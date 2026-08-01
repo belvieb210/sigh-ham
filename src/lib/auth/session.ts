@@ -1,20 +1,13 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { createHash, randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { DUREE_SESSION_JOURS, NOM_COOKIE_SESSION } from "@/lib/auth/constants";
+import { genererTokenSession, hasherToken } from "@/lib/auth/hash-token";
 
 export { NOM_COOKIE_SESSION } from "@/lib/auth/constants";
+export { genererTokenSession, hasherToken } from "@/lib/auth/hash-token";
 
 const DUREE_SESSION = DUREE_SESSION_JOURS;
-
-export function genererTokenSession(): string {
-  return randomBytes(32).toString("hex");
-}
-
-export function hasherToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
-}
 
 export async function creerSession(
   utilisateurId: string,

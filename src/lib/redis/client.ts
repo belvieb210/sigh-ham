@@ -1,5 +1,8 @@
 import "server-only";
 import Redis from "ioredis";
+import { CANAUX_REDIS } from "@/lib/redis/canaux";
+
+export { CANAUX_REDIS } from "@/lib/redis/canaux";
 
 let client: Redis | null = null;
 
@@ -19,12 +22,6 @@ export function obtenirRedis(): Redis | null {
 
   return client;
 }
-
-export const CANAUX_REDIS = {
-  messagerie: "sigh:messagerie",
-  notifications: "sigh:notifications",
-  presence: "sigh:presence",
-} as const;
 
 export async function publierRedis(canal: string, payload: unknown) {
   const redis = obtenirRedis();

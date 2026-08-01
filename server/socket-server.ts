@@ -2,11 +2,11 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import Redis from "ioredis";
 import { createAdapter } from "@socket.io/redis-adapter";
-import { prisma } from "../src/lib/prisma";
-import { CANAUX_REDIS } from "../src/lib/redis/client";
+import { prisma } from "./prisma";
+import { CANAUX_REDIS } from "../src/lib/redis/canaux";
 import { EVENEMENTS_SOCKET } from "../src/lib/realtime/evenements";
 import { NOM_COOKIE_SESSION } from "../src/lib/auth/constants";
-import { hasherToken } from "../src/lib/auth/session";
+import { hasherToken } from "../src/lib/auth/hash-token";
 
 const PORT = parseInt(process.env.SOCKET_PORT ?? "3001", 10);
 

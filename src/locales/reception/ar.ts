@@ -390,6 +390,8 @@ export const receptionAr = {
     enregistrement: "جارٍ الحفظ…",
     supprimerPatientTitre: "Supprimer définitivement ?",
     supprimerPatientDescription: "Cette action est irréversible. Toutes les données du patient {{nom}} ({{id}}) seront supprimées.",
+    supprimerPatientConfirmer: "Supprimer définitivement",
+    suppressionEnCours: "Suppression…",
   },
   stats: {
     patientsAujourdhui: "المرضى اليوم",

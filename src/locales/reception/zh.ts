@@ -392,6 +392,8 @@ export const receptionZh = {
     enregistrement: "正在保存…",
     supprimerPatientTitre: "Supprimer définitivement ?",
     supprimerPatientDescription: "Cette action est irréversible. Toutes les données du patient {{nom}} ({{id}}) seront supprimées.",
+    supprimerPatientConfirmer: "Supprimer définitivement",
+    suppressionEnCours: "Suppression…",
   },
   stats: {
     patientsAujourdhui: "今日患者",

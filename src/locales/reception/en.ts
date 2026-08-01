@@ -392,6 +392,8 @@ export const receptionEn = {
     supprimerPatientTitre: "Delete permanently?",
     supprimerPatientDescription:
       "This action cannot be undone. All data for patient {{nom}} ({{id}}) will be permanently deleted.",
+    supprimerPatientConfirmer: "Delete permanently",
+    suppressionEnCours: "Deleting…",
   },
   stats: {
     patientsAujourdhui: "Patients today",

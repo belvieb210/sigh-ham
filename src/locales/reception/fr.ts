@@ -393,6 +393,8 @@ export const receptionFr = {
     supprimerPatientTitre: "Supprimer définitivement ?",
     supprimerPatientDescription:
       "Cette action est irréversible. Toutes les données du patient {{nom}} ({{id}}) seront supprimées définitivement.",
+    supprimerPatientConfirmer: "Supprimer définitivement",
+    suppressionEnCours: "Suppression…",
   },
   stats: {
     patientsAujourdhui: "Patients aujourd'hui",

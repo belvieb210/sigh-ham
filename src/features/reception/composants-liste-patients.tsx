@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import type { PatientEnregistre } from "@/constants/reception";
 import { EVENEMENT_RECEPTION_PATIENTS_MODIFIES } from "@/constants/reception";
+import { ModaleConfirmation } from "@/components/ui/modale-confirmation";
 import { useTraductionsReception } from "@/hooks/use-traductions-reception";
 import { cn } from "@/lib/utils";
 
@@ -181,7 +182,9 @@ function ActionsGestionPatient({
 }) {
   const { t } = useTranslation();
   const router = useRouter();
+  const [modaleOuverte, setModaleOuverte] = useState(false);
   const [suppressionEnCours, setSuppressionEnCours] = useState(false);
+  const [erreurSuppression, setErreurSuppression] = useState<string | null>(null);
 
   const modifier = () => {
     router.push(
@@ -189,16 +192,18 @@ function ActionsGestionPatient({
     );
   };
 
-  const supprimer = async () => {
-    const confirme = window.confirm(
-      t("reception.modales.supprimerPatientDescription", {
-        nom: patient.nom,
-        id: patient.id,
-      })
-    );
-    if (!confirme || suppressionEnCours) return;
+  const fermerModale = () => {
+    if (suppressionEnCours) return;
+    setModaleOuverte(false);
+    setErreurSuppression(null);
+  };
+
+  const confirmerSuppression = async () => {
+    if (suppressionEnCours) return;
 
     setSuppressionEnCours(true);
+    setErreurSuppression(null);
+
     try {
       const res = await fetch(
         `/api/reception/patients/${encodeURIComponent(patient.id)}`,
@@ -208,10 +213,11 @@ function ActionsGestionPatient({
       if (!res.ok) {
         throw new Error(data.message ?? t("reception.erreurs.suppressionImpossible"));
       }
+      setModaleOuverte(false);
       onApresSuppression?.();
       window.dispatchEvent(new CustomEvent(EVENEMENT_RECEPTION_PATIENTS_MODIFIES));
     } catch (error) {
-      window.alert(
+      setErreurSuppression(
         error instanceof Error ? error.message : t("reception.erreurs.suppressionImpossible")
       );
     } finally {
@@ -238,7 +244,8 @@ function ActionsGestionPatient({
         disabled={suppressionEnCours}
         onClick={(e) => {
           e.stopPropagation();
-          void supprimer();
+          setErreurSuppression(null);
+          setModaleOuverte(true);
         }}
         className="rounded-lg p-1.5 text-texte-secondaire transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
         aria-label={t("reception.actions.supprimerPatient")}
@@ -246,6 +253,27 @@ function ActionsGestionPatient({
       >
         <Trash2 className="h-4 w-4" />
       </button>
+
+      <ModaleConfirmation
+        ouverte={modaleOuverte}
+        onFermer={fermerModale}
+        onConfirmer={confirmerSuppression}
+        variante="danger"
+        titre={t("reception.modales.supprimerPatientTitre")}
+        description={t("reception.modales.supprimerPatientDescription", {
+          nom: patient.nom,
+          id: patient.id,
+        })}
+        libelleConfirmer={
+          suppressionEnCours
+            ? t("reception.modales.suppressionEnCours")
+            : t("reception.modales.supprimerPatientConfirmer")
+        }
+        libelleAnnuler={t("reception.common.annuler")}
+        libelleFermer={t("reception.common.fermer")}
+        enCours={suppressionEnCours}
+        erreur={erreurSuppression}
+      />
     </>
   );
 }

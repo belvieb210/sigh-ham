@@ -16,6 +16,7 @@ const variantesBouton = cva(
           "border border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair",
         fantome: "text-bleu-medical hover:bg-bleu-medical-clair",
         vert: "bg-vert-sante text-white hover:opacity-90",
+        danger: "bg-red-600 text-white shadow-md hover:bg-red-700 hover:shadow-lg",
       },
       taille: {
         petit: "h-9 px-4 text-xs",

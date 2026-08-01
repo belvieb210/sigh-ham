@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PatientEnregistre } from "@/constants/reception";
-import { EVENEMENT_RECEPTION_PATIENTS_MODIFIES } from "@/constants/reception";
+import {
+  EVENEMENT_RECEPTION_PATIENTS_MODIFIES,
+  type DetailPatientOrientationModifiee,
+} from "@/constants/reception";
 import { TableauPatients } from "@/features/reception/composants-liste-patients";
 import { ModaleExamensTransfert } from "@/features/reception/modale-examens-transfert";
 
@@ -45,7 +48,25 @@ export function TableauPatientsRecents({
   }, [charger]);
 
   useEffect(() => {
-    const rafraichir = () => {
+    const rafraichir = (event: Event) => {
+      const detail = (event as CustomEvent<DetailPatientOrientationModifiee>).detail;
+
+      if (detail?.type === "orientation" && detail.patientId) {
+        setPatients((liste) =>
+          liste.map((p) =>
+            p.id === detail.patientId
+              ? {
+                  ...p,
+                  orientation: detail.orientation,
+                  orientationCouleur: detail.orientationCouleur,
+                  codeSalleDestination: detail.codeSalleDestination,
+                }
+              : p
+          )
+        );
+        return;
+      }
+
       void charger();
     };
     window.addEventListener(EVENEMENT_RECEPTION_PATIENTS_MODIFIES, rafraichir);

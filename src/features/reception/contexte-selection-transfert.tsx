@@ -9,7 +9,12 @@ import {
   type ReactNode,
 } from "react";
 import type { PatientEnregistre } from "@/constants/reception";
-import { EVENEMENT_RECEPTION_PATIENTS_MODIFIES, ORIENTATIONS_RAPIDES } from "@/constants/reception";
+import {
+  COULEURS_ORIENTATION_LISTE,
+  EVENEMENT_RECEPTION_PATIENTS_MODIFIES,
+  ORIENTATIONS_RAPIDES,
+  type DetailPatientOrientationModifiee,
+} from "@/constants/reception";
 import { useOrientationRapide } from "@/features/reception/contexte-orientation-rapide";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import type { DonneesFormulairePatient } from "@/lib/reception/types";
@@ -87,24 +92,40 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
 
         if (!res.ok) throw new Error(data.message ?? "Modification impossible.");
 
-        const codeFinal = data.codeSalle ?? codeSalle;
+        const codeFinalSalle = data.codeSalle ?? codeSalle;
         const orientationAffichee =
-          ORIENTATIONS_RAPIDES.find((o) => o.value === codeFinal)?.label ??
+          ORIENTATIONS_RAPIDES.find((o) => o.value === codeFinalSalle)?.label ??
           data.salleDestination ??
-          codeFinal;
+          codeFinalSalle;
+
+        const orientationCouleur =
+          COULEURS_ORIENTATION_LISTE[orientationAffichee] ??
+          COULEURS_ORIENTATION_LISTE["Non orienté"];
 
         setPatientSelectionne((courant) =>
           courant
             ? {
                 ...courant,
-                codeSalleDestination: data.codeSalle ?? codeSalle,
+                codeSalleDestination: codeFinalSalle,
                 orientation: orientationAffichee,
+                orientationCouleur,
               }
             : courant
         );
 
         setMessagePanneau(data.message ?? "Destination mise à jour.");
-        window.dispatchEvent(new CustomEvent(EVENEMENT_RECEPTION_PATIENTS_MODIFIES));
+
+        /** Mise à jour locale de la ligne — pas de rechargement de toute la liste */
+        const detail: DetailPatientOrientationModifiee = {
+          type: "orientation",
+          patientId: patientSelectionne.id,
+          orientation: orientationAffichee,
+          orientationCouleur,
+          codeSalleDestination: codeFinalSalle,
+        };
+        window.dispatchEvent(
+          new CustomEvent(EVENEMENT_RECEPTION_PATIENTS_MODIFIES, { detail })
+        );
       } catch (error) {
         setMessagePanneau(
           error instanceof Error ? error.message : "Impossible de changer la destination."

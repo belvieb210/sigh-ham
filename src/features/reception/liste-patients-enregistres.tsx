@@ -6,6 +6,7 @@ import type { PatientEnregistre } from "@/constants/reception";
 import {
   EVENEMENT_RECEPTION_PATIENTS_MODIFIES,
   EVENEMENT_RECEPTION_PATIENT_RECHERCHE,
+  type DetailPatientOrientationModifiee,
   type DetailPatientRechercheSelectionne,
 } from "@/constants/reception";
 import { useSelectionTransfert } from "@/features/reception/contexte-selection-transfert";
@@ -18,43 +19,73 @@ export function ListePatientsEnregistres() {
     useSelectionTransfert();
   const [patients, setPatients] = useState<PatientEnregistre[]>([]);
   const [stats, setStats] = useState({ aujourdhui: 0, enAttente: 0 });
-  const [chargement, setChargement] = useState(true);
+  const [chargementInitial, setChargementInitial] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [patientExamens, setPatientExamens] = useState<PatientEnregistre | null>(null);
   const [modaleExamensOuverte, setModaleExamensOuverte] = useState(false);
 
-  const charger = useCallback(async () => {
-    setChargement(true);
-    setErreur(null);
-    try {
-      const res = await fetch("/api/reception/patients");
-      const data = (await res.json()) as {
-        patients?: PatientEnregistre[];
-        stats?: { aujourdhui: number; enAttente: number };
-        message?: string;
-      };
-      if (!res.ok) throw new Error(data.message ?? "Chargement impossible.");
-      const liste = data.patients ?? [];
-      setPatients(liste);
-      synchroniserSelection(liste);
-      setStats(data.stats ?? { aujourdhui: 0, enAttente: 0 });
-    } catch (error) {
-      setErreur(
-        error instanceof Error ? error.message : "Impossible de charger les patients."
-      );
-    } finally {
-      setChargement(false);
-    }
-  }, [synchroniserSelection]);
+  const charger = useCallback(
+    async (options?: { silencieux?: boolean }) => {
+      const silencieux = options?.silencieux ?? false;
+      if (!silencieux) {
+        setChargementInitial(true);
+        setErreur(null);
+      }
+      try {
+        const res = await fetch("/api/reception/patients");
+        const data = (await res.json()) as {
+          patients?: PatientEnregistre[];
+          stats?: { aujourdhui: number; enAttente: number };
+          message?: string;
+        };
+        if (!res.ok) throw new Error(data.message ?? "Chargement impossible.");
+        const liste = data.patients ?? [];
+        setPatients(liste);
+        synchroniserSelection(liste);
+        setStats(data.stats ?? { aujourdhui: 0, enAttente: 0 });
+        setErreur(null);
+      } catch (error) {
+        if (!silencieux) {
+          setErreur(
+            error instanceof Error ? error.message : "Impossible de charger les patients."
+          );
+        }
+      } finally {
+        if (!silencieux) setChargementInitial(false);
+      }
+    },
+    [synchroniserSelection]
+  );
 
   useEffect(() => {
-    charger();
+    void charger();
   }, [charger]);
 
   useEffect(() => {
-    const rafraichir = () => {
-      void charger();
+    const rafraichir = (event: Event) => {
+      const detail = (event as CustomEvent<DetailPatientOrientationModifiee>).detail;
+
+      /** Changement de salle : maj locale de la ligne uniquement */
+      if (detail?.type === "orientation" && detail.patientId) {
+        setPatients((liste) =>
+          liste.map((p) =>
+            p.id === detail.patientId
+              ? {
+                  ...p,
+                  orientation: detail.orientation,
+                  orientationCouleur: detail.orientationCouleur,
+                  codeSalleDestination: detail.codeSalleDestination,
+                }
+              : p
+          )
+        );
+        return;
+      }
+
+      /** Autres actions : refresh silencieux (sans écran de chargement) */
+      void charger({ silencieux: true });
     };
+
     window.addEventListener(EVENEMENT_RECEPTION_PATIENTS_MODIFIES, rafraichir);
     return () => window.removeEventListener(EVENEMENT_RECEPTION_PATIENTS_MODIFIES, rafraichir);
   }, [charger]);
@@ -75,7 +106,7 @@ export function ListePatientsEnregistres() {
       window.removeEventListener(EVENEMENT_RECEPTION_PATIENT_RECHERCHE, onRecherchePatient);
   }, [patients, selectionnerPourPanneau]);
 
-  if (chargement) {
+  if (chargementInitial) {
     return (
       <div className="rounded-xl border border-gris-bordure bg-white px-6 py-16 text-center text-sm text-texte-secondaire shadow-sm">
         {t("reception.pages.enregistres.chargement")}
@@ -89,7 +120,7 @@ export function ListePatientsEnregistres() {
         <p className="text-sm text-red-700">{erreur}</p>
         <button
           type="button"
-          onClick={charger}
+          onClick={() => void charger()}
           className="mt-4 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
         >
           {t("reception.liste.reessayer")}
@@ -111,7 +142,7 @@ export function ListePatientsEnregistres() {
         afficherFiltreStatut
         placeholderRecherche={t("reception.pages.enregistres.placeholder")}
         patientSelectionneId={patientSelectionne?.id ?? null}
-        onRafraichirTransferts={charger}
+        onRafraichirTransferts={() => void charger({ silencieux: true })}
         onSelectionnerPatient={(patient) => {
           void selectionnerPourPanneau(patient);
         }}

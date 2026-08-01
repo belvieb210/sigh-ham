@@ -6,6 +6,7 @@ import type { PatientEnregistre } from "@/constants/reception";
 import {
   EVENEMENT_RECEPTION_PATIENTS_MODIFIES,
   EVENEMENT_RECEPTION_PATIENT_RECHERCHE,
+  type DetailPatientOrientationModifiee,
   type DetailPatientRechercheSelectionne,
 } from "@/constants/reception";
 import { useSelectionTransfert } from "@/features/reception/contexte-selection-transfert";
@@ -27,41 +28,66 @@ export function ListePatientsTransferes() {
   const [patientExamens, setPatientExamens] = useState<PatientEnregistre | null>(null);
   const [modaleExamensOuverte, setModaleExamensOuverte] = useState(false);
 
-  const charger = useCallback(async () => {
-    setChargement(true);
-    setErreur(null);
-    try {
-      const res = await fetch("/api/reception/transferts");
-      const data = (await res.json()) as {
-        patients?: PatientEnregistre[];
-        stats?: { aujourdhui: number; versInfirmiers: number; versCaisse: number };
-        message?: string;
-      };
-      if (!res.ok) throw new Error(data.message ?? "Chargement impossible.");
-      const liste = data.patients ?? [];
-      setPatients(liste);
-      synchroniserSelection(liste);
-      setStats(
-        data.stats ?? { aujourdhui: 0, versInfirmiers: 0, versCaisse: 0 }
-      );
-    } catch (error) {
-      setErreur(
-        error instanceof Error
-          ? error.message
-          : "Impossible de charger les patients transférés."
-      );
-    } finally {
-      setChargement(false);
-    }
-  }, [synchroniserSelection]);
+  const charger = useCallback(
+    async (options?: { silencieux?: boolean }) => {
+      const silencieux = options?.silencieux ?? false;
+      if (!silencieux) {
+        setChargement(true);
+        setErreur(null);
+      }
+      try {
+        const res = await fetch("/api/reception/transferts");
+        const data = (await res.json()) as {
+          patients?: PatientEnregistre[];
+          stats?: { aujourdhui: number; versInfirmiers: number; versCaisse: number };
+          message?: string;
+        };
+        if (!res.ok) throw new Error(data.message ?? "Chargement impossible.");
+        const liste = data.patients ?? [];
+        setPatients(liste);
+        synchroniserSelection(liste);
+        setStats(data.stats ?? { aujourdhui: 0, versInfirmiers: 0, versCaisse: 0 });
+        setErreur(null);
+      } catch (error) {
+        if (!silencieux) {
+          setErreur(
+            error instanceof Error
+              ? error.message
+              : "Impossible de charger les patients transférés."
+          );
+        }
+      } finally {
+        if (!silencieux) setChargement(false);
+      }
+    },
+    [synchroniserSelection]
+  );
 
   useEffect(() => {
-    charger();
+    void charger();
   }, [charger]);
 
   useEffect(() => {
-    const onModifie = () => {
-      void charger();
+    const onModifie = (event: Event) => {
+      const detail = (event as CustomEvent<DetailPatientOrientationModifiee>).detail;
+
+      if (detail?.type === "orientation" && detail.patientId) {
+        setPatients((liste) =>
+          liste.map((p) =>
+            p.id === detail.patientId
+              ? {
+                  ...p,
+                  orientation: detail.orientation,
+                  orientationCouleur: detail.orientationCouleur,
+                  codeSalleDestination: detail.codeSalleDestination,
+                }
+              : p
+          )
+        );
+        return;
+      }
+
+      void charger({ silencieux: true });
     };
     window.addEventListener(EVENEMENT_RECEPTION_PATIENTS_MODIFIES, onModifie);
     return () => window.removeEventListener(EVENEMENT_RECEPTION_PATIENTS_MODIFIES, onModifie);
@@ -97,7 +123,7 @@ export function ListePatientsTransferes() {
         <p className="text-sm text-red-700">{erreur}</p>
         <button
           type="button"
-          onClick={charger}
+          onClick={() => void charger()}
           className="mt-4 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
         >
           {t("reception.liste.reessayer")}
@@ -135,7 +161,7 @@ export function ListePatientsTransferes() {
         ]}
         afficherFiltreStatut={false}
         varianteActions="transferts"
-        onRafraichirTransferts={charger}
+        onRafraichirTransferts={() => void charger({ silencieux: true })}
         patientSelectionneId={patientSelectionne?.id ?? null}
         onSelectionnerPatient={(patient) => {
           void selectionnerPourPanneau(patient);

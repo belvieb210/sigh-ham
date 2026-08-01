@@ -12,6 +12,15 @@ OUTPUT="${BACKUP_DIR}/sigh_ham_${STAMP}.sql"
 
 mkdir -p "${BACKUP_DIR}"
 
+# En prod, l'export tourne souvent sous l'utilisateur sigh
+if [[ "${EUID:-0}" -eq 0 ]]; then
+  chown -R sigh:sigh "${BACKUP_DIR}" 2>/dev/null || true
+elif [[ ! -w "${BACKUP_DIR}" ]]; then
+  echo "❌ Pas d'écriture dans ${BACKUP_DIR}"
+  echo "   sudo chown -R sigh:sigh ${BACKUP_DIR}"
+  exit 1
+fi
+
 # shellcheck source=lib/database-url.sh
 source "${APP_DIR}/deploy/lib/database-url.sh"
 charger_database_url "${APP_DIR}"

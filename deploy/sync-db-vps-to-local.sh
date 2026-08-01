@@ -15,6 +15,9 @@ echo "       Ce script exporte les DONNÉES en plus des migrations."
 echo ""
 
 cd "${APP_DIR}"
+mkdir -p "${APP_DIR}/prisma/backups"
+chown -R sigh:sigh "${APP_DIR}/prisma/backups" 2>/dev/null || true
+
 sudo -u sigh bash deploy/export-postgres.sh
 
 LATEST=$(ls -t "${APP_DIR}/prisma/backups/"sigh_ham_*.sql.gz 2>/dev/null | head -1)

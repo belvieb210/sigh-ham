@@ -1,0 +1,5 @@
+# Projets Apache sur ce VPS — domaine | dossier_projet | ServerAlias (optionnel)
+# Le script détecte automatiquement public/ ou racine avec index.php
+hamlabor.org|/var/www/ham_project|www.hamlabor.org
+profildeborah.duckdns.org|/var/www/ProfilDeborah|
+# shk-annonce|/var/www/shk-annonce|www.example.com

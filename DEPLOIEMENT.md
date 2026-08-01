@@ -115,7 +115,29 @@ Compte réception (seed) :
 
 ---
 
-## 8. Restaurer les autres projets Apache (hamlabor.org, profildeborah, etc.)
+### Réparer hamlabor.org (404 Apache)
+
+Après migration Nginx, le **DocumentRoot** Apache peut être incorrect.
+
+```bash
+cd /var/www/sigh-ham
+git pull
+bash deploy/fix-apache-projets.sh
+```
+
+Le script recrée les VirtualHost pour `hamlabor.org`, `profildeborah.duckdns.org`, etc.  
+Éditez `deploy/projets-apache.list` si le chemin du projet diffère.
+
+Diagnostic manuel :
+
+```bash
+apache2ctl -S | grep -i hamlabor
+grep -r DocumentRoot /etc/apache2/sites-enabled/
+ls -la /var/www/ham_project/public/
+curl -I https://hamlabor.org
+```
+
+---
 
 Erreur **`NET::ERR_CERT_COMMON_NAME_INVALID`** sur `hamlabor.org` : Nginx servait le certificat de `hamlab5.duckdns.org` car aucun bloc SSL n'existait pour `hamlabor.org`.
 

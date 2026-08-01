@@ -87,7 +87,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cp "${SCRIPT_DIR}/nginx/sigh-ham-http.bootstrap.conf" /etc/nginx/sites-available/sigh-ham
 ln -sf /etc/nginx/sites-available/sigh-ham /etc/nginx/sites-enabled/sigh-ham
 rm -f /etc/nginx/sites-enabled/default
-nginx -t && systemctl reload nginx
+nginx -t
+systemctl enable nginx
+if systemctl is-active --quiet nginx; then
+  systemctl reload nginx
+else
+  systemctl start nginx
+fi
 
 echo "==> Systemd"
 cp "${SCRIPT_DIR}/systemd/sigh-web.service" /etc/systemd/system/

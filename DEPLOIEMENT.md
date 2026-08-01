@@ -36,8 +36,18 @@ cp deploy/nginx/sigh-ham.conf /etc/nginx/sites-available/sigh-ham
 nginx -t && systemctl reload nginx
 ```
 
-## Mises à jour
+## Nginx ne démarre pas
+
+Cause fréquente : config **HTTPS** (`sigh-ham.conf`) copiée **avant** certbot → certificats absents.
 
 ```bash
-sudo -u sigh bash /var/www/sigh-ham/deploy/deploy-app.sh
+bash /var/www/sigh-ham/deploy/fix-nginx-bootstrap.sh
 ```
+
+Puis voir l’erreur exacte :
+
+```bash
+nginx -t
+journalctl -xeu nginx.service --no-pager | tail -30
+```
+

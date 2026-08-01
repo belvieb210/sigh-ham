@@ -38,11 +38,13 @@ if ! command -v pg_dump >/dev/null 2>&1; then
 fi
 
 echo "==> Export PostgreSQL → ${OUTPUT}"
+export PGCLIENTENCODING=UTF8
 pg_dump "${PG_URL}" \
   --no-owner \
   --no-acl \
   --clean \
   --if-exists \
+  --encoding=UTF8 \
   --format=plain \
   --file="${OUTPUT}"
 

@@ -28,40 +28,57 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
-echo "==> Git pull"
-git pull origin main || git pull origin master || true
+# Exécuter le travail applicatif sous l'utilisateur sigh
+run_as_sigh() {
+  if [[ "$(id -un)" == "sigh" ]]; then
+    bash -lc "cd '${APP_DIR}' && $*"
+  elif [[ "${EUID:-0}" -eq 0 ]]; then
+    chown -R sigh:sigh "${APP_DIR}" 2>/dev/null || true
+    rm -rf "${APP_DIR}/.next"
+    sudo -u sigh -H bash -lc "cd '${APP_DIR}' && $*"
+  else
+    bash -lc "cd '${APP_DIR}' && $*"
+  fi
+}
 
-echo "==> Dépendances npm"
-if ! npm ci 2>/dev/null; then
-  echo "⚠️  package-lock.json désynchronisé — npm install"
-  npm install
+echo "==> Git pull"
+if [[ "${EUID:-0}" -eq 0 ]]; then
+  sudo -u sigh git -C "${APP_DIR}" pull origin main \
+    || sudo -u sigh git -C "${APP_DIR}" pull origin master || true
+else
+  git pull origin main || git pull origin master || true
 fi
 
-echo "==> Prisma generate"
-npm run db:generate
+echo "==> Dépendances npm"
+run_as_sigh 'if ! npm ci 2>/dev/null; then echo "⚠️  package-lock désynchronisé — npm install"; npm install; fi'
 
-echo "==> Migrations base de données"
-npm run db:migrate:deploy
+echo "==> Prisma generate + migrations"
+run_as_sigh "npm run db:generate && npm run db:migrate:deploy"
 
 if [[ "${SEED}" == "true" ]]; then
   echo "==> Seed initial (salles, rôles, utilisateur réception)"
-  npm run db:seed
-  npm run db:seed:reception || true
-  npm run db:seed:messagerie || true
+  run_as_sigh "npm run db:seed"
+  run_as_sigh "npm run db:seed:reception || true"
+  run_as_sigh "npm run db:seed:messagerie || true"
 fi
 
 echo "==> Build Next.js"
-npm run build
+run_as_sigh "npm run build"
 
 echo "==> Permissions uploads"
-mkdir -p public/uploads/messagerie
-chmod -R 775 public/uploads 2>/dev/null || true
+run_as_sigh "mkdir -p public/uploads/messagerie && chmod -R 775 public/uploads"
 
 echo "==> Redémarrage services"
 if command -v systemctl >/dev/null 2>&1; then
-  sudo systemctl enable sigh-web sigh-socket 2>/dev/null || true
-  sudo systemctl restart sigh-web sigh-socket
-  sudo systemctl status sigh-web --no-pager -l || true
+  if [[ "${EUID:-0}" -eq 0 ]]; then
+    systemctl enable sigh-web sigh-socket 2>/dev/null || true
+    systemctl restart sigh-web sigh-socket
+    systemctl status sigh-web --no-pager -l || true
+  else
+    sudo systemctl enable sigh-web sigh-socket 2>/dev/null || true
+    sudo systemctl restart sigh-web sigh-socket
+    sudo systemctl status sigh-web --no-pager -l || true
+  fi
 else
   echo "⚠️  systemd non disponible — lancez manuellement : npm run start & npx tsx server/socket-server.ts"
 fi

@@ -19,6 +19,7 @@
     "db:seed:messagerie": "npx tsx prisma/seed-messagerie.ts",
     "db:export": "bash deploy/export-postgres.sh",
     "db:import": "bash deploy/import-postgres.sh",
+    "db:migrate:vps": "bash deploy/migrate-db.sh",
     "db:purge:conversations-patient": "npx tsx prisma/supprimer-conversations-patient.ts",
     "dev:socket": "npx tsx server/socket-server.ts",
     "dev:full": "concurrently \"npm run dev:propre\" \"npm run dev:socket\"",

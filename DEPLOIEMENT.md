@@ -356,6 +356,49 @@ npx prisma generate
 npm run dev
 ```
 
+### Migrations + crontab sur le VPS
+
+Scripts :
+
+| Script | Rôle |
+|--------|------|
+| `deploy/migrate-db.sh` | Applique les migrations Prisma (`--pull`, `--seed`) |
+| `deploy/cron-maintenance.sh` | Backup + migrations (+ `--deploy` pour build/restart) |
+| `deploy/install-crontab.sh` | Installe le crontab automatique |
+| `deploy/crontab.example` | Modèle des tâches planifiées |
+
+**Migration manuelle (immédiat) :**
+
+```bash
+cd /var/www/sigh-ham
+git pull
+chmod +x deploy/*.sh
+bash deploy/migrate-db.sh --pull
+```
+
+**Installer le crontab (root) :**
+
+```bash
+bash /var/www/sigh-ham/deploy/install-crontab.sh
+```
+
+Tâches installées :
+
+| Horaire | Action |
+|---------|--------|
+| Tous les jours 03:15 | Backup PostgreSQL + migrations |
+| Toutes les 6 h | `git pull` + migrations seulement |
+| Dimanche 04:00 | Déploiement complet (build + restart) |
+
+Logs : `/var/www/sigh-ham/logs/`
+
+Vérifier :
+
+```bash
+crontab -l
+tail -50 /var/www/sigh-ham/logs/migrate-db.log
+```
+
 ### Envoyer le dump sur GitHub
 
 ⚠️ **Repo PRIVÉ obligatoire** — le dump contient des données patients et des mots de passe hashés.

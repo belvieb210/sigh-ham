@@ -19,10 +19,6 @@ if [[ ! -f "$DUMP" ]]; then
   exit 1
 fi
 
-if [[ -f "${APP_DIR}/.env" ]]; then
-  true
-fi
-
 # shellcheck source=lib/database-url.sh
 source "${APP_DIR}/deploy/lib/database-url.sh"
 charger_database_url "${APP_DIR}"

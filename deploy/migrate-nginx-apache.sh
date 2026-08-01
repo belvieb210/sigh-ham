@@ -40,6 +40,13 @@ apache2ctl configtest
 systemctl restart apache2
 echo "   Apache actif sur :8080"
 
+echo "==> Apache : port 443 libéré pour Nginx"
+if grep -qE '^Listen 443' "${PORTS}"; then
+  sed -i 's/^Listen 443/#Listen 443  # Nginx gère HTTPS/' "${PORTS}"
+  apache2ctl configtest
+  systemctl restart apache2
+fi
+
 echo "==> Installation Nginx"
 apt-get update -qq
 apt-get install -y nginx certbot python3-certbot-nginx

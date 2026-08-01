@@ -16,13 +16,51 @@ if [[ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]]; then
   exit 1
 fi
 
+echo "==> Apache : libérer le port 443 (Nginx sert le SSL)"
+PORTS="/etc/apache2/ports.conf"
+if grep -qE '^Listen 443' "${PORTS}"; then
+  sed -i 's/^Listen 443/#Listen 443  # Nginx gère HTTPS/' "${PORTS}"
+  apache2ctl configtest
+  systemctl restart apache2
+  echo "   Listen 443 Apache désactivé"
+else
+  echo "   Apache n'écoute pas sur 443"
+fi
+
+echo "==> Nginx : un seul site actif (sigh-ham)"
+mkdir -p /etc/nginx/sites-enabled
+for f in /etc/nginx/sites-enabled/*; do
+  [[ -e "$f" ]] || continue
+  base=$(basename "$f")
+  if [[ "$base" != "sigh-ham" ]]; then
+    rm -f "$f"
+    echo "   Retiré : $base"
+  fi
+done
+
 echo "==> Config Nginx HTTPS"
 cp "${APP_DIR}/deploy/nginx/sigh-ham-coexist-ssl.conf" /etc/nginx/sites-available/sigh-ham
 ln -sf /etc/nginx/sites-available/sigh-ham /etc/nginx/sites-enabled/sigh-ham
 
 nginx -t
-systemctl reload nginx
+systemctl restart nginx
 
 echo ""
-echo "✅ HTTPS actif : https://${DOMAIN}/connexion"
-curl -sI "https://${DOMAIN}/connexion" | head -5
+echo "==> Diagnostic port 443"
+ss -tlnp | grep ':443' || echo "(rien sur 443 ?)"
+echo ""
+echo "==> Certificat servi pour ${DOMAIN}"
+echo | openssl s_client -connect "127.0.0.1:443" -servername "${DOMAIN}" 2>/dev/null \
+  | openssl x509 -noout -subject -dates 2>/dev/null || echo "Échec openssl"
+
+echo ""
+if curl -sfI "https://${DOMAIN}/connexion" | head -3; then
+  echo ""
+  echo "✅ HTTPS actif : https://${DOMAIN}/connexion"
+else
+  echo ""
+  echo "❌ HTTPS encore incorrect. Envoyez la sortie de :"
+  echo "   nginx -T | grep -E 'listen|ssl_certificate|server_name'"
+  echo "   ls -la /etc/nginx/sites-enabled/"
+  exit 1
+fi

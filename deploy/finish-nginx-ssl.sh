@@ -16,16 +16,11 @@ if [[ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]]; then
   exit 1
 fi
 
+# shellcheck source=lib/apache-443.sh
+source "${APP_DIR}/deploy/lib/apache-443.sh"
+
 echo "==> Apache : libérer le port 443 (Nginx sert le SSL)"
-PORTS="/etc/apache2/ports.conf"
-if grep -qE '^Listen 443' "${PORTS}"; then
-  sed -i 's/^Listen 443/#Listen 443  # Nginx gère HTTPS/' "${PORTS}"
-  apache2ctl configtest
-  systemctl restart apache2
-  echo "   Listen 443 Apache désactivé"
-else
-  echo "   Apache n'écoute pas sur 443"
-fi
+liberer_port_443_apache
 
 echo "==> Nginx : un seul site actif (sigh-ham)"
 mkdir -p /etc/nginx/sites-enabled

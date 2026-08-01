@@ -71,6 +71,18 @@ git pull
 bash deploy/finish-nginx-ssl.sh
 ```
 
+Si Apache garde le port 443 (`profildeborah` ou autre certificat servi) :
+
+```bash
+# Commenter TOUS les Listen 443 (y compris indentés)
+sed -i 's/^\([[:space:]]*\)Listen 443/\1#Listen 443/' /etc/apache2/ports.conf
+systemctl restart apache2
+ss -tlnp | grep ':443'   # ne doit plus afficher apache
+bash deploy/finish-nginx-ssl.sh
+```
+
+> **Note :** `profildeborah.duckdns.org` en HTTPS passera aussi par Nginx une fois le port 443 libéré. Il faudra ajouter un bloc `server` Nginx pour ce domaine (proxy → Apache:8080) si vous en avez besoin.
+
 **Test :** https://hamlab5.duckdns.org/connexion
 
 Compte réception (seed) :

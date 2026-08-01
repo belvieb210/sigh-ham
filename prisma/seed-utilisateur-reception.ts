@@ -3,10 +3,13 @@
  * Usage : npx tsx prisma/seed-utilisateur-reception.ts
  */
 import "dotenv/config";
-import { creerClientPrisma } from "../src/lib/prisma";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
+import { PrismaClient } from "../src/generated/prisma/client";
 import { hasherMotDePasse } from "../src/lib/auth/mot-de-passe";
 
-const prisma = creerClientPrisma();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 const COMPTE = {
   identifiant: "bokulubelvie@gmail.com",
@@ -63,4 +66,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

@@ -31,7 +31,7 @@ cd /var/www/sigh-ham
 chmod +x deploy/*.sh
 bash deploy/install-vps.sh
 sudo -u sigh bash deploy/deploy-app.sh --seed
-certbot --nginx -d hamlab5.duckdns.org --email VOTRE@EMAIL.com --agree-tos --non-interactive
+certbot --nginx -d hamlab5.duckdns.org --email bokulubelvie@gmail.com --agree-tos --non-interactive
 cp deploy/nginx/sigh-ham.conf /etc/nginx/sites-available/sigh-ham
 nginx -t && systemctl reload nginx
 ```

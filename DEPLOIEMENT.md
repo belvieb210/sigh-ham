@@ -63,6 +63,14 @@ sudo -u sigh npm run build
 sudo systemctl restart sigh-web sigh-socket
 ```
 
+Si la migration s'arrête avec `options-ssl-nginx.conf` introuvable (certificat OK mais Nginx pas rechargé) :
+
+```bash
+cd /var/www/sigh-ham
+git pull
+bash deploy/finish-nginx-ssl.sh
+```
+
 **Test :** https://hamlab5.duckdns.org/connexion
 
 Compte réception (seed) :

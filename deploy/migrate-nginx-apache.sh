@@ -56,12 +56,16 @@ systemctl restart nginx
 echo "   Nginx actif sur :80"
 
 echo "==> Certificat SSL Let's Encrypt pour ${DOMAIN}"
-certbot certonly --webroot \
-  -w /var/www/certbot \
-  -d "${DOMAIN}" \
-  --email "${EMAIL}" \
-  --agree-tos \
-  --non-interactive
+if [[ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]]; then
+  certbot certonly --webroot \
+    -w /var/www/certbot \
+    -d "${DOMAIN}" \
+    --email "${EMAIL}" \
+    --agree-tos \
+    --non-interactive
+else
+  echo "   Certificat déjà présent — étape ignorée"
+fi
 
 echo "==> Config Nginx HTTPS (SIGH) + proxy Apache (autres sites)"
 cp "${APP_DIR}/deploy/nginx/sigh-ham-coexist-ssl.conf" /etc/nginx/sites-available/sigh-ham

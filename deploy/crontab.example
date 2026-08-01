@@ -1,24 +1,17 @@
 # =============================================================================
 # SIGH HAM — Crontab VPS (root)
-# Installation :
-#   bash /var/www/sigh-ham/deploy/install-crontab.sh
-# Ou manuel :
-#   crontab -e
-#   (coller les lignes ci-dessous)
+# Installation : bash /var/www/sigh-ham/deploy/install-crontab.sh
 # =============================================================================
 
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 MAILTO=""
 
-# ── Tous les jours à 03:15 — backup + migrations ─────────────────────────────
-15 3 * * * /var/www/sigh-ham/deploy/cron-maintenance.sh >> /var/www/sigh-ham/logs/cron-maintenance.log 2>&1
+# ── Chaque minute — auto-deploy si git change OU dump dans inbox/ ─────────────
+# (ne rebuild PAS si rien n'a changé ; flock interne dans le script)
+* * * * * /var/www/sigh-ham/deploy/auto-deploy-cron.sh
 
-# ── Dimanche à 04:00 — déploiement complet (git pull + migrate + build + restart)
-0 4 * * 0 /var/www/sigh-ham/deploy/cron-maintenance.sh --deploy >> /var/www/sigh-ham/logs/cron-deploy.log 2>&1
+# ── Tous les jours à 03:15 — backup PostgreSQL uniquement ────────────────────
+15 3 * * * /var/www/sigh-ham/deploy/export-postgres.sh >> /var/www/sigh-ham/logs/cron-backup.log 2>&1
 
-# ── Toutes les 6 h — migrations seules (si push GitHub entre-temps)
-0 */6 * * * /var/www/sigh-ham/deploy/migrate-db.sh --pull >> /var/www/sigh-ham/logs/migrate-db.log 2>&1
-
-# Note : le renouvellement SSL Let's Encrypt est déjà géré par :
-#   systemctl status certbot.timer
+# Note SSL : géré par certbot.timer (ou cron SHK existant)

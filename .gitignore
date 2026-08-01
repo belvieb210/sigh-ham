@@ -44,4 +44,8 @@ next-env.d.ts
 # dumps PostgreSQL (données sensibles — repo privé seulement)
 /prisma/backups/*.sql
 /prisma/backups/*.sql.gz
+/prisma/backups/inbox/*
+!/prisma/backups/inbox/.gitkeep
+/prisma/backups/imported/
 !/prisma/backups/README.md
+/logs/

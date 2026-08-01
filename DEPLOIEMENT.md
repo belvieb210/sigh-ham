@@ -356,47 +356,40 @@ npx prisma generate
 npm run dev
 ```
 
-### Migrations + crontab sur le VPS
+### Auto-déploiement VPS (crontab chaque minute)
 
-Scripts :
+Un seul script fait tout : `deploy/auto-deploy-cron.sh`  
+Guide : `deploy/COMMANDES-VPS.md`
 
-| Script | Rôle |
-|--------|------|
-| `deploy/migrate-db.sh` | Applique les migrations Prisma (`--pull`, `--seed`) |
-| `deploy/cron-maintenance.sh` | Backup + migrations (+ `--deploy` pour build/restart) |
-| `deploy/install-crontab.sh` | Installe le crontab automatique |
-| `deploy/crontab.example` | Modèle des tâches planifiées |
-
-**Migration manuelle (immédiat) :**
+**Installer (root) :**
 
 ```bash
 cd /var/www/sigh-ham
 git pull
 chmod +x deploy/*.sh
-bash deploy/migrate-db.sh --pull
+bash deploy/install-crontab.sh
 ```
-
-**Installer le crontab (root) :**
-
-```bash
-bash /var/www/sigh-ham/deploy/install-crontab.sh
-```
-
-Tâches installées :
 
 | Horaire | Action |
 |---------|--------|
-| Tous les jours 03:15 | Backup PostgreSQL + migrations |
-| Toutes les 6 h | `git pull` + migrations seulement |
-| Dimanche 04:00 | Déploiement complet (build + restart) |
+| **Chaque minute** | Si nouveau commit GitHub **ou** dump dans `inbox/` → pull + migrate + import + build + restart |
+| **03:15** chaque jour | Backup PostgreSQL |
 
-Logs : `/var/www/sigh-ham/logs/`
+Le script **ne rebuild pas** s’il n’y a rien de nouveau (sécurité CPU).
 
-Vérifier :
+**Après un `git push` :** rien à faire sur le VPS (détecté sous 1 min).
+
+**Importer une base depuis le PC :**
+
+```powershell
+scp mon_dump.sql.gz root@185.202.236.210:/var/www/sigh-ham/prisma/backups/inbox/
+```
+
+**Forcer maintenant :**
 
 ```bash
-crontab -l
-tail -50 /var/www/sigh-ham/logs/migrate-db.log
+bash /var/www/sigh-ham/deploy/auto-deploy-cron.sh --force
+tail -f /var/www/sigh-ham/logs/auto-deploy.log
 ```
 
 ### Envoyer le dump sur GitHub

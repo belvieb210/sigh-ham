@@ -32,15 +32,30 @@ detecter_racine() {
 
 echo ""
 echo "═══════════════════════════════════════════════════════════"
-echo "  2. Désactivation des sites en conflit"
+echo "  2. Désactivation des sites en conflit + fix 000-default-le-ssl"
 echo "═══════════════════════════════════════════════════════════"
-# 000-default-le-ssl → DocumentRoot /var/www/ham (inexistant) + default_server :443
+
+# Certbot déploie souvent sur 000-default-le-ssl avec DocumentRoot /var/www/ham (inexistant)
+FIX_SSL="/etc/apache2/sites-available/000-default-le-ssl.conf"
+if [[ -f "$FIX_SSL" ]]; then
+  if grep -qE '/var/www/ham[^_]|DocumentRoot /var/www/ham"' "$FIX_SSL" 2>/dev/null; then
+    sed -i 's|/var/www/ham|/var/www/ham_project|g' "$FIX_SSL"
+    echo "   ✓ 000-default-le-ssl : /var/www/ham → /var/www/ham_project"
+  fi
+fi
+
+# Corriger le même chemin erroné dans tous les vhosts
+grep -rl 'DocumentRoot /var/www/ham"' /etc/apache2/sites-available/ 2>/dev/null \
+  | while read -r f; do
+  sed -i 's|DocumentRoot /var/www/ham"|DocumentRoot /var/www/ham_project"|g' "$f"
+  sed -i 's|<Directory /var/www/ham>|<Directory /var/www/ham_project>|g' "$f"
+  echo "   ✓ corrigé : $(basename "$f")"
+done
+
 CONFLITS=(
-  "000-default.conf"
-  "000-default-le-ssl.conf"
-  "default-ssl.conf"
   "ham.conf"
   "le-redirect-hamlabor.org.conf"
+  "ProfilDeborah-http.conf"
 )
 for site in "${CONFLITS[@]}"; do
   if a2dissite "$site" 2>/dev/null; then
@@ -61,8 +76,16 @@ while IFS='|' read -r domaine base aliases; do
   docroot=$(detecter_racine "$base")
 
   if [[ ! -d "$docroot" ]] || [[ ! -f "${docroot}/index.php" && ! -f "${docroot}/index.html" ]]; then
-    echo "⚠ ${domaine} — index introuvable dans ${docroot}"
-    continue
+    # ProfilDeborah etc. : chercher index.php dans le dossier
+    if [[ -f "${base}/index.php" ]]; then
+      docroot="$base"
+    elif [[ -f "${base}/public/index.php" ]]; then
+      docroot="${base}/public"
+    else
+      echo "⚠ ${domaine} — index introuvable dans ${base}"
+      ls -la "$base" 2>/dev/null | head -3
+      continue
+    fi
   fi
 
   safe=$(echo "$domaine" | tr '.' '-')

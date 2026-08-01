@@ -1,0 +1,1085 @@
+// Schéma SIGH — HAM LABORATOIRE
+// Système Intégré de Gestion Hospitalière
+// Communication inter-salles par transfert de dossier (pas d'accès croisé aux écrans)
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Énumérations ───────────────────────────────────────────────────────────
+
+enum CodeSalle {
+  RECEPTION
+  INFIRMIERS
+  MEDECINS
+  CAISSE
+  LABORATOIRE
+  PHARMACIE
+  EGLISE
+  MEDECINS_EXTERNES
+  HOSPITALISATION
+  ADMIN
+  MESSAGERIE
+}
+
+enum StatutUtilisateur {
+  ACTIF
+  INACTIF
+  SUSPENDU
+}
+
+enum Sexe {
+  MASCULIN
+  FEMININ
+  AUTRE
+}
+
+enum StatutDossier {
+  OUVERT
+  EN_COURS
+  CLOTURE
+  ARCHIVE
+}
+
+enum StatutPassage {
+  EN_ATTENTE
+  EN_COURS
+  TERMINE
+  ANNULE
+}
+
+enum StatutTransfert {
+  EN_ATTENTE
+  ACCEPTE
+  EN_TRAITEMENT
+  TERMINE
+  REFUSE
+  ANNULE
+}
+
+enum StatutRecuperationTransfert {
+  EN_RECUPERATION
+  RECUPERE
+}
+
+enum PrioriteFile {
+  NORMALE
+  URGENTE
+  TRES_URGENTE
+}
+
+enum StatutFacture {
+  BROUILLON
+  EMISE
+  PARTIELLEMENT_PAYEE
+  PAYEE
+  ANNULEE
+}
+
+enum ModePaiement {
+  ESPECES
+  MOBILE_MONEY
+  CARTE
+  VIREMENT
+  CHEQUE
+}
+
+enum StatutExamen {
+  PRESCRIT
+  PRELEVE
+  EN_ANALYSE
+  TERMINE
+  ANNULE
+}
+
+enum TypeConversation {
+  DIRECT
+  GROUPE
+  CANAL_SALLE
+  DIFFUSION
+}
+
+enum CategorieGroupe {
+  GENERAL
+  URGENCES
+  BLOC_OPERATOIRE
+  HOSPITALISATION
+  ADMINISTRATION
+  DIRECTION_MEDICALE
+  INTER_SERVICES
+}
+
+enum RoleParticipant {
+  ADMIN
+  MEMBRE
+}
+
+enum PrioriteMessage {
+  NORMALE
+  URGENTE
+  CRITIQUE
+}
+
+enum TypeMessage {
+  TEXTE
+  SYSTEME
+  LIEN_PATIENT
+  LIEN_TRANSFERT
+  FICHIER
+  IMAGE
+  AUDIO
+}
+
+enum StatutPresence {
+  EN_LIGNE
+  HORS_LIGNE
+  OCCUPE
+  EN_CONSULTATION
+  EN_LABORATOIRE
+  ABSENT
+}
+
+enum TypeNotification {
+  NOUVEAU_PATIENT
+  PATIENT_TRANSFERE
+  PATIENT_EN_ATTENTE
+  CONSULTATION_TERMINEE
+  PATIENT_A_CONSULTER
+  RESULTATS_LABO
+  PATIENT_A_FACTURER
+  PAIEMENT_VALIDE
+  EXAMENS_AUTORISES
+  NOUVEL_EXAMEN
+  RESULTAT_VALIDE
+  ORDONNANCE_PRETE
+  PAIEMENT_PHARMACIE
+  NOUVELLE_ADMISSION
+  DEMANDE_TRANSFERT
+  SORTIE_PATIENT
+  NOUVEL_UTILISATEUR
+  SAUVEGARDE
+  RAPPORT
+  NOUVEAU_MESSAGE
+  NOUVEAU_GROUPE
+  MENTION
+  DIFFUSION
+}
+
+enum CanalNotification {
+  IN_APP
+  TABLEAU_BORD
+  PUSH
+  EMAIL
+  SMS
+}
+
+enum TypePieceJointe {
+  PDF
+  IMAGE
+  AUDIO
+  VIDEO
+  DOCUMENT
+  AUTRE
+}
+
+enum EmojiReaction {
+  POUCES
+  COEUR
+  CHECK
+  EPINGLE
+  RIRE
+  SURPRISE
+}
+
+enum StatutOrdonnance {
+  EN_ATTENTE
+  PARTIELLEMENT_DELIVREE
+  DELIVREE
+  ANNULEE
+}
+
+enum StatutAdmission {
+  ADMIS
+  EN_SOINS
+  SORTI
+  TRANSFERE
+  DECEDE
+}
+
+enum TypeAudit {
+  CONNEXION
+  DECONNEXION
+  CREATION
+  MODIFICATION
+  SUPPRESSION
+  TRANSFERT
+  CONSULTATION
+  EXPORT
+}
+
+enum StatutRendezVous {
+  DEMANDE
+  CONFIRME
+  ANNULE
+  TERMINE
+  ABSENT
+}
+
+enum StatutExamenPrenuptial {
+  PLANIFIE
+  EN_COURS
+  TERMINE
+  ANNULE
+}
+
+// ─── RBAC & Salles ──────────────────────────────────────────────────────────
+
+model Salle {
+  id          String    @id @default(cuid())
+  code        CodeSalle @unique
+  nom         String
+  description String?
+  actif       Boolean   @default(true)
+  ordre       Int       @default(0)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  roles                 Role[]
+  transfertsOrigine     Transfert[]   @relation("TransfertOrigine")
+  transfertsDestination Transfert[]   @relation("TransfertDestination")
+  filesAttente          FileAttente[]
+
+  @@map("salles")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  nom         String
+  description String?
+  salleId     String?  @map("salle_id")
+  salle       Salle?   @relation(fields: [salleId], references: [id])
+  systeme     Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  utilisateurs Utilisateur[]
+  permissions  RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String     @id @default(cuid())
+  code        String     @unique
+  nom         String
+  description String?
+  module      CodeSalle?
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String     @map("role_id")
+  permissionId String     @map("permission_id")
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("roles_permissions")
+}
+
+model Utilisateur {
+  id                String            @id @default(cuid())
+  identifiant       String            @unique
+  email             String?           @unique
+  motDePasseHash    String            @map("mot_de_passe_hash")
+  prenom            String
+  nom               String
+  telephone         String?
+  statut            StatutUtilisateur @default(ACTIF)
+  roleId            String            @map("role_id")
+  role              Role              @relation(fields: [roleId], references: [id])
+  medecinExterneId  String?           @unique @map("medecin_externe_id")
+  medecinExterne    MedecinExterne?   @relation(fields: [medecinExterneId], references: [id])
+  derniereConnexion DateTime?         @map("derniere_connexion")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  sessions                 Session[]
+  transfertsEmis           Transfert[]               @relation("TransfertEmetteur")
+  transfertsRecus          Transfert[]               @relation("TransfertRecepteur")
+  consultations            Consultation[]
+  constantesVitales        ConstantesVitales[]
+  enregistrementsReception EnregistrementReception[]
+  paiementsEnregistres     Paiement[]
+  ordonnancesPrescrites    Ordonnance[]
+  examensPrescrits         ExamenLaboratoire[]       @relation("ExamenPrescripteur")
+  examensRealises          ExamenLaboratoire[]       @relation("ExamenTechnicien")
+  journauxAudit            JournalAudit[]
+  messagesEnvoyes          Message[]
+  recuperationsRejetees    TransfertRecuperation[] @relation("RecuperationRejetePar")
+  recuperationsRecuperees  TransfertRecuperation[] @relation("RecuperationRecuperePar")
+  conversationsCreees      Conversation[]          @relation("ConversationCreateur")
+  participationsMessagerie ParticipantConversation[]
+  messagesLus              MessageLu[]
+  presence                 PresenceUtilisateur?
+  reactions                ReactionMessage[]
+  mentionsRecues           MentionMessage[]        @relation("MentionDestinataire")
+  messagesMasques          MessageMasque[]
+  notifications            Notification[]
+  preferencesNotification  PreferenceNotification?
+  abonnementsPush          AbonnementPush[]
+
+  @@map("utilisateurs")
+}
+
+model Session {
+  id            String      @id @default(cuid())
+  utilisateurId String      @map("utilisateur_id")
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  tokenHash     String      @unique @map("token_hash")
+  expireLe      DateTime    @map("expire_le")
+  ipAddress     String?     @map("ip_address")
+  userAgent     String?     @map("user_agent")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  @@map("sessions")
+}
+
+// ─── Patients & Dossiers ────────────────────────────────────────────────────
+
+model Patient {
+  id               String          @id @default(cuid())
+  numeroPatient    String          @unique @map("numero_patient")
+  prenom           String
+  nom              String
+  dateNaissance    DateTime?       @map("date_naissance")
+  sexe             Sexe?
+  telephone        String?
+  email            String?
+  adresse          String?
+  ville            String?
+  province         String?
+  pays             String          @default("RD Congo")
+  groupeSanguin    String?         @map("groupe_sanguin")
+  allergies        String?
+  contactUrgence   String?         @map("contact_urgence")
+  telephoneUrgence String?         @map("telephone_urgence")
+  photoUrl         String?         @map("photo_url")
+  medecinExterneId String?         @map("medecin_externe_id")
+  medecinExterne   MedecinExterne? @relation(fields: [medecinExterneId], references: [id])
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  dossiers DossierPatient[]
+  recuperationsTransfert TransfertRecuperation[]
+  conversations Conversation[]
+
+  @@map("patients")
+}
+
+model DossierPatient {
+  id             String        @id @default(cuid())
+  numeroDossier  String        @unique @map("numero_dossier")
+  patientId      String        @map("patient_id")
+  patient        Patient       @relation(fields: [patientId], references: [id])
+  statut         StatutDossier @default(OUVERT)
+  motifOuverture String?       @map("motif_ouverture")
+  ouvertLe       DateTime      @default(now()) @map("ouvert_le")
+  clotureLe      DateTime?     @map("cloture_le")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  passages                 Passage[]
+  transferts               Transfert[]
+  enregistrementsReception EnregistrementReception[]
+  constantesVitales        ConstantesVitales[]
+  consultations            Consultation[]
+  factures                 Facture[]
+  examensLaboratoire       ExamenLaboratoire[]
+  ordonnances              Ordonnance[]
+  admissions               Admission[]
+  examensPrenuptiaux       ExamenPrenuptial[]
+  recuperationsTransfert   TransfertRecuperation[]
+  conversations            Conversation[]
+
+  @@map("dossiers_patients")
+}
+
+model Passage {
+  id        String         @id @default(cuid())
+  dossierId String         @map("dossier_id")
+  dossier   DossierPatient @relation(fields: [dossierId], references: [id])
+  statut    StatutPassage  @default(EN_ATTENTE)
+  priorite  PrioriteFile   @default(NORMALE)
+  motif     String?
+  debutLe   DateTime?      @map("debut_le")
+  finLe     DateTime?      @map("fin_le")
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  transferts  Transfert[]
+  fileAttente FileAttente?
+
+  @@map("passages")
+}
+
+// ─── Transferts & Files d'attente (cœur du flux inter-salles) ───────────────
+
+model Transfert {
+  id                 String          @id @default(cuid())
+  dossierId          String          @map("dossier_id")
+  dossier            DossierPatient  @relation(fields: [dossierId], references: [id])
+  passageId          String?         @map("passage_id")
+  passage            Passage?        @relation(fields: [passageId], references: [id])
+  salleOrigineId     String          @map("salle_origine_id")
+  salleOrigine       Salle           @relation("TransfertOrigine", fields: [salleOrigineId], references: [id])
+  salleDestinationId String          @map("salle_destination_id")
+  salleDestination   Salle           @relation("TransfertDestination", fields: [salleDestinationId], references: [id])
+  statut             StatutTransfert @default(EN_ATTENTE)
+  priorite           PrioriteFile    @default(NORMALE)
+  motif              String?
+  notes              String?
+  emetteurId         String          @map("emetteur_id")
+  emetteur           Utilisateur     @relation("TransfertEmetteur", fields: [emetteurId], references: [id])
+  recepteurId        String?         @map("recepteur_id")
+  recepteur          Utilisateur?    @relation("TransfertRecepteur", fields: [recepteurId], references: [id])
+  emisLe             DateTime        @default(now()) @map("emis_le")
+  accepteLe          DateTime?       @map("accepte_le")
+  termineLe          DateTime?       @map("termine_le")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  recuperation TransfertRecuperation?
+
+  @@index([salleDestinationId, statut])
+  @@index([dossierId])
+  @@map("transferts")
+}
+
+model TransfertRecuperation {
+  id            String                      @id @default(cuid())
+  transfertId   String                      @unique @map("transfert_id")
+  transfert     Transfert                   @relation(fields: [transfertId], references: [id], onDelete: Cascade)
+  dossierId     String                      @map("dossier_id")
+  dossier       DossierPatient              @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  patientId     String                      @map("patient_id")
+  patient       Patient                     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  examensIds    String[]                    @map("examens_ids")
+  motifRejet    String?                     @map("motif_rejet")
+  rejeteParId   String                      @map("rejete_par_id")
+  rejetePar     Utilisateur                 @relation("RecuperationRejetePar", fields: [rejeteParId], references: [id])
+  rejeteLe      DateTime                    @default(now()) @map("rejete_le")
+  recupereParId String?                     @map("recupere_par_id")
+  recuperePar   Utilisateur?                @relation("RecuperationRecuperePar", fields: [recupereParId], references: [id])
+  recupereLe    DateTime?                   @map("recupere_le")
+  statut        StatutRecuperationTransfert @default(EN_RECUPERATION)
+
+  @@index([dossierId])
+  @@index([patientId])
+  @@map("transferts_recuperation")
+}
+
+model FileAttente {
+  id          String       @id @default(cuid())
+  salleId     String       @map("salle_id")
+  salle       Salle        @relation(fields: [salleId], references: [id])
+  passageId   String       @unique @map("passage_id")
+  passage     Passage      @relation(fields: [passageId], references: [id], onDelete: Cascade)
+  numeroOrdre Int          @map("numero_ordre")
+  priorite    PrioriteFile @default(NORMALE)
+  arriveLe    DateTime     @default(now()) @map("arrive_le")
+  appeleLe    DateTime?    @map("appele_le")
+  serviLe     DateTime?    @map("servi_le")
+
+  @@index([salleId, numeroOrdre])
+  @@map("files_attente")
+}
+
+// ─── Réception ──────────────────────────────────────────────────────────────
+
+model EnregistrementReception {
+  id              String         @id @default(cuid())
+  dossierId       String         @map("dossier_id")
+  dossier         DossierPatient @relation(fields: [dossierId], references: [id])
+  agentId         String         @map("agent_id")
+  agent           Utilisateur    @relation(fields: [agentId], references: [id])
+  typeVisite      String         @map("type_visite")
+  assurance       String?
+  numeroAssurance String?        @map("numero_assurance")
+  observations    String?
+  enregistreLe    DateTime       @default(now()) @map("enregistre_le")
+
+  @@map("enregistrements_reception")
+}
+
+// ─── Infirmiers ───────────────────────────────────────────────────────────────
+
+model ConstantesVitales {
+  id                    String         @id @default(cuid())
+  dossierId             String         @map("dossier_id")
+  dossier               DossierPatient @relation(fields: [dossierId], references: [id])
+  infirmierId           String         @map("infirmier_id")
+  infirmier             Utilisateur    @relation(fields: [infirmierId], references: [id])
+  temperature           Decimal?       @db.Decimal(4, 1)
+  tensionSystolique     Int?           @map("tension_systolique")
+  tensionDiastolique    Int?           @map("tension_diastolique")
+  frequenceCardiaque    Int?           @map("frequence_cardiaque")
+  frequenceRespiratoire Int?           @map("frequence_respiratoire")
+  poidsKg               Decimal?       @map("poids_kg") @db.Decimal(5, 2)
+  tailleCm              Decimal?       @map("taille_cm") @db.Decimal(5, 1)
+  saturationO2          Int?           @map("saturation_o2")
+  glycemie              Decimal?       @db.Decimal(5, 2)
+  observations          String?
+  mesureLe              DateTime       @default(now()) @map("mesure_le")
+
+  @@map("constantes_vitales")
+}
+
+// ─── Médecins ─────────────────────────────────────────────────────────────────
+
+model Consultation {
+  id             String         @id @default(cuid())
+  dossierId      String         @map("dossier_id")
+  dossier        DossierPatient @relation(fields: [dossierId], references: [id])
+  medecinId      String         @map("medecin_id")
+  medecin        Utilisateur    @relation(fields: [medecinId], references: [id])
+  motif          String
+  anamnese       String?
+  examenClinique String?        @map("examen_clinique")
+  conclusion     String?
+  debutLe        DateTime       @default(now()) @map("debut_le")
+  finLe          DateTime?      @map("fin_le")
+
+  diagnostics Diagnostic[]
+  actes       PrescriptionActe[]
+
+  @@map("consultations")
+}
+
+model Diagnostic {
+  id             String       @id @default(cuid())
+  consultationId String       @map("consultation_id")
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  codeCim        String?      @map("code_cim")
+  libelle        String
+  principal      Boolean      @default(false)
+
+  @@map("diagnostics")
+}
+
+model PrescriptionActe {
+  id             String       @id @default(cuid())
+  consultationId String       @map("consultation_id")
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  typeActe       String       @map("type_acte")
+  libelle        String
+  quantite       Int          @default(1)
+  notes          String?
+
+  @@map("prescriptions_actes")
+}
+
+// ─── Caisse ───────────────────────────────────────────────────────────────────
+
+model Facture {
+  id            String         @id @default(cuid())
+  numeroFacture String         @unique @map("numero_facture")
+  dossierId     String         @map("dossier_id")
+  dossier       DossierPatient @relation(fields: [dossierId], references: [id])
+  statut        StatutFacture  @default(BROUILLON)
+  montantTotal  Decimal        @map("montant_total") @db.Decimal(12, 2)
+  montantPaye   Decimal        @default(0) @map("montant_paye") @db.Decimal(12, 2)
+  devise        String         @default("CDF")
+  emiseLe       DateTime?      @map("emise_le")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  lignes    LigneFacture[]
+  paiements Paiement[]
+
+  @@map("factures")
+}
+
+model LigneFacture {
+  id           String  @id @default(cuid())
+  factureId    String  @map("facture_id")
+  facture      Facture @relation(fields: [factureId], references: [id], onDelete: Cascade)
+  libelle      String
+  quantite     Int     @default(1)
+  prixUnitaire Decimal @map("prix_unitaire") @db.Decimal(12, 2)
+  montant      Decimal @db.Decimal(12, 2)
+
+  @@map("lignes_facture")
+}
+
+model Paiement {
+  id         String       @id @default(cuid())
+  factureId  String       @map("facture_id")
+  facture    Facture      @relation(fields: [factureId], references: [id])
+  montant    Decimal      @db.Decimal(12, 2)
+  mode       ModePaiement
+  reference  String?
+  caissierId String       @map("caissier_id")
+  caissier   Utilisateur  @relation(fields: [caissierId], references: [id])
+  payeLe     DateTime     @default(now()) @map("paye_le")
+
+  @@map("paiements")
+}
+
+// ─── Laboratoire ──────────────────────────────────────────────────────────────
+
+model TypeExamen {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  libelle     String
+  categorie   String
+  prix        Decimal @db.Decimal(12, 2)
+  delaiHeures Int     @default(24) @map("delai_heures")
+  actif       Boolean @default(true)
+
+  examens ExamenLaboratoire[]
+
+  @@map("types_examen")
+}
+
+model ExamenLaboratoire {
+  id             String         @id @default(cuid())
+  dossierId      String         @map("dossier_id")
+  dossier        DossierPatient @relation(fields: [dossierId], references: [id])
+  typeExamenId   String         @map("type_examen_id")
+  typeExamen     TypeExamen     @relation(fields: [typeExamenId], references: [id])
+  prescripteurId String         @map("prescripteur_id")
+  prescripteur   Utilisateur    @relation("ExamenPrescripteur", fields: [prescripteurId], references: [id])
+  technicienId   String?        @map("technicien_id")
+  technicien     Utilisateur?   @relation("ExamenTechnicien", fields: [technicienId], references: [id])
+  statut         StatutExamen   @default(PRESCRIT)
+  preleveLe      DateTime?      @map("preleve_le")
+  resultatLe     DateTime?      @map("resultat_le")
+  rapportPdfUrl  String?        @map("rapport_pdf_url")
+  notes          String?
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  resultats ResultatExamen[]
+
+  @@map("examens_laboratoire")
+}
+
+model ResultatExamen {
+  id        String            @id @default(cuid())
+  examenId  String            @map("examen_id")
+  examen    ExamenLaboratoire @relation(fields: [examenId], references: [id], onDelete: Cascade)
+  parametre String
+  valeur    String
+  unite     String?
+  normeMin  String?           @map("norme_min")
+  normeMax  String?           @map("norme_max")
+  anormal   Boolean           @default(false)
+
+  @@map("resultats_examen")
+}
+
+// ─── Pharmacie ────────────────────────────────────────────────────────────────
+
+model Medicament {
+  id           String  @id @default(cuid())
+  code         String  @unique
+  nom          String
+  forme        String?
+  dosage       String?
+  prixUnitaire Decimal @map("prix_unitaire") @db.Decimal(12, 2)
+  actif        Boolean @default(true)
+
+  stocks           StockMedicament[]
+  lignesOrdonnance LigneOrdonnance[]
+
+  @@map("medicaments")
+}
+
+model StockMedicament {
+  id           String     @id @default(cuid())
+  medicamentId String     @map("medicament_id")
+  medicament   Medicament @relation(fields: [medicamentId], references: [id])
+  quantite     Int        @default(0)
+  seuilAlerte  Int        @default(10) @map("seuil_alerte")
+  lot          String?
+  expirationLe DateTime?  @map("expiration_le")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  @@map("stocks_medicaments")
+}
+
+model Ordonnance {
+  id         String           @id @default(cuid())
+  dossierId  String           @map("dossier_id")
+  dossier    DossierPatient   @relation(fields: [dossierId], references: [id])
+  medecinId  String           @map("medecin_id")
+  medecin    Utilisateur      @relation(fields: [medecinId], references: [id])
+  statut     StatutOrdonnance @default(EN_ATTENTE)
+  prescritLe DateTime         @default(now()) @map("prescrit_le")
+  notes      String?
+
+  lignes      LigneOrdonnance[]
+  delivrances DelivrancePharmacie[]
+
+  @@map("ordonnances")
+}
+
+model LigneOrdonnance {
+  id           String     @id @default(cuid())
+  ordonnanceId String     @map("ordonnance_id")
+  ordonnance   Ordonnance @relation(fields: [ordonnanceId], references: [id], onDelete: Cascade)
+  medicamentId String     @map("medicament_id")
+  medicament   Medicament @relation(fields: [medicamentId], references: [id])
+  quantite     Int
+  posologie    String?
+  dureeJours   Int?       @map("duree_jours")
+
+  @@map("lignes_ordonnance")
+}
+
+model DelivrancePharmacie {
+  id           String     @id @default(cuid())
+  ordonnanceId String     @map("ordonnance_id")
+  ordonnance   Ordonnance @relation(fields: [ordonnanceId], references: [id])
+  delivreLe    DateTime   @default(now()) @map("delivre_le")
+  notes        String?
+
+  @@map("delivrances_pharmacie")
+}
+
+// ─── Église (examens prénuptiaux) ─────────────────────────────────────────────
+
+model ExamenPrenuptial {
+  id            String                 @id @default(cuid())
+  dossierId     String                 @map("dossier_id")
+  dossier       DossierPatient         @relation(fields: [dossierId], references: [id])
+  statut        StatutExamenPrenuptial @default(PLANIFIE)
+  dateMariage   DateTime?              @map("date_mariage")
+  paroisse      String?
+  resultat      String?
+  certificatUrl String?                @map("certificat_url")
+  planifieLe    DateTime               @default(now()) @map("planifie_le")
+  termineLe     DateTime?              @map("termine_le")
+
+  @@map("examens_prenuptiaux")
+}
+
+// ─── Médecins externes (patients isolés) ──────────────────────────────────────
+
+model MedecinExterne {
+  id          String   @id @default(cuid())
+  prenom      String
+  nom         String
+  specialite  String?
+  telephone   String?
+  email       String?
+  numeroOrdre String?  @map("numero_ordre")
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  utilisateur Utilisateur?
+  patients    Patient[]
+
+  @@map("medecins_externes")
+}
+
+// ─── Hospitalisation ──────────────────────────────────────────────────────────
+
+model Chambre {
+  id       String  @id @default(cuid())
+  numero   String  @unique
+  service  String
+  capacite Int     @default(1)
+  actif    Boolean @default(true)
+
+  lits       Lit[]
+  admissions Admission[]
+
+  @@map("chambres")
+}
+
+model Lit {
+  id        String  @id @default(cuid())
+  chambreId String  @map("chambre_id")
+  chambre   Chambre @relation(fields: [chambreId], references: [id])
+  numero    String
+  occupe    Boolean @default(false)
+
+  admissions Admission[]
+
+  @@unique([chambreId, numero])
+  @@map("lits")
+}
+
+model Admission {
+  id        String          @id @default(cuid())
+  dossierId String          @map("dossier_id")
+  dossier   DossierPatient  @relation(fields: [dossierId], references: [id])
+  chambreId String?         @map("chambre_id")
+  chambre   Chambre?        @relation(fields: [chambreId], references: [id])
+  litId     String?         @map("lit_id")
+  lit       Lit?            @relation(fields: [litId], references: [id])
+  statut    StatutAdmission @default(ADMIS)
+  motif     String
+  admisLe   DateTime        @default(now()) @map("admis_le")
+  sortiLe   DateTime?       @map("sorti_le")
+  notes     String?
+
+  @@map("admissions")
+}
+
+// ─── Site public — Rendez-vous ────────────────────────────────────────────────
+
+model DemandeRendezVous {
+  id            String           @id @default(cuid())
+  prenom        String
+  nom           String
+  telephone     String
+  email         String?
+  service       String
+  motif         String?
+  dateSouhaitee DateTime         @map("date_souhaitee")
+  statut        StatutRendezVous @default(DEMANDE)
+  notes         String?
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  @@map("demandes_rendez_vous")
+}
+
+// ─── Messagerie (Redis / WebSocket pour temps réel — phase 2) ─────────────────
+
+model Conversation {
+  id              String           @id @default(cuid())
+  type            TypeConversation @default(DIRECT)
+  sujet           String?
+  salleCode       CodeSalle?       @map("salle_code")
+  categorieGroupe CategorieGroupe? @map("categorie_groupe")
+  patientId       String?          @map("patient_id")
+  patient         Patient?         @relation(fields: [patientId], references: [id])
+  dossierId       String?          @map("dossier_id")
+  dossier         DossierPatient?  @relation(fields: [dossierId], references: [id])
+  epingle         Boolean          @default(false)
+  archivee        Boolean          @default(false)
+  photoUrl        String?          @map("photo_url")
+  createurId      String?          @map("createur_id")
+  createur        Utilisateur?     @relation("ConversationCreateur", fields: [createurId], references: [id])
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  participants ParticipantConversation[]
+  messages     Message[]
+
+  @@index([type, salleCode])
+  @@index([patientId])
+  @@index([dossierId])
+  @@index([updatedAt])
+  @@map("conversations")
+}
+
+model ParticipantConversation {
+  id             String       @id @default(cuid())
+  conversationId String       @map("conversation_id")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  utilisateurId  String       @map("utilisateur_id")
+  utilisateur    Utilisateur  @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  role           RoleParticipant @default(MEMBRE)
+  silencieux     Boolean      @default(false)
+  epinglePerso   Boolean      @default(false) @map("epingle_perso")
+  dernierLuLe    DateTime?    @map("dernier_lu_le")
+  rejointLe      DateTime     @default(now()) @map("rejoint_le")
+
+  @@unique([conversationId, utilisateurId])
+  @@index([utilisateurId])
+  @@map("participants_conversations")
+}
+
+model Message {
+  id               String          @id @default(cuid())
+  conversationId   String          @map("conversation_id")
+  conversation     Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  expediteurId     String          @map("expediteur_id")
+  expediteur       Utilisateur     @relation(fields: [expediteurId], references: [id])
+  messageParentId  String?         @map("message_parent_id")
+  messageParent    Message?        @relation("ReponsesMessage", fields: [messageParentId], references: [id])
+  reponses         Message[]       @relation("ReponsesMessage")
+  transfereDeId    String?         @map("transfere_de_id")
+  type             TypeMessage     @default(TEXTE)
+  priorite         PrioriteMessage @default(NORMALE)
+  contenu          String
+  metadonnees      Json?           @map("metadonnees")
+  modifieLe        DateTime?       @map("modifie_le")
+  supprime         Boolean         @default(false)
+  supprimeLe       DateTime?       @map("supprime_le")
+  envoyeLe         DateTime        @default(now()) @map("envoye_le")
+
+  lectures      MessageLu[]
+  piecesJointes PieceJointe[]
+  reactions     ReactionMessage[]
+  mentions      MentionMessage[]
+  masques       MessageMasque[]
+
+  @@index([conversationId, envoyeLe])
+  @@index([messageParentId])
+  @@map("messages")
+}
+
+model PieceJointe {
+  id         String          @id @default(cuid())
+  messageId  String          @map("message_id")
+  message    Message         @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  nom        String
+  type       TypePieceJointe @default(DOCUMENT)
+  mimeType   String          @map("mime_type")
+  taille     Int
+  url        String
+  bucket     String?
+  cleStockage String?        @map("cle_stockage")
+  envoyeLe   DateTime        @default(now()) @map("envoye_le")
+
+  @@index([messageId])
+  @@map("pieces_jointes")
+}
+
+model ReactionMessage {
+  id            String        @id @default(cuid())
+  messageId     String        @map("message_id")
+  message       Message       @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  utilisateurId String        @map("utilisateur_id")
+  utilisateur   Utilisateur   @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  emoji         EmojiReaction
+  creeLe        DateTime      @default(now()) @map("cree_le")
+
+  @@unique([messageId, utilisateurId, emoji])
+  @@map("reactions_messages")
+}
+
+model MentionMessage {
+  id              String      @id @default(cuid())
+  messageId       String      @map("message_id")
+  message         Message     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  destinataireId  String      @map("destinataire_id")
+  destinataire    Utilisateur @relation("MentionDestinataire", fields: [destinataireId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, destinataireId])
+  @@map("mentions_messages")
+}
+
+model PresenceUtilisateur {
+  id            String         @id @default(cuid())
+  utilisateurId String         @unique @map("utilisateur_id")
+  utilisateur   Utilisateur    @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  statut        StatutPresence @default(HORS_LIGNE)
+  messageStatut String?        @map("message_statut")
+  dernierPing   DateTime       @default(now()) @map("dernier_ping")
+
+  @@map("presences_utilisateurs")
+}
+
+model MessageLu {
+  messageId     String      @map("message_id")
+  message       Message     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  utilisateurId String      @map("utilisateur_id")
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  luLe          DateTime    @default(now()) @map("lu_le")
+
+  @@id([messageId, utilisateurId])
+  @@map("messages_lus")
+}
+
+model MessageMasque {
+  messageId     String      @map("message_id")
+  message       Message     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  utilisateurId String      @map("utilisateur_id")
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  masqueLe      DateTime    @default(now()) @map("masque_le")
+
+  @@id([messageId, utilisateurId])
+  @@map("messages_masques")
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id            String           @id @default(cuid())
+  utilisateurId String           @map("utilisateur_id")
+  utilisateur   Utilisateur      @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  type          TypeNotification
+  canal         CanalNotification @default(IN_APP)
+  titre         String
+  message       String
+  module        CodeSalle?
+  entite        String?
+  entiteId      String?          @map("entite_id")
+  lien          String?
+  lu            Boolean          @default(false)
+  archivee      Boolean          @default(false)
+  metadonnees   Json?            @map("metadonnees")
+  creeLe        DateTime         @default(now()) @map("cree_le")
+  luLe          DateTime?        @map("lu_le")
+
+  @@index([utilisateurId, lu, creeLe])
+  @@index([type, creeLe])
+  @@map("notifications")
+}
+
+model PreferenceNotification {
+  id              String      @id @default(cuid())
+  utilisateurId   String      @unique @map("utilisateur_id")
+  utilisateur     Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  inApp           Boolean     @default(true) @map("in_app")
+  tableauBord     Boolean     @default(true) @map("tableau_bord")
+  push            Boolean     @default(false)
+  son             Boolean     @default(true)
+  email           Boolean     @default(false)
+  sms             Boolean     @default(false)
+  silencieux      Boolean     @default(false)
+  typesSilencieux TypeNotification[] @map("types_silencieux")
+
+  @@map("preferences_notifications")
+}
+
+model AbonnementPush {
+  id            String      @id @default(cuid())
+  utilisateurId String      @map("utilisateur_id")
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  endpoint      String      @unique
+  p256dh        String      @map("p256dh")
+  auth          String
+  userAgent     String?     @map("user_agent")
+  creeLe        DateTime    @default(now()) @map("cree_le")
+
+  @@index([utilisateurId])
+  @@map("abonnements_push")
+}
+
+// ─── Audit ────────────────────────────────────────────────────────────────────
+
+model JournalAudit {
+  id            String       @id @default(cuid())
+  utilisateurId String?      @map("utilisateur_id")
+  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id])
+  type          TypeAudit
+  module        CodeSalle?
+  entite        String
+  entiteId      String?      @map("entite_id")
+  action        String
+  details       Json?
+  ipAddress     String?      @map("ip_address")
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  @@index([utilisateurId, createdAt])
+  @@index([module, createdAt])
+  @@map("journal_audit")
+}

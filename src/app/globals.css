@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bleu-medical: #1a4d7c;
+  --color-bleu-medical-fonce: #143d63;
+  --color-bleu-medical-clair: #eef4fa;
+  --color-ham-plum: #4d2254;
+  --color-ham-indigo: #2e337a;
+  --color-vert-sante: #16a34a;
+  --color-vert-sante-clair: #ecfdf3;
+  --color-gris-tres-clair: #f8fafc;
+  --color-gris-bordure: #e2e8f0;
+  --color-texte-principal: #0f172a;
+  --color-texte-secondaire: #64748b;
+  --font-sans: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --radius-carte: 1rem;
+}
+
+@layer base {
+  * {
+    @apply border-gris-bordure;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white text-texte-principal antialiased;
+    font-family: var(--font-sans);
+  }
+}
+
+@layer utilities {
+  .conteneur-principal {
+    @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8;
+  }
+
+  .titre-section {
+    @apply text-2xl font-bold tracking-tight text-texte-principal md:text-[1.75rem];
+  }
+
+  .lien-voir-tout {
+    @apply inline-flex items-center gap-1.5 text-sm font-semibold text-bleu-medical transition-colors hover:text-bleu-medical-fonce;
+  }
+
+  .text-degrade-ham {
+    background: linear-gradient(to right, var(--color-ham-plum), var(--color-ham-indigo));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bg-degrade-ham {
+    background: linear-gradient(to right, var(--color-ham-plum), var(--color-ham-indigo));
+  }
+
+  .border-degrade-ham {
+    border: 2px solid transparent;
+    background:
+      linear-gradient(white, white) padding-box,
+      linear-gradient(to right, var(--color-ham-plum), var(--color-ham-indigo)) border-box;
+  }
+
+  .fond-hero-maquette {
+    background:
+      radial-gradient(ellipse 80% 60% at 0% 0%, rgba(26, 77, 124, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 100% 100%, rgba(45, 42, 110, 0.05) 0%, transparent 60%),
+      #ffffff;
+  }
+
+  /* Dégradé hero — texte à gauche, image visible à droite */
+  .hero-overlay-degrade {
+    background: linear-gradient(
+      105deg,
+      rgba(255, 255, 255, 0.97) 0%,
+      rgba(255, 255, 255, 0.92) 28%,
+      rgba(255, 255, 255, 0.75) 45%,
+      rgba(255, 255, 255, 0.35) 62%,
+      rgba(255, 255, 255, 0.08) 78%,
+      transparent 100%
+    );
+  }
+
+  @media (max-width: 767px) {
+    .hero-overlay-degrade {
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.96) 0%,
+        rgba(255, 255, 255, 0.88) 55%,
+        rgba(255, 255, 255, 0.55) 75%,
+        rgba(255, 255, 255, 0.25) 100%
+      );
+    }
+  }
+
+  .scrollbar-masquee {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-masquee::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hero page À propos — fond blanc à gauche, labo visible à droite */
+  .hero-a-propos-degrade {
+    background: linear-gradient(
+      100deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(255, 255, 255, 0.94) 35%,
+      rgba(255, 255, 255, 0.72) 52%,
+      rgba(255, 255, 255, 0.35) 68%,
+      rgba(255, 255, 255, 0.1) 82%,
+      transparent 100%
+    );
+  }
+
+  @media (max-width: 767px) {
+    .hero-a-propos-degrade {
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.97) 0%,
+        rgba(255, 255, 255, 0.9) 55%,
+        rgba(255, 255, 255, 0.6) 80%,
+        rgba(255, 255, 255, 0.25) 100%
+      );
+    }
+  }
+
+  /* Badge slogan magenta — forme biseautée comme la charte HAM */
+  .badge-slogan-magenta {
+    background-color: #7a1f4e;
+    clip-path: polygon(0 0, 100% 0, 96% 100%, 0 100%);
+  }
+}

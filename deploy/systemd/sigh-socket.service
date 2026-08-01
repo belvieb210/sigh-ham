@@ -1,0 +1,21 @@
+[Unit]
+Description=SIGH HAM — Socket.IO (messagerie temps réel)
+After=network.target postgresql.service redis-server.service sigh-web.service
+Wants=redis-server.service
+
+[Service]
+Type=simple
+User=sigh
+Group=sigh
+WorkingDirectory=/var/www/sigh-ham
+Environment=NODE_ENV=production
+EnvironmentFile=/var/www/sigh-ham/.env
+ExecStart=/usr/bin/npx tsx server/socket-server.ts
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sigh-socket
+
+[Install]
+WantedBy=multi-user.target

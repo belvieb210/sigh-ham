@@ -1,0 +1,71 @@
+/** Bloc notificationsCentre — Kiswahili */
+export const notificationsCentreSw = {
+  titre: "Kituo cha arifa",
+  sousTitre: "Arifa {{count}} hazijasomwa",
+  toutLu: "Weka zote kama zimesomwa",
+  voirTout: "Angalia arifa zote",
+  rechercher: "Tafuta arifa…",
+  chargement: "Inapakia arifa…",
+  aucuneTitre: "Kila kitu kimesasishwa",
+  aucune: "Hakuna arifa kwa sasa. Ujumbe na uhamisho utaonekana hapa kwa wakati halisi.",
+  voir: "Angalia",
+  marquerLu: "Weka kama imesomwa",
+  archiver: "Hifadhi kwenye kumbukumbu",
+  filtres: { tous: "Zote", non_lus: "Hazijasomwa", archives: "Zilizohifadhiwa" },
+  temps: {
+    maintenant: "Sasa hivi",
+    minutes: "Dakika {{count}} zilizopita",
+    heures: "Saa {{count}} zilizopita",
+    hier: "Jana",
+    jours: "Siku {{count}} zilizopita",
+  },
+  types: {
+    NOUVEAU_PATIENT: "Mgonjwa mpya",
+    PATIENT_TRANSFERE: "Uhamisho",
+    PATIENT_EN_ATTENTE: "Inasubiri",
+    NOUVEAU_MESSAGE: "Ujumbe",
+    MENTION: "Utajo",
+    DIFFUSION: "Tangazo",
+    RESULTATS_LABO: "Maabara",
+    PATIENT_A_FACTURER: "Kasa",
+    PAIEMENT_VALIDE: "Malipo",
+  },
+  preferences: {
+    titre: "Mapendeleo",
+    inApp: "Arifa ndani ya programu",
+    tableauBord: "Alama ya ubao wa udhibiti",
+    push: "Arifa za kivinjari",
+    son: "Sauti inapopokea",
+    email: "Arifa za barua pepe (inakuja hivi karibuni)",
+    sms: "Arifa za SMS (inakuja hivi karibuni)",
+    silencieux: "Hali ya kimya kwa ujumla",
+    enregistrer: "Hifadhi",
+    enregistre: "Mapendeleo yamehifadhiwa.",
+  },
+  messages: {
+    NOUVEAU_PATIENT: {
+      titre: "Mgonjwa mpya amesajiliwa",
+      message: "{{prenom}} {{nom}} ({{numero}}) amesajiliwa sasa hivi.",
+    },
+    PATIENT_TRANSFERE: {
+      titre: "Mgonjwa amehamishwa",
+      message: "{{prenom}} {{nom}} amepelekwa kwenye idara yako.",
+    },
+    PATIENT_EN_ATTENTE: {
+      titre: "Mgonjwa anasubiri",
+      message: "{{prenom}} {{nom}} anasubiri kupimwa vipimo vya uhai.",
+    },
+    NOUVEAU_MESSAGE: {
+      titre: "Ujumbe mpya",
+      message: "{{expediteur}}: {{apercu}}",
+    },
+    MENTION: {
+      titre: "Umetajwa",
+      message: "{{expediteur}} amekutaja kwenye mazungumzo.",
+    },
+    DIFFUSION: {
+      titre: "Tangazo la taasisi",
+      message: "{{apercu}}",
+    },
+  },
+} as const;

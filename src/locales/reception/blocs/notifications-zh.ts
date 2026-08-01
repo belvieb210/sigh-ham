@@ -1,0 +1,71 @@
+/** Bloc notificationsCentre — 中文 */
+export const notificationsCentreZh = {
+  titre: "通知中心",
+  sousTitre: "{{count}} 条未读通知",
+  toutLu: "全部标为已读",
+  voirTout: "查看全部通知",
+  rechercher: "搜索通知…",
+  chargement: "正在加载通知…",
+  aucuneTitre: "已全部处理",
+  aucune: "暂无通知。消息和转发将在此实时显示。",
+  voir: "查看",
+  marquerLu: "标为已读",
+  archiver: "归档",
+  filtres: { tous: "全部", non_lus: "未读", archives: "已归档" },
+  temps: {
+    maintenant: "刚刚",
+    minutes: "{{count}} 分钟前",
+    heures: "{{count}} 小时前",
+    hier: "昨天",
+    jours: "{{count}} 天前",
+  },
+  types: {
+    NOUVEAU_PATIENT: "新患者",
+    PATIENT_TRANSFERE: "转介",
+    PATIENT_EN_ATTENTE: "等待中",
+    NOUVEAU_MESSAGE: "消息",
+    MENTION: "提及",
+    DIFFUSION: "公告",
+    RESULTATS_LABO: "实验室",
+    PATIENT_A_FACTURER: "收银",
+    PAIEMENT_VALIDE: "付款",
+  },
+  preferences: {
+    titre: "偏好设置",
+    inApp: "应用内通知",
+    tableauBord: "仪表板徽章",
+    push: "浏览器推送通知",
+    son: "接收提示音",
+    email: "电子邮件通知（即将推出）",
+    sms: "短信通知（即将推出）",
+    silencieux: "全局静音模式",
+    enregistrer: "保存",
+    enregistre: "偏好设置已保存。",
+  },
+  messages: {
+    NOUVEAU_PATIENT: {
+      titre: "新患者已登记",
+      message: "{{prenom}} {{nom}}（{{numero}}）刚刚登记。",
+    },
+    PATIENT_TRANSFERE: {
+      titre: "患者已转介",
+      message: "{{prenom}} {{nom}} 已转至您的科室。",
+    },
+    PATIENT_EN_ATTENTE: {
+      titre: "患者等待中",
+      message: "{{prenom}} {{nom}} 等待测量生命体征。",
+    },
+    NOUVEAU_MESSAGE: {
+      titre: "新消息",
+      message: "{{expediteur}}：{{apercu}}",
+    },
+    MENTION: {
+      titre: "您被提及",
+      message: "{{expediteur}} 在会话中提及了您。",
+    },
+    DIFFUSION: {
+      titre: "机构公告",
+      message: "{{apercu}}",
+    },
+  },
+} as const;

@@ -1,0 +1,71 @@
+/** Bloc notificationsCentre — Kikongo */
+export const notificationsCentreKg = {
+  titre: "Ebandeli ya bansangu ya kebula",
+  sousTitre: "Bansangu {{count}} oyo ke vanda ve",
+  toutLu: "Tia nyonso lokola etangami",
+  voirTout: "Tala bansangu nyonso",
+  rechercher: "Luka bansangu ya kebula…",
+  chargement: "Ke kozinga bansangu ya kebula…",
+  aucuneTitre: "Nyonso ezali malamu",
+  aucune: "Bansangu ya kebula mosi ve na ntangu yai. Bansangu mpe ba kotinda ekomonana awa na ntangu ya solo.",
+  voir: "Tala",
+  marquerLu: "Tia lokola etangami",
+  archiver: "Bika na kumbi",
+  filtres: { tous: "Nyonso", non_lus: "Oyo ke vanda ve", archives: "Oyo ebiki" },
+  temps: {
+    maintenant: "Ntangu yai",
+    minutes: "Miniti {{count}} eleki",
+    heures: "Ngonga {{count}} eleki",
+    hier: "Lobi",
+    jours: "Mikolo {{count}} eleki",
+  },
+  types: {
+    NOUVEAU_PATIENT: "Muntu ya maladi ya sika",
+    PATIENT_TRANSFERE: "Kotinda",
+    PATIENT_EN_ATTENTE: "Ke vanda",
+    NOUVEAU_MESSAGE: "Nsangu",
+    MENTION: "Koyebisa",
+    DIFFUSION: "Lanso",
+    RESULTATS_LABO: "Ndako ya ba kotala",
+    PATIENT_A_FACTURER: "Kuta ya lifuti",
+    PAIEMENT_VALIDE: "Lifuti",
+  },
+  preferences: {
+    titre: "Ba ndinga oyo olingi",
+    inApp: "Bansangu ya kebula na kati ya programu",
+    tableauBord: "Elembo na ndako ya bokengi",
+    push: "Bansangu ya kebula na programu ya mokili",
+    son: "Luyalu ntango bazwi",
+    email: "Bansangu ya kebula na posita ya elektroniki (ekoya noki)",
+    sms: "Bansangu ya kebula na nsangu ya mokili (ekoya noki)",
+    silencieux: "Kimya na nyonso",
+    enregistrer: "Bika",
+    enregistre: "Ba ndinga oyo olingi ebiki.",
+  },
+  messages: {
+    NOUVEAU_PATIENT: {
+      titre: "Muntu ya maladi ya sika ebaki",
+      message: "{{prenom}} {{nom}} ({{numero}}) mponi abaki.",
+    },
+    PATIENT_TRANSFERE: {
+      titre: "Muntu ya maladi etindami",
+      message: "{{prenom}} {{nom}} etindami na ndako ya mosala na yo.",
+    },
+    PATIENT_EN_ATTENTE: {
+      titre: "Muntu ya maladi ke vanda",
+      message: "{{prenom}} {{nom}} ke vanda mpo na kozwa ba signe ya bomoi.",
+    },
+    NOUVEAU_MESSAGE: {
+      titre: "Nsangu ya sika",
+      message: "{{expediteur}}: {{apercu}}",
+    },
+    MENTION: {
+      titre: "Basengi yo",
+      message: "{{expediteur}} asengi yo na lisolo.",
+    },
+    DIFFUSION: {
+      titre: "Lanso ya ndako",
+      message: "{{apercu}}",
+    },
+  },
+} as const;

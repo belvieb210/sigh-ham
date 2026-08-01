@@ -1,0 +1,38 @@
+import "server-only";
+import Redis from "ioredis";
+
+let client: Redis | null = null;
+
+export function obtenirRedis(): Redis | null {
+  const url = process.env.REDIS_URL;
+  if (!url) return null;
+
+  if (!client) {
+    client = new Redis(url, {
+      maxRetriesPerRequest: 3,
+      lazyConnect: true,
+    });
+    client.connect().catch(() => {
+      /* Redis optionnel en dev */
+    });
+  }
+
+  return client;
+}
+
+export const CANAUX_REDIS = {
+  messagerie: "sigh:messagerie",
+  notifications: "sigh:notifications",
+  presence: "sigh:presence",
+} as const;
+
+export async function publierRedis(canal: string, payload: unknown) {
+  const redis = obtenirRedis();
+  if (!redis) return false;
+  try {
+    await redis.publish(canal, JSON.stringify(payload));
+    return true;
+  } catch {
+    return false;
+  }
+}

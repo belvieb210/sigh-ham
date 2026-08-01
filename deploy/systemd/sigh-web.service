@@ -1,0 +1,21 @@
+[Unit]
+Description=SIGH HAM — Next.js (réception & modules)
+After=network.target postgresql.service redis-server.service
+Wants=postgresql.service redis-server.service
+
+[Service]
+Type=simple
+User=sigh
+Group=sigh
+WorkingDirectory=/var/www/sigh-ham
+Environment=NODE_ENV=production
+EnvironmentFile=/var/www/sigh-ham/.env
+ExecStart=/usr/bin/npm run start
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sigh-web
+
+[Install]
+WantedBy=multi-user.target

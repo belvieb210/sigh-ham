@@ -80,6 +80,8 @@ export const receptionKg = {
     aideTransfertManuel:
       "Transfert manuel ke salaka orientation oyo safuti likolo, sans motif to examen. Ke zala na zelo ya kondima na réception.",
     selectionRequise: "Safula muntu ya maladi na liste to na formulaire liboso ya transfert manuel.",
+    modifierPatient: "Modifier le patient",
+    supprimerPatient: "Supprimer définitivement",
   },
   pages: {
     accueil: { titre: "Ebandeli réception" },
@@ -87,6 +89,9 @@ export const receptionKg = {
       titre: "Muntu ya maladi ya sika",
       description: "Enregistrer muntu ya maladi ya sika mpe orienter ye na service ya malamu.",
       fil: "Muntu ya maladi ya sika",
+      titreModification: "Modifier le patient",
+      descriptionModification: "Mettez à jour les informations du patient.",
+      filModification: "Modifier",
     },
     enregistres: {
       titre: "Bantu ya maladi enregistrés",
@@ -215,6 +220,7 @@ export const receptionKg = {
     fermer: "Funga",
     annuler: "Annuler",
     modifier: "Bongola",
+    supprimer: "Supprimer",
     retour: "Zonga",
     suivant: "Suivant",
     reset: "Reset",
@@ -224,6 +230,7 @@ export const receptionKg = {
   },
   formulaire: {
     titre: "Enregistrement ya sika",
+    titreModification: "Modification du patient",
     patientSelectionne: "Muntu ya maladi oyo safuti :",
     etapes: {
       infosPatient: "Ba info ya muntu ya maladi",
@@ -311,6 +318,8 @@ export const receptionKg = {
       suivant: "Suivant",
       enregistrer: "Enregistrer",
       enregistrement: "Enregistrement...",
+      mettreAJour: "Enregistrer les modifications",
+      miseAJour: "Mise à jour...",
       transferer: "Transferer muntu ya maladi",
       transfert: "Transfert...",
     },
@@ -381,6 +390,8 @@ export const receptionKg = {
     chargement: "Kuzinga ba examen…",
     sansTransfert: "Transfert mosi ve mpo na muntu ya maladi oyo.",
     enregistrement: "Enregistrement…",
+    supprimerPatientTitre: "Supprimer définitivement ?",
+    supprimerPatientDescription: "Cette action est irréversible. Toutes les données du patient {{nom}} ({{id}}) seront supprimées.",
   },
   stats: {
     patientsAujourdhui: "Bantu ya maladi lelo",
@@ -410,6 +421,10 @@ export const receptionKg = {
     numerosImpossible: "Kuzinga ba numéro ke salaki ve.",
     enregistrementImpossible: "Enregistrement ke salaki ve.",
     enregistrementErreur: "Erreur na enregistrement.",
+    modificationImpossible: "Modification impossible.",
+    modificationErreur: "Erreur lors de la modification.",
+    suppressionImpossible: "Suppression impossible.",
+    chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "Motif ya visite esengeli (étape 2).",
     motifPreciser: "Precisa motif ya visite (étape 2).",
     salleRequise: "Safula chambre ya destination.",

@@ -80,6 +80,8 @@ export const receptionZh = {
     aideTransfertManuel:
       "手动转介使用上方所选分诊方向，无需事由或检验。转介在接待处待确认。",
     selectionRequise: "手动转介前请从列表或表单中选择患者。",
+    modifierPatient: "Modifier le patient",
+    supprimerPatient: "Supprimer définitivement",
   },
   pages: {
     accueil: { titre: "接待首页" },
@@ -87,6 +89,9 @@ export const receptionZh = {
       titre: "新患者",
       description: "登记新患者并分诊至相应服务。",
       fil: "新患者",
+      titreModification: "Modifier le patient",
+      descriptionModification: "Mettez à jour les informations du patient.",
+      filModification: "Modifier",
     },
     enregistres: {
       titre: "已登记患者",
@@ -215,6 +220,7 @@ export const receptionZh = {
     fermer: "关闭",
     annuler: "取消",
     modifier: "编辑",
+    supprimer: "Supprimer",
     retour: "返回",
     suivant: "下一步",
     reset: "重置",
@@ -224,6 +230,7 @@ export const receptionZh = {
   },
   formulaire: {
     titre: "新登记",
+    titreModification: "Modification du patient",
     patientSelectionne: "已选患者：",
     etapes: {
       infosPatient: "患者信息",
@@ -311,6 +318,8 @@ export const receptionZh = {
       suivant: "下一步",
       enregistrer: "保存",
       enregistrement: "正在保存...",
+      mettreAJour: "Enregistrer les modifications",
+      miseAJour: "Mise à jour...",
       transferer: "转介患者",
       transfert: "正在转介...",
     },
@@ -381,6 +390,8 @@ export const receptionZh = {
     chargement: "正在加载检验…",
     sansTransfert: "此患者无关联转介。",
     enregistrement: "正在保存…",
+    supprimerPatientTitre: "Supprimer définitivement ?",
+    supprimerPatientDescription: "Cette action est irréversible. Toutes les données du patient {{nom}} ({{id}}) seront supprimées.",
   },
   stats: {
     patientsAujourdhui: "今日患者",
@@ -410,6 +421,10 @@ export const receptionZh = {
     numerosImpossible: "无法加载登记编号。",
     enregistrementImpossible: "登记失败。",
     enregistrementErreur: "登记过程中出错。",
+    modificationImpossible: "Modification impossible.",
+    modificationErreur: "Erreur lors de la modification.",
+    suppressionImpossible: "Suppression impossible.",
+    chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "就诊事由为必填项（第 2 步）。",
     motifPreciser: "请说明就诊事由（第 2 步）。",
     salleRequise: "请选择目的地科室。",

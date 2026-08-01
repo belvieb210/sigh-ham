@@ -78,6 +78,8 @@ export const receptionEn = {
     aideTransfertManuel:
       "Manual transfer uses the routing selected above, without reason or tests. It remains pending confirmation at reception.",
     selectionRequise: "Select a patient from the list or form before a manual transfer.",
+    modifierPatient: "Edit patient",
+    supprimerPatient: "Delete permanently",
   },
   pages: {
     accueil: { titre: "Reception home" },
@@ -85,6 +87,10 @@ export const receptionEn = {
       titre: "New patient",
       description: "Register a new patient and route them to the appropriate service.",
       fil: "New patient",
+      titreModification: "Edit patient",
+      descriptionModification:
+        "Update the patient information. Changes will be saved to their record.",
+      filModification: "Edit",
     },
     enregistres: {
       titre: "Registered patients",
@@ -213,6 +219,7 @@ export const receptionEn = {
     fermer: "Close",
     annuler: "Cancel",
     modifier: "Edit",
+    supprimer: "Delete",
     retour: "Back",
     suivant: "Next",
     reset: "Reset",
@@ -222,6 +229,7 @@ export const receptionEn = {
   },
   formulaire: {
     titre: "New registration",
+    titreModification: "Edit patient",
     patientSelectionne: "Selected patient:",
     etapes: {
       infosPatient: "Patient information",
@@ -309,6 +317,8 @@ export const receptionEn = {
       suivant: "Next",
       enregistrer: "Save",
       enregistrement: "Saving...",
+      mettreAJour: "Save changes",
+      miseAJour: "Updating...",
       transferer: "Transfer patient",
       transfert: "Transferring...",
     },
@@ -379,6 +389,9 @@ export const receptionEn = {
     chargement: "Loading tests…",
     sansTransfert: "No transfer associated with this patient.",
     enregistrement: "Saving…",
+    supprimerPatientTitre: "Delete permanently?",
+    supprimerPatientDescription:
+      "This action cannot be undone. All data for patient {{nom}} ({{id}}) will be permanently deleted.",
   },
   stats: {
     patientsAujourdhui: "Patients today",
@@ -408,6 +421,10 @@ export const receptionEn = {
     numerosImpossible: "Unable to load registration numbers.",
     enregistrementImpossible: "Registration failed.",
     enregistrementErreur: "Error during registration.",
+    modificationImpossible: "Update failed.",
+    modificationErreur: "Error while updating.",
+    suppressionImpossible: "Deletion failed.",
+    chargementPatientImpossible: "Unable to load the patient for editing.",
     motifObligatoire: "Visit reason is required (step 2).",
     motifPreciser: "Please specify the visit reason (step 2).",
     salleRequise: "Please select a destination room.",

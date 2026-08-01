@@ -2,8 +2,19 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { Check, Eye, FlaskConical, MoreVertical, Printer, RotateCcw, X } from "lucide-react";
+import {
+  Check,
+  Eye,
+  FlaskConical,
+  MoreVertical,
+  Pencil,
+  Printer,
+  RotateCcw,
+  Trash2,
+  X,
+} from "lucide-react";
 import type { PatientEnregistre } from "@/constants/reception";
 import { EVENEMENT_RECEPTION_PATIENTS_MODIFIES } from "@/constants/reception";
 import { useTraductionsReception } from "@/hooks/use-traductions-reception";
@@ -96,15 +107,20 @@ export function CartePatientEnregistre({
                 {t("reception.common.examens")}
               </button>
             )}
-            {patient.transfertId && onRafraichirTransferts ? (
-              <div
-                className="flex shrink-0 items-center"
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-              >
+            <div
+              className="flex shrink-0 items-center gap-0.5"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              <ActionsGestionPatient
+                patient={patient}
+                onApresSuppression={onRafraichirTransferts}
+              />
+              {patient.transfertId && onRafraichirTransferts && (
                 <MenuActionsTransfert patient={patient} onRafraichir={onRafraichirTransferts} />
-              </div>
-            ) : (
+              )}
+            </div>
+            {!patient.transfertId && (
               <button
                 type="button"
                 onClick={(e) => {
@@ -155,6 +171,84 @@ export function BadgeStatut({ patient }: { patient: PatientEnregistre }) {
 }
 
 export type VarianteActionsPatient = "defaut" | "transferts";
+
+function ActionsGestionPatient({
+  patient,
+  onApresSuppression,
+}: {
+  patient: PatientEnregistre;
+  onApresSuppression?: () => void;
+}) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const [suppressionEnCours, setSuppressionEnCours] = useState(false);
+
+  const modifier = () => {
+    router.push(
+      `/sigh/reception/nouveau?modifier=${encodeURIComponent(patient.id)}`
+    );
+  };
+
+  const supprimer = async () => {
+    const confirme = window.confirm(
+      t("reception.modales.supprimerPatientDescription", {
+        nom: patient.nom,
+        id: patient.id,
+      })
+    );
+    if (!confirme || suppressionEnCours) return;
+
+    setSuppressionEnCours(true);
+    try {
+      const res = await fetch(
+        `/api/reception/patients/${encodeURIComponent(patient.id)}`,
+        { method: "DELETE" }
+      );
+      const data = (await res.json()) as { message?: string };
+      if (!res.ok) {
+        throw new Error(data.message ?? t("reception.erreurs.suppressionImpossible"));
+      }
+      onApresSuppression?.();
+      window.dispatchEvent(new CustomEvent(EVENEMENT_RECEPTION_PATIENTS_MODIFIES));
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : t("reception.erreurs.suppressionImpossible")
+      );
+    } finally {
+      setSuppressionEnCours(false);
+    }
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          modifier();
+        }}
+        className="rounded-lg p-1.5 text-texte-secondaire transition-colors hover:bg-bleu-medical-clair hover:text-bleu-medical"
+        aria-label={t("reception.actions.modifierPatient")}
+        title={t("reception.actions.modifierPatient")}
+      >
+        <Pencil className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        disabled={suppressionEnCours}
+        onClick={(e) => {
+          e.stopPropagation();
+          void supprimer();
+        }}
+        className="rounded-lg p-1.5 text-texte-secondaire transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+        aria-label={t("reception.actions.supprimerPatient")}
+        title={t("reception.actions.supprimerPatient")}
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </>
+  );
+}
 
 function MenuActionsTransfert({
   patient,
@@ -402,6 +496,7 @@ export function ActionsPatient({
           <Eye className="h-4 w-4" />
         </button>
       )}
+      <ActionsGestionPatient patient={patient} onApresSuppression={onRafraichirTransferts} />
       {patient.transfertId && onRafraichirTransferts && (
         <MenuActionsTransfert patient={patient} onRafraichir={onRafraichirTransferts} />
       )}

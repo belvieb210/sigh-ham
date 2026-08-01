@@ -12,7 +12,7 @@ function normaliserPays(pays?: string): string {
   return pays;
 }
 
-function construireObservations(donnees: DonneesEnregistrementPatient): string | null {
+export function construireObservations(donnees: DonneesEnregistrementPatient): string | null {
   const lignes: string[] = [];
 
   if (donnees.postNom?.trim()) lignes.push(`Post-nom : ${donnees.postNom.trim()}`);

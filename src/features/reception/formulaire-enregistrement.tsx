@@ -82,10 +82,12 @@ const ETAT_INITIAL_FORMULAIRE: EtatFormulairePatient = {
 interface PropsFormulaireEnregistrement {
   /** apercu = accueil réception (compact) | complet = page Nouveau patient */
   variante?: VarianteFormulaire;
-  /** Données injectées depuis la liste des patients récents */
+  /** Données injectées depuis la liste des patients récents ou mode édition */
   donneesPrefill?: DonneesFormulairePatient | null;
   /** Callback après application du préremplissage */
   onPrefillApplique?: () => void;
+  /** Mode modification d'un patient existant (page nouveau?modifier=) */
+  modeEdition?: boolean;
 }
 
 function mapperPrefillVersEtat(donnees: DonneesFormulairePatient): EtatFormulairePatient {
@@ -119,7 +121,7 @@ export const FormulaireEnregistrement = forwardRef<
   HTMLElement,
   PropsFormulaireEnregistrement
 >(function FormulaireEnregistrement(
-  { variante = "apercu", donneesPrefill, onPrefillApplique },
+  { variante = "apercu", donneesPrefill, onPrefillApplique, modeEdition = false },
   ref
 ) {
   const router = useRouter();
@@ -183,7 +185,7 @@ export const FormulaireEnregistrement = forwardRef<
   }, [majDateHeureActuelles]);
 
   useEffect(() => {
-    if (!estComplet) return;
+    if (!estComplet || modeEdition) return;
 
     let annule = false;
 
@@ -207,10 +209,12 @@ export const FormulaireEnregistrement = forwardRef<
     return () => {
       annule = true;
     };
-  }, [estComplet]);
+  }, [estComplet, modeEdition, t]);
 
   useEffect(() => {
-    if (!donneesPrefill || estComplet) return;
+    if (!donneesPrefill) return;
+    /** Prefill accueil (aperçu) ou édition complète */
+    if (estComplet && !modeEdition) return;
 
     setFormulaire(mapperPrefillVersEtat(donneesPrefill));
     setSexe(donneesPrefill.sexe);
@@ -225,7 +229,7 @@ export const FormulaireEnregistrement = forwardRef<
     setEtape(0);
     setErreur(null);
     onPrefillApplique?.();
-  }, [donneesPrefill, estComplet, onPrefillApplique]);
+  }, [donneesPrefill, estComplet, modeEdition, onPrefillApplique]);
 
   useEffect(() => {
     definirDepuisFormulaire({
@@ -269,7 +273,7 @@ export const FormulaireEnregistrement = forwardRef<
 
   const annuler = () => {
     if (estComplet) {
-      router.push("/sigh/reception");
+      router.push(modeEdition ? "/sigh/reception/enregistres" : "/sigh/reception");
     } else {
       reinitialiser();
     }
@@ -294,24 +298,39 @@ export const FormulaireEnregistrement = forwardRef<
       formData.append("sexe", sexe);
       if (photoPatient) formData.append("photo", photoPatient);
 
-      const res = await fetch("/api/reception/patients", {
-        method: "POST",
+      const url =
+        modeEdition && numeroPatientActif
+          ? `/api/reception/patients/${encodeURIComponent(numeroPatientActif)}`
+          : "/api/reception/patients";
+
+      const res = await fetch(url, {
+        method: modeEdition ? "PUT" : "POST",
         body: formData,
       });
 
       const data = (await res.json()) as { message?: string; numeroPatient?: string };
 
       if (!res.ok) {
-        throw new Error(data.message ?? t("reception.erreurs.enregistrementImpossible"));
+        throw new Error(
+          data.message ??
+            (modeEdition
+              ? t("reception.erreurs.modificationImpossible")
+              : t("reception.erreurs.enregistrementImpossible"))
+        );
       }
 
+      const numero = data.numeroPatient ?? numeroPatientActif ?? "";
       router.push(
-        `/sigh/reception/enregistres?nouveau=${encodeURIComponent(data.numeroPatient ?? "")}`
+        `/sigh/reception/enregistres?${modeEdition ? "modifie" : "nouveau"}=${encodeURIComponent(numero)}`
       );
       router.refresh();
     } catch (error) {
       setErreur(
-        error instanceof Error ? error.message : t("reception.erreurs.enregistrementErreur")
+        error instanceof Error
+          ? error.message
+          : modeEdition
+            ? t("reception.erreurs.modificationErreur")
+            : t("reception.erreurs.enregistrementErreur")
       );
     } finally {
       setEnCours(false);
@@ -388,13 +407,20 @@ export const FormulaireEnregistrement = forwardRef<
 
   const libelleActionPrincipale = () => {
     if (enCours) {
-      return estComplet
-        ? t("reception.formulaire.boutons.enregistrement")
-        : etape >= ETAPES_ENREGISTREMENT.length - 1
-          ? t("reception.formulaire.boutons.transfert")
-          : t("reception.formulaire.boutons.suivant");
+      if (estComplet) {
+        return modeEdition
+          ? t("reception.formulaire.boutons.miseAJour")
+          : t("reception.formulaire.boutons.enregistrement");
+      }
+      return etape >= ETAPES_ENREGISTREMENT.length - 1
+        ? t("reception.formulaire.boutons.transfert")
+        : t("reception.formulaire.boutons.suivant");
     }
-    if (estComplet) return t("reception.formulaire.boutons.enregistrer");
+    if (estComplet) {
+      return modeEdition
+        ? t("reception.formulaire.boutons.mettreAJour")
+        : t("reception.formulaire.boutons.enregistrer");
+    }
     if (etape >= ETAPES_ENREGISTREMENT.length - 1)
       return t("reception.formulaire.boutons.transferer");
     return t("reception.formulaire.boutons.suivant");
@@ -436,8 +462,16 @@ export const FormulaireEnregistrement = forwardRef<
       )}
       <div className="border-b border-gris-bordure px-4 py-4 lg:px-6 lg:py-5">
         <h2 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-          {t("reception.formulaire.titre")}
+          {modeEdition
+            ? t("reception.formulaire.titreModification")
+            : t("reception.formulaire.titre")}
         </h2>
+        {modeEdition && numeroPatientActif && (
+          <p className="mt-2 text-sm text-texte-secondaire">
+            {t("reception.formulaire.patientSelectionne")}{" "}
+            <span className="font-semibold text-texte-principal">{numeroPatientActif}</span>
+          </p>
+        )}
 
         {/* Stepper mobile — accueil uniquement (4 étapes) */}
         {!estComplet && (

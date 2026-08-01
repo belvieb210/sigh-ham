@@ -78,6 +78,8 @@ export const receptionHi = {
     aideTransfertManuel:
       "मैनुअल स्थानांतरण ऊपर चयनित दिशा-निर्देश का उपयोग करता है, बिना कारण या परीक्षण के। यह रिसेप्शन पर पुष्टि की प्रतीक्षा में रहता है।",
     selectionRequise: "मैनुअल स्थानांतरण से पहले सूची या फ़ॉर्म से एक रोगी चुनें।",
+    modifierPatient: "Modifier le patient",
+    supprimerPatient: "Supprimer définitivement",
   },
   pages: {
     accueil: { titre: "रिसेप्शन होम" },
@@ -85,6 +87,9 @@ export const receptionHi = {
       titre: "नया रोगी",
       description: "एक नया रोगी पंजीकृत करें और उन्हें उपयुक्त सेवा में भेजें।",
       fil: "नया रोगी",
+      titreModification: "Modifier le patient",
+      descriptionModification: "Mettez à jour les informations du patient.",
+      filModification: "Modifier",
     },
     enregistres: {
       titre: "पंजीकृत रोगी",
@@ -213,6 +218,7 @@ export const receptionHi = {
     fermer: "बंद करें",
     annuler: "रद्द करें",
     modifier: "संपादित करें",
+    supprimer: "Supprimer",
     retour: "वापस",
     suivant: "अगला",
     reset: "रीसेट",
@@ -222,6 +228,7 @@ export const receptionHi = {
   },
   formulaire: {
     titre: "नया पंजीकरण",
+    titreModification: "Modification du patient",
     patientSelectionne: "चयनित रोगी:",
     etapes: {
       infosPatient: "रोगी की जानकारी",
@@ -309,6 +316,8 @@ export const receptionHi = {
       suivant: "अगला",
       enregistrer: "सहेजें",
       enregistrement: "सहेजा जा रहा है...",
+      mettreAJour: "Enregistrer les modifications",
+      miseAJour: "Mise à jour...",
       transferer: "रोगी स्थानांतरित करें",
       transfert: "स्थानांतरण जारी...",
     },
@@ -379,6 +388,8 @@ export const receptionHi = {
     chargement: "परीक्षण लोड हो रहे हैं…",
     sansTransfert: "इस रोगी से कोई स्थानांतरण संबद्ध नहीं।",
     enregistrement: "सहेजा जा रहा है…",
+    supprimerPatientTitre: "Supprimer définitivement ?",
+    supprimerPatientDescription: "Cette action est irréversible. Toutes les données du patient {{nom}} ({{id}}) seront supprimées.",
   },
   stats: {
     patientsAujourdhui: "आज के रोगी",
@@ -408,6 +419,10 @@ export const receptionHi = {
     numerosImpossible: "पंजीकरण संख्याएँ लोड नहीं की जा सकीं।",
     enregistrementImpossible: "पंजीकरण विफल रहा।",
     enregistrementErreur: "पंजीकरण के दौरान त्रुटि।",
+    modificationImpossible: "Modification impossible.",
+    modificationErreur: "Erreur lors de la modification.",
+    suppressionImpossible: "Suppression impossible.",
+    chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "विज़िट का कारण आवश्यक है (चरण 2)।",
     motifPreciser: "कृपया विज़िट का कारण बताएँ (चरण 2)।",
     salleRequise: "कृपया एक गंतव्य कक्ष चुनें।",

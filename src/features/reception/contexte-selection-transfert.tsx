@@ -143,8 +143,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
   const synchroniserSelection = useCallback((patients: PatientEnregistre[]) => {
     setPatientSelectionne((courant) => {
       if (!courant) return courant;
-      const aJour = patients.find((p) => p.id === courant.id);
-      return aJour ?? courant;
+      return patients.find((p) => p.id === courant.id) ?? null;
     });
   }, []);
 

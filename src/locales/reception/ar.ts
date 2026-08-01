@@ -78,7 +78,8 @@ export const receptionAr = {
     aideTransfertManuel:
       "يستخدم التحويل اليدي التوجيه المحدد أعلاه، دون سبب زيارة أو فحوصات. يبقى في انتظار التأكيد في الاستقبال.",
     selectionRequise: "حدّد مريضاً من القائمة أو النموذج قبل التحويل اليدوي.",
-
+    modifierPatient: "Modifier le patient",
+    supprimerPatient: "Supprimer définitivement",
   },
   pages: {
     accueil: { titre: "الرئيسية — الاستقبال" },
@@ -86,6 +87,9 @@ export const receptionAr = {
       titre: "مريض جديد",
       description: "سجّل مريضاً جديداً ووجّهه إلى القسم المناسب.",
       fil: "مريض جديد",
+      titreModification: "Modifier le patient",
+      descriptionModification: "Mettez à jour les informations du patient.",
+      filModification: "Modifier",
     },
     enregistres: {
       titre: "المرضى المسجلون",
@@ -214,6 +218,7 @@ export const receptionAr = {
     fermer: "إغلاق",
     annuler: "إلغاء",
     modifier: "تعديل",
+    supprimer: "Supprimer",
     retour: "رجوع",
     suivant: "التالي",
     reset: "إعادة تعيين",
@@ -223,6 +228,7 @@ export const receptionAr = {
   },
   formulaire: {
     titre: "تسجيل جديد",
+    titreModification: "Modification du patient",
     patientSelectionne: "المريض المحدد:",
     etapes: {
       infosPatient: "معلومات المريض",
@@ -310,6 +316,8 @@ export const receptionAr = {
       suivant: "التالي",
       enregistrer: "حفظ",
       enregistrement: "جارٍ الحفظ...",
+      mettreAJour: "Enregistrer les modifications",
+      miseAJour: "Mise à jour...",
       transferer: "تحويل المريض",
       transfert: "جارٍ التحويل...",
     },
@@ -380,6 +388,8 @@ export const receptionAr = {
     chargement: "جارٍ تحميل الفحوصات…",
     sansTransfert: "لا يوجد تحويل مرتبط بهذا المريض.",
     enregistrement: "جارٍ الحفظ…",
+    supprimerPatientTitre: "Supprimer définitivement ?",
+    supprimerPatientDescription: "Cette action est irréversible. Toutes les données du patient {{nom}} ({{id}}) seront supprimées.",
   },
   stats: {
     patientsAujourdhui: "المرضى اليوم",
@@ -409,6 +419,10 @@ export const receptionAr = {
     numerosImpossible: "تعذّر تحميل أرقام التسجيل.",
     enregistrementImpossible: "فشل التسجيل.",
     enregistrementErreur: "خطأ أثناء التسجيل.",
+    modificationImpossible: "Modification impossible.",
+    modificationErreur: "Erreur lors de la modification.",
+    suppressionImpossible: "Suppression impossible.",
+    chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "سبب الزيارة إلزامي (الخطوة 2).",
     motifPreciser: "حدّد سبب الزيارة (الخطوة 2).",
     salleRequise: "اختر قسم الوجهة.",

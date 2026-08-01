@@ -80,6 +80,8 @@ export const receptionSw = {
     aideTransfertManuel:
       "Uhamisho wa mkono hutumia uelekezaji uliochaguliwa hapo juu, bila sababu au vipimo. Unabaki unasubiri uthibitisho kwenye mapokezi.",
     selectionRequise: "Chagua mgonjwa kutoka kwenye orodha au fomu kabla ya uhamisho wa mkono.",
+    modifierPatient: "Modifier le patient",
+    supprimerPatient: "Supprimer définitivement",
   },
   pages: {
     accueil: { titre: "Mwanzo wa mapokezi" },
@@ -87,6 +89,9 @@ export const receptionSw = {
       titre: "Mgonjwa mpya",
       description: "Sajili mgonjwa mpya na mwelekeze kwenye huduma inayofaa.",
       fil: "Mgonjwa mpya",
+      titreModification: "Modifier le patient",
+      descriptionModification: "Mettez à jour les informations du patient.",
+      filModification: "Modifier",
     },
     enregistres: {
       titre: "Wagonjwa waliosajiliwa",
@@ -215,6 +220,7 @@ export const receptionSw = {
     fermer: "Funga",
     annuler: "Ghairi",
     modifier: "Hariri",
+    supprimer: "Supprimer",
     retour: "Rudi",
     suivant: "Ifuatayo",
     reset: "Weka upya",
@@ -224,6 +230,7 @@ export const receptionSw = {
   },
   formulaire: {
     titre: "Usajili mpya",
+    titreModification: "Modification du patient",
     patientSelectionne: "Mgonjwa aliyechaguliwa:",
     etapes: {
       infosPatient: "Taarifa za mgonjwa",
@@ -311,6 +318,8 @@ export const receptionSw = {
       suivant: "Ifuatayo",
       enregistrer: "Hifadhi",
       enregistrement: "Inahifadhi...",
+      mettreAJour: "Enregistrer les modifications",
+      miseAJour: "Mise à jour...",
       transferer: "Hamisha mgonjwa",
       transfert: "Inahamisha...",
     },
@@ -381,6 +390,8 @@ export const receptionSw = {
     chargement: "Inapakia vipimo…",
     sansTransfert: "Hakuna uhamisho unaohusishwa na mgonjwa huyu.",
     enregistrement: "Inahifadhi…",
+    supprimerPatientTitre: "Supprimer définitivement ?",
+    supprimerPatientDescription: "Cette action est irréversible. Toutes les données du patient {{nom}} ({{id}}) seront supprimées.",
   },
   stats: {
     patientsAujourdhui: "Wagonjwa leo",
@@ -410,6 +421,10 @@ export const receptionSw = {
     numerosImpossible: "Imeshindwa kupakia nambari za usajili.",
     enregistrementImpossible: "Usajili umeshindwa.",
     enregistrementErreur: "Hitilafu wakati wa usajili.",
+    modificationImpossible: "Modification impossible.",
+    modificationErreur: "Erreur lors de la modification.",
+    suppressionImpossible: "Suppression impossible.",
+    chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "Sababu ya ziara inahitajika (hatua ya 2).",
     motifPreciser: "Tafadhali eleza sababu ya ziara (hatua ya 2).",
     salleRequise: "Tafadhali chagua chumba cha marudio.",

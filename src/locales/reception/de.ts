@@ -78,6 +78,8 @@ export const receptionDe = {
     aideTransfertManuel:
       "Die manuelle Überweisung verwendet die oben ausgewählte Weiterleitung, ohne Grund oder Untersuchungen. Sie bleibt zur Bestätigung am Empfang ausstehend.",
     selectionRequise: "Wählen Sie einen Patienten aus der Liste oder dem Formular, bevor Sie eine manuelle Überweisung durchführen.",
+    modifierPatient: "Modifier le patient",
+    supprimerPatient: "Supprimer définitivement",
   },
   pages: {
     accueil: { titre: "Empfangsstartseite" },
@@ -85,6 +87,9 @@ export const receptionDe = {
       titre: "Neuer Patient",
       description: "Registrieren Sie einen neuen Patienten und leiten Sie ihn an die entsprechende Abteilung weiter.",
       fil: "Neuer Patient",
+      titreModification: "Modifier le patient",
+      descriptionModification: "Mettez à jour les informations du patient.",
+      filModification: "Modifier",
     },
     enregistres: {
       titre: "Registrierte Patienten",
@@ -213,6 +218,7 @@ export const receptionDe = {
     fermer: "Schließen",
     annuler: "Abbrechen",
     modifier: "Bearbeiten",
+    supprimer: "Supprimer",
     retour: "Zurück",
     suivant: "Weiter",
     reset: "Zurücksetzen",
@@ -222,6 +228,7 @@ export const receptionDe = {
   },
   formulaire: {
     titre: "Neue Registrierung",
+    titreModification: "Modification du patient",
     patientSelectionne: "Ausgewählter Patient:",
     etapes: {
       infosPatient: "Patienteninformationen",
@@ -309,6 +316,8 @@ export const receptionDe = {
       suivant: "Weiter",
       enregistrer: "Speichern",
       enregistrement: "Wird gespeichert...",
+      mettreAJour: "Enregistrer les modifications",
+      miseAJour: "Mise à jour...",
       transferer: "Patient überweisen",
       transfert: "Wird überwiesen...",
     },
@@ -379,6 +388,8 @@ export const receptionDe = {
     chargement: "Untersuchungen werden geladen…",
     sansTransfert: "Keine Überweisung mit diesem Patienten verknüpft.",
     enregistrement: "Wird gespeichert…",
+    supprimerPatientTitre: "Supprimer définitivement ?",
+    supprimerPatientDescription: "Cette action est irréversible. Toutes les données du patient {{nom}} ({{id}}) seront supprimées.",
   },
   stats: {
     patientsAujourdhui: "Patienten heute",
@@ -408,6 +419,10 @@ export const receptionDe = {
     numerosImpossible: "Registrierungsnummern konnten nicht geladen werden.",
     enregistrementImpossible: "Registrierung fehlgeschlagen.",
     enregistrementErreur: "Fehler bei der Registrierung.",
+    modificationImpossible: "Modification impossible.",
+    modificationErreur: "Erreur lors de la modification.",
+    suppressionImpossible: "Suppression impossible.",
+    chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "Besuchsgrund ist erforderlich (Schritt 2).",
     motifPreciser: "Bitte geben Sie den Besuchsgrund an (Schritt 2).",
     salleRequise: "Bitte wählen Sie einen Zielraum.",

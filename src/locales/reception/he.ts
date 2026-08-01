@@ -78,6 +78,8 @@ export const receptionHe = {
     aideTransfertManuel:
       "העברה ידנית משתמשת בהפניה שנבחרה למעלה, ללא סיבה או בדיקות. נשארת ממתינה לאישור בקבלה.",
     selectionRequise: "בחרו מטופל מהרשימה או מהטופס לפני העברה ידנית.",
+    modifierPatient: "Modifier le patient",
+    supprimerPatient: "Supprimer définitivement",
   },
   pages: {
     accueil: { titre: "דף הבית — קבלה" },
@@ -85,6 +87,9 @@ export const receptionHe = {
       titre: "מטופל חדש",
       description: "רשמו מטופל חדש והפנו לשירות המתאים.",
       fil: "מטופל חדש",
+      titreModification: "Modifier le patient",
+      descriptionModification: "Mettez à jour les informations du patient.",
+      filModification: "Modifier",
     },
     enregistres: {
       titre: "מטופלים רשומים",
@@ -213,6 +218,7 @@ export const receptionHe = {
     fermer: "סגירה",
     annuler: "ביטול",
     modifier: "עריכה",
+    supprimer: "Supprimer",
     retour: "חזרה",
     suivant: "הבא",
     reset: "איפוס",
@@ -222,6 +228,7 @@ export const receptionHe = {
   },
   formulaire: {
     titre: "רישום חדש",
+    titreModification: "Modification du patient",
     patientSelectionne: "מטופל שנבחר:",
     etapes: {
       infosPatient: "פרטי מטופל",
@@ -309,6 +316,8 @@ export const receptionHe = {
       suivant: "הבא",
       enregistrer: "שמירה",
       enregistrement: "שומר...",
+      mettreAJour: "Enregistrer les modifications",
+      miseAJour: "Mise à jour...",
       transferer: "העברת מטופל",
       transfert: "מעביר...",
     },
@@ -379,6 +388,8 @@ export const receptionHe = {
     chargement: "טוען בדיקות…",
     sansTransfert: "אין העברה משויכת למטופל זה.",
     enregistrement: "שומר…",
+    supprimerPatientTitre: "Supprimer définitivement ?",
+    supprimerPatientDescription: "Cette action est irréversible. Toutes les données du patient {{nom}} ({{id}}) seront supprimées.",
   },
   stats: {
     patientsAujourdhui: "מטופלים היום",
@@ -408,6 +419,10 @@ export const receptionHe = {
     numerosImpossible: "לא ניתן לטעון מספרי רישום.",
     enregistrementImpossible: "הרישום נכשל.",
     enregistrementErreur: "שגיאה במהלך הרישום.",
+    modificationImpossible: "Modification impossible.",
+    modificationErreur: "Erreur lors de la modification.",
+    suppressionImpossible: "Suppression impossible.",
+    chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "סיבת הביקור חובה (שלב 2).",
     motifPreciser: "פרטו את סיבת הביקור (שלב 2).",
     salleRequise: "בחרו חדר יעד.",

@@ -80,6 +80,8 @@ export const receptionLn = {
     aideTransfertManuel:
       "Transfert manuel esalelaka orientation oyo eponami likolo, sans motif to examen. Ezali kozela kondima na réception.",
     selectionRequise: "Pona patient na liste to na formulaire liboso ya transfert manuel.",
+    modifierPatient: "Modifier le patient",
+    supprimerPatient: "Supprimer définitivement",
   },
   pages: {
     accueil: { titre: "Ebandeli réception" },
@@ -87,6 +89,9 @@ export const receptionLn = {
       titre: "Patient ya sika",
       description: "Enregistrer patient ya sika mpe orienter ye na service ya malamu.",
       fil: "Patient ya sika",
+      titreModification: "Modifier le patient",
+      descriptionModification: "Mettez à jour les informations du patient.",
+      filModification: "Modifier",
     },
     enregistres: {
       titre: "Ba patient enregistrés",
@@ -215,6 +220,7 @@ export const receptionLn = {
     fermer: "Funga",
     annuler: "Annuler",
     modifier: "Bobongola",
+    supprimer: "Supprimer",
     retour: "Zonga",
     suivant: "Suivant",
     reset: "Reset",
@@ -224,6 +230,7 @@ export const receptionLn = {
   },
   formulaire: {
     titre: "Enregistrement ya sika",
+    titreModification: "Modification du patient",
     patientSelectionne: "Patient oyo eponami :",
     etapes: {
       infosPatient: "Ba info ya patient",
@@ -311,6 +318,8 @@ export const receptionLn = {
       suivant: "Suivant",
       enregistrer: "Enregistrer",
       enregistrement: "Enregistrement...",
+      mettreAJour: "Enregistrer les modifications",
+      miseAJour: "Mise à jour...",
       transferer: "Transferer patient",
       transfert: "Transfert...",
     },
@@ -381,6 +390,8 @@ export const receptionLn = {
     chargement: "Kozonga ba examen…",
     sansTransfert: "Transfert moko te mpo na patient oyo.",
     enregistrement: "Enregistrement…",
+    supprimerPatientTitre: "Supprimer définitivement ?",
+    supprimerPatientDescription: "Cette action est irréversible. Toutes les données du patient {{nom}} ({{id}}) seront supprimées.",
   },
   stats: {
     patientsAujourdhui: "Ba patient lelo",
@@ -410,6 +421,10 @@ export const receptionLn = {
     numerosImpossible: "Kozonga ba numéro elongaki te.",
     enregistrementImpossible: "Enregistrement elongaki te.",
     enregistrementErreur: "Erreur na enregistrement.",
+    modificationImpossible: "Modification impossible.",
+    modificationErreur: "Erreur lors de la modification.",
+    suppressionImpossible: "Suppression impossible.",
+    chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "Motif ya visite esengeli (étape 2).",
     motifPreciser: "Precisa motif ya visite (étape 2).",
     salleRequise: "Pona chambre ya destination.",

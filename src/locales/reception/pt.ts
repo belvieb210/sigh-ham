@@ -78,6 +78,8 @@ export const receptionPt = {
     aideTransfertManuel:
       "A transferência manual utiliza o encaminhamento selecionado acima, sem motivo nem exames. Permanece pendente de confirmação na recepção.",
     selectionRequise: "Selecione um paciente da lista ou do formulário antes de uma transferência manual.",
+    modifierPatient: "Modifier le patient",
+    supprimerPatient: "Supprimer définitivement",
   },
   pages: {
     accueil: { titre: "Início da recepção" },
@@ -85,6 +87,9 @@ export const receptionPt = {
       titre: "Novo paciente",
       description: "Registe um novo paciente e encaminhe-o para o serviço adequado.",
       fil: "Novo paciente",
+      titreModification: "Modifier le patient",
+      descriptionModification: "Mettez à jour les informations du patient.",
+      filModification: "Modifier",
     },
     enregistres: {
       titre: "Pacientes registados",
@@ -213,6 +218,7 @@ export const receptionPt = {
     fermer: "Fechar",
     annuler: "Cancelar",
     modifier: "Editar",
+    supprimer: "Supprimer",
     retour: "Voltar",
     suivant: "Seguinte",
     reset: "Repor",
@@ -222,6 +228,7 @@ export const receptionPt = {
   },
   formulaire: {
     titre: "Novo registo",
+    titreModification: "Modification du patient",
     patientSelectionne: "Paciente selecionado:",
     etapes: {
       infosPatient: "Informações do paciente",
@@ -309,6 +316,8 @@ export const receptionPt = {
       suivant: "Seguinte",
       enregistrer: "Guardar",
       enregistrement: "A guardar...",
+      mettreAJour: "Enregistrer les modifications",
+      miseAJour: "Mise à jour...",
       transferer: "Transferir paciente",
       transfert: "A transferir...",
     },
@@ -379,6 +388,8 @@ export const receptionPt = {
     chargement: "A carregar exames…",
     sansTransfert: "Nenhuma transferência associada a este paciente.",
     enregistrement: "A guardar…",
+    supprimerPatientTitre: "Supprimer définitivement ?",
+    supprimerPatientDescription: "Cette action est irréversible. Toutes les données du patient {{nom}} ({{id}}) seront supprimées.",
   },
   stats: {
     patientsAujourdhui: "Pacientes hoje",
@@ -408,6 +419,10 @@ export const receptionPt = {
     numerosImpossible: "Não foi possível carregar os números de registo.",
     enregistrementImpossible: "O registo falhou.",
     enregistrementErreur: "Erro durante o registo.",
+    modificationImpossible: "Modification impossible.",
+    modificationErreur: "Erreur lors de la modification.",
+    suppressionImpossible: "Suppression impossible.",
+    chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "O motivo da visita é obrigatório (passo 2).",
     motifPreciser: "Especifique o motivo da visita (passo 2).",
     salleRequise: "Selecione uma sala de destino.",

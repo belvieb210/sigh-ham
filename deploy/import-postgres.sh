@@ -40,19 +40,24 @@ cd "${APP_DIR}"
 npx prisma migrate deploy
 
 echo "==> Import des données : ${DUMP}"
-# Retire les SET spécifiques PostgreSQL 17 (ex. transaction_timeout) incompatibles avec PG 15/16
+export PGCLIENTENCODING=UTF8
+# Retire les SET spécifiques PostgreSQL 17 incompatibles avec PG 15/16
 filtrer_sql() {
   sed -E \
     -e '/^SET transaction_timeout/d' \
     -e '/^SET idle_session_timeout/d' \
-    -e '/^SET idle_in_transaction_session_timeout/d'
+    -e '/^SET idle_in_transaction_session_timeout/d' \
+    -e '/^SET client_encoding/d'
 }
 
-if [[ "$DUMP" == *.gz ]]; then
-  gunzip -c "$DUMP" | filtrer_sql | psql "${PG_URL}" -v ON_ERROR_STOP=1
-else
-  filtrer_sql < "$DUMP" | psql "${PG_URL}" -v ON_ERROR_STOP=1
-fi
+{
+  echo "SET client_encoding TO 'UTF8';"
+  if [[ "$DUMP" == *.gz ]]; then
+    gunzip -c "$DUMP" | filtrer_sql
+  else
+    filtrer_sql < "$DUMP"
+  fi
+} | psql "${PG_URL}" -v ON_ERROR_STOP=1
 
 echo ""
 echo "✅ Import terminé"

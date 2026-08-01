@@ -12,18 +12,16 @@ OUTPUT="${BACKUP_DIR}/sigh_ham_${STAMP}.sql"
 
 mkdir -p "${BACKUP_DIR}"
 
-# Charger DATABASE_URL depuis .env
-if [[ -f "${APP_DIR}/.env" ]]; then
-  set -a
-  # shellcheck disable=SC1091
-  source <(grep -E '^DATABASE_URL=' "${APP_DIR}/.env" | sed 's/\r$//')
-  set +a
-fi
+# shellcheck source=lib/database-url.sh
+source "${APP_DIR}/deploy/lib/database-url.sh"
+charger_database_url "${APP_DIR}"
 
 if [[ -z "${DATABASE_URL:-}" ]]; then
   echo "❌ DATABASE_URL absent — définissez-le dans .env"
   exit 1
 fi
+
+PG_URL=$(url_pour_pg_tools "${DATABASE_URL}")
 
 if ! command -v pg_dump >/dev/null 2>&1; then
   echo "❌ pg_dump introuvable — installez postgresql-client"
@@ -31,7 +29,7 @@ if ! command -v pg_dump >/dev/null 2>&1; then
 fi
 
 echo "==> Export PostgreSQL → ${OUTPUT}"
-pg_dump "${DATABASE_URL}" \
+pg_dump "${PG_URL}" \
   --no-owner \
   --no-acl \
   --clean \

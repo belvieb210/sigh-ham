@@ -4,25 +4,47 @@ Hébergement du module **Réception** sur [hamlab5.duckdns.org](https://hamlab5.
 
 Dépôt GitHub : [belvieb210/sigh-ham](https://github.com/belvieb210/sigh-ham)
 
-## Architecture recommandée (VPS avec d'autres sites Apache)
+## Architecture — Apache seul (recommandé si vous avez déjà des projets PHP)
 
 | Composant | Rôle |
 |-----------|------|
-| **Nginx** | Port **80** et **443** — HTTPS pour SIGH, reverse proxy vers Apache pour les autres projets |
-| **Apache** | Port **8080** — vos sites PHP existants **inchangés** |
-| **Next.js** | Port **3000** — application SIGH |
+| **Apache** | Port **80** et **443** — tous vos sites PHP + proxy SIGH |
+| **Next.js** | Port **3000** — SIGH (interne, Apache proxy pour `hamlab5.duckdns.org`) |
 | **Socket.IO** | Port **3001** — messagerie temps réel |
+| **MySQL/MariaDB** | Bases des projets existants — **inchangées** |
+| **PostgreSQL** | Base SIGH (`sigh_ham`) — **séparée** |
 
-> **Ne pas arrêter Apache** si d'autres projets tournent dessus. Nginx passe devant ; Apache reste actif sur 8080.
+> **Nginx n'est pas nécessaire.** Apache gère tout : `hamlabor.org`, `profildeborah.duckdns.org`, etc. avec leurs certificats SSL habituels (`certbot --apache`).
 
-Scripts dans `deploy/` :
+### Revenir à Apache seul (après migration Nginx)
+
+```bash
+cd /var/www/sigh-ham
+git pull
+chmod +x deploy/*.sh
+bash deploy/rollback-apache-only.sh
+```
+
+Ce script : arrête Nginx, remet Apache sur **80/443**, restaure les VirtualHost, **ne touche pas aux bases de données**.
+
+---
+
+## Architecture alternative — Nginx devant Apache (option avancée)
+
+| Composant | Rôle |
+|-----------|------|
+| **Nginx** | Port **80** et **443** |
+| **Apache** | Port **8080** — projets PHP en arrière-plan |
+
+Scripts :
 
 - `deploy/install-vps.sh` — PostgreSQL, Redis, Node 22, utilisateur `sigh`
 - `deploy/deploy-app.sh` — build, migrations, seeds, systemd
-- `deploy/migrate-nginx-apache.sh` — **Nginx + Apache coexistants + HTTPS** (recommandé)
-- `deploy/setup-nginx-apache-sites.sh` — **restaure tous les sites Apache** via Nginx
-- `deploy/setup-apache-sigh.sh` — Apache seul sur :80 (sans Nginx, si pas d'autres sites)
-- `deploy/fix-nginx-bootstrap.sh` — Nginx HTTP seul (sans SSL, sans Apache)
+- `deploy/rollback-apache-only.sh` — **retour Apache 80/443** (recommandé)
+- `deploy/setup-apache-sigh.sh` — Apache seul, installation initiale SIGH
+- `deploy/migrate-nginx-apache.sh` — Nginx + Apache (option avancée)
+- `deploy/setup-nginx-apache-sites.sh` — sites Apache via Nginx
+- `deploy/fix-nginx-bootstrap.sh` — Nginx HTTP seul
 
 ---
 

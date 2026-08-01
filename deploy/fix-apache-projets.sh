@@ -56,6 +56,8 @@ CONFLITS=(
   "ham.conf"
   "le-redirect-hamlabor.org.conf"
   "ProfilDeborah-http.conf"
+  "ProfilDeborah.conf"
+  "ProfilDeborah-le-ssl.conf"
 )
 for site in "${CONFLITS[@]}"; do
   if a2dissite "$site" 2>/dev/null; then
@@ -154,6 +156,11 @@ EOF
   else
     a2dissite "$(basename "$ssl_conf")" 2>/dev/null || true
     echo "  ⚠ Pas de certificat — certbot --apache -d ${domaine}"
+  fi
+
+  # Désactiver l'ancien 000-default-le-ssl si doublon hamlabor (certbot y déploie parfois)
+  if [[ "$domaine" == "hamlabor.org" ]]; then
+    a2dissite 000-default-le-ssl.conf 2>/dev/null && echo "  ✗ 000-default-le-ssl désactivé (doublon hamlabor)" || true
   fi
 done < "$LISTE"
 

@@ -115,7 +115,41 @@ Compte réception (seed) :
 
 ---
 
-### Réparer hamlabor.org (404 Apache)
+### Audit complet des autres sites
+
+```bash
+cd /var/www/sigh-ham
+git pull
+bash deploy/diagnostic-apache-complet.sh
+# Rapport détaillé :
+bash deploy/diagnostic-apache-complet.sh --export | tee /root/apache-audit.txt
+```
+
+Puis appliquer les corrections :
+
+```bash
+bash deploy/fix-apache-projets.sh
+```
+
+Sites attendus :
+
+| Domaine | Dossier | Type |
+|---------|---------|------|
+| `hamlabor.org` | `/var/www/ham_project` | PHP (index.php à la racine) |
+| `profildeborah.duckdns.org` | `/var/www/ProfilDeborah` | PHP |
+| `shk-annonce.duckdns.org` | `/var/www/shk-annonce` | PHP |
+| `hamlab5.duckdns.org` | proxy → `:3000` | SIGH Next.js ✅ |
+
+Problèmes connus à corriger :
+
+| Erreur | Cause | Fix |
+|--------|-------|-----|
+| 404 hamlabor.org | `DocumentRoot /var/www/ham` inexistant | `fix-apache-projets.sh` |
+| Certificat SIGH invalide | Pas de vhost SSL `sigh-ham-le-ssl` | `certbot --apache -d hamlab5.duckdns.org` |
+| Doublons VirtualHost | `ham.conf`, `000-default-le-ssl`, `le-redirect` | script les désactive |
+| profildeborah | anciens `ProfilDeborah.conf` en conflit | script recrée config propre |
+
+---
 
 Après migration Nginx, le **DocumentRoot** Apache peut être incorrect.
 

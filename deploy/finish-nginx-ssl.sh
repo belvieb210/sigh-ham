@@ -22,18 +22,8 @@ source "${APP_DIR}/deploy/lib/apache-443.sh"
 echo "==> Apache : libérer le port 443 (Nginx sert le SSL)"
 liberer_port_443_apache
 
-echo "==> Nginx : un seul site actif (sigh-ham)"
+echo "==> Nginx : site SIGH (ne pas supprimer apache-sites)"
 mkdir -p /etc/nginx/sites-enabled
-for f in /etc/nginx/sites-enabled/*; do
-  [[ -e "$f" ]] || continue
-  base=$(basename "$f")
-  if [[ "$base" != "sigh-ham" ]]; then
-    rm -f "$f"
-    echo "   Retiré : $base"
-  fi
-done
-
-echo "==> Config Nginx HTTPS"
 cp "${APP_DIR}/deploy/nginx/sigh-ham-coexist-ssl.conf" /etc/nginx/sites-available/sigh-ham
 ln -sf /etc/nginx/sites-available/sigh-ham /etc/nginx/sites-enabled/sigh-ham
 

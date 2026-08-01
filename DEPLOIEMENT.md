@@ -20,6 +20,7 @@ Scripts dans `deploy/` :
 - `deploy/install-vps.sh` — PostgreSQL, Redis, Node 22, utilisateur `sigh`
 - `deploy/deploy-app.sh` — build, migrations, seeds, systemd
 - `deploy/migrate-nginx-apache.sh` — **Nginx + Apache coexistants + HTTPS** (recommandé)
+- `deploy/setup-nginx-apache-sites.sh` — **restaure tous les sites Apache** via Nginx
 - `deploy/setup-apache-sigh.sh` — Apache seul sur :80 (sans Nginx, si pas d'autres sites)
 - `deploy/fix-nginx-bootstrap.sh` — Nginx HTTP seul (sans SSL, sans Apache)
 
@@ -81,7 +82,7 @@ ss -tlnp | grep ':443'   # ne doit plus afficher apache
 bash deploy/finish-nginx-ssl.sh
 ```
 
-> **Note :** `profildeborah.duckdns.org` en HTTPS passera aussi par Nginx une fois le port 443 libéré. Il faudra ajouter un bloc `server` Nginx pour ce domaine (proxy → Apache:8080) si vous en avez besoin.
+> **Note :** après migration, restaurez les autres sites avec la section 8 ci-dessous.
 
 **Test :** https://hamlab5.duckdns.org/connexion
 
@@ -89,6 +90,67 @@ Compte réception (seed) :
 
 - Email : `bokulubelvie@gmail.com`
 - Mot de passe : `Belvie210@!!`
+
+---
+
+## 8. Restaurer les autres projets Apache (hamlabor.org, profildeborah, etc.)
+
+Erreur **`NET::ERR_CERT_COMMON_NAME_INVALID`** sur `hamlabor.org` : Nginx servait le certificat de `hamlab5.duckdns.org` car aucun bloc SSL n'existait pour `hamlabor.org`.
+
+```bash
+cd /var/www/sigh-ham
+git pull
+chmod +x deploy/*.sh
+
+# 1. Regénère Nginx pour chaque VirtualHost Apache → proxy :8080
+bash deploy/setup-nginx-apache-sites.sh
+
+# 2. Crée les certificats manquants (hamlabor.org, etc.)
+bash deploy/setup-nginx-apache-sites.sh --certificats
+
+# 3. Recharge SIGH si besoin
+cp deploy/nginx/sigh-ham-coexist-ssl.conf /etc/nginx/sites-available/sigh-ham
+nginx -t && systemctl reload nginx
+```
+
+Vérifications :
+
+```bash
+curl -I http://hamlabor.org
+curl -I https://hamlabor.org
+curl -I https://profildeborah.duckdns.org
+apache2ctl -S          # VirtualHost sur :8080
+ls /etc/nginx/sites-enabled/
+```
+
+Projets dans `/var/www/` (servis par Apache) :
+
+| Dossier | Domaine typique |
+|---------|-----------------|
+| `ham_project` | `hamlabor.org` |
+| `ProfilDeborah` | `profildeborah.duckdns.org` |
+| `shk-annonce` | (voir `apache2ctl -S`) |
+| `sigh-ham` | `hamlab5.duckdns.org` → Nginx → Next.js :3000 |
+
+---
+
+## 9. Erreurs API SIGH (401 / 500)
+
+| Erreur | Cause probable | Action |
+|--------|----------------|--------|
+| `POST /api/auth/connexion` **401** | Identifiant ou mot de passe incorrect | `bokulubelvie@gmail.com` / `Belvie210@!!` — relancer `sudo -u sigh npm run db:seed:reception` |
+| `GET /api/reception/patients` **401** | Non connecté (cookie session absent) | Se connecter d'abord sur `/connexion` |
+| `GET /api/reception/patients` **500** | Erreur serveur / base de données | `journalctl -u sigh-web -n 50 --no-pager` |
+
+Diagnostic connexion :
+
+```bash
+curl -s -X POST https://hamlab5.duckdns.org/api/auth/connexion \
+  -H "Content-Type: application/json" \
+  -d '{"identifiant":"bokulubelvie@gmail.com","motDePasse":"Belvie210@!!"}'
+```
+
+Réponse attendue : `"redirect":"/sigh/reception"` (pas 401).
 
 ---
 

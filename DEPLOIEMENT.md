@@ -301,3 +301,83 @@ git push origin main
 ```
 
 Sur le VPS : `git pull` puis rebuild si le code a changé.
+
+---
+
+## 8. Export / import base de données SIGH
+
+### Important : PostgreSQL, pas MySQL
+
+| Projet | Base de données |
+|--------|-----------------|
+| **SIGH** (`sigh-ham`) | **PostgreSQL** (`sigh_ham`) |
+| **hamlabor.org** (`ham_project`) | **MySQL** (projet PHP séparé) |
+
+Nginx/Apache = serveurs web, **pas** des bases de données.
+
+### Migrations (structure) — déjà sur GitHub
+
+Le dossier `prisma/migrations/` contient **toute la structure** (tables, colonnes).  
+Inutile de l'exporter : il est versionné avec le code.
+
+```bash
+# Nouveau PC ou VPS : appliquer les migrations
+npm run db:migrate:deploy
+npm run db:seed
+npm run db:seed:reception
+```
+
+### Données complètes (patients, utilisateurs, messages…)
+
+**Sur le VPS (production) :**
+
+```bash
+cd /var/www/sigh-ham
+git pull
+chmod +x deploy/*.sh
+bash deploy/sync-db-vps-to-local.sh
+# ou : sudo -u sigh npm run db:export
+```
+
+**Sur votre PC (import) :**
+
+```powershell
+# 1. Copier le dump depuis le VPS
+scp root@185.202.236.210:/var/www/sigh-ham/prisma/backups/sigh_ham_XXXXXX.sql.gz prisma/backups/
+
+# 2. PostgreSQL local requis (pas MySQL XAMPP pour SIGH)
+#    Installez PostgreSQL ou utilisez Docker
+
+# 3. .env local avec DATABASE_URL pointant vers votre PostgreSQL local
+
+# 4. Import
+bash deploy/import-postgres.sh prisma/backups/sigh_ham_XXXXXX.sql.gz
+npx prisma generate
+npm run dev
+```
+
+### Envoyer le dump sur GitHub
+
+⚠️ **Repo PRIVÉ obligatoire** — le dump contient des données patients et des mots de passe hashés.
+
+Par défaut les fichiers `prisma/backups/*.sql.gz` sont **ignorés** par git (`.gitignore`).
+
+Pour forcer l'ajout (repo privé seulement) :
+
+```bash
+git add -f prisma/backups/sigh_ham_XXXXXX.sql.gz
+git commit -m "backup: dump production YYYY-MM-DD"
+git push origin main
+```
+
+Alternative recommandée : [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github) pour les gros fichiers.
+
+### ham_project (MySQL) — projet PHP séparé
+
+Export MySQL (sur le VPS, **pas** SIGH) :
+
+```bash
+mysqldump -u USER -p NOM_BASE > ham_project_backup.sql
+```
+
+Ce dump concerne `hamlabor.org`, pas le module SIGH Next.js.

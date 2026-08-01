@@ -41,7 +41,7 @@ export function MiseEnPageAuth({
 
       <div className="relative z-10 w-full max-w-md">
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
           className="mb-8 flex flex-col items-center gap-3"
@@ -56,7 +56,7 @@ export function MiseEnPageAuth({
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.05 }}
           className="rounded-2xl border border-gris-bordure/80 bg-white p-7 shadow-lg sm:p-8"

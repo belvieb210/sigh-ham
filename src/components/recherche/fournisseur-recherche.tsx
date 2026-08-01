@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { usePathname } from "next/navigation";
 import { ModaleRecherche } from "@/components/recherche/modale-recherche";
 
 interface ContexteRecherche {
@@ -17,7 +18,12 @@ interface ContexteRecherche {
 
 const RechercheContext = createContext<ContexteRecherche | null>(null);
 
+function estRouteAuth(pathname: string) {
+  return pathname === "/connexion" || pathname.startsWith("/connexion/");
+}
+
 export function FournisseurRecherche({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [ouverte, setOuverte] = useState(false);
 
   const ouvrir = useCallback(() => setOuverte(true), []);
@@ -25,6 +31,8 @@ export function FournisseurRecherche({ children }: { children: ReactNode }) {
   const basculer = useCallback(() => setOuverte((v) => !v), []);
 
   useEffect(() => {
+    if (estRouteAuth(pathname)) return;
+
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
@@ -33,12 +41,14 @@ export function FournisseurRecherche({ children }: { children: ReactNode }) {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [basculer]);
+  }, [basculer, pathname]);
 
   return (
     <RechercheContext.Provider value={{ ouvrir, fermer }}>
       {children}
-      <ModaleRecherche ouverte={ouverte} onFermer={fermer} />
+      {!estRouteAuth(pathname) && (
+        <ModaleRecherche ouverte={ouverte} onFermer={fermer} />
+      )}
     </RechercheContext.Provider>
   );
 }

@@ -32,7 +32,10 @@ echo "==> Git pull"
 git pull origin main || git pull origin master || true
 
 echo "==> Dépendances npm"
-npm ci
+if ! npm ci 2>/dev/null; then
+  echo "⚠️  package-lock.json désynchronisé — npm install"
+  npm install
+fi
 
 echo "==> Prisma generate"
 npm run db:generate

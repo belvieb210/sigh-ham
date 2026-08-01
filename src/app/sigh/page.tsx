@@ -4,6 +4,9 @@ import { obtenirRouteApresConnexion } from "@/lib/auth/redirections";
 
 export default async function PageSighAccueil() {
   const session = await lireSessionDepuisCookie();
-  if (!session) redirect("/connexion");
+  if (!session) {
+    /** Nettoie le cookie invalide puis affiche la connexion (évite boucle de redirects) */
+    redirect("/api/auth/nettoyer-session");
+  }
   redirect(obtenirRouteApresConnexion(session.utilisateur.role));
 }

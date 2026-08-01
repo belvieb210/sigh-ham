@@ -14,9 +14,12 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  if (pathname === "/connexion" && token) {
-    return NextResponse.redirect(new URL("/sigh", request.url));
-  }
+  /**
+   * Ne pas rediriger /connexion → /sigh sur la seule présence du cookie.
+   * Après un import DB, le cookie peut exister alors que la session a disparu :
+   * /connexion → /sigh → /connexion = ERR_TOO_MANY_REDIRECTS.
+   * La page /connexion valide la session côté serveur.
+   */
 
   return NextResponse.next();
 }

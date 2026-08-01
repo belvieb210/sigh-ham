@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PatientEnregistre } from "@/constants/reception";
-import { EVENEMENT_RECEPTION_PATIENTS_MODIFIES, PATIENTS_ENREGISTRES } from "@/constants/reception";
+import { EVENEMENT_RECEPTION_PATIENTS_MODIFIES } from "@/constants/reception";
 import { TableauPatients } from "@/features/reception/composants-liste-patients";
 import { ModaleExamensTransfert } from "@/features/reception/modale-examens-transfert";
 
@@ -32,10 +32,12 @@ export function TableauPatientsRecents({
         setPatients(data.patients ?? []);
         return;
       }
-    } catch {
-      /* fallback mock si API indisponible */
+      console.error("[patients récents] API", res.status);
+    } catch (err) {
+      console.error("[patients récents]", err);
     }
-    setPatients(PATIENTS_ENREGISTRES.slice(0, 4));
+    /** Pas de données mock : liste vide si API en erreur */
+    setPatients([]);
   }, []);
 
   useEffect(() => {

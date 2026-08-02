@@ -45,12 +45,11 @@ if command -v systemctl >/dev/null 2>&1 && [[ "${EUID:-0}" -eq 0 ]]; then
   systemctl stop sigh-web sigh-socket 2>/dev/null || true
 fi
 
-echo "==> Git pull"
+echo "==> Git pull (branche main)"
 if [[ "${EUID:-0}" -eq 0 ]]; then
-  sudo -u sigh git -C "${APP_DIR}" pull origin main \
-    || sudo -u sigh git -C "${APP_DIR}" pull origin master || true
+  sudo -u sigh git -C "${APP_DIR}" pull origin main
 else
-  git pull origin main || git pull origin master || true
+  git pull origin main
 fi
 
 echo "==> Dépendances npm"

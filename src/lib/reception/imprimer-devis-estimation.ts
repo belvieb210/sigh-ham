@@ -93,11 +93,7 @@ function construireLignesTicket(donnees: DonneesDevisEstimation): string[] {
   return lignes;
 }
 
-/** Impression ticket thermique 80 mm via fenêtre dédiée (évite crash React removeChild). */
-export function imprimerDevisEstimation(donnees: DonneesDevisEstimation): boolean {
-  const fenetre = window.open("", "_blank", "noopener,noreferrer,width=420,height=720");
-  if (!fenetre) return false;
-
+function construireHtmlTicket(donnees: DonneesDevisEstimation): string {
   const lignes = construireLignesTicket(donnees);
   const corps = lignes.map((l) => (l === "" ? "<br />" : ligneHtml(l))).join("\n");
   const maintenant = new Date().toLocaleString("fr-FR", {
@@ -108,7 +104,7 @@ export function imprimerDevisEstimation(donnees: DonneesDevisEstimation): boolea
     minute: "2-digit",
   });
 
-  const html = `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
@@ -122,13 +118,13 @@ export function imprimerDevisEstimation(donnees: DonneesDevisEstimation): boolea
     html, body {
       margin: 0;
       padding: 0;
-      background: #e2e8f0;
+      background: #fff;
     }
     .ticket {
       width: 80mm;
       max-width: 80mm;
-      margin: 12px auto;
-      padding: 8px 6px 16px;
+      margin: 0 auto;
+      padding: 2mm 1.5mm 8mm;
       background: #fff;
       color: #000;
       font-family: "Courier New", Courier, monospace;
@@ -138,45 +134,64 @@ export function imprimerDevisEstimation(donnees: DonneesDevisEstimation): boolea
       overflow-x: hidden;
     }
     .ticket div { white-space: pre; }
-    .genere {
-      margin-top: 10px;
-      text-align: center;
-      font-size: 9px;
-      color: #64748b;
-      white-space: normal;
-      font-family: system-ui, sans-serif;
-    }
-    @media print {
-      html, body { background: #fff; }
-      .ticket {
-        margin: 0;
-        padding: 2mm 1.5mm 8mm;
-        width: 80mm;
-        box-shadow: none;
-      }
-      .genere { display: none; }
-    }
   </style>
 </head>
 <body>
   <div class="ticket">
 ${corps}
   </div>
-  <p class="genere">${echapperHtml(donnees.labels.genereLe)} ${echapperHtml(maintenant)}</p>
-  <script>
-    window.onload = function () {
-      window.focus();
-      setTimeout(function () {
-        window.print();
-      }, 120);
-      window.onafterprint = function () { window.close(); };
-    };
-  </script>
 </body>
 </html>`;
+}
 
-  fenetre.document.open();
-  fenetre.document.write(html);
-  fenetre.document.close();
+/**
+ * Impression dans la même fenêtre (iframe cachée) — pas de popup about:blank.
+ * Évite aussi le crash React removeChild lié à window.print() sur le DOM principal.
+ */
+export function imprimerDevisEstimation(donnees: DonneesDevisEstimation): boolean {
+  if (typeof document === "undefined") return false;
+
+  const html = construireHtmlTicket(donnees);
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("title", donnees.labels.titreTicket);
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  iframe.style.opacity = "0";
+  iframe.style.pointerEvents = "none";
+  iframe.setAttribute("aria-hidden", "true");
+
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
+  if (!doc) {
+    iframe.remove();
+    return false;
+  }
+
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  const nettoyer = () => {
+    window.setTimeout(() => {
+      iframe.remove();
+    }, 500);
+  };
+
+  const lancerImpression = () => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } finally {
+      nettoyer();
+    }
+  };
+
+  // Laisser le navigateur peindre le document de l'iframe avant print()
+  window.setTimeout(lancerImpression, 150);
   return true;
 }

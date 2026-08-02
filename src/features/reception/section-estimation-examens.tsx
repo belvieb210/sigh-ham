@@ -89,7 +89,7 @@ export function SectionEstimationExamens({
       },
     });
     if (!ok) {
-      onErreur?.("Impossible d'ouvrir la fenêtre d'impression. Autorisez les pop-ups.");
+      onErreur?.("Impossible de lancer l'impression. Réessayez.");
     }
   };
 

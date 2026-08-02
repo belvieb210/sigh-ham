@@ -834,5 +834,17 @@ export const receptionEn = {
     champsRequis: "Please fill in the required patient fields.",
     mentionLegale:
       "This document is an estimate. Exams are billed only after validation and billing.",
+    ticket: {
+      titre: "ESTIMATION",
+      numero: "N°",
+      date: "Date",
+      patient: "Patient",
+      telephone: "Tel",
+      medecin: "Doctor",
+      description: "Description",
+      prix: "Price",
+      total: "Total",
+      genereLe: "Generated on",
+    },
   },
 } satisfies Record<keyof ReceptionFr, unknown>;

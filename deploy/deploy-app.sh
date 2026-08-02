@@ -40,6 +40,11 @@ run_as_sigh() {
   fi
 }
 
+echo "==> Arrêt des services (évite ENOTEMPTY sur node_modules)"
+if command -v systemctl >/dev/null 2>&1 && [[ "${EUID:-0}" -eq 0 ]]; then
+  systemctl stop sigh-web sigh-socket 2>/dev/null || true
+fi
+
 echo "==> Git pull"
 if [[ "${EUID:-0}" -eq 0 ]]; then
   sudo -u sigh git -C "${APP_DIR}" pull origin main \
@@ -49,7 +54,14 @@ else
 fi
 
 echo "==> Dépendances npm"
-run_as_sigh 'if ! npm ci 2>/dev/null; then echo "⚠️  package-lock désynchronisé — npm install"; npm install; fi'
+if ! run_as_sigh 'npm ci || { echo "⚠️  package-lock désynchronisé — npm install"; npm install; }'; then
+  echo "⚠️  node_modules corrompu — réinstallation propre"
+  rm -rf "${APP_DIR}/node_modules"
+  if [[ "${EUID:-0}" -eq 0 ]]; then
+    chown -R sigh:sigh "${APP_DIR}"
+  fi
+  run_as_sigh 'npm ci || npm install'
+fi
 
 echo "==> Prisma generate + migrations"
 run_as_sigh "npm run db:generate && npm run db:migrate:deploy"
@@ -62,9 +74,6 @@ if [[ "${SEED}" == "true" ]]; then
 fi
 
 echo "==> Build Next.js"
-if command -v systemctl >/dev/null 2>&1 && [[ "${EUID:-0}" -eq 0 ]]; then
-  systemctl stop sigh-web 2>/dev/null || true
-fi
 if [[ "${EUID:-0}" -eq 0 ]]; then
   rm -rf "${APP_DIR}/.next"
 fi

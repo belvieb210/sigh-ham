@@ -838,6 +838,18 @@ export const receptionFr = {
     champsRequis: "Veuillez renseigner les champs obligatoires du patient.",
     mentionLegale:
       "Ce document est un devis estimatif. Les examens ne sont facturés qu'après validation et envoi à la caisse.",
+    ticket: {
+      titre: "ESTIMATION",
+      numero: "N°",
+      date: "Date",
+      patient: "Patient",
+      telephone: "Tel",
+      medecin: "Médecin",
+      description: "Description",
+      prix: "Prix",
+      total: "Total",
+      genereLe: "Généré le",
+    },
   },
 } as const;
 

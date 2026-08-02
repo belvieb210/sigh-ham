@@ -20,6 +20,7 @@ interface PropsSectionEstimationExamens {
   examens: TypeExamenReception[];
   nomPatient: string;
   prenomPatient: string;
+  telephonePatient?: string;
   numeroEnregistrement: string;
   dateEnregistrement: string;
   onErreur?: (message: string) => void;
@@ -33,6 +34,7 @@ export function SectionEstimationExamens({
   examens,
   nomPatient,
   prenomPatient,
+  telephonePatient = "",
   numeroEnregistrement,
   dateEnregistrement,
   onErreur,
@@ -51,24 +53,39 @@ export function SectionEstimationExamens({
       return;
     }
     onErreur?.("");
+    const dateHeure =
+      dateEnregistrement && !dateEnregistrement.includes(":")
+        ? `${dateEnregistrement} ${new Date().toLocaleTimeString("fr-FR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}`
+        : dateEnregistrement ||
+          new Date().toLocaleString("fr-FR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
     const ok = imprimerDevisEstimation({
       examens,
       medecinResponsable: medecinResponsable.trim(),
       nomPatient,
       prenomPatient,
+      telephonePatient,
       numeroEnregistrement,
-      dateEnregistrement,
+      dateEnregistrement: dateHeure,
       labels: {
-        titre: t("reception.estimations.devisTitre"),
-        estimation: t("reception.estimations.etapes.estimation"),
-        patient: t("reception.estimations.patient"),
-        medecin: t("reception.formulaire.champs.medecinResponsable"),
-        code: t("reception.examens.colonnes.code"),
-        nom: t("reception.examens.colonnes.nom"),
-        categorie: t("reception.examens.colonnes.categorie"),
-        prix: t("reception.examens.colonnes.prix"),
-        montantTotal: t("reception.estimations.montantTotal"),
-        mentionLegale: t("reception.estimations.mentionLegale"),
+        titreTicket: t("reception.estimations.ticket.titre"),
+        numero: t("reception.estimations.ticket.numero"),
+        date: t("reception.estimations.ticket.date"),
+        patient: t("reception.estimations.ticket.patient"),
+        telephone: t("reception.estimations.ticket.telephone"),
+        medecin: t("reception.estimations.ticket.medecin"),
+        description: t("reception.estimations.ticket.description"),
+        prix: t("reception.estimations.ticket.prix"),
+        total: t("reception.estimations.ticket.total"),
+        genereLe: t("reception.estimations.ticket.genereLe"),
       },
     });
     if (!ok) {

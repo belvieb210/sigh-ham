@@ -1,8 +1,12 @@
 import type { TypeExamenReception } from "@/lib/reception/types";
-
-function formaterPrix(prix: number): string {
-  return `$ ${prix.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-}
+import {
+  INFOS_LEGALES_TICKET,
+  SEPARATEUR_ETOILES,
+  SEPARATEUR_TIRETS,
+  centrerLigne,
+  formaterPrixTicket,
+  ligneDeuxColonnes,
+} from "@/constants/ticket-thermique";
 
 function echapperHtml(texte: string): string {
   return texte
@@ -12,101 +16,159 @@ function echapperHtml(texte: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function ligneHtml(texte: string, classe = ""): string {
+  const cls = classe ? ` class="${classe}"` : "";
+  return `<div${cls}>${echapperHtml(texte)}</div>`;
+}
+
 export interface DonneesDevisEstimation {
   examens: TypeExamenReception[];
   medecinResponsable: string;
   nomPatient: string;
   prenomPatient: string;
+  telephonePatient?: string;
   numeroEnregistrement: string;
   dateEnregistrement: string;
   labels: {
-    titre: string;
-    estimation: string;
+    titreTicket: string;
+    numero: string;
+    date: string;
     patient: string;
+    telephone: string;
     medecin: string;
-    code: string;
-    nom: string;
-    categorie: string;
+    description: string;
     prix: string;
-    montantTotal: string;
-    mentionLegale: string;
+    total: string;
+    genereLe: string;
   };
 }
 
-/** Impression via fenêtre dédiée — évite de perturber le DOM React (window.print sur la page). */
+function construireLignesTicket(donnees: DonneesDevisEstimation): string[] {
+  const L = INFOS_LEGALES_TICKET;
+  const montantTotal = donnees.examens.reduce((total, e) => total + e.prix, 0);
+  const patient = `${donnees.prenomPatient} ${donnees.nomPatient}`.trim();
+  const tel = donnees.telephonePatient?.trim() || "—";
+
+  const lignes: string[] = [
+    centrerLigne(L.ligne1),
+    centrerLigne(L.ligne2),
+    centrerLigne(L.rccm),
+    centrerLigne(L.idNat),
+    centrerLigne(L.nImpot),
+    centrerLigne(L.minSante),
+    centrerLigne(L.sloganLigne1),
+    centrerLigne(L.sloganLigne2),
+    "",
+    SEPARATEUR_ETOILES,
+    centrerLigne(donnees.labels.titreTicket),
+    SEPARATEUR_ETOILES,
+    "",
+    centrerLigne(`${donnees.labels.numero}: ${donnees.numeroEnregistrement}`),
+    centrerLigne(`${donnees.labels.date}: ${donnees.dateEnregistrement}`),
+    centrerLigne(`${donnees.labels.patient}: ${patient}`),
+    centrerLigne(`${donnees.labels.telephone}: ${tel}`),
+    centrerLigne(`${donnees.labels.medecin}: ${donnees.medecinResponsable}`),
+    "",
+    ligneDeuxColonnes(donnees.labels.description, donnees.labels.prix),
+  ];
+
+  for (const examen of donnees.examens) {
+    const libelle = examen.libelle || examen.code;
+    lignes.push(ligneDeuxColonnes(libelle, formaterPrixTicket(examen.prix)));
+  }
+
+  lignes.push(
+    SEPARATEUR_ETOILES,
+    ligneDeuxColonnes(donnees.labels.total, formaterPrixTicket(montantTotal)),
+    "",
+    SEPARATEUR_TIRETS,
+    centrerLigne(L.sloganPied),
+    centrerLigne(L.adresseLigne1),
+    centrerLigne(L.adresseLigne2),
+    centrerLigne(L.ville),
+    centrerLigne(L.telephones),
+    centrerLigne(L.email)
+  );
+
+  return lignes;
+}
+
+/** Impression ticket thermique 80 mm via fenêtre dédiée (évite crash React removeChild). */
 export function imprimerDevisEstimation(donnees: DonneesDevisEstimation): boolean {
-  const fenetre = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+  const fenetre = window.open("", "_blank", "noopener,noreferrer,width=420,height=720");
   if (!fenetre) return false;
 
-  const montantTotal = donnees.examens.reduce((total, e) => total + e.prix, 0);
-  const lignesExamens = donnees.examens
-    .map(
-      (examen) => `
-        <tr>
-          <td>${echapperHtml(examen.code)}</td>
-          <td>${echapperHtml(examen.libelle)}</td>
-          <td>${echapperHtml(examen.categorie)}</td>
-          <td class="prix">${formaterPrix(examen.prix)}</td>
-        </tr>`
-    )
-    .join("");
+  const lignes = construireLignesTicket(donnees);
+  const corps = lignes.map((l) => (l === "" ? "<br />" : ligneHtml(l))).join("\n");
+  const maintenant = new Date().toLocaleString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <title>${echapperHtml(donnees.labels.titre)}</title>
+  <title>${echapperHtml(donnees.labels.titreTicket)}</title>
   <style>
-    body { font-family: system-ui, sans-serif; color: #0f172a; margin: 2rem; }
-    h1 { font-size: 1.5rem; margin: 0.5rem 0; }
-    .meta { color: #64748b; font-size: 0.875rem; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0; }
-    .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 600; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; font-size: 0.875rem; }
-    th, td { border-bottom: 1px solid #e2e8f0; padding: 0.5rem 0.75rem; text-align: left; }
-    th { font-size: 0.7rem; text-transform: uppercase; color: #64748b; }
-    .prix, td.prix { text-align: right; font-weight: 600; }
-    tfoot td { border-top: 2px solid #cbd5e1; padding-top: 1rem; font-weight: 700; }
-    .legal { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; font-size: 0.75rem; color: #64748b; }
+    @page {
+      size: 80mm auto;
+      margin: 0;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #e2e8f0;
+    }
+    .ticket {
+      width: 80mm;
+      max-width: 80mm;
+      margin: 12px auto;
+      padding: 8px 6px 16px;
+      background: #fff;
+      color: #000;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11px;
+      line-height: 1.35;
+      white-space: pre;
+      overflow-x: hidden;
+    }
+    .ticket div { white-space: pre; }
+    .genere {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 9px;
+      color: #64748b;
+      white-space: normal;
+      font-family: system-ui, sans-serif;
+    }
+    @media print {
+      html, body { background: #fff; }
+      .ticket {
+        margin: 0;
+        padding: 2mm 1.5mm 8mm;
+        width: 80mm;
+        box-shadow: none;
+      }
+      .genere { display: none; }
+    }
   </style>
 </head>
 <body>
-  <p class="meta">HAM LABORATOIRE</p>
-  <h1>${echapperHtml(donnees.labels.titre)} — ${echapperHtml(donnees.labels.estimation)}</h1>
-  <p class="meta">${echapperHtml(donnees.dateEnregistrement)}</p>
-  <div class="grid">
-    <div>
-      <p class="label">${echapperHtml(donnees.labels.patient)}</p>
-      <p><strong>${echapperHtml(donnees.prenomPatient)} ${echapperHtml(donnees.nomPatient)}</strong></p>
-      <p class="meta">${echapperHtml(donnees.numeroEnregistrement)}</p>
-    </div>
-    <div>
-      <p class="label">${echapperHtml(donnees.labels.medecin)}</p>
-      <p><strong>${echapperHtml(donnees.medecinResponsable)}</strong></p>
-    </div>
+  <div class="ticket">
+${corps}
   </div>
-  <table>
-    <thead>
-      <tr>
-        <th>${echapperHtml(donnees.labels.code)}</th>
-        <th>${echapperHtml(donnees.labels.nom)}</th>
-        <th>${echapperHtml(donnees.labels.categorie)}</th>
-        <th class="prix">${echapperHtml(donnees.labels.prix)}</th>
-      </tr>
-    </thead>
-    <tbody>${lignesExamens}</tbody>
-    <tfoot>
-      <tr>
-        <td colspan="3" class="prix">${echapperHtml(donnees.labels.montantTotal)}</td>
-        <td class="prix">${formaterPrix(montantTotal)}</td>
-      </tr>
-    </tfoot>
-  </table>
-  <p class="legal">${echapperHtml(donnees.labels.mentionLegale)}</p>
+  <p class="genere">${echapperHtml(donnees.labels.genereLe)} ${echapperHtml(maintenant)}</p>
   <script>
     window.onload = function () {
       window.focus();
-      window.print();
+      setTimeout(function () {
+        window.print();
+      }, 120);
       window.onafterprint = function () { window.close(); };
     };
   </script>

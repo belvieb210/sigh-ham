@@ -1039,6 +1039,7 @@ export const FormulaireEnregistrement = forwardRef<
               examens={examensSelectionnes}
               nomPatient={formulaire.nom}
               prenomPatient={formulaire.prenom}
+              telephonePatient={formulaire.telephone}
               numeroEnregistrement={numeroEnregistrement}
               dateEnregistrement={aujourdhui}
               onErreur={(message) => setErreur(message || null)}

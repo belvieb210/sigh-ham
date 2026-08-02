@@ -18,6 +18,8 @@ export interface DonneesDevisEstimation {
   telephonePatient?: string;
   numeroEnregistrement: string;
   dateEnregistrement: string;
+  /** Utilisateur connecté (réception) qui émet le devis */
+  agentNom?: string;
   labels: {
     titreTicket: string;
     numero: string;
@@ -29,6 +31,7 @@ export interface DonneesDevisEstimation {
     prix: string;
     total: string;
     genereLe: string;
+    agent?: string;
   };
 }
 
@@ -54,55 +57,48 @@ function formaterPrix(prix: number): string {
   })}`;
 }
 
-const BLEU = "#003366";
-const BLEU_CLAIR = "#e8f1f8";
-const ROUGE = "#c62828";
-const GRIS = "#475569";
-const GRIS_CLAIR = "#f8fafc";
-const BORDURE = "#93c5e8";
+const NOIR = "#111111";
+const GRIS = "#555555";
+const GRIS_CLAIR = "#f5f5f5";
+const BORDURE = "#cccccc";
 
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Roboto",
-    fontSize: 11,
+    fontSize: 12,
     paddingTop: 28,
     paddingHorizontal: 28,
     paddingBottom: 48,
-    color: "#0f172a",
+    color: NOIR,
     backgroundColor: "#ffffff",
   },
   enTete: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 16,
+    marginBottom: 18,
+    paddingBottom: 14,
+    borderBottomWidth: 1.5,
+    borderBottomColor: NOIR,
   },
   enTeteGauche: {
     flexDirection: "row",
-    width: "58%",
-    gap: 10,
-  },
-  logoBadge: {
-    width: 56,
-    height: 56,
-    borderRadius: 10,
-    backgroundColor: BLEU,
+    width: "60%",
     alignItems: "center",
-    justifyContent: "center",
   },
-  logoBadgeTexte: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "bold",
+  logo: {
+    width: 72,
+    height: 72,
+    objectFit: "contain",
   },
   enTeteInfos: {
     flex: 1,
-    paddingLeft: 8,
+    paddingLeft: 12,
   },
   nomLabo: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: "bold",
-    color: BLEU,
+    color: NOIR,
     marginBottom: 2,
   },
   sousNom: {
@@ -111,125 +107,122 @@ const styles = StyleSheet.create({
     marginBottom: 1,
   },
   contact: {
-    fontSize: 9,
+    fontSize: 10,
     color: GRIS,
-    marginTop: 4,
+    marginTop: 3,
   },
   enTeteDroite: {
-    width: "40%",
+    width: "38%",
     alignItems: "flex-end",
   },
   badgeTitre: {
-    backgroundColor: BLEU,
-    borderRadius: 8,
-    paddingVertical: 10,
+    borderWidth: 1.5,
+    borderColor: NOIR,
+    borderRadius: 4,
+    paddingVertical: 8,
     paddingHorizontal: 14,
     marginBottom: 8,
   },
   badgeTitreTexte: {
-    color: "#ffffff",
+    color: NOIR,
     fontSize: 14,
     fontWeight: "bold",
     textAlign: "center",
   },
   numeroDoc: {
-    color: ROUGE,
+    color: NOIR,
     fontSize: 13,
     fontWeight: "bold",
     marginBottom: 4,
   },
   metaDroite: {
-    fontSize: 10,
-    color: "#0f172a",
+    fontSize: 11,
+    color: NOIR,
     marginBottom: 2,
     textAlign: "right",
   },
   cartes: {
     flexDirection: "row",
-    gap: 10,
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   carte: {
     width: "48.5%",
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: BORDURE,
-    borderRadius: 6,
+    borderRadius: 4,
     padding: 12,
-    backgroundColor: "#ffffff",
   },
   carteTitre: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "bold",
-    color: BLEU,
+    color: NOIR,
     marginBottom: 8,
     textTransform: "uppercase",
     letterSpacing: 0.4,
   },
   carteLigne: {
-    fontSize: 11,
-    marginBottom: 4,
-    color: "#0f172a",
+    fontSize: 12,
+    marginBottom: 5,
+    color: NOIR,
   },
   carteLabel: {
     color: GRIS,
-    fontSize: 10,
+    fontSize: 11,
   },
   table: {
     borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 4,
-    overflow: "hidden",
+    borderColor: BORDURE,
     marginBottom: 14,
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: BLEU,
+    backgroundColor: NOIR,
     paddingVertical: 9,
     paddingHorizontal: 8,
   },
   headerCell: {
     color: "#ffffff",
     fontWeight: "bold",
-    fontSize: 10,
+    fontSize: 11,
   },
   tableRow: {
     flexDirection: "row",
-    paddingVertical: 8,
+    paddingVertical: 9,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    borderBottomColor: BORDURE,
   },
   tableRowAlt: {
     backgroundColor: GRIS_CLAIR,
   },
-  colN: { width: "8%", fontSize: 11 },
-  colDesc: { width: "48%", fontSize: 11 },
-  colCode: { width: "18%", fontSize: 11, fontWeight: "bold", color: BLEU },
-  colPrix: { width: "26%", fontSize: 11, textAlign: "right", fontWeight: "bold" },
+  colN: { width: "8%", fontSize: 12 },
+  colDesc: { width: "48%", fontSize: 12 },
+  colCode: { width: "18%", fontSize: 12, fontWeight: "bold" },
+  colPrix: { width: "26%", fontSize: 12, textAlign: "right", fontWeight: "bold" },
   basTable: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 16,
-    gap: 10,
   },
   conditions: {
     width: "52%",
     borderWidth: 1,
     borderColor: BORDURE,
-    borderRadius: 6,
+    borderRadius: 4,
     padding: 10,
   },
   conditionsTitre: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "bold",
-    color: BLEU,
+    color: NOIR,
     marginBottom: 6,
   },
   conditionsLigne: {
-    fontSize: 9,
+    fontSize: 10,
     color: GRIS,
     marginBottom: 3,
-    lineHeight: 1.35,
+    lineHeight: 1.4,
   },
   totaux: {
     width: "44%",
@@ -240,7 +233,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    borderBottomColor: BORDURE,
+    fontSize: 12,
   },
   totalFinal: {
     flexDirection: "row",
@@ -248,18 +242,18 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 10,
     marginTop: 4,
-    backgroundColor: BLEU_CLAIR,
-    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: NOIR,
   },
   totalFinalLabel: {
     fontSize: 13,
     fontWeight: "bold",
-    color: ROUGE,
+    color: NOIR,
   },
   totalFinalValeur: {
     fontSize: 14,
     fontWeight: "bold",
-    color: ROUGE,
+    color: NOIR,
   },
   signatures: {
     flexDirection: "row",
@@ -272,7 +266,7 @@ const styles = StyleSheet.create({
     width: "42%",
   },
   signatureTitre: {
-    fontSize: 10,
+    fontSize: 11,
     color: GRIS,
     marginBottom: 4,
   },
@@ -283,20 +277,20 @@ const styles = StyleSheet.create({
   },
   signatureLigne: {
     borderBottomWidth: 1,
-    borderBottomColor: "#94a3b8",
+    borderBottomColor: "#999999",
     marginTop: 28,
     marginBottom: 4,
   },
   signatureNom: {
-    fontSize: 10,
-    color: "#0f172a",
+    fontSize: 11,
+    color: NOIR,
   },
   pied: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: BLEU,
+    backgroundColor: NOIR,
     paddingVertical: 10,
     paddingHorizontal: 28,
     flexDirection: "row",
@@ -304,7 +298,7 @@ const styles = StyleSheet.create({
   },
   piedTexte: {
     color: "#ffffff",
-    fontSize: 9,
+    fontSize: 10,
   },
 });
 
@@ -317,10 +311,10 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
   const montantTotal = donnees.examens.reduce((t, e) => t + e.prix, 0);
   const patient = `${donnees.prenomPatient} ${donnees.nomPatient}`.trim();
   const tel = donnees.telephonePatient?.trim() || "—";
-  const signatureSrc =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/images/signature-ham.png`
-      : "/images/signature-ham.png";
+  const agent = donnees.agentNom?.trim() || "—";
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const logoSrc = `${origin}/images/logo-ham-laboratoire.png`;
+  const signatureSrc = `${origin}/images/signature-ham.png`;
 
   return (
     <Document
@@ -331,16 +325,14 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
       <Page size="A4" style={styles.page}>
         <View style={styles.enTete}>
           <View style={styles.enTeteGauche}>
-            <View style={styles.logoBadge}>
-              <Text style={styles.logoBadgeTexte}>HAM</Text>
-            </View>
+            <Image src={logoSrc} style={styles.logo} />
             <View style={styles.enTeteInfos}>
               <Text style={styles.nomLabo}>HAM LABORATOIRE</Text>
-              <Text style={styles.sousNom}>Centre de Diagnostic et d&apos;Analyses Médicales</Text>
-              <Text style={styles.sousNom}>{L.rccm}</Text>
-              <Text style={styles.contact}>
-                Tél. {L.telephones}
+              <Text style={styles.sousNom}>
+                Centre de Diagnostic et d'Analyses Médicales
               </Text>
+              <Text style={styles.sousNom}>{L.rccm}</Text>
+              <Text style={styles.contact}>Tél. {L.telephones}</Text>
               <Text style={styles.contact}>{L.email}</Text>
             </View>
           </View>
@@ -388,6 +380,12 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
               {donnees.medecinResponsable || "—"}
             </Text>
             <Text style={styles.carteLigne}>
+              <Text style={styles.carteLabel}>
+                {donnees.labels.agent ?? "Émis par"} :{" "}
+              </Text>
+              {agent}
+            </Text>
+            <Text style={styles.carteLigne}>
               <Text style={styles.carteLabel}>Examens : </Text>
               {donnees.examens.length} sélectionné
               {donnees.examens.length > 1 ? "s" : ""}
@@ -431,7 +429,7 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
               • Facturation après validation et envoi à la caisse.
             </Text>
             <Text style={styles.conditionsLigne}>
-              • Tarifs susceptibles d&apos;évoluer selon protocoles.
+              • Tarifs susceptibles d'évoluer selon protocoles.
             </Text>
             <Text style={styles.conditionsLigne}>
               • Devis valable 15 jours à compter de la date.
@@ -460,7 +458,7 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
           <View style={styles.signatureBloc}>
             <Text style={styles.signatureTitre}>Préparé par</Text>
             <View style={styles.signatureLigne} />
-            <Text style={styles.signatureNom}>Réception — HAM Laboratoire</Text>
+            <Text style={styles.signatureNom}>{agent}</Text>
           </View>
 
           <View style={[styles.signatureBloc, { alignItems: "flex-end" }]}>

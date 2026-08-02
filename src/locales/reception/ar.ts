@@ -852,6 +852,7 @@ export const receptionAr = {
       prix: "Prix",
       total: "Total",
       genereLe: "Généré le",
+      agent: "صادر عن",
     },
   },
 } satisfies Record<keyof ReceptionFr, unknown>;

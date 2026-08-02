@@ -849,6 +849,7 @@ export const receptionFr = {
       prix: "Prix",
       total: "Total",
       genereLe: "Généré le",
+      agent: "Émis par",
     },
   },
 } as const;

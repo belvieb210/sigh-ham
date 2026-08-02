@@ -24,19 +24,24 @@ function blobVersDataUrl(blob: Blob): Promise<string> {
       if (typeof reader.result === "string") resolve(reader.result);
       else reject(new Error("Lecture PDF impossible"));
     };
-    reader.onerror = () => reject(reader.error ?? new Error("Lecture PDF impossible"));
+    reader.onerror = () =>
+      reject(reader.error ?? new Error("Lecture PDF impossible"));
     reader.readAsDataURL(blob);
   });
 }
 
-async function ouvrirPdfSurMobile(blob: Blob, nomFichier: string): Promise<boolean> {
+/**
+ * Sur mobile, les URL blob: (blob:https://...) sont souvent bloquées.
+ * On utilise data: URL, partage natif, ou téléchargement — jamais blob: seul.
+ */
+async function ouvrirPdfSansBlob(blob: Blob, nomFichier: string): Promise<boolean> {
   const fichier = new File([blob], nomFichier, { type: "application/pdf" });
 
-  // Android / iOS récents : partage natif (ouvre le visualiseur PDF)
   const nav = navigator as Navigator & {
     canShare?: (data: ShareData) => boolean;
     share?: (data: ShareData) => Promise<void>;
   };
+
   if (nav.canShare?.({ files: [fichier] }) && nav.share) {
     try {
       await nav.share({
@@ -46,32 +51,31 @@ async function ouvrirPdfSurMobile(blob: Blob, nomFichier: string): Promise<boole
       });
       return true;
     } catch {
-      /* utilisateur a annulé ou share indisponible → fallback */
+      /* annulé → fallback */
     }
   }
 
-  // data: URL — plus fiable que blob: dans un nouvel onglet sur mobile
   const dataUrl = await blobVersDataUrl(blob);
 
+  // Téléchargement (Android / la plupart des navigateurs)
   const lien = document.createElement("a");
   lien.href = dataUrl;
   lien.download = nomFichier;
-  lien.target = "_blank";
   lien.rel = "noopener";
   document.body.appendChild(lien);
   lien.click();
   lien.remove();
 
-  // iOS Safari : ouvrir dans le même onglet si le téléchargement ne suffit pas
-  const estIos = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  if (estIos) {
+  // iOS Safari : afficher le PDF dans le même onglet (data: OK, blob: non)
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
     window.location.assign(dataUrl);
   }
 
   return true;
 }
 
-async function ouvrirPdfSurDesktop(blob: Blob, nomFichier: string): Promise<boolean> {
+async function ouvrirPdfDesktop(blob: Blob, nomFichier: string): Promise<boolean> {
+  // Desktop : blob: fonctionne correctement (problème surtout mobile / iOS)
   const url = URL.createObjectURL(blob);
   const onglet = window.open(url, "_blank");
 
@@ -84,13 +88,13 @@ async function ouvrirPdfSurDesktop(blob: Blob, nomFichier: string): Promise<bool
     lien.remove();
   }
 
-  window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   return true;
 }
 
 /**
- * Génère un devis PDF A4 (@react-pdf/renderer).
- * Desktop : nouvel onglet. Mobile : share / data-URL (blob: échoue souvent sur iOS).
+ * Génère un devis PDF A4.
+ * N'utilise plus d'URL blob: pour l'affichage (problème mobile confirmé).
  */
 export async function imprimerDevisEstimation(
   donnees: DonneesDevisEstimation
@@ -104,10 +108,10 @@ export async function imprimerDevisEstimation(
     const nomFichier = `estimation-${donnees.numeroEnregistrement || "devis"}.pdf`;
 
     if (estNavigateurMobile()) {
-      return ouvrirPdfSurMobile(blob, nomFichier);
+      return ouvrirPdfSansBlob(blob, nomFichier);
     }
 
-    return ouvrirPdfSurDesktop(blob, nomFichier);
+    return ouvrirPdfDesktop(blob, nomFichier);
   } catch (error) {
     console.error("[imprimerDevisEstimation]", error);
     return false;

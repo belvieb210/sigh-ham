@@ -23,7 +23,7 @@ interface PropsContenuReception {
   utilisateur: UtilisateurReception;
 }
 
-function CorpsAccueilReception() {
+function CorpsAccueilReception({ agentNom }: { agentNom: string }) {
   const refFormulaire = useRef<HTMLElement>(null);
   const [donneesPrefill, setDonneesPrefill] = useState<DonneesFormulairePatient | null>(null);
   const [patientSelectionneId, setPatientSelectionneId] = useState<string | null>(null);
@@ -99,6 +99,7 @@ function CorpsAccueilReception() {
         variante="apercu"
         donneesPrefill={donneesPrefill}
         onPrefillApplique={() => setDonneesPrefill(null)}
+        agentNom={agentNom}
       />
       <TableauPatientsRecents
         patientSelectionneId={patientSelectionneId}
@@ -120,7 +121,9 @@ export function ContenuReception({ utilisateur }: PropsContenuReception) {
       sousTitre={t("reception.layout.sousTitre")}
       panneauDroit={<PanneauDroitReception afficherTransfertManuel />}
     >
-      <CorpsAccueilReception />
+      <CorpsAccueilReception
+        agentNom={`${utilisateur.prenom} ${utilisateur.nom}`.trim()}
+      />
     </MiseEnPageReception>
   );
 }

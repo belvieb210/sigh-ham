@@ -116,6 +116,7 @@ export function ContenuNouveauPatient({ utilisateur }: PropsContenuNouveauPatien
               variante="complet"
               modeEdition={modeEdition}
               donneesPrefill={modeEdition ? donneesEdition : null}
+              agentNom={`${utilisateur.prenom} ${utilisateur.nom}`.trim()}
             />
           )}
 

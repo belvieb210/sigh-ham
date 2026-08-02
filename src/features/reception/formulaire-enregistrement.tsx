@@ -89,6 +89,8 @@ interface PropsFormulaireEnregistrement {
   onPrefillApplique?: () => void;
   /** Mode modification d'un patient existant (page nouveau?modifier=) */
   modeEdition?: boolean;
+  /** Agent connecté (affiché sur le devis PDF) */
+  agentNom?: string;
 }
 
 function mapperPrefillVersEtat(donnees: DonneesFormulairePatient): EtatFormulairePatient {
@@ -122,7 +124,13 @@ export const FormulaireEnregistrement = forwardRef<
   HTMLElement,
   PropsFormulaireEnregistrement
 >(function FormulaireEnregistrement(
-  { variante = "apercu", donneesPrefill, onPrefillApplique, modeEdition = false },
+  {
+    variante = "apercu",
+    donneesPrefill,
+    onPrefillApplique,
+    modeEdition = false,
+    agentNom = "",
+  },
   ref
 ) {
   const router = useRouter();
@@ -1042,6 +1050,7 @@ export const FormulaireEnregistrement = forwardRef<
               telephonePatient={formulaire.telephone}
               numeroEnregistrement={numeroEnregistrement}
               dateEnregistrement={aujourdhui}
+              agentNom={agentNom}
               onErreur={(message) => setErreur(message || null)}
             />
           </div>

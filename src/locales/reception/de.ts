@@ -852,6 +852,7 @@ export const receptionDe = {
       prix: "Prix",
       total: "Total",
       genereLe: "Généré le",
+      agent: "Ausgestellt von",
     },
   },
 } satisfies Record<keyof ReceptionFr, unknown>;

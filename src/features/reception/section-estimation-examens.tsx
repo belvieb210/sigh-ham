@@ -23,6 +23,8 @@ interface PropsSectionEstimationExamens {
   telephonePatient?: string;
   numeroEnregistrement: string;
   dateEnregistrement: string;
+  /** Nom de l'agent connecté qui émet le devis */
+  agentNom?: string;
   onErreur?: (message: string) => void;
 }
 
@@ -37,6 +39,7 @@ export function SectionEstimationExamens({
   telephonePatient = "",
   numeroEnregistrement,
   dateEnregistrement,
+  agentNom = "",
   onErreur,
 }: PropsSectionEstimationExamens) {
   const { t } = useTranslation();
@@ -75,6 +78,7 @@ export function SectionEstimationExamens({
       telephonePatient,
       numeroEnregistrement,
       dateEnregistrement: dateHeure,
+      agentNom: agentNom.trim(),
       labels: {
         titreTicket: t("reception.estimations.ticket.titre"),
         numero: t("reception.estimations.ticket.numero"),
@@ -86,6 +90,7 @@ export function SectionEstimationExamens({
         prix: t("reception.estimations.ticket.prix"),
         total: t("reception.estimations.ticket.total"),
         genereLe: t("reception.estimations.ticket.genereLe"),
+        agent: t("reception.estimations.ticket.agent"),
       },
     }).then((ok) => {
       if (!ok) {

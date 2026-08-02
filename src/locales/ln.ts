@@ -2,6 +2,7 @@ import type { TraductionsSite } from "./types";
 import { communLn } from "./commun/ln";
 import { pagesLn } from "./pages/ln";
 import { receptionLn } from "./reception/ln";
+import { caisseLn } from "./caisse/ln";
 
 /** Lingala — traductions principales du site public */
 const ln: { translation: TraductionsSite } = {
@@ -153,6 +154,7 @@ const ln: { translation: TraductionsSite } = {
     },
     pages: pagesLn,
     reception: receptionLn,
+    caisse: caisseLn,
     ...communLn,
   },
 };

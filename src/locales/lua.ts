@@ -2,6 +2,7 @@ import type { TraductionsSite } from "./types";
 import { communLua } from "./commun/lua";
 import { pagesLua } from "./pages/lua";
 import { receptionLua } from "./reception/lua";
+import { caisseLua } from "./caisse/lua";
 
 /** Tshiluba — traductions principales du site public */
 const lua: { translation: TraductionsSite } = {
@@ -153,6 +154,7 @@ const lua: { translation: TraductionsSite } = {
     },
     pages: pagesLua,
     reception: receptionLua,
+    caisse: caisseLua,
     ...communLua,
   },
 };

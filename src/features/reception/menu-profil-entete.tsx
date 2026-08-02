@@ -12,9 +12,14 @@ import type { UtilisateurReception } from "@/lib/auth/props-utilisateur-receptio
 interface PropsMenuProfilEntete {
   utilisateur: UtilisateurReception;
   compact?: boolean;
+  hrefProfil?: string;
 }
 
-export function MenuProfilEntete({ utilisateur, compact = false }: PropsMenuProfilEntete) {
+export function MenuProfilEntete({
+  utilisateur,
+  compact = false,
+  hrefProfil = "/sigh/reception/profil",
+}: PropsMenuProfilEntete) {
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -82,7 +87,7 @@ export function MenuProfilEntete({ utilisateur, compact = false }: PropsMenuProf
 
           <DropdownMenu.Item asChild>
             <Link
-              href="/sigh/reception/profil"
+              href={hrefProfil}
               className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-texte-principal outline-none transition-colors hover:bg-bleu-medical-clair/40 focus:bg-bleu-medical-clair/40"
             >
               <UserCircle className="h-4 w-4 text-bleu-medical" />

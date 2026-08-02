@@ -2,6 +2,7 @@ import type { TraductionsSite } from "./types";
 import { communHi } from "./commun/hi";
 import { pagesHi } from "./pages/hi";
 import { receptionHi } from "./reception/hi";
+import { caisseHi } from "./caisse/hi";
 
 const hi: { translation: TraductionsSite } = {
   translation: {
@@ -149,6 +150,7 @@ const hi: { translation: TraductionsSite } = {
     },
     pages: pagesHi,
     reception: receptionHi,
+    caisse: caisseHi,
     ...communHi,
   },
 };

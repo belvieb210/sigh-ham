@@ -19,6 +19,7 @@ import { ChampMotDePasse } from "@/components/ui/champ-mot-de-passe";
 import { AvatarUtilisateur } from "@/components/ui/avatar-utilisateur";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 import { MiseEnPageReception, type UtilisateurReception } from "@/features/reception/mise-en-page-reception";
+import { MiseEnPageCaisse } from "@/features/caisse/mise-en-page-caisse";
 import { traduireRoleHospitalier } from "@/features/messagerie/traduire-role";
 import type { ProfilUtilisateurPublic } from "@/lib/auth/types-profil";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
@@ -26,6 +27,8 @@ import { cn } from "@/lib/utils";
 
 interface PropsContenuProfilUtilisateur {
   utilisateur: UtilisateurReception;
+  /** Shell de salle (défaut: réception) */
+  salle?: "reception" | "caisse";
 }
 
 function formaterDate(iso: string | null, locale: string) {
@@ -40,10 +43,22 @@ function formaterDate(iso: string | null, locale: string) {
   }
 }
 
-export function ContenuProfilUtilisateur({ utilisateur }: PropsContenuProfilUtilisateur) {
+export function ContenuProfilUtilisateur({
+  utilisateur,
+  salle = "reception",
+}: PropsContenuProfilUtilisateur) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const inputPhotoRef = useRef<HTMLInputElement>(null);
+  const Layout = salle === "caisse" ? MiseEnPageCaisse : MiseEnPageReception;
+  const titreLayout =
+    salle === "caisse" ? t("caisse.layout.titre") : t("reception.layout.titre");
+  const sousTitreLayout =
+    salle === "caisse" ? t("caisse.layout.sousTitre") : t("reception.layout.sousTitre");
+  const filAccueil =
+    salle === "caisse"
+      ? { label: t("caisse.layout.caisse"), href: "/sigh/caisse" }
+      : { label: t("reception.common.reception"), href: "/sigh/reception" };
 
   const [profil, setProfil] = useState<ProfilUtilisateurPublic | null>(null);
   const [chargement, setChargement] = useState(true);
@@ -233,17 +248,25 @@ export function ContenuProfilUtilisateur({ utilisateur }: PropsContenuProfilUtil
   };
 
   return (
-    <MiseEnPageReception
+    <Layout
       utilisateur={utilisateurAffiche}
-      titre={t("reception.layout.titre")}
-      sousTitre={t("reception.layout.sousTitre")}
+      titre={titreLayout}
+      sousTitre={sousTitreLayout}
     >
       <div className="mx-auto w-full max-w-3xl space-y-5">
         <EnTetePageReception
-          titre={t("reception.pages.profil.titre")}
-          description={t("reception.pages.profil.description")}
+          titre={
+            salle === "caisse"
+              ? t("caisse.pages.profil.titre")
+              : t("reception.pages.profil.titre")
+          }
+          description={
+            salle === "caisse"
+              ? t("caisse.pages.profil.description")
+              : t("reception.pages.profil.description")
+          }
           fil={[
-            { label: t("reception.common.reception"), href: "/sigh/reception" },
+            filAccueil,
             { label: t("reception.pages.profil.fil") },
           ]}
         />
@@ -514,7 +537,7 @@ export function ContenuProfilUtilisateur({ utilisateur }: PropsContenuProfilUtil
           </>
         )}
       </div>
-    </MiseEnPageReception>
+    </Layout>
   );
 }
 

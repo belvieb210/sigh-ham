@@ -16,6 +16,7 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "db:seed:reception": "npx tsx prisma/seed-utilisateur-reception.ts",
+    "db:seed:caisse": "npx tsx prisma/seed-utilisateur-caisse.ts",
     "db:seed:messagerie": "npx tsx prisma/seed-messagerie.ts",
     "db:export": "bash deploy/export-postgres.sh",
     "db:import": "bash deploy/import-postgres.sh",

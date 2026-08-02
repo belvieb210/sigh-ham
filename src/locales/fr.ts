@@ -2,6 +2,7 @@ import type { TraductionsSite } from "./types";
 import { communFr } from "./commun/fr";
 import { pagesFr } from "./pages/fr";
 import { receptionFr } from "./reception/fr";
+import { caisseFr } from "./caisse/fr";
 
 const fr: { translation: TraductionsSite } = {
   translation: {
@@ -152,6 +153,7 @@ const fr: { translation: TraductionsSite } = {
     },
     pages: pagesFr,
     reception: receptionFr,
+    caisse: caisseFr,
     ...communFr,
   },
 };

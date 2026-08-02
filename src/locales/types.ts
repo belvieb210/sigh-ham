@@ -127,6 +127,7 @@ export interface TraductionsSite {
   campagnesDetail: DeepString<CommunFr["campagnesDetail"]>;
   placeholders: DeepString<CommunFr["placeholders"]>;
   reception: DeepString<import("./reception/fr").ReceptionFr>;
+  caisse: DeepString<import("./caisse/fr").CaisseFr>;
 }
 
 export type CodeLangue =

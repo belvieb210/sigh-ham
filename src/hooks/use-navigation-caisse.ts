@@ -18,8 +18,8 @@ export function useNavigationCaisse() {
       etiquette: t(`caisse.nav.${item.id}`),
     }));
 
-  const accueil = useMemo(
-    () => mapSection(NAVIGATION_CAISSE.accueil),
+  const tableauDeBord = useMemo(
+    () => mapSection(NAVIGATION_CAISSE.tableauDeBord),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [t, langue]
   );
@@ -30,6 +30,11 @@ export function useNavigationCaisse() {
   );
   const rapports = useMemo(
     () => mapSection(NAVIGATION_CAISSE.rapports),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, langue]
+  );
+  const communication = useMemo(
+    () => mapSection(NAVIGATION_CAISSE.communication),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [t, langue]
   );
@@ -48,5 +53,5 @@ export function useNavigationCaisse() {
     [t, langue]
   );
 
-  return { accueil, caisse, rapports, parametres, basse };
+  return { tableauDeBord, caisse, rapports, communication, parametres, basse };
 }

@@ -26,10 +26,11 @@ export function NavigationBasseCaisse({ onMenu }: PropsNavigationBasseCaisse) {
           const actif =
             pathname === item.href ||
             (item.id === "accueil" && pathname === "/sigh/caisse") ||
-            (item.id === "file" && pathname.startsWith("/sigh/caisse/patients")) ||
-            (item.id === "nouvelleFacture" &&
+            (item.id === "patients" && pathname.startsWith("/sigh/caisse/patients")) ||
+            (item.id === "facturation" &&
               pathname.startsWith("/sigh/caisse/facturation")) ||
-            (item.id === "factures" && pathname.startsWith("/sigh/caisse/factures"));
+            (item.id === "encaissements" &&
+              pathname.startsWith("/sigh/caisse/encaissements"));
           const Icone = item.icone;
           const estFab = "fab" in item && item.fab;
 

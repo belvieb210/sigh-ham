@@ -37,7 +37,8 @@ function LiensNavigation({
   const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
-  const { accueil, caisse, rapports, parametres } = useNavigationCaisse();
+  const { tableauDeBord, caisse, rapports, communication, parametres } =
+    useNavigationCaisse();
   const heureOuverture = "08:15";
 
   const estActif = (href: string) => {
@@ -130,9 +131,16 @@ function LiensNavigation({
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        {rendreSection(t("caisse.layout.sectionAccueil"), accueil as ItemNav[])}
+        {rendreSection(
+          t("caisse.layout.sectionTableauDeBord"),
+          tableauDeBord as ItemNav[]
+        )}
         {rendreSection(t("caisse.layout.sectionCaisse"), caisse as ItemNav[])}
         {rendreSection(t("caisse.layout.sectionRapports"), rapports as ItemNav[])}
+        {rendreSection(
+          t("caisse.layout.sectionCommunication"),
+          communication as ItemNav[]
+        )}
         {rendreSection(t("caisse.layout.sectionParametres"), parametres as ItemNav[])}
       </nav>
 
@@ -151,7 +159,7 @@ function LiensNavigation({
           <p className="text-sm font-bold text-texte-principal">500,00 $</p>
           <button
             type="button"
-            className="mt-2 w-full rounded-lg border border-gris-bordure bg-white px-2 py-1.5 text-xs font-medium text-texte-principal hover:bg-gris-tres-clair"
+            className="mt-2 w-full rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100"
           >
             {t("caisse.layout.cloturerSession")}
           </button>

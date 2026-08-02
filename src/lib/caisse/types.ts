@@ -52,11 +52,14 @@ export interface FactureCaisseDetail {
 
 export interface HistoriquePaiementCaisse {
   id: string;
+  numeroRecu: string;
   montant: number;
   mode: ModePaiement;
+  typeFacture: string | null;
   reference: string | null;
   payeLe: string;
   caissier: string;
+  statut: "PAYE" | "PARTIEL";
 }
 
 export interface DossierFacturationCaisse {
@@ -71,6 +74,8 @@ export interface DossierFacturationCaisse {
   statutAttente: "EN_ATTENTE_PAIEMENT" | "PAYE" | "HORS_FILE";
   fileAttenteId: string | null;
   transfertId: string | null;
+  recuLe: string | null;
+  transferePar: string | null;
   facture: FactureCaisseDetail;
 }
 

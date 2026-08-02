@@ -1,14 +1,11 @@
-export function formaterMontantCaisse(montant: number, devise = "USD", locale = "fr-CD") {
-  try {
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: devise === "CDF" ? "CDF" : "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(montant);
-  } catch {
-    return `${montant.toFixed(2)} $`;
-  }
+export function formaterMontantCaisse(montant: number, devise = "USD", locale = "fr-FR") {
+  const n = Number.isFinite(montant) ? montant : 0;
+  const corps = n.toLocaleString(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  if (devise === "CDF") return `${corps} CDF`;
+  return `${corps} $`;
 }
 
 export function formaterHeure(iso: string, locale = "fr-FR") {

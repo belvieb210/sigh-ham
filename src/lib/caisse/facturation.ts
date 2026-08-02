@@ -66,7 +66,6 @@ export async function obtenirDossierFacturation(
       },
       factures: {
         orderBy: { createdAt: "desc" },
-        take: 1,
         include: {
           lignes: true,
           paiements: {
@@ -88,6 +87,9 @@ export async function obtenirDossierFacturation(
             },
             orderBy: { emisLe: "desc" },
             take: 1,
+            include: {
+              emetteur: { select: { prenom: true, nom: true } },
+            },
           },
         },
       },
@@ -102,7 +104,10 @@ export async function obtenirDossierFacturation(
       ? passage.fileAttente
       : null;
   const transfert = passage?.transferts[0] ?? null;
-  const facture = dossier.factures[0] ?? null;
+  const facture =
+    dossier.factures.find((f) => f.statut !== "ANNULEE" && f.statut !== "PAYEE") ??
+    dossier.factures[0] ??
+    null;
 
   const lignesExamens = dossier.examensLaboratoire.map((ex) => ({
     id: ex.id,
@@ -133,6 +138,30 @@ export async function obtenirDossierFacturation(
   if (fileAttente) statutAttente = "EN_ATTENTE_PAIEMENT";
   else if (facture?.statut === "PAYEE") statutAttente = "PAYE";
 
+  const historiquePaiements = dossier.factures.flatMap((f) =>
+    f.paiements.map((p) => {
+      const modeFacture =
+        p.reference
+          ?.split("|")
+          .find((part) => part.startsWith("modeFacture="))
+          ?.replace("modeFacture=", "") ?? null;
+      return {
+        id: p.id,
+        numeroRecu: f.numeroFacture.replace(/^FAC-/, "REC-"),
+        montant: decimalVersNombre(p.montant),
+        mode: p.mode,
+        typeFacture: modeFacture,
+        reference: p.reference,
+        payeLe: p.payeLe.toISOString(),
+        caissier: formaterCaissier(p.caissier.prenom, p.caissier.nom),
+        statut:
+          f.statut === "PAYEE" || decimalVersNombre(p.montant) > 0
+            ? ("PAYE" as const)
+            : ("PARTIEL" as const),
+      };
+    })
+  );
+
   return {
     dossierId: dossier.id,
     numeroPatient: dossier.patient.numeroPatient,
@@ -145,23 +174,23 @@ export async function obtenirDossierFacturation(
     statutAttente,
     fileAttenteId: fileAttente?.id ?? null,
     transfertId: transfert?.id ?? null,
+    recuLe:
+      fileAttente?.arriveLe.toISOString() ??
+      transfert?.accepteLe?.toISOString() ??
+      transfert?.emisLe.toISOString() ??
+      null,
+    transferePar: transfert?.emetteur
+      ? formaterCaissier(transfert.emetteur.prenom, transfert.emetteur.nom)
+      : null,
     facture: {
       id: facture?.id ?? null,
       numeroFacture: facture?.numeroFacture ?? null,
       statut: facture?.statut ?? null,
       montantTotal,
       montantPaye: facture ? decimalVersNombre(facture.montantPaye) : 0,
-      devise: facture?.devise ?? "CDF",
+      devise: facture?.devise ?? "USD",
       lignes,
-      historiquePaiements:
-        facture?.paiements.map((p) => ({
-          id: p.id,
-          montant: decimalVersNombre(p.montant),
-          mode: p.mode,
-          reference: p.reference,
-          payeLe: p.payeLe.toISOString(),
-          caissier: formaterCaissier(p.caissier.prenom, p.caissier.nom),
-        })) ?? [],
+      historiquePaiements,
     },
   };
 }

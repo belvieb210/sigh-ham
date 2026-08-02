@@ -5,6 +5,7 @@ import {
   View,
   StyleSheet,
   Font,
+  Image,
 } from "@react-pdf/renderer";
 import type { TypeExamenReception } from "@/lib/reception/types";
 import { INFOS_LEGALES_TICKET } from "@/constants/ticket-thermique";
@@ -53,48 +54,37 @@ function formaterPrix(prix: number): string {
   })}`;
 }
 
-/** Bleu médical HAM — rendu PDF professionnel */
-const BLEU = "#0b4f8a";
+const BLEU = "#003366";
 const BLEU_CLAIR = "#e8f1f8";
-const BLEU_MOYEN = "#1a6bb5";
+const ROUGE = "#c62828";
 const GRIS = "#475569";
-const GRIS_CLAIR = "#f1f5f9";
-const BORDURE = "#cbd5e1";
+const GRIS_CLAIR = "#f8fafc";
+const BORDURE = "#93c5e8";
 
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Roboto",
-    fontSize: 12,
-    paddingTop: 0,
-    paddingBottom: 28,
-    paddingHorizontal: 0,
+    fontSize: 11,
+    paddingTop: 28,
+    paddingHorizontal: 28,
+    paddingBottom: 48,
     color: "#0f172a",
     backgroundColor: "#ffffff",
   },
-  bandeau: {
-    backgroundColor: BLEU,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-  },
-  bandeauTexte: {
-    color: "#ffffff",
-    fontSize: 10,
-    textAlign: "center",
-    letterSpacing: 0.6,
-  },
-  contenu: {
-    paddingHorizontal: 36,
-    paddingTop: 22,
-  },
   enTete: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 18,
-    gap: 14,
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 16,
+  },
+  enTeteGauche: {
+    flexDirection: "row",
+    width: "58%",
+    gap: 10,
   },
   logoBadge: {
-    width: 68,
-    height: 68,
+    width: 56,
+    height: 56,
     borderRadius: 10,
     backgroundColor: BLEU,
     alignItems: "center",
@@ -102,182 +92,219 @@ const styles = StyleSheet.create({
   },
   logoBadgeTexte: {
     color: "#ffffff",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
-    textAlign: "center",
   },
-  enTeteTexte: {
+  enTeteInfos: {
     flex: 1,
-    paddingLeft: 12,
+    paddingLeft: 8,
   },
-  nomCentre: {
+  nomLabo: {
     fontSize: 13,
     fontWeight: "bold",
     color: BLEU,
     marginBottom: 2,
   },
-  nomLabo: {
-    fontSize: 15,
-    fontWeight: "bold",
-    color: "#0f172a",
-    marginBottom: 4,
-  },
-  legal: {
-    fontSize: 9,
+  sousNom: {
+    fontSize: 10,
     color: GRIS,
     marginBottom: 1,
   },
-  slogan: {
-    fontSize: 10,
-    color: BLEU_MOYEN,
-    fontWeight: "bold",
-    marginTop: 4,
-  },
-  bandeauTitre: {
-    backgroundColor: BLEU_CLAIR,
-    borderLeftWidth: 5,
-    borderLeftColor: BLEU,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 18,
-  },
-  titre: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: BLEU,
-    letterSpacing: 1.5,
-  },
-  sousTitre: {
-    fontSize: 11,
-    color: GRIS,
-    marginTop: 3,
-  },
-  carteMeta: {
-    flexDirection: "row",
-    borderWidth: 1,
-    borderColor: BORDURE,
-    borderRadius: 6,
-    marginBottom: 20,
-    overflow: "hidden",
-  },
-  metaCol: {
-    width: "50%",
-    padding: 14,
-  },
-  metaColDroite: {
-    width: "50%",
-    padding: 14,
-    borderLeftWidth: 1,
-    borderLeftColor: BORDURE,
-    backgroundColor: GRIS_CLAIR,
-  },
-  metaLabel: {
+  contact: {
     fontSize: 9,
     color: GRIS,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    marginBottom: 3,
-    fontWeight: "bold",
+    marginTop: 4,
   },
-  metaValeur: {
+  enTeteDroite: {
+    width: "40%",
+    alignItems: "flex-end",
+  },
+  badgeTitre: {
+    backgroundColor: BLEU,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 8,
+  },
+  badgeTitreTexte: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  numeroDoc: {
+    color: ROUGE,
     fontSize: 13,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 4,
+  },
+  metaDroite: {
+    fontSize: 10,
     color: "#0f172a",
+    marginBottom: 2,
+    textAlign: "right",
   },
-  sectionTitre: {
-    fontSize: 13,
+  cartes: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 16,
+  },
+  carte: {
+    width: "48.5%",
+    borderWidth: 1.5,
+    borderColor: BORDURE,
+    borderRadius: 6,
+    padding: 12,
+    backgroundColor: "#ffffff",
+  },
+  carteTitre: {
+    fontSize: 10,
     fontWeight: "bold",
     color: BLEU,
     marginBottom: 8,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
+  },
+  carteLigne: {
+    fontSize: 11,
+    marginBottom: 4,
+    color: "#0f172a",
+  },
+  carteLabel: {
+    color: GRIS,
+    fontSize: 10,
   },
   table: {
     borderWidth: 1,
-    borderColor: BORDURE,
+    borderColor: "#d1d5db",
     borderRadius: 4,
     overflow: "hidden",
-    marginBottom: 12,
+    marginBottom: 14,
   },
   tableHeader: {
     flexDirection: "row",
     backgroundColor: BLEU,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 8,
   },
   headerCell: {
     color: "#ffffff",
     fontWeight: "bold",
-    fontSize: 11,
+    fontSize: 10,
   },
   tableRow: {
     flexDirection: "row",
-    paddingVertical: 10,
-    paddingHorizontal: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: BORDURE,
-    alignItems: "center",
+    borderBottomColor: "#e5e7eb",
   },
   tableRowAlt: {
-    backgroundColor: BLEU_CLAIR,
+    backgroundColor: GRIS_CLAIR,
   },
-  colCode: { width: "14%", fontSize: 12, fontWeight: "bold", color: BLEU },
-  colNom: { width: "44%", fontSize: 12 },
-  colCat: { width: "24%", fontSize: 11, color: GRIS },
-  colPrix: { width: "18%", fontSize: 12, textAlign: "right", fontWeight: "bold" },
-  totalBloc: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginBottom: 18,
-  },
-  totalCarte: {
-    width: "48%",
-    backgroundColor: BLEU,
-    borderRadius: 6,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+  colN: { width: "8%", fontSize: 11 },
+  colDesc: { width: "48%", fontSize: 11 },
+  colCode: { width: "18%", fontSize: 11, fontWeight: "bold", color: BLEU },
+  colPrix: { width: "26%", fontSize: 11, textAlign: "right", fontWeight: "bold" },
+  basTable: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    marginBottom: 16,
+    gap: 10,
   },
-  totalLabel: {
-    color: "#ffffff",
+  conditions: {
+    width: "52%",
+    borderWidth: 1,
+    borderColor: BORDURE,
+    borderRadius: 6,
+    padding: 10,
+  },
+  conditionsTitre: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: BLEU,
+    marginBottom: 6,
+  },
+  conditionsLigne: {
+    fontSize: 9,
+    color: GRIS,
+    marginBottom: 3,
+    lineHeight: 1.35,
+  },
+  totaux: {
+    width: "44%",
+  },
+  totalLigne: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  totalFinal: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    marginTop: 4,
+    backgroundColor: BLEU_CLAIR,
+    borderRadius: 4,
+  },
+  totalFinalLabel: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: ROUGE,
+  },
+  totalFinalValeur: {
     fontSize: 14,
     fontWeight: "bold",
+    color: ROUGE,
   },
-  totalValeur: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "bold",
+  signatures: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    marginTop: 8,
+    marginBottom: 18,
   },
-  mention: {
-    backgroundColor: GRIS_CLAIR,
-    borderRadius: 4,
-    padding: 12,
+  signatureBloc: {
+    width: "42%",
+  },
+  signatureTitre: {
     fontSize: 10,
     color: GRIS,
-    lineHeight: 1.45,
-    marginBottom: 20,
-  },
-  pied: {
-    borderTopWidth: 2,
-    borderTopColor: BLEU,
-    paddingTop: 12,
-    marginTop: 8,
-  },
-  piedSlogan: {
-    fontSize: 11,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: BLEU,
     marginBottom: 4,
   },
-  piedLigne: {
+  signatureImage: {
+    width: 160,
+    height: 70,
+    objectFit: "contain",
+  },
+  signatureLigne: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#94a3b8",
+    marginTop: 28,
+    marginBottom: 4,
+  },
+  signatureNom: {
     fontSize: 10,
-    textAlign: "center",
-    color: GRIS,
-    marginBottom: 2,
+    color: "#0f172a",
+  },
+  pied: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: BLEU,
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  piedTexte: {
+    color: "#ffffff",
+    fontSize: 9,
   },
 });
 
@@ -285,20 +312,16 @@ interface PropsDocumentDevisEstimation {
   donnees: DonneesDevisEstimation;
 }
 
-function ChampMeta({ label, valeur }: { label: string; valeur: string }) {
-  return (
-    <View>
-      <Text style={styles.metaLabel}>{label}</Text>
-      <Text style={styles.metaValeur}>{valeur}</Text>
-    </View>
-  );
-}
-
 export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimation) {
   const L = INFOS_LEGALES_TICKET;
   const montantTotal = donnees.examens.reduce((t, e) => t + e.prix, 0);
   const patient = `${donnees.prenomPatient} ${donnees.nomPatient}`.trim();
   const tel = donnees.telephonePatient?.trim() || "—";
+  const signatureSrc =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/images/signature-ham.png`
+      : "/images/signature-ham.png";
+
   return (
     <Document
       title={`${donnees.labels.titreTicket} — ${patient}`}
@@ -306,118 +329,149 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
       subject="Devis d'estimation d'examens"
     >
       <Page size="A4" style={styles.page}>
-        <View style={styles.bandeau}>
-          <Text style={styles.bandeauTexte}>
-            CENTRE DE DIAGNOSTIC ET D&apos;ANALYSES MÉDICALES — DOCUMENT OFFICIEL
-          </Text>
-        </View>
-
-        <View style={styles.contenu}>
-          <View style={styles.enTete}>
+        <View style={styles.enTete}>
+          <View style={styles.enTeteGauche}>
             <View style={styles.logoBadge}>
               <Text style={styles.logoBadgeTexte}>HAM</Text>
             </View>
-            <View style={styles.enTeteTexte}>
-              <Text style={styles.nomCentre}>{L.ligne1}</Text>
-              <Text style={styles.nomLabo}>{L.ligne2}</Text>
-              <Text style={styles.legal}>{L.rccm}</Text>
-              <Text style={styles.legal}>{L.idNat}</Text>
-              <Text style={styles.legal}>
-                {L.nImpot} {L.minSante}
+            <View style={styles.enTeteInfos}>
+              <Text style={styles.nomLabo}>HAM LABORATOIRE</Text>
+              <Text style={styles.sousNom}>Centre de Diagnostic et d&apos;Analyses Médicales</Text>
+              <Text style={styles.sousNom}>{L.rccm}</Text>
+              <Text style={styles.contact}>
+                Tél. {L.telephones}
               </Text>
-              <Text style={styles.slogan}>
-                {L.sloganLigne1} {L.sloganLigne2}
-              </Text>
+              <Text style={styles.contact}>{L.email}</Text>
             </View>
           </View>
 
-          <View style={styles.bandeauTitre}>
-            <Text style={styles.titre}>{donnees.labels.titreTicket}</Text>
-            <Text style={styles.sousTitre}>
-              Devis estimatif d&apos;examens médicaux — non contractuel
+          <View style={styles.enTeteDroite}>
+            <View style={styles.badgeTitre}>
+              <Text style={styles.badgeTitreTexte}>{donnees.labels.titreTicket}</Text>
+            </View>
+            <Text style={styles.numeroDoc}>
+              N° {donnees.numeroEnregistrement || "—"}
+            </Text>
+            <Text style={styles.metaDroite}>
+              Date : {donnees.dateEnregistrement || "—"}
+            </Text>
+            <Text style={styles.metaDroite}>Valable pour : 15 jours</Text>
+            <Text style={styles.metaDroite}>Devise : USD ($)</Text>
+          </View>
+        </View>
+
+        <View style={styles.cartes}>
+          <View style={styles.carte}>
+            <Text style={styles.carteTitre}>Informations du patient</Text>
+            <Text style={styles.carteLigne}>
+              <Text style={styles.carteLabel}>Nom : </Text>
+              {patient || "—"}
+            </Text>
+            <Text style={styles.carteLigne}>
+              <Text style={styles.carteLabel}>Téléphone : </Text>
+              {tel}
+            </Text>
+            <Text style={styles.carteLigne}>
+              <Text style={styles.carteLabel}>Dossier N° : </Text>
+              {donnees.numeroEnregistrement || "—"}
             </Text>
           </View>
 
-          <View style={styles.carteMeta}>
-            <View style={styles.metaCol}>
-              <ChampMeta label={donnees.labels.patient} valeur={patient || "—"} />
-              <ChampMeta label={donnees.labels.telephone} valeur={tel} />
-              <ChampMeta
-                label={donnees.labels.medecin}
-                valeur={donnees.medecinResponsable || "—"}
-              />
-            </View>
-            <View style={styles.metaColDroite}>
-              <ChampMeta
-                label={donnees.labels.numero}
-                valeur={donnees.numeroEnregistrement || "—"}
-              />
-              <ChampMeta
-                label={donnees.labels.date}
-                valeur={donnees.dateEnregistrement || "—"}
-              />
-              <ChampMeta
-                label="Examens"
-                valeur={`${donnees.examens.length} sélectionné${donnees.examens.length > 1 ? "s" : ""}`}
-              />
-            </View>
-          </View>
-
-          <Text style={styles.sectionTitre}>Détail des examens</Text>
-
-          <View style={styles.table}>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.colCode, styles.headerCell]}>Code</Text>
-              <Text style={[styles.colNom, styles.headerCell]}>
-                {donnees.labels.description}
-              </Text>
-              <Text style={[styles.colCat, styles.headerCell]}>Catégorie</Text>
-              <Text style={[styles.colPrix, styles.headerCell]}>
-                {donnees.labels.prix}
-              </Text>
-            </View>
-
-            {donnees.examens.map((examen, index) => (
-              <View
-                key={examen.id}
-                style={
-                  index % 2 === 1
-                    ? [styles.tableRow, styles.tableRowAlt]
-                    : styles.tableRow
-                }
-                wrap={false}
-              >
-                <Text style={styles.colCode}>{examen.code}</Text>
-                <Text style={styles.colNom}>{examen.libelle}</Text>
-                <Text style={styles.colCat}>{examen.categorie}</Text>
-                <Text style={styles.colPrix}>{formaterPrix(examen.prix)}</Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.totalBloc}>
-            <View style={styles.totalCarte}>
-              <Text style={styles.totalLabel}>{donnees.labels.total}</Text>
-              <Text style={styles.totalValeur}>{formaterPrix(montantTotal)}</Text>
-            </View>
-          </View>
-
-          <Text style={styles.mention}>
-            Ce document est un devis estimatif. Les examens ne sont facturés
-            qu&apos;après validation et envoi à la caisse. Les tarifs indiqués
-            peuvent évoluer selon les protocoles et disponibilités du laboratoire.
-          </Text>
-
-          <View style={styles.pied}>
-            <Text style={styles.piedSlogan}>{L.sloganPied}</Text>
-            <Text style={styles.piedLigne}>
-              {L.adresseLigne1} — {L.adresseLigne2}
+          <View style={styles.carte}>
+            <Text style={styles.carteTitre}>Émis pour</Text>
+            <Text style={styles.carteLigne}>
+              <Text style={styles.carteLabel}>Patient : </Text>
+              {patient || "—"}
             </Text>
-            <Text style={styles.piedLigne}>{L.ville}</Text>
-            <Text style={styles.piedLigne}>
-              {L.telephones} · {L.email}
+            <Text style={styles.carteLigne}>
+              <Text style={styles.carteLabel}>Médecin / Prescripteur : </Text>
+              {donnees.medecinResponsable || "—"}
+            </Text>
+            <Text style={styles.carteLigne}>
+              <Text style={styles.carteLabel}>Examens : </Text>
+              {donnees.examens.length} sélectionné
+              {donnees.examens.length > 1 ? "s" : ""}
             </Text>
           </View>
+        </View>
+
+        <View style={styles.table}>
+          <View style={styles.tableHeader}>
+            <Text style={[styles.colN, styles.headerCell]}>N°</Text>
+            <Text style={[styles.colDesc, styles.headerCell]}>Examens demandés</Text>
+            <Text style={[styles.colCode, styles.headerCell]}>Code</Text>
+            <Text style={[styles.colPrix, styles.headerCell]}>Montant ($)</Text>
+          </View>
+
+          {donnees.examens.map((examen, index) => (
+            <View
+              key={examen.id}
+              style={
+                index % 2 === 1
+                  ? [styles.tableRow, styles.tableRowAlt]
+                  : styles.tableRow
+              }
+              wrap={false}
+            >
+              <Text style={styles.colN}>{index + 1}</Text>
+              <Text style={styles.colDesc}>{examen.libelle}</Text>
+              <Text style={styles.colCode}>{examen.code}</Text>
+              <Text style={styles.colPrix}>{formaterPrix(examen.prix)}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.basTable}>
+          <View style={styles.conditions}>
+            <Text style={styles.conditionsTitre}>Conditions</Text>
+            <Text style={styles.conditionsLigne}>
+              • Document estimatif, non contractuel.
+            </Text>
+            <Text style={styles.conditionsLigne}>
+              • Facturation après validation et envoi à la caisse.
+            </Text>
+            <Text style={styles.conditionsLigne}>
+              • Tarifs susceptibles d&apos;évoluer selon protocoles.
+            </Text>
+            <Text style={styles.conditionsLigne}>
+              • Devis valable 15 jours à compter de la date.
+            </Text>
+          </View>
+
+          <View style={styles.totaux}>
+            <View style={styles.totalLigne}>
+              <Text>Sous-total</Text>
+              <Text>{formaterPrix(montantTotal)}</Text>
+            </View>
+            <View style={styles.totalLigne}>
+              <Text>Remise</Text>
+              <Text>$ 0</Text>
+            </View>
+            <View style={styles.totalFinal}>
+              <Text style={styles.totalFinalLabel}>MONTANT TOTAL</Text>
+              <Text style={styles.totalFinalValeur}>
+                {formaterPrix(montantTotal)}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.signatures}>
+          <View style={styles.signatureBloc}>
+            <Text style={styles.signatureTitre}>Préparé par</Text>
+            <View style={styles.signatureLigne} />
+            <Text style={styles.signatureNom}>Réception — HAM Laboratoire</Text>
+          </View>
+
+          <View style={[styles.signatureBloc, { alignItems: "flex-end" }]}>
+            <Text style={styles.signatureTitre}>Signature / Cachet</Text>
+            <Image src={signatureSrc} style={styles.signatureImage} />
+          </View>
+        </View>
+
+        <View style={styles.pied} fixed>
+          <Text style={styles.piedTexte}>Merci de votre confiance !</Text>
+          <Text style={styles.piedTexte}>HAM LABORATOIRE — Kinshasa, RDC</Text>
         </View>
       </Page>
     </Document>

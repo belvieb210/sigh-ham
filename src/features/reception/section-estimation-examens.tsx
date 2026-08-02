@@ -139,7 +139,6 @@ export function SectionEstimationExamens({
             </div>
           </section>
         )}
-      </div>
     </div>
   );
 }

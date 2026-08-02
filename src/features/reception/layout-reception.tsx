@@ -4,28 +4,22 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ChevronDown,
-  LogOut,
-  Menu,
-  X,
-} from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { LogoHam } from "@/components/brand/logo-ham";
+import { AvatarUtilisateur } from "@/components/ui/avatar-utilisateur";
 import { SelecteurLangue } from "@/components/ui/selecteur-langue";
 import { INFORMATIONS_HOPITAL } from "@/constants/navigation";
+import { MenuProfilEntete } from "@/features/reception/menu-profil-entete";
 import { RecherchePatientEnTete } from "@/features/reception/recherche-patient-en-tete";
 import { traduireRoleHospitalier } from "@/features/messagerie/traduire-role";
 import { BadgeMessagerieSidebar } from "@/features/messagerie/badge-messagerie-sidebar";
 import { BadgeNotificationsSidebar } from "@/features/notifications/badge-notifications-sidebar";
 import { BoutonNotificationsEnTete } from "@/features/notifications/composants/bouton-notifications-entete";
 import { useNavigationReception } from "@/hooks/use-navigation-reception";
+import type { UtilisateurReception } from "@/lib/auth/props-utilisateur-reception";
 import { cn } from "@/lib/utils";
 
-interface PropsUtilisateurReception {
-  prenom: string;
-  nom: string;
-  role: string;
-}
+type PropsUtilisateurReception = UtilisateurReception;
 
 interface PropsBarreLateraleReception {
   utilisateur: PropsUtilisateurReception;
@@ -161,11 +155,18 @@ function LiensNavigation({
       </nav>
 
       <div className="space-y-2 border-t border-gris-bordure p-3">
-        <div className="flex items-center gap-3 rounded-xl bg-gris-tres-clair p-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-degrade-ham text-sm font-bold text-white">
-            {utilisateur.prenom[0]}
-            {utilisateur.nom[0]}
-          </div>
+        <Link
+          href="/sigh/reception/profil"
+          onClick={onFermer}
+          className="flex items-center gap-3 rounded-xl bg-gris-tres-clair p-3 transition-colors hover:bg-bleu-medical-clair/40"
+        >
+          <AvatarUtilisateur
+            prenom={utilisateur.prenom}
+            nom={utilisateur.nom}
+            photoUrl={utilisateur.photoUrl}
+            taille="md"
+            forme="rond"
+          />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold capitalize text-texte-principal">
               {utilisateur.prenom} {utilisateur.nom.toLowerCase()}
@@ -178,7 +179,7 @@ function LiensNavigation({
               {t("reception.layout.enLigne")}
             </p>
           </div>
-        </div>
+        </Link>
         {onFermer && (
           <button
             type="button"
@@ -249,13 +250,6 @@ interface PropsEnTeteSigh {
 
 export function EnTeteSigh({ titre, sousTitre, utilisateur, onMenu }: PropsEnTeteSigh) {
   const { t } = useTranslation();
-  const router = useRouter();
-
-  const deconnecter = async () => {
-    await fetch("/api/auth/deconnexion", { method: "POST" });
-    router.push("/connexion");
-    router.refresh();
-  };
 
   return (
     <header className="sticky top-0 z-30 shrink-0 border-b border-gris-bordure bg-white">
@@ -280,18 +274,7 @@ export function EnTeteSigh({ titre, sousTitre, utilisateur, onMenu }: PropsEnTet
         </div>
         <SelecteurLangue variante="compacte" className="shrink-0" />
         <BoutonNotificationsEnTete />
-        <button
-          type="button"
-          onClick={deconnecter}
-          className="relative shrink-0"
-          aria-label={t("reception.layout.profil")}
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-degrade-ham text-xs font-bold text-white ring-2 ring-white">
-            {utilisateur.prenom[0]}
-            {utilisateur.nom[0]}
-          </div>
-          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-vert-sante" />
-        </button>
+        <MenuProfilEntete utilisateur={utilisateur} compact />
       </div>
 
       {/* Desktop */}
@@ -308,31 +291,7 @@ export function EnTeteSigh({ titre, sousTitre, utilisateur, onMenu }: PropsEnTet
 
           <BoutonNotificationsEnTete />
 
-          <div className="flex items-center gap-2 rounded-xl border border-gris-bordure bg-white py-1.5 pl-1.5 pr-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-degrade-ham text-xs font-bold text-white">
-              {utilisateur.prenom[0]}
-              {utilisateur.nom[0]}
-            </div>
-            <div className="hidden xl:block">
-              <p className="text-sm font-semibold capitalize leading-tight text-texte-principal">
-                {utilisateur.prenom} {utilisateur.nom.toLowerCase()}
-              </p>
-              <p className="text-xs text-texte-secondaire">
-                {traduireRoleHospitalier(utilisateur.role, t)}
-              </p>
-            </div>
-            <ChevronDown className="h-4 w-4 text-texte-secondaire" />
-          </div>
-
-          <button
-            type="button"
-            onClick={deconnecter}
-            className="rounded-lg p-2 text-texte-secondaire transition-colors hover:bg-red-50 hover:text-red-600"
-            aria-label={t("reception.layout.deconnecter")}
-            title={t("reception.layout.deconnecter")}
-          >
-            <LogOut className="h-5 w-5" />
-          </button>
+          <MenuProfilEntete utilisateur={utilisateur} />
         </div>
       </div>
     </header>

@@ -33,6 +33,7 @@ export const receptionEn = {
     examensInitiaux: "Initial tests",
     utilisateurs: "Users",
     parametres: "Settings",
+    profil: "My profile",
   },
   navBas: {
     accueil: "Home",
@@ -147,6 +148,11 @@ export const receptionEn = {
       titre: "Settings",
       description: "Reception desk preferences and configuration.",
       fil: "Settings",
+    },
+    profil: {
+      titre: "My profile",
+      description: "Manage your personal information, photo and password.",
+      fil: "My profile",
     },
     aVenir: {
       titre: "Page coming soon",
@@ -760,5 +766,49 @@ export const receptionEn = {
   tableau: {
     recents: "Recently registered patients",
     chargement: "Loading…",
+  },
+  profil: {
+    sections: {
+      photo: "Profile photo",
+      informations: "Personal information",
+      compte: "Account & role",
+      securite: "Security",
+    },
+    photoHint: "PNG, JPG or WebP — max 2 MB. Shown in navigation and messaging.",
+    compteHint:
+      "These details are managed by administration. Your role cannot be changed here.",
+    securiteHint:
+      "After changing your password, other active sessions will be signed out to protect your account.",
+    champs: {
+      prenom: "First name",
+      nom: "Last name",
+      email: "Email",
+      telephone: "Phone",
+      identifiant: "Username",
+      role: "Role",
+      salle: "Assigned department",
+      derniereConnexion: "Last sign-in",
+      mdpActuel: "Current password",
+      mdpNouveau: "New password",
+      mdpConfirmation: "Confirm new password",
+    },
+    boutons: {
+      changerPhoto: "Change photo",
+      retirerPhoto: "Remove photo",
+      enregistrer: "Save changes",
+      changerMotDePasse: "Update password",
+    },
+    succes: {
+      infos: "Information updated.",
+      photo: "Profile photo updated.",
+      photoRetiree: "Profile photo removed.",
+      motDePasse: "Password updated successfully.",
+    },
+    erreurs: {
+      chargement: "Unable to load profile.",
+      infos: "Unable to save information.",
+      photo: "Unable to update photo.",
+      motDePasse: "Unable to change password.",
+    },
   },
 } satisfies Record<keyof ReceptionFr, unknown>;

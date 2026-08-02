@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ContenuPageReceptionAvenir } from "@/features/reception/contenu-page-reception-avenir";
 import { verifierAccesReception } from "@/lib/auth/garde-salle";
+import { propsUtilisateurReception } from "@/lib/auth/props-utilisateur-reception";
 
 export const metadata: Metadata = {
   title: "Motifs de visite — Réception",
@@ -13,11 +14,7 @@ export default async function PageMotifsVisite() {
   return (
     <ContenuPageReceptionAvenir
       page="motifs"
-      utilisateur={{
-        prenom: utilisateur.prenom,
-        nom: utilisateur.nom,
-        role: utilisateur.role.nom,
-      }}
+      utilisateur={propsUtilisateurReception(utilisateur)}
     />
   );
 }

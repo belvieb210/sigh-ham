@@ -20,6 +20,7 @@ export async function GET() {
       nom: utilisateur.nom,
       email: utilisateur.email,
       identifiant: utilisateur.identifiant,
+      photoUrl: utilisateur.photoUrl ?? null,
       role: {
         code: utilisateur.role.code,
         nom: utilisateur.role.nom,

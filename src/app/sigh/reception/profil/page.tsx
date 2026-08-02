@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
-import { ContenuReception } from "@/features/reception/contenu-reception";
+import { ContenuProfilUtilisateur } from "@/features/reception/contenu-profil-utilisateur";
 import { verifierAccesReception } from "@/lib/auth/garde-salle";
 import { propsUtilisateurReception } from "@/lib/auth/props-utilisateur-reception";
 
 export const metadata: Metadata = {
-  title: "Salle de Réception",
+  title: "Mon profil — Réception",
   robots: { index: false, follow: false },
 };
 
-export default async function PageReception() {
+export default async function PageProfilReception() {
   const utilisateur = await verifierAccesReception();
 
-  return (
-    <ContenuReception
-      utilisateur={propsUtilisateurReception(utilisateur)}
-    />
-  );
+  return <ContenuProfilUtilisateur utilisateur={propsUtilisateurReception(utilisateur)} />;
 }

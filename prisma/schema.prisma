@@ -305,6 +305,7 @@ model Utilisateur {
   prenom            String
   nom               String
   telephone         String?
+  photoUrl          String?           @map("photo_url")
   statut            StatutUtilisateur @default(ACTIF)
   roleId            String            @map("role_id")
   role              Role              @relation(fields: [roleId], references: [id])

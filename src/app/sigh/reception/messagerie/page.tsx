@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ContenuMessagerieReception } from "@/features/messagerie/contenu-messagerie-reception";
 import { verifierAccesReception } from "@/lib/auth/garde-salle";
+import { propsUtilisateurReception } from "@/lib/auth/props-utilisateur-reception";
 import { estRoleAdministrateur } from "@/lib/auth/est-administrateur";
 
 export const metadata: Metadata = {

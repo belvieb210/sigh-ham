@@ -12,12 +12,9 @@ import { FournisseurSelectionTransfert } from "@/features/reception/contexte-sel
 import { ToastNotificationGlobale } from "@/features/notifications/composants/toast-notification-globale";
 import { GestionnaireAlertesNotifications } from "@/features/notifications/composants/gestionnaire-alertes-notifications";
 import { FournisseurNotifications } from "@/features/notifications/fournisseur-notifications";
+import type { UtilisateurReception } from "@/lib/auth/props-utilisateur-reception";
 
-export interface UtilisateurReception {
-  prenom: string;
-  nom: string;
-  role: string;
-}
+export type { UtilisateurReception };
 
 interface PropsMiseEnPageReception {
   utilisateur: UtilisateurReception;

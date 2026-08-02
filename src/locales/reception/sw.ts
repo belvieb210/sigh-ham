@@ -35,6 +35,7 @@ export const receptionSw = {
     examensInitiaux: "Vipimo vya awali",
     utilisateurs: "Watumiaji",
     parametres: "Mipangilio",
+    profil: "Mon profil",
   },
   navBas: {
     accueil: "Mwanzo",
@@ -148,6 +149,11 @@ export const receptionSw = {
       titre: "Paramètres",
       description: "Configuration de la réception.",
       fil: "Paramètres",
+    },
+    profil: {
+      titre: "Mon profil",
+      description: "Gérez vos informations personnelles, votre photo et votre mot de passe.",
+      fil: "Mon profil",
     },
     aVenir: {
       titre: "Page en préparation",
@@ -446,5 +452,47 @@ export const receptionSw = {
   tableau: {
     recents: "Wagonjwa waliosajiliwa hivi karibuni",
     chargement: "Inapakia…",
+  },
+  profil: {
+    sections: {
+      photo: "Photo de profil",
+      informations: "Informations personnelles",
+      compte: "Compte & rôle",
+      securite: "Sécurité",
+    },
+    photoHint: "PNG, JPG ou WebP — max. 2 Mo.",
+    compteHint: "Ces informations sont gérées par l'administration. Votre rôle ne peut pas être modifié ici.",
+    securiteHint: "Après changement, les autres sessions actives seront déconnectées.",
+    champs: {
+      prenom: "Prénom",
+      nom: "Nom",
+      email: "E-mail",
+      telephone: "Téléphone",
+      identifiant: "Identifiant",
+      role: "Rôle",
+      salle: "Salle assignée",
+      derniereConnexion: "Dernière connexion",
+      mdpActuel: "Mot de passe actuel",
+      mdpNouveau: "Nouveau mot de passe",
+      mdpConfirmation: "Confirmer le nouveau mot de passe",
+    },
+    boutons: {
+      changerPhoto: "Changer la photo",
+      retirerPhoto: "Retirer la photo",
+      enregistrer: "Enregistrer les modifications",
+      changerMotDePasse: "Mettre à jour le mot de passe",
+    },
+    succes: {
+      infos: "Informations mises à jour.",
+      photo: "Photo de profil mise à jour.",
+      photoRetiree: "Photo de profil retirée.",
+      motDePasse: "Mot de passe modifié avec succès.",
+    },
+    erreurs: {
+      chargement: "Impossible de charger le profil.",
+      infos: "Impossible d'enregistrer les informations.",
+      photo: "Impossible de mettre à jour la photo.",
+      motDePasse: "Impossible de changer le mot de passe.",
+    },
   },
 } satisfies Record<keyof ReceptionFr, unknown>;

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ContenuPatientsEnregistres } from "@/features/reception/contenu-patients-enregistres";
 import { verifierAccesReception } from "@/lib/auth/garde-salle";
+import { propsUtilisateurReception } from "@/lib/auth/props-utilisateur-reception";
 
 export const metadata: Metadata = {
   title: "Patients enregistrés — Réception",
@@ -12,11 +13,7 @@ export default async function PagePatientsEnregistres() {
 
   return (
     <ContenuPatientsEnregistres
-      utilisateur={{
-        prenom: utilisateur.prenom,
-        nom: utilisateur.nom,
-        role: utilisateur.role.nom,
-      }}
+      utilisateur={propsUtilisateurReception(utilisateur)}
     />
   );
 }

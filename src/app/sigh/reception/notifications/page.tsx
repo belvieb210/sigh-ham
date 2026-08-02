@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ContenuNotificationsReception } from "@/features/notifications/contenu-notifications-reception";
 import { verifierAccesReception } from "@/lib/auth/garde-salle";
+import { propsUtilisateurReception } from "@/lib/auth/props-utilisateur-reception";
 
 export const metadata: Metadata = {
   title: "Notifications — Réception",
@@ -12,11 +13,7 @@ export default async function PageNotificationsReception() {
 
   return (
     <ContenuNotificationsReception
-      utilisateur={{
-        prenom: utilisateur.prenom,
-        nom: utilisateur.nom,
-        role: utilisateur.role.nom,
-      }}
+      utilisateur={propsUtilisateurReception(utilisateur)}
     />
   );
 }

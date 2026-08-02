@@ -44,11 +44,17 @@ export function useSocketSigh(options?: {
     });
 
     const pingPresence = () => {
-      fetch("/api/messagerie/presence", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ statut: "EN_LIGNE" }),
-      }).catch(() => {});
+      void fetch("/api/auth/session", { credentials: "include" })
+        .then((res) => {
+          if (!res.ok) return null;
+          return fetch("/api/messagerie/presence", {
+            method: "PATCH",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ statut: "EN_LIGNE" }),
+          });
+        })
+        .catch(() => {});
     };
 
     pingPresence();
@@ -56,11 +62,17 @@ export function useSocketSigh(options?: {
 
     return () => {
       clearInterval(interval);
-      fetch("/api/messagerie/presence", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ statut: "HORS_LIGNE" }),
-      }).catch(() => {});
+      void fetch("/api/auth/session", { credentials: "include" })
+        .then((res) => {
+          if (!res.ok) return null;
+          return fetch("/api/messagerie/presence", {
+            method: "PATCH",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ statut: "HORS_LIGNE" }),
+          });
+        })
+        .catch(() => {});
       socket.disconnect();
     };
   }, []);

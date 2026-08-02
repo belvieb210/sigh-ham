@@ -6,7 +6,7 @@ import { Bouton } from "@/components/ui/bouton";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import type { TypeExamenReception } from "@/lib/reception/types";
 import { cn } from "@/lib/utils";
-import { DevisEstimationImprimable } from "@/features/reception/devis-estimation-imprimable";
+import { imprimerDevisEstimation } from "@/lib/reception/imprimer-devis-estimation";
 
 function formaterPrix(prix: number): string {
   return `$ ${prix.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
@@ -51,22 +51,33 @@ export function SectionEstimationExamens({
       return;
     }
     onErreur?.("");
-    window.print();
+    const ok = imprimerDevisEstimation({
+      examens,
+      medecinResponsable: medecinResponsable.trim(),
+      nomPatient,
+      prenomPatient,
+      numeroEnregistrement,
+      dateEnregistrement,
+      labels: {
+        titre: t("reception.estimations.devisTitre"),
+        estimation: t("reception.estimations.etapes.estimation"),
+        patient: t("reception.estimations.patient"),
+        medecin: t("reception.formulaire.champs.medecinResponsable"),
+        code: t("reception.examens.colonnes.code"),
+        nom: t("reception.examens.colonnes.nom"),
+        categorie: t("reception.examens.colonnes.categorie"),
+        prix: t("reception.examens.colonnes.prix"),
+        montantTotal: t("reception.estimations.montantTotal"),
+        mentionLegale: t("reception.estimations.mentionLegale"),
+      },
+    });
+    if (!ok) {
+      onErreur?.("Impossible d'ouvrir la fenêtre d'impression. Autorisez les pop-ups.");
+    }
   };
 
   return (
-    <>
-      <DevisEstimationImprimable
-        examens={examens}
-        medecinResponsable={medecinResponsable}
-        nomPatient={nomPatient}
-        prenomPatient={prenomPatient}
-        numeroEnregistrement={numeroEnregistrement}
-        dateEnregistrement={dateEnregistrement}
-        montantTotal={montantTotal}
-      />
-
-      <div className="mt-6 space-y-4 border-t border-gris-bordure pt-5">
+    <div className="mt-6 space-y-4 border-t border-gris-bordure pt-5">
         <div>
           <label className={CLASSE_LABEL_RECEPTION} htmlFor="medecin-responsable">
             {t("reception.formulaire.champs.medecinResponsable")}
@@ -129,6 +140,6 @@ export function SectionEstimationExamens({
           </section>
         )}
       </div>
-    </>
+    </div>
   );
 }

@@ -14,7 +14,7 @@ export default async function PageRapportsCaisse() {
   return (
     <ContenuPlaceholderCaisse
       utilisateur={propsUtilisateurCaisse(utilisateur)}
-      page="rapports"
+      titreKey="caisse.nav.rapportJournalier"
     />
   );
 }

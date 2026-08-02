@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { useTranslation } from "react-i18next";
-import { LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, Search, X } from "lucide-react";
 import { LogoHam } from "@/components/brand/logo-ham";
 import { AvatarUtilisateur } from "@/components/ui/avatar-utilisateur";
 import { SelecteurLangue } from "@/components/ui/selecteur-langue";
@@ -22,22 +22,28 @@ interface PropsBarreLateraleCaisse {
   utilisateur: UtilisateurCaisse;
   ouvert?: boolean;
   onFermer?: () => void;
+  badgeFile?: number;
 }
 
 function LiensNavigation({
   utilisateur,
   onFermer,
+  badgeFile = 0,
 }: {
   utilisateur: UtilisateurCaisse;
   onFermer?: () => void;
+  badgeFile?: number;
 }) {
   const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
-  const { principal, communication, parametres } = useNavigationCaisse();
+  const { accueil, caisse, rapports, parametres } = useNavigationCaisse();
+  const heureOuverture = "08:15";
 
-  const estActif = (href: string) =>
-    href === "/sigh/caisse" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  const estActif = (href: string) => {
+    if (href === "/sigh/caisse") return pathname === href;
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   const lienClasse = (href: string) =>
     cn(
@@ -53,6 +59,54 @@ function LiensNavigation({
     router.push("/connexion");
     router.refresh();
   };
+
+  type ItemNav = {
+    href: string;
+    id: string;
+    icone: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+    etiquette: string;
+    badge?: boolean;
+  };
+
+  const rendreSection = (titre: string, items: ItemNav[]) => (
+    <>
+      <p className="mb-2 mt-5 px-2 text-[10px] font-bold uppercase tracking-widest text-texte-secondaire first:mt-0">
+        {titre}
+      </p>
+      <ul className="space-y-0.5">
+        {items.map((item) => {
+          const Icone = item.icone;
+          const afficherBadge = Boolean(item.badge) && badgeFile > 0;
+          return (
+            <li key={item.href}>
+              <Link href={item.href} onClick={onFermer} className={lienClasse(item.href)}>
+                <Icone className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="min-w-0 flex-1 truncate">{item.etiquette}</span>
+                {afficherBadge ? (
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                      estActif(item.href)
+                        ? "bg-white/20 text-white"
+                        : "bg-bleu-medical text-white"
+                    )}
+                  >
+                    {badgeFile}
+                  </span>
+                ) : null}
+                {item.id === "messagerie" ? (
+                  <BadgeMessagerieSidebar actif={estActif(item.href)} />
+                ) : null}
+                {item.id === "notifications" ? (
+                  <BadgeNotificationsSidebar actif={estActif(item.href)} />
+                ) : null}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
 
   return (
     <>
@@ -76,70 +130,33 @@ function LiensNavigation({
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-texte-secondaire">
-          {t("caisse.layout.caisse")}
-        </p>
-        <ul className="space-y-0.5">
-          {principal.map((item) => {
-            const Icone = item.icone;
-            return (
-              <li key={item.href}>
-                <Link href={item.href} onClick={onFermer} className={lienClasse(item.href)}>
-                  <Icone className="h-4 w-4 shrink-0" aria-hidden />
-                  {item.etiquette}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-
-        <p className="mb-2 mt-6 px-2 text-[10px] font-bold uppercase tracking-widest text-texte-secondaire">
-          {t("caisse.layout.communication")}
-        </p>
-        <ul className="space-y-0.5">
-          {communication.map((item) => {
-            const Icone = item.icone;
-            return (
-              <li key={item.href}>
-                <Link href={item.href} onClick={onFermer} className={lienClasse(item.href)}>
-                  <Icone className="h-4 w-4 shrink-0" aria-hidden />
-                  <span className="min-w-0 flex-1 truncate">{item.etiquette}</span>
-                  {item.id === "messagerie" ? (
-                    <BadgeMessagerieSidebar actif={estActif(item.href)} />
-                  ) : item.id === "notifications" ? (
-                    <BadgeNotificationsSidebar actif={estActif(item.href)} />
-                  ) : null}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-
-        <p className="mb-2 mt-6 px-2 text-[10px] font-bold uppercase tracking-widest text-texte-secondaire">
-          {t("caisse.layout.parametres")}
-        </p>
-        <ul className="space-y-0.5">
-          {parametres.map((item) => {
-            const Icone = item.icone;
-            return (
-              <li key={item.href}>
-                <Link href={item.href} onClick={onFermer} className={lienClasse(item.href)}>
-                  <Icone
-                    className={cn(
-                      "h-4 w-4 shrink-0",
-                      !estActif(item.href) && "text-texte-secondaire"
-                    )}
-                    aria-hidden
-                  />
-                  {item.etiquette}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        {rendreSection(t("caisse.layout.sectionAccueil"), accueil as ItemNav[])}
+        {rendreSection(t("caisse.layout.sectionCaisse"), caisse as ItemNav[])}
+        {rendreSection(t("caisse.layout.sectionRapports"), rapports as ItemNav[])}
+        {rendreSection(t("caisse.layout.sectionParametres"), parametres as ItemNav[])}
       </nav>
 
       <div className="space-y-2 border-t border-gris-bordure p-3">
+        <div className="rounded-xl border border-bleu-medical/20 bg-bleu-medical-clair/30 p-3">
+          <p className="text-xs font-semibold text-bleu-medical">
+            {t("caisse.layout.sessionEnCours")}
+          </p>
+          <p className="mt-1 text-[11px] text-texte-secondaire">
+            {t("caisse.layout.ouverteA", { heure: heureOuverture })} ·{" "}
+            {t("caisse.layout.caisseNumero")}
+          </p>
+          <p className="mt-2 text-[11px] text-texte-secondaire">
+            {t("caisse.layout.soldeOuverture")}
+          </p>
+          <p className="text-sm font-bold text-texte-principal">500,00 $</p>
+          <button
+            type="button"
+            className="mt-2 w-full rounded-lg border border-gris-bordure bg-white px-2 py-1.5 text-xs font-medium text-texte-principal hover:bg-gris-tres-clair"
+          >
+            {t("caisse.layout.cloturerSession")}
+          </button>
+        </div>
+
         <Link
           href="/sigh/caisse/profil"
           onClick={onFermer}
@@ -158,10 +175,6 @@ function LiensNavigation({
             </p>
             <p className="truncate text-xs text-texte-secondaire">
               {traduireRoleHospitalier(utilisateur.role, t)}
-            </p>
-            <p className="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-vert-sante">
-              <span className="h-1.5 w-1.5 rounded-full bg-vert-sante" />
-              {t("caisse.layout.enLigne")}
             </p>
           </div>
         </Link>
@@ -184,6 +197,7 @@ export function BarreLateraleCaisse({
   utilisateur,
   ouvert = false,
   onFermer,
+  badgeFile = 0,
 }: PropsBarreLateraleCaisse) {
   const { t } = useTranslation();
 
@@ -199,7 +213,7 @@ export function BarreLateraleCaisse({
   return (
     <>
       <aside className="hidden h-full w-[260px] shrink-0 flex-col border-r border-gris-bordure bg-white lg:flex">
-        <LiensNavigation utilisateur={utilisateur} />
+        <LiensNavigation utilisateur={utilisateur} badgeFile={badgeFile} />
       </aside>
 
       {ouvert && (
@@ -214,9 +228,12 @@ export function BarreLateraleCaisse({
             className="fixed inset-y-0 left-0 z-[60] flex w-[min(88vw,320px)] flex-col border-r border-gris-bordure bg-white shadow-2xl lg:hidden"
             role="dialog"
             aria-modal="true"
-            aria-label="Menu de navigation"
           >
-            <LiensNavigation utilisateur={utilisateur} onFermer={onFermer} />
+            <LiensNavigation
+              utilisateur={utilisateur}
+              onFermer={onFermer}
+              badgeFile={badgeFile}
+            />
           </aside>
         </>
       )}
@@ -233,6 +250,7 @@ interface PropsEnTeteCaisse {
 
 export function EnTeteCaisse({ titre, sousTitre, utilisateur, onMenu }: PropsEnTeteCaisse) {
   const { t } = useTranslation();
+  const [recherche, setRecherche] = useState("");
 
   return (
     <header className="sticky top-0 z-30 shrink-0 border-b border-gris-bordure bg-white">
@@ -248,7 +266,7 @@ export function EnTeteCaisse({ titre, sousTitre, utilisateur, onMenu }: PropsEnT
         <LogoHam taille="petit" href="/sigh/caisse" afficherTexte={false} />
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-sm font-bold text-bleu-medical sm:text-base">
-            {t("caisse.layout.caisse")}
+            {t("caisse.layout.titre")}
           </h1>
           <p className="truncate text-[10px] text-texte-secondaire sm:text-[11px]">{sousTitre}</p>
         </div>
@@ -258,12 +276,26 @@ export function EnTeteCaisse({ titre, sousTitre, utilisateur, onMenu }: PropsEnT
       </div>
 
       <div className="hidden items-center justify-between gap-4 px-6 py-4 lg:flex">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-lg font-bold text-texte-principal">{titre}</h1>
           <p className="text-sm text-texte-secondaire">{sousTitre}</p>
         </div>
 
-        <div className="flex flex-1 items-center justify-end gap-3">
+        <div className="relative hidden min-w-0 flex-1 max-w-md xl:block">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
+          <input
+            type="search"
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+            placeholder={t("caisse.layout.rechercher")}
+            className="w-full rounded-xl border border-gris-bordure bg-gris-tres-clair/50 py-2.5 pl-10 pr-20 text-sm outline-none focus:border-bleu-medical focus:ring-2 focus:ring-bleu-medical/20"
+          />
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-gris-bordure bg-white px-1.5 py-0.5 text-[10px] text-texte-secondaire">
+            {t("caisse.layout.raccourciRecherche")}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-end gap-3">
           <SelecteurLangue />
           <BoutonNotificationsEnTete />
           <MenuProfilEntete utilisateur={utilisateur} hrefProfil="/sigh/caisse/profil" />

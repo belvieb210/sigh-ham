@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   BarreLateraleCaisse,
   EnTeteCaisse,
@@ -27,6 +27,27 @@ export function MiseEnPageCaisse({
   children,
 }: PropsMiseEnPageCaisse) {
   const [menuOuvert, setMenuOuvert] = useState(false);
+  const [badgeFile, setBadgeFile] = useState(0);
+
+  useEffect(() => {
+    let annule = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/caisse/stats");
+        const data = (await res.json()) as {
+          stats?: { patientsEnAttente?: number };
+        };
+        if (!annule && res.ok) {
+          setBadgeFile(data.stats?.patientsEnAttente ?? 0);
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      annule = true;
+    };
+  }, []);
 
   return (
     <FournisseurNotifications>
@@ -35,6 +56,7 @@ export function MiseEnPageCaisse({
           utilisateur={utilisateur}
           ouvert={menuOuvert}
           onFermer={() => setMenuOuvert(false)}
+          badgeFile={badgeFile}
         />
 
         <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col">

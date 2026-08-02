@@ -1,5 +1,5 @@
 /**
- * Crée ou met à jour le compte caissier de démonstration
+ * Crée ou met à jour le compte caissier
  * Usage : npx tsx prisma/seed-utilisateur-caisse.ts
  */
 import "dotenv/config";
@@ -12,11 +12,11 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 const COMPTE = {
-  identifiant: "caisse.demo@ham.local",
-  email: "caisse.demo@ham.local",
-  motDePasse: "Demo2026!",
-  prenom: "Eric",
-  nom: "Mutombo",
+  identifiant: "caisse@gmail.com",
+  email: "caisse@gmail.com",
+  motDePasse: "Belvie210@!!",
+  prenom: "Marie",
+  nom: "Caisse",
   roleCode: "CAISSIER",
 };
 

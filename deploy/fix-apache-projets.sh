@@ -187,8 +187,14 @@ if [[ -f "/etc/letsencrypt/live/${SIGH_DOMAIN}/fullchain.pem" ]]; then
     RequestHeader set X-Forwarded-Proto "https"
     RequestHeader set X-Forwarded-Port "443"
 
-    ProxyPass        /socket.io/ ws://127.0.0.1:3001/socket.io/
-    ProxyPassReverse /socket.io/ ws://127.0.0.1:3001/socket.io/
+    # Socket.IO — polling HTTP + upgrade WebSocket (NE PAS utiliser ws:// seul)
+    RewriteEngine On
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^/socket\\.io/(.*) ws://127.0.0.1:3003/socket.io/\$1 [P,L]
+
+    ProxyPass        /socket.io/ http://127.0.0.1:3003/socket.io/
+    ProxyPassReverse /socket.io/ http://127.0.0.1:3003/socket.io/
 
     Alias /uploads /var/www/sigh-ham/public/uploads
     <Directory /var/www/sigh-ham/public/uploads>
@@ -199,11 +205,6 @@ if [[ -f "/etc/letsencrypt/live/${SIGH_DOMAIN}/fullchain.pem" ]]; then
     ProxyPass        /uploads !
     ProxyPass        / http://127.0.0.1:3000/ retry=0 timeout=300
     ProxyPassReverse / http://127.0.0.1:3000/
-
-    RewriteEngine On
-    RewriteCond %{HTTP:Upgrade} websocket [NC]
-    RewriteCond %{HTTP:Connection} upgrade [NC]
-    RewriteRule ^/socket.io/(.*) ws://127.0.0.1:3001/socket.io/\$1 [P,L]
 
     ErrorLog \${APACHE_LOG_DIR}/sigh-ham-ssl-error.log
     CustomLog \${APACHE_LOG_DIR}/sigh-ham-ssl-access.log combined

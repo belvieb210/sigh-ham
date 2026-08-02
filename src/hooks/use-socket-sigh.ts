@@ -23,7 +23,8 @@ export function useSocketSigh(options?: {
     const socket = io(URL_SOCKET, {
       path: "/socket.io",
       withCredentials: true,
-      transports: ["websocket", "polling"],
+      // polling d'abord : plus fiable derrière Apache (upgrade WS ensuite)
+      transports: ["polling", "websocket"],
       reconnectionAttempts: 5,
       reconnectionDelay: 3000,
       timeout: 8000,

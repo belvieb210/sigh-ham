@@ -67,7 +67,7 @@ export function SectionEstimationExamens({
             hour: "2-digit",
             minute: "2-digit",
           });
-    const ok = imprimerDevisEstimation({
+    void imprimerDevisEstimation({
       examens,
       medecinResponsable: medecinResponsable.trim(),
       nomPatient,
@@ -87,10 +87,11 @@ export function SectionEstimationExamens({
         total: t("reception.estimations.ticket.total"),
         genereLe: t("reception.estimations.ticket.genereLe"),
       },
+    }).then((ok) => {
+      if (!ok) {
+        onErreur?.("Impossible de générer le PDF. Réessayez.");
+      }
     });
-    if (!ok) {
-      onErreur?.("Impossible de lancer l'impression. Réessayez.");
-    }
   };
 
   return (

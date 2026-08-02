@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # =============================================================================
 # SIGH HAM — Appliquer les migrations PostgreSQL sur le VPS
-# Usage (root) :
+# Usage (root de préférence) :
 #   bash /var/www/sigh-ham/deploy/migrate-db.sh
 #   bash /var/www/sigh-ham/deploy/migrate-db.sh --pull   # git pull avant
 #   bash /var/www/sigh-ham/deploy/migrate-db.sh --seed   # + seeds (1ère fois)
+# Éviter : sudo -u sigh bash deploy/migrate-db.sh  (ancien bug PATH/commande)
 # =============================================================================
 set -euo pipefail
 
@@ -36,12 +37,14 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
-# Toujours exécuter en utilisateur sigh (évite fichiers root dans .next)
+# Toujours exécuter via bash -lc (charge nvm/PATH de sigh).
+# Ne pas utiliser "$@" avec une chaîne "npm run …" : Bash la prendrait pour un seul nom de commande.
 run_as_sigh() {
+  local cmd="$*"
   if [[ "$(id -un)" == "sigh" ]]; then
-    "$@"
+    bash -lc "cd '${APP_DIR}' && ${cmd}"
   elif [[ "${EUID:-0}" -eq 0 ]]; then
-    sudo -u sigh -H bash -lc "cd '${APP_DIR}' && $*"
+    sudo -u sigh -H bash -lc "cd '${APP_DIR}' && ${cmd}"
   else
     echo "❌ Exécutez en root ou en utilisateur sigh"
     exit 1

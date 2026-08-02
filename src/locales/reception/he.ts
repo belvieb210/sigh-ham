@@ -23,6 +23,7 @@ export const receptionHe = {
   nav: {
     accueil: "דף הבית",
     nouveauPatient: "מטופל חדש",
+    estimations: "Estimations",
     patientsEnregistres: "מטופלים רשומים",
     patientsTransferes: "מטופלים שהועברו",
     rechercherPatient: "חיפוש מטופל",
@@ -73,6 +74,7 @@ export const receptionHe = {
   },
   actions: {
     rechercherPatient: "חיפוש מטופל",
+    estimations: "Estimations",
     imprimerFiche: "הדפסת כרטיס",
     prendreRdv: "קביעת תור",
     transfertManuel: "העברה ידנית",
@@ -91,6 +93,11 @@ export const receptionHe = {
       titreModification: "Modifier le patient",
       descriptionModification: "Mettez à jour les informations du patient.",
       filModification: "Modifier",
+    },
+    estimations: {
+      titre: "Estimations",
+      description: "Établissez un devis d'examens pour un patient, imprimez-le puis convertissez-le vers la caisse.",
+      fil: "Estimations",
     },
     enregistres: {
       titre: "מטופלים רשומים",
@@ -272,6 +279,7 @@ export const receptionHe = {
       telephoneSecondaire: "טלפון נוסף",
       email: "דוא\"ל",
       etatCivil: "מצב משפחתי",
+      medecinResponsable: "Médecin responsable",
       adresse: "כתובת",
       commune: "רובע",
       ville: "עיר",
@@ -306,6 +314,7 @@ export const receptionHe = {
       observations: "הערות נוספות...",
       motifAutre: "פרטו את סיבת הביקור...",
       descriptionMotif: "תארו בקצרה את סיבת הביקור...",
+      medecinResponsable: "Ex. Dr KABAMBA Jean-Pierre",
     },
     sexe: { MASCULIN: "זכר", FEMININ: "נקבה" },
     nonRenseigne: "— לא צוין —",
@@ -433,6 +442,7 @@ export const receptionHe = {
     chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "סיבת הביקור חובה (שלב 2).",
     motifPreciser: "פרטו את סיבת הביקור (שלב 2).",
+    medecinObligatoire: "Le medecin responsable est obligatoire (etape 3).",
     salleRequise: "בחרו חדר יעד.",
     transfertImpossible: "ההעברה נכשלה.",
     transfertErreur: "שגיאה במהלך ההעברה.",
@@ -807,5 +817,29 @@ export const receptionHe = {
       photo: "Impossible de mettre à jour la photo.",
       motDePasse: "Impossible de changer le mot de passe.",
     },
+  },
+  estimations: {
+    etapes: {
+      infos: "Informations patient",
+      estimation: "Estimation",
+    },
+    introExamens: "Sélectionnez les examens à estimer. Au moins un examen est requis.",
+    valider: "Valider Estimation",
+    examenRequis: "Au moins un examen est requis pour valider une estimation.",
+    erreurValidation: "Impossible d'enregistrer l'estimation.",
+    erreurConversion: "Impossible d'envoyer l'estimation à la caisse.",
+    succesTitre: "Estimation enregistrée",
+    succesDescription:
+      "Patient {{numero}} — dossier {{enregistrement}}. Vous pouvez imprimer le devis ou l'envoyer à la caisse.",
+    montantTotal: "Montant total",
+    imprimerDevis: "Imprimer le devis",
+    envoyerCaisse: "Envoyer à la caisse",
+    devisTitre: "Devis d'examens",
+    patient: "Patient",
+    agent: "Agent",
+    introuvable: "Estimation introuvable.",
+    champsRequis: "Veuillez renseigner les champs obligatoires du patient.",
+    mentionLegale:
+      "Ce document est un devis estimatif. Les examens ne sont facturés qu'après conversion et envoi à la caisse.",
   },
 } satisfies Record<keyof ReceptionFr, unknown>;

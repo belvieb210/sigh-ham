@@ -23,6 +23,7 @@ import {
 import { useTraductionsReception } from "@/hooks/use-traductions-reception";
 import { ZonePhotoPatient } from "@/features/reception/zone-photo-patient";
 import { SelectionExamensInitiaux } from "@/features/reception/selection-examens-initiaux";
+import { SectionEstimationExamens } from "@/features/reception/section-estimation-examens";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import { cn } from "@/lib/utils";
 import type { DonneesFormulairePatient, TypeExamenReception } from "@/lib/reception/types";
@@ -158,6 +159,8 @@ export const FormulaireEnregistrement = forwardRef<
   const [motifAutreTexte, setMotifAutreTexte] = useState("");
   const [descriptionMotif, setDescriptionMotif] = useState("");
   const [examensSelectionnes, setExamensSelectionnes] = useState<TypeExamenReception[]>([]);
+  const [medecinResponsable, setMedecinResponsable] = useState("");
+  const [modeEstimation, setModeEstimation] = useState(false);
   const [orientation, setOrientation] = useState<string>("INFIRMIERS");
 
   const motifEstAutre = motifPrincipal === "autre";
@@ -263,6 +266,8 @@ export const FormulaireEnregistrement = forwardRef<
     setMotifAutreTexte("");
     setDescriptionMotif("");
     setExamensSelectionnes([]);
+    setMedecinResponsable("");
+    setModeEstimation(false);
     setOrientation("INFIRMIERS");
     if (!estComplet) {
       setNumeroEnregistrement("20260101001");
@@ -280,6 +285,11 @@ export const FormulaireEnregistrement = forwardRef<
   };
 
   const etapeSuivante = () => {
+    if (etape === 2 && !medecinResponsable.trim()) {
+      setErreur(t("reception.erreurs.medecinObligatoire"));
+      return;
+    }
+    setErreur(null);
     setEtape((e) => Math.min(e + 1, ETAPES_ENREGISTREMENT.length - 1));
   };
 
@@ -356,6 +366,11 @@ export const FormulaireEnregistrement = forwardRef<
       setErreur(t("reception.erreurs.salleRequise"));
       return;
     }
+    if (!medecinResponsable.trim()) {
+      setErreur(t("reception.erreurs.medecinObligatoire"));
+      setEtape(2);
+      return;
+    }
 
     setEnCours(true);
 
@@ -373,6 +388,8 @@ export const FormulaireEnregistrement = forwardRef<
           motifAutreTexte: motifAutreTexte || undefined,
           descriptionMotif: descriptionMotif || undefined,
           examensIds: examensSelectionnes.map((e) => e.id),
+          medecinResponsable: medecinResponsable.trim(),
+          estEstimation: modeEstimation,
         }),
       });
 
@@ -1013,6 +1030,18 @@ export const FormulaireEnregistrement = forwardRef<
             <SelectionExamensInitiaux
               selection={examensSelectionnes}
               onChange={setExamensSelectionnes}
+            />
+            <SectionEstimationExamens
+              medecinResponsable={medecinResponsable}
+              onMedecinChange={setMedecinResponsable}
+              modeEstimation={modeEstimation}
+              onModeEstimationChange={setModeEstimation}
+              examens={examensSelectionnes}
+              nomPatient={formulaire.nom}
+              prenomPatient={formulaire.prenom}
+              numeroEnregistrement={numeroEnregistrement}
+              dateEnregistrement={aujourdhui}
+              onErreur={(message) => setErreur(message || null)}
             />
           </div>
         )}

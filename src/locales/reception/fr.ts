@@ -290,6 +290,7 @@ export const receptionFr = {
       observations: "Observations",
       motifPrincipal: "Motif principal",
       descriptionMotif: "Description du motif",
+      medecinResponsable: "Médecin responsable",
     },
     placeholders: {
       nom: "KABAMBA",
@@ -308,6 +309,7 @@ export const receptionFr = {
       observations: "Notes complémentaires...",
       motifAutre: "Précisez le motif de visite...",
       descriptionMotif: "Décrivez brièvement la raison de la visite...",
+      medecinResponsable: "Ex. Dr KABAMBA Jean-Pierre",
     },
     sexe: { MASCULIN: "Masculin", FEMININ: "Féminin" },
     nonRenseigne: "— Non renseigné —",
@@ -436,6 +438,7 @@ export const receptionFr = {
     chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "Le motif de visite est obligatoire (étape 2).",
     motifPreciser: "Veuillez préciser le motif de visite (étape 2).",
+    medecinObligatoire: "Le médecin responsable est obligatoire (étape 3).",
     salleRequise: "Veuillez sélectionner une salle de destination.",
     transfertImpossible: "Transfert impossible.",
     transfertErreur: "Erreur lors du transfert.",
@@ -811,6 +814,30 @@ export const receptionFr = {
       photo: "Impossible de mettre à jour la photo.",
       motDePasse: "Impossible de changer le mot de passe.",
     },
+  },
+  estimations: {
+    etapes: {
+      infos: "Informations patient",
+      estimation: "Estimation",
+    },
+    introExamens: "Sélectionnez au moins un examen pour imprimer l'estimation.",
+    valider: "Valider Estimation",
+    examenRequis: "Au moins un examen est requis pour imprimer une estimation.",
+    erreurValidation: "Impossible d'enregistrer l'estimation.",
+    erreurConversion: "Impossible d'envoyer l'estimation à la caisse.",
+    succesTitre: "Estimation enregistrée",
+    succesDescription:
+      "Patient {{numero}} — dossier {{enregistrement}}. Vous pouvez imprimer le devis ou l'envoyer à la caisse.",
+    montantTotal: "Montant total",
+    imprimerDevis: "Imprimer Estimation",
+    envoyerCaisse: "Envoyer à la caisse",
+    devisTitre: "Devis d'examens",
+    patient: "Patient",
+    agent: "Agent",
+    introuvable: "Estimation introuvable.",
+    champsRequis: "Veuillez renseigner les champs obligatoires du patient.",
+    mentionLegale:
+      "Ce document est un devis estimatif. Les examens ne sont facturés qu'après validation et envoi à la caisse.",
   },
 } as const;
 

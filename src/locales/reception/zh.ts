@@ -25,6 +25,7 @@ export const receptionZh = {
   nav: {
     accueil: "首页",
     nouveauPatient: "新患者",
+    estimations: "Estimations",
     patientsEnregistres: "已登记患者",
     patientsTransferes: "已转介患者",
     rechercherPatient: "搜索患者",
@@ -75,6 +76,7 @@ export const receptionZh = {
   },
   actions: {
     rechercherPatient: "搜索患者",
+    estimations: "Estimations",
     imprimerFiche: "打印档案",
     prendreRdv: "安排预约",
     transfertManuel: "手动转介",
@@ -93,6 +95,11 @@ export const receptionZh = {
       titreModification: "Modifier le patient",
       descriptionModification: "Mettez à jour les informations du patient.",
       filModification: "Modifier",
+    },
+    estimations: {
+      titre: "Estimations",
+      description: "Établissez un devis d'examens pour un patient, imprimez-le puis convertissez-le vers la caisse.",
+      fil: "Estimations",
     },
     enregistres: {
       titre: "已登记患者",
@@ -274,6 +281,7 @@ export const receptionZh = {
       telephoneSecondaire: "备用电话",
       email: "电子邮箱",
       etatCivil: "婚姻状况",
+      medecinResponsable: "Médecin responsable",
       adresse: "地址",
       commune: "区/公社",
       ville: "城市",
@@ -308,6 +316,7 @@ export const receptionZh = {
       observations: "补充说明...",
       motifAutre: "请说明就诊事由...",
       descriptionMotif: "请简要描述就诊事由...",
+      medecinResponsable: "Ex. Dr KABAMBA Jean-Pierre",
     },
     sexe: { MASCULIN: "男", FEMININ: "女" },
     nonRenseigne: "— 未填写 —",
@@ -435,6 +444,7 @@ export const receptionZh = {
     chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "就诊事由为必填项（第 2 步）。",
     motifPreciser: "请说明就诊事由（第 2 步）。",
+    medecinObligatoire: "Le medecin responsable est obligatoire (etape 3).",
     salleRequise: "请选择目的地科室。",
     transfertImpossible: "转介失败。",
     transfertErreur: "转介过程中出错。",
@@ -494,5 +504,29 @@ export const receptionZh = {
       photo: "Impossible de mettre à jour la photo.",
       motDePasse: "Impossible de changer le mot de passe.",
     },
+  },
+  estimations: {
+    etapes: {
+      infos: "Informations patient",
+      estimation: "Estimation",
+    },
+    introExamens: "Sélectionnez les examens à estimer. Au moins un examen est requis.",
+    valider: "Valider Estimation",
+    examenRequis: "Au moins un examen est requis pour valider une estimation.",
+    erreurValidation: "Impossible d'enregistrer l'estimation.",
+    erreurConversion: "Impossible d'envoyer l'estimation à la caisse.",
+    succesTitre: "Estimation enregistrée",
+    succesDescription:
+      "Patient {{numero}} — dossier {{enregistrement}}. Vous pouvez imprimer le devis ou l'envoyer à la caisse.",
+    montantTotal: "Montant total",
+    imprimerDevis: "Imprimer le devis",
+    envoyerCaisse: "Envoyer à la caisse",
+    devisTitre: "Devis d'examens",
+    patient: "Patient",
+    agent: "Agent",
+    introuvable: "Estimation introuvable.",
+    champsRequis: "Veuillez renseigner les champs obligatoires du patient.",
+    mentionLegale:
+      "Ce document est un devis estimatif. Les examens ne sont facturés qu'après conversion et envoi à la caisse.",
   },
 } satisfies Record<keyof ReceptionFr, unknown>;

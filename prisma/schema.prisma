@@ -517,8 +517,10 @@ model EnregistrementReception {
   typeVisite      String         @map("type_visite")
   assurance       String?
   numeroAssurance String?        @map("numero_assurance")
-  observations    String?
-  enregistreLe    DateTime       @default(now()) @map("enregistre_le")
+  observations       String?
+  medecinResponsable String         @default("") @map("medecin_responsable")
+  estEstimation      Boolean        @default(false) @map("est_estimation")
+  enregistreLe       DateTime       @default(now()) @map("enregistre_le")
 
   @@map("enregistrements_reception")
 }

@@ -23,6 +23,7 @@ export const receptionPt = {
   nav: {
     accueil: "Início",
     nouveauPatient: "Novo paciente",
+    estimations: "Estimations",
     patientsEnregistres: "Pacientes registados",
     patientsTransferes: "Pacientes transferidos",
     rechercherPatient: "Pesquisar paciente",
@@ -73,6 +74,7 @@ export const receptionPt = {
   },
   actions: {
     rechercherPatient: "Pesquisar paciente",
+    estimations: "Estimations",
     imprimerFiche: "Imprimir ficha",
     prendreRdv: "Marcar consulta",
     transfertManuel: "Transferência manual",
@@ -91,6 +93,11 @@ export const receptionPt = {
       titreModification: "Modifier le patient",
       descriptionModification: "Mettez à jour les informations du patient.",
       filModification: "Modifier",
+    },
+    estimations: {
+      titre: "Estimations",
+      description: "Établissez un devis d'examens pour un patient, imprimez-le puis convertissez-le vers la caisse.",
+      fil: "Estimations",
     },
     enregistres: {
       titre: "Pacientes registados",
@@ -272,6 +279,7 @@ export const receptionPt = {
       telephoneSecondaire: "Telefone secundário",
       email: "E-mail",
       etatCivil: "Estado civil",
+      medecinResponsable: "Médecin responsable",
       adresse: "Morada",
       commune: "Comuna",
       ville: "Cidade",
@@ -306,6 +314,7 @@ export const receptionPt = {
       observations: "Notas adicionais...",
       motifAutre: "Especifique o motivo da visita...",
       descriptionMotif: "Descreva brevemente o motivo da visita...",
+      medecinResponsable: "Ex. Dr KABAMBA Jean-Pierre",
     },
     sexe: { MASCULIN: "Masculino", FEMININ: "Feminino" },
     nonRenseigne: "— Não especificado —",
@@ -433,6 +442,7 @@ export const receptionPt = {
     chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "O motivo da visita é obrigatório (passo 2).",
     motifPreciser: "Especifique o motivo da visita (passo 2).",
+    medecinObligatoire: "Le medecin responsable est obligatoire (etape 3).",
     salleRequise: "Selecione uma sala de destino.",
     transfertImpossible: "A transferência falhou.",
     transfertErreur: "Erro durante a transferência.",
@@ -807,5 +817,29 @@ export const receptionPt = {
       photo: "Impossible de mettre à jour la photo.",
       motDePasse: "Impossible de changer le mot de passe.",
     },
+  },
+  estimations: {
+    etapes: {
+      infos: "Informations patient",
+      estimation: "Estimation",
+    },
+    introExamens: "Sélectionnez les examens à estimer. Au moins un examen est requis.",
+    valider: "Valider Estimation",
+    examenRequis: "Au moins un examen est requis pour valider une estimation.",
+    erreurValidation: "Impossible d'enregistrer l'estimation.",
+    erreurConversion: "Impossible d'envoyer l'estimation à la caisse.",
+    succesTitre: "Estimation enregistrée",
+    succesDescription:
+      "Patient {{numero}} — dossier {{enregistrement}}. Vous pouvez imprimer le devis ou l'envoyer à la caisse.",
+    montantTotal: "Montant total",
+    imprimerDevis: "Imprimer le devis",
+    envoyerCaisse: "Envoyer à la caisse",
+    devisTitre: "Devis d'examens",
+    patient: "Patient",
+    agent: "Agent",
+    introuvable: "Estimation introuvable.",
+    champsRequis: "Veuillez renseigner les champs obligatoires du patient.",
+    mentionLegale:
+      "Ce document est un devis estimatif. Les examens ne sont facturés qu'après conversion et envoi à la caisse.",
   },
 } satisfies Record<keyof ReceptionFr, unknown>;

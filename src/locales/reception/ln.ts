@@ -25,6 +25,7 @@ export const receptionLn = {
   nav: {
     accueil: "Ebandeli",
     nouveauPatient: "Patient ya sika",
+    estimations: "Estimations",
     patientsEnregistres: "Ba patient enregistrés",
     patientsTransferes: "Ba patient transférés",
     rechercherPatient: "Koluka patient",
@@ -75,6 +76,7 @@ export const receptionLn = {
   },
   actions: {
     rechercherPatient: "Koluka patient",
+    estimations: "Estimations",
     imprimerFiche: "Imprimer fiche",
     prendreRdv: "Kozwa RDV",
     transfertManuel: "Transfert manuel",
@@ -93,6 +95,11 @@ export const receptionLn = {
       titreModification: "Modifier le patient",
       descriptionModification: "Mettez à jour les informations du patient.",
       filModification: "Modifier",
+    },
+    estimations: {
+      titre: "Estimations",
+      description: "Établissez un devis d'examens pour un patient, imprimez-le puis convertissez-le vers la caisse.",
+      fil: "Estimations",
     },
     enregistres: {
       titre: "Ba patient enregistrés",
@@ -274,6 +281,7 @@ export const receptionLn = {
       telephoneSecondaire: "Téléphone ya mibale",
       email: "Email",
       etatCivil: "État civil",
+      medecinResponsable: "Médecin responsable",
       adresse: "Adresse",
       commune: "Commune",
       ville: "Ville",
@@ -308,6 +316,7 @@ export const receptionLn = {
       observations: "Ba note ya kobakisa...",
       motifAutre: "Precisa motif ya visite...",
       descriptionMotif: "Lakisa ntina ya visite...",
+      medecinResponsable: "Ex. Dr KABAMBA Jean-Pierre",
     },
     sexe: { MASCULIN: "Mobali", FEMININ: "Mwasi" },
     nonRenseigne: "— Eponami te —",
@@ -435,6 +444,7 @@ export const receptionLn = {
     chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "Motif ya visite esengeli (étape 2).",
     motifPreciser: "Precisa motif ya visite (étape 2).",
+    medecinObligatoire: "Le medecin responsable est obligatoire (etape 3).",
     salleRequise: "Pona chambre ya destination.",
     transfertImpossible: "Transfert elongaki te.",
     transfertErreur: "Erreur na transfert.",
@@ -494,5 +504,29 @@ export const receptionLn = {
       photo: "Impossible de mettre à jour la photo.",
       motDePasse: "Impossible de changer le mot de passe.",
     },
+  },
+  estimations: {
+    etapes: {
+      infos: "Informations patient",
+      estimation: "Estimation",
+    },
+    introExamens: "Sélectionnez les examens à estimer. Au moins un examen est requis.",
+    valider: "Valider Estimation",
+    examenRequis: "Au moins un examen est requis pour valider une estimation.",
+    erreurValidation: "Impossible d'enregistrer l'estimation.",
+    erreurConversion: "Impossible d'envoyer l'estimation à la caisse.",
+    succesTitre: "Estimation enregistrée",
+    succesDescription:
+      "Patient {{numero}} — dossier {{enregistrement}}. Vous pouvez imprimer le devis ou l'envoyer à la caisse.",
+    montantTotal: "Montant total",
+    imprimerDevis: "Imprimer le devis",
+    envoyerCaisse: "Envoyer à la caisse",
+    devisTitre: "Devis d'examens",
+    patient: "Patient",
+    agent: "Agent",
+    introuvable: "Estimation introuvable.",
+    champsRequis: "Veuillez renseigner les champs obligatoires du patient.",
+    mentionLegale:
+      "Ce document est un devis estimatif. Les examens ne sont facturés qu'après conversion et envoi à la caisse.",
   },
 } satisfies Record<keyof ReceptionFr, unknown>;

@@ -84,6 +84,8 @@ export interface DonneesTransfertAccueil extends DonneesEnregistrementPatient {
   motifAutreTexte?: string;
   descriptionMotif?: string;
   examensIds?: string[];
+  medecinResponsable?: string;
+  estEstimation?: boolean;
   transfertManuel?: boolean;
 }
 

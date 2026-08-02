@@ -23,6 +23,7 @@ export const receptionAr = {
   nav: {
     accueil: "الرئيسية",
     nouveauPatient: "مريض جديد",
+    estimations: "Estimations",
     patientsEnregistres: "المرضى المسجلون",
     patientsTransferes: "المرضى المحوّلون",
     rechercherPatient: "البحث عن مريض",
@@ -73,6 +74,7 @@ export const receptionAr = {
   },
   actions: {
     rechercherPatient: "البحث عن مريض",
+    estimations: "Estimations",
     imprimerFiche: "طباعة البطاقة",
     prendreRdv: "حجز موعد",
     transfertManuel: "تحويل يدوي",
@@ -91,6 +93,11 @@ export const receptionAr = {
       titreModification: "Modifier le patient",
       descriptionModification: "Mettez à jour les informations du patient.",
       filModification: "Modifier",
+    },
+    estimations: {
+      titre: "Estimations",
+      description: "Établissez un devis d'examens pour un patient, imprimez-le puis convertissez-le vers la caisse.",
+      fil: "Estimations",
     },
     enregistres: {
       titre: "المرضى المسجلون",
@@ -272,6 +279,7 @@ export const receptionAr = {
       telephoneSecondaire: "هاتف ثانوي",
       email: "البريد الإلكتروني",
       etatCivil: "الحالة الاجتماعية",
+      medecinResponsable: "Médecin responsable",
       adresse: "العنوان",
       commune: "البلدية",
       ville: "المدينة",
@@ -306,6 +314,7 @@ export const receptionAr = {
       observations: "ملاحظات إضافية...",
       motifAutre: "حدّد سبب الزيارة...",
       descriptionMotif: "صف سبب الزيارة باختصار...",
+      medecinResponsable: "Ex. Dr KABAMBA Jean-Pierre",
     },
     sexe: { MASCULIN: "ذكر", FEMININ: "أنثى" },
     nonRenseigne: "— غير محدد —",
@@ -433,6 +442,7 @@ export const receptionAr = {
     chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "سبب الزيارة إلزامي (الخطوة 2).",
     motifPreciser: "حدّد سبب الزيارة (الخطوة 2).",
+    medecinObligatoire: "Le medecin responsable est obligatoire (etape 3).",
     salleRequise: "اختر قسم الوجهة.",
     transfertImpossible: "فشل التحويل.",
     transfertErreur: "خطأ أثناء التحويل.",
@@ -807,5 +817,29 @@ export const receptionAr = {
       photo: "Impossible de mettre à jour la photo.",
       motDePasse: "Impossible de changer le mot de passe.",
     },
+  },
+  estimations: {
+    etapes: {
+      infos: "Informations patient",
+      estimation: "Estimation",
+    },
+    introExamens: "Sélectionnez les examens à estimer. Au moins un examen est requis.",
+    valider: "Valider Estimation",
+    examenRequis: "Au moins un examen est requis pour valider une estimation.",
+    erreurValidation: "Impossible d'enregistrer l'estimation.",
+    erreurConversion: "Impossible d'envoyer l'estimation à la caisse.",
+    succesTitre: "Estimation enregistrée",
+    succesDescription:
+      "Patient {{numero}} — dossier {{enregistrement}}. Vous pouvez imprimer le devis ou l'envoyer à la caisse.",
+    montantTotal: "Montant total",
+    imprimerDevis: "Imprimer le devis",
+    envoyerCaisse: "Envoyer à la caisse",
+    devisTitre: "Devis d'examens",
+    patient: "Patient",
+    agent: "Agent",
+    introuvable: "Estimation introuvable.",
+    champsRequis: "Veuillez renseigner les champs obligatoires du patient.",
+    mentionLegale:
+      "Ce document est un devis estimatif. Les examens ne sont facturés qu'après conversion et envoi à la caisse.",
   },
 } satisfies Record<keyof ReceptionFr, unknown>;

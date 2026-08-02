@@ -23,6 +23,7 @@ export const receptionHi = {
   nav: {
     accueil: "होम",
     nouveauPatient: "नया रोगी",
+    estimations: "Estimations",
     patientsEnregistres: "पंजीकृत रोगी",
     patientsTransferes: "स्थानांतरित रोगी",
     rechercherPatient: "रोगी खोजें",
@@ -73,6 +74,7 @@ export const receptionHi = {
   },
   actions: {
     rechercherPatient: "रोगी खोजें",
+    estimations: "Estimations",
     imprimerFiche: "फ़ाइल प्रिंट करें",
     prendreRdv: "अपॉइंटमेंट बुक करें",
     transfertManuel: "मैनुअल स्थानांतरण",
@@ -91,6 +93,11 @@ export const receptionHi = {
       titreModification: "Modifier le patient",
       descriptionModification: "Mettez à jour les informations du patient.",
       filModification: "Modifier",
+    },
+    estimations: {
+      titre: "Estimations",
+      description: "Établissez un devis d'examens pour un patient, imprimez-le puis convertissez-le vers la caisse.",
+      fil: "Estimations",
     },
     enregistres: {
       titre: "पंजीकृत रोगी",
@@ -272,6 +279,7 @@ export const receptionHi = {
       telephoneSecondaire: "द्वितीयक फ़ोन",
       email: "ईमेल",
       etatCivil: "वैवाहिक स्थिति",
+      medecinResponsable: "Médecin responsable",
       adresse: "पता",
       commune: "वार्ड",
       ville: "शहर",
@@ -306,6 +314,7 @@ export const receptionHi = {
       observations: "अतिरिक्त टिप्पणियाँ...",
       motifAutre: "विज़िट का कारण बताएँ...",
       descriptionMotif: "विज़िट का कारण संक्षेप में बताएँ...",
+      medecinResponsable: "Ex. Dr KABAMBA Jean-Pierre",
     },
     sexe: { MASCULIN: "पुरुष", FEMININ: "महिला" },
     nonRenseigne: "— निर्दिष्ट नहीं —",
@@ -433,6 +442,7 @@ export const receptionHi = {
     chargementPatientImpossible: "Impossible de charger le patient à modifier.",
     motifObligatoire: "विज़िट का कारण आवश्यक है (चरण 2)।",
     motifPreciser: "कृपया विज़िट का कारण बताएँ (चरण 2)।",
+    medecinObligatoire: "Le medecin responsable est obligatoire (etape 3).",
     salleRequise: "कृपया एक गंतव्य कक्ष चुनें।",
     transfertImpossible: "स्थानांतरण विफल रहा।",
     transfertErreur: "स्थानांतरण के दौरान त्रुटि।",
@@ -807,5 +817,29 @@ export const receptionHi = {
       photo: "Impossible de mettre à jour la photo.",
       motDePasse: "Impossible de changer le mot de passe.",
     },
+  },
+  estimations: {
+    etapes: {
+      infos: "Informations patient",
+      estimation: "Estimation",
+    },
+    introExamens: "Sélectionnez les examens à estimer. Au moins un examen est requis.",
+    valider: "Valider Estimation",
+    examenRequis: "Au moins un examen est requis pour valider une estimation.",
+    erreurValidation: "Impossible d'enregistrer l'estimation.",
+    erreurConversion: "Impossible d'envoyer l'estimation à la caisse.",
+    succesTitre: "Estimation enregistrée",
+    succesDescription:
+      "Patient {{numero}} — dossier {{enregistrement}}. Vous pouvez imprimer le devis ou l'envoyer à la caisse.",
+    montantTotal: "Montant total",
+    imprimerDevis: "Imprimer le devis",
+    envoyerCaisse: "Envoyer à la caisse",
+    devisTitre: "Devis d'examens",
+    patient: "Patient",
+    agent: "Agent",
+    introuvable: "Estimation introuvable.",
+    champsRequis: "Veuillez renseigner les champs obligatoires du patient.",
+    mentionLegale:
+      "Ce document est un devis estimatif. Les examens ne sont facturés qu'après conversion et envoi à la caisse.",
   },
 } satisfies Record<keyof ReceptionFr, unknown>;

@@ -119,6 +119,8 @@ export function parserDonneesTransfert(body: unknown): Partial<DonneesTransfertA
     examensIds: Array.isArray(b.examensIds)
       ? b.examensIds.map((id) => String(id))
       : [],
+    medecinResponsable: String(b.medecinResponsable ?? "").trim(),
+    estEstimation: b.estEstimation === true,
     transfertManuel: b.transfertManuel === true,
   };
 }
@@ -174,6 +176,10 @@ export function validerDonneesTransfert(
 
   if (donnees.motifPrincipal === "autre" && !donnees.motifAutreTexte?.trim()) {
     return "Veuillez préciser le motif de visite.";
+  }
+
+  if (!donnees.medecinResponsable?.trim()) {
+    return "Le médecin responsable est obligatoire.";
   }
 
   return null;
@@ -272,7 +278,8 @@ async function prescrireExamensInitiaux(
   tx: Prisma.TransactionClient,
   dossierId: string,
   agentId: string,
-  idsExamens: string[]
+  idsExamens: string[],
+  estEstimation: boolean
 ) {
   if (idsExamens.length === 0) return 0;
 
@@ -284,6 +291,10 @@ async function prescrireExamensInitiaux(
   if (typesExamens.length !== idsExamens.length) {
     throw new Error("Un ou plusieurs examens sélectionnés sont invalides.");
   }
+
+  const noteExamen = estEstimation
+    ? "Prescrit à la réception — estimation"
+    : "Prescrit à la réception — examens initiaux";
 
   const dejaPrescrits = await tx.examenLaboratoire.findMany({
     where: { dossierId, typeExamenId: { in: idsExamens } },
@@ -299,12 +310,33 @@ async function prescrireExamensInitiaux(
         typeExamenId: type.id,
         prescripteurId: agentId,
         statut: "PRESCRIT" as const,
-        notes: "Prescrit à la réception — examens initiaux",
+        notes: noteExamen,
       })),
     });
   }
 
   return nouveaux.length;
+}
+
+function donneesEnregistrementDepuisTransfert(
+  donnees: DonneesTransfertAccueil,
+  manuel: boolean
+) {
+  return {
+    typeVisite: donnees.typeVisite || (donnees.numeroPatient ? "ancien" : "nouveau"),
+    assurance:
+      donnees.assurance?.trim() &&
+      donnees.assurance !== "Aucune" &&
+      donnees.assurance !== ""
+        ? donnees.assurance
+        : null,
+    numeroAssurance: donnees.numeroAssurance?.trim() || null,
+    observations: manuel
+      ? construireObservationsEnregistrement(donnees)
+      : construireObservationsEnregistrement(donnees, donnees.descriptionMotif),
+    medecinResponsable: donnees.medecinResponsable?.trim() ?? "",
+    estEstimation: donnees.estEstimation ?? false,
+  };
 }
 
 export async function transfererPatientAccueil(
@@ -441,19 +473,7 @@ export async function transfererPatientAccueil(
       numeroEnregistrement = dossierMisAJour.numeroDossier;
 
       const enregistrement = dossierExistant.enregistrementsReception[0];
-      const donneesEnregistrement = {
-        typeVisite: donnees.typeVisite || (donnees.numeroPatient ? "ancien" : "nouveau"),
-        assurance:
-          donnees.assurance?.trim() &&
-          donnees.assurance !== "Aucune" &&
-          donnees.assurance !== ""
-            ? donnees.assurance
-            : null,
-        numeroAssurance: donnees.numeroAssurance?.trim() || null,
-        observations: manuel
-          ? construireObservationsEnregistrement(donnees)
-          : construireObservationsEnregistrement(donnees, donnees.descriptionMotif),
-      };
+      const donneesEnregistrement = donneesEnregistrementDepuisTransfert(donnees, manuel);
 
       if (enregistrement) {
         await tx.enregistrementReception.update({
@@ -516,17 +536,7 @@ export async function transfererPatientAccueil(
         data: {
           dossierId,
           agentId,
-          typeVisite: donnees.typeVisite || (donnees.numeroPatient ? "ancien" : "nouveau"),
-          assurance:
-            donnees.assurance?.trim() &&
-            donnees.assurance !== "Aucune" &&
-            donnees.assurance !== ""
-              ? donnees.assurance
-              : null,
-          numeroAssurance: donnees.numeroAssurance?.trim() || null,
-          observations: manuel
-          ? construireObservationsEnregistrement(donnees)
-          : construireObservationsEnregistrement(donnees, donnees.descriptionMotif),
+          ...donneesEnregistrementDepuisTransfert(donnees, manuel),
         },
       });
     }
@@ -535,7 +545,8 @@ export async function transfererPatientAccueil(
       tx,
       dossierId,
       agentId,
-      idsExamens
+      idsExamens,
+      donnees.estEstimation ?? false
     );
 
     const transfert = await tx.transfert.create({

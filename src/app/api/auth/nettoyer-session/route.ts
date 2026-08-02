@@ -17,5 +17,10 @@ export async function GET(request: NextRequest) {
   } catch {
     await supprimerCookieSession().catch(() => undefined);
   }
-  return NextResponse.redirect(new URL("/connexion", request.url));
+  const redirectParam = request.nextUrl.searchParams.get("redirect");
+  const cible = new URL("/connexion", request.url);
+  if (redirectParam) {
+    cible.searchParams.set("redirect", redirectParam);
+  }
+  return NextResponse.redirect(cible);
 }

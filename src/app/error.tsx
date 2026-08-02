@@ -7,7 +7,6 @@ import { Bouton } from "@/components/ui/bouton";
 
 export default function PageErreur({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -26,7 +25,7 @@ export default function PageErreur({
         Le chargement de la page a échoué. Vous pouvez réessayer ou revenir à l&apos;accueil.
       </p>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-        <Bouton type="button" variante="primaire" onClick={reset}>
+        <Bouton type="button" variante="primaire" onClick={() => window.location.reload()}>
           Réessayer
         </Bouton>
         <Link href="/">

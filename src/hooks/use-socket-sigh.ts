@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { io, type Socket } from "socket.io-client";
+import { redirigerSiSessionInvalide } from "@/lib/auth/rediriger-session-invalide";
 import { EVENEMENTS_SOCKET } from "@/lib/realtime/evenements";
 
 const URL_SOCKET = process.env.NEXT_PUBLIC_SOCKET_URL;
@@ -43,36 +44,24 @@ export function useSocketSigh(options?: {
       optsRef.current?.onPresence?.(p);
     });
 
-    const pingPresence = () => {
-      void fetch("/api/auth/session", { credentials: "include" })
-        .then((res) => {
-          if (!res.ok) return null;
-          return fetch("/api/messagerie/presence", {
-            method: "PATCH",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ statut: "EN_LIGNE" }),
-          });
-        })
+    const mettreAJourPresence = (statut: "EN_LIGNE" | "HORS_LIGNE") => {
+      void fetch("/api/messagerie/presence", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statut }),
+      })
+        .then((res) => redirigerSiSessionInvalide(res))
         .catch(() => {});
     };
 
-    pingPresence();
-    const interval = setInterval(pingPresence, 60000);
+    const demarrage = window.setTimeout(() => mettreAJourPresence("EN_LIGNE"), 150);
+    const interval = setInterval(() => mettreAJourPresence("EN_LIGNE"), 60000);
 
     return () => {
+      clearTimeout(demarrage);
       clearInterval(interval);
-      void fetch("/api/auth/session", { credentials: "include" })
-        .then((res) => {
-          if (!res.ok) return null;
-          return fetch("/api/messagerie/presence", {
-            method: "PATCH",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ statut: "HORS_LIGNE" }),
-          });
-        })
-        .catch(() => {});
+      mettreAJourPresence("HORS_LIGNE");
       socket.disconnect();
     };
   }, []);

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { useMonteClient } from "@/hooks/use-monte-client";
 import {
   Check,
   Eye,
@@ -286,6 +287,7 @@ function MenuActionsTransfert({
   onRafraichir?: () => void;
 }) {
   const { t } = useTranslation();
+  const monte = useMonteClient();
   const [ouvert, setOuvert] = useState(false);
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -371,8 +373,8 @@ function MenuActionsTransfert({
   };
 
   const menu =
+    monte &&
     ouvert &&
-    typeof document !== "undefined" &&
     createPortal(
       <div
         ref={menuRef}

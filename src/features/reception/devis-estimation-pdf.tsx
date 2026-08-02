@@ -329,7 +329,7 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
             <View style={styles.enTeteInfos}>
               <Text style={styles.nomLabo}>HAM LABORATOIRE</Text>
               <Text style={styles.sousNom}>
-                Centre de Diagnostic et d'Analyses Médicales
+                {"Centre de Diagnostic et d'Analyses Médicales"}
               </Text>
               <Text style={styles.sousNom}>{L.rccm}</Text>
               <Text style={styles.contact}>Tél. {L.telephones}</Text>
@@ -429,7 +429,7 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
               • Facturation après validation et envoi à la caisse.
             </Text>
             <Text style={styles.conditionsLigne}>
-              • Tarifs susceptibles d'évoluer selon protocoles.
+              {"• Tarifs susceptibles d'évoluer selon protocoles."}
             </Text>
             <Text style={styles.conditionsLigne}>
               • Devis valable 15 jours à compter de la date.

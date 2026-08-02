@@ -34,7 +34,6 @@ run_as_sigh() {
     bash -lc "cd '${APP_DIR}' && $*"
   elif [[ "${EUID:-0}" -eq 0 ]]; then
     chown -R sigh:sigh "${APP_DIR}" 2>/dev/null || true
-    rm -rf "${APP_DIR}/.next"
     sudo -u sigh -H bash -lc "cd '${APP_DIR}' && $*"
   else
     bash -lc "cd '${APP_DIR}' && $*"
@@ -63,6 +62,12 @@ if [[ "${SEED}" == "true" ]]; then
 fi
 
 echo "==> Build Next.js"
+if command -v systemctl >/dev/null 2>&1 && [[ "${EUID:-0}" -eq 0 ]]; then
+  systemctl stop sigh-web 2>/dev/null || true
+fi
+if [[ "${EUID:-0}" -eq 0 ]]; then
+  rm -rf "${APP_DIR}/.next"
+fi
 run_as_sigh "npm run build"
 
 echo "==> Permissions uploads"

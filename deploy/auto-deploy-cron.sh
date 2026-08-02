@@ -145,6 +145,7 @@ fi
 
 # ── 4. Build + restart ──────────────────────────────────────────────────────
 log "==> build Next.js"
+systemctl stop sigh-web 2>/dev/null || true
 rm -rf "${APP_DIR}/.next"
 chown -R sigh:sigh "${APP_DIR}"
 run_as_sigh "npm run build"

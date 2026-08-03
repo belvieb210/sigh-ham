@@ -123,57 +123,43 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: NOIR,
     borderRadius: 3,
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-    marginBottom: 3,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    marginBottom: 2,
     alignSelf: "flex-end",
   },
   badgeTitreTexte: {
     color: NOIR,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "bold",
     textAlign: "center",
+    lineHeight: 1,
   },
-  metaLigne: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  /** Bloc meta compact : 1 Text multi-lignes (évite l'espace extra des View flex) */
+  metaBloc: {
     width: "100%",
+    marginTop: 0,
     marginBottom: 0,
-    paddingVertical: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
-  metaLabel: {
+  metaLigneTexte: {
     fontSize: 9,
     color: NOIR,
-    lineHeight: 1.25,
+    lineHeight: 1.15,
+    marginBottom: 0,
   },
-  metaValeur: {
-    fontSize: 9,
-    color: NOIR,
-    textAlign: "right",
-    flexShrink: 1,
-    paddingLeft: 6,
-    lineHeight: 1.25,
-  },
-  metaValeurBold: {
-    fontSize: 11,
+  metaLigneNumero: {
+    fontSize: 10,
     fontWeight: "bold",
     color: ROUGE,
-    textAlign: "right",
-    flexShrink: 1,
-    paddingLeft: 6,
-    lineHeight: 1.25,
-  },
-  metaNumeroLabel: {
-    fontSize: 11,
-    fontWeight: "bold",
-    color: ROUGE,
-    lineHeight: 1.25,
+    lineHeight: 1.15,
+    marginBottom: 0,
   },
   separateurEnTete: {
     borderBottomWidth: 1.5,
     borderBottomColor: NOIR,
-    marginTop: 4,
+    marginTop: 2,
     marginBottom: 8,
   },
   cartes: {
@@ -388,26 +374,20 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
             <View style={styles.badgeTitre}>
               <Text style={styles.badgeTitreTexte}>{donnees.labels.titreTicket}</Text>
             </View>
-            <View style={styles.metaLigne}>
-              <Text style={styles.metaNumeroLabel}>N°</Text>
-              <Text style={styles.metaValeurBold}>
-                {donnees.numeroEnregistrement || "—"}
+            {/*
+              Une seule Text par ligne (pas de View flex row) :
+              react-pdf ajoute sinon une hauteur min. trop grande entre les lignes.
+            */}
+            <Text style={styles.metaBloc}>
+              <Text style={styles.metaLigneNumero}>
+                {`N°  ${donnees.numeroEnregistrement || "—"}\n`}
               </Text>
-            </View>
-            <View style={styles.metaLigne}>
-              <Text style={styles.metaLabel}>Date</Text>
-              <Text style={styles.metaValeur}>
-                {donnees.dateEnregistrement || "—"}
+              <Text style={styles.metaLigneTexte}>
+                {`Date : ${donnees.dateEnregistrement || "—"}\n`}
               </Text>
-            </View>
-            <View style={styles.metaLigne}>
-              <Text style={styles.metaLabel}>Valable pour</Text>
-              <Text style={styles.metaValeur}>15 jours</Text>
-            </View>
-            <View style={styles.metaLigne}>
-              <Text style={styles.metaLabel}>Devise</Text>
-              <Text style={styles.metaValeur}>USD ($)</Text>
-            </View>
+              <Text style={styles.metaLigneTexte}>{`Valable pour : 15 jours\n`}</Text>
+              <Text style={styles.metaLigneTexte}>Devise : USD ($)</Text>
+            </Text>
           </View>
         </View>
 

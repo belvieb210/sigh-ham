@@ -28,7 +28,12 @@ export interface PatientFileCaisse {
   nombreExamens: number;
   montantEstime: number;
   factureOuverte: boolean;
+  /** Salle / service d'origine du transfert */
+  provenance: string;
+  medecinResponsable: string | null;
 }
+
+export type TypeFactureCaisseUi = "NORMALE" | "PHARMACIE";
 
 export interface LigneFacturable {
   id: string;
@@ -153,6 +158,8 @@ export interface PatientTransfertCaisse {
   montantEstime: number;
   dateNaissance: string | null;
   factureOuverte: boolean;
+  provenance: string;
+  medecinResponsable: string | null;
 }
 
 export interface StatsTransfertsCaisse {

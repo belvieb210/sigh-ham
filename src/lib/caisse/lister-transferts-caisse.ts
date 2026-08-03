@@ -60,6 +60,8 @@ export async function listerPatientsTransfertsCaisse(): Promise<{
     montantEstime: p.montantEstime,
     dateNaissance: p.dateNaissance,
     factureOuverte: p.factureOuverte,
+    provenance: p.provenance,
+    medecinResponsable: p.medecinResponsable,
   }));
 
   const stats: StatsTransfertsCaisse = {

@@ -48,12 +48,20 @@ export async function listerPatientsFileAttenteSalle(codeSalle: CodeSalle) {
                 where: { statut: { not: "ANNULE" } },
                 include: { typeExamen: true },
               },
+              enregistrementsReception: {
+                orderBy: { enregistreLe: "desc" },
+                take: 1,
+                select: { medecinResponsable: true },
+              },
             },
           },
           transferts: {
             where: filtreTransfertVisibleSalle(codeSalle),
             orderBy: { emisLe: "desc" },
             take: 1,
+            include: {
+              salleOrigine: { select: { code: true, nom: true } },
+            },
           },
         },
       },

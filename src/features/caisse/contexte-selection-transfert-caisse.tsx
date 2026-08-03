@@ -37,11 +37,19 @@ export const RESUME_CAISSE_VIDE: ResumePatientCaisse = {
   vide: true,
 };
 
+interface ConfirmationOrientation {
+  codeSalle: string;
+  label: string;
+}
+
 interface ContexteSelectionTransfertCaisse {
   patientSelectionne: PatientTransfertCaisse | null;
   resume: ResumePatientCaisse;
   selectionnerPatient: (patient: PatientTransfertCaisse) => void;
-  orienterPatient: (codeSalle: string) => Promise<void>;
+  demanderOrientation: (codeSalle: string) => void;
+  confirmerOrientation: () => Promise<void>;
+  annulerConfirmationOrientation: () => void;
+  confirmationOrientation: ConfirmationOrientation | null;
   synchroniserSelection: (patients: PatientTransfertCaisse[]) => void;
   modificationEnCours: boolean;
   messagePanneau: string | null;
@@ -57,10 +65,13 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
   const [resume, setResume] = useState<ResumePatientCaisse>(RESUME_CAISSE_VIDE);
   const [modificationEnCours, setModificationEnCours] = useState(false);
   const [messagePanneau, setMessagePanneau] = useState<string | null>(null);
+  const [confirmationOrientation, setConfirmationOrientation] =
+    useState<ConfirmationOrientation | null>(null);
 
   const selectionnerPatient = useCallback(
     (patient: PatientTransfertCaisse) => {
       setMessagePanneau(null);
+      setConfirmationOrientation(null);
       setPatientSelectionne(patient);
       definirOrientation(patient.codeSalleDestination || "LABORATOIRE");
       const age = calculerAge(patient.dateNaissance);
@@ -77,64 +88,85 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
     [definirOrientation]
   );
 
-  const orienterPatient = useCallback(
-    async (codeSalle: string) => {
+  const demanderOrientation = useCallback(
+    (codeSalle: string) => {
       if (!patientSelectionne || modificationEnCours) return;
       if (codeSalle === "CAISSE") {
         setMessagePanneau("Le patient est déjà à la caisse.");
         return;
       }
-
-      setModificationEnCours(true);
-      setMessagePanneau(null);
-
-      try {
-        const res = await fetch("/api/caisse/transferts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            dossierId: patientSelectionne.dossierId,
-            orientation: codeSalle,
-          }),
-        });
-        const data = (await res.json()) as {
-          message?: string;
-          salleDestination?: string;
-          codeSalle?: string;
-        };
-        if (!res.ok) throw new Error(data.message ?? "Orientation impossible.");
-
-        const label =
-          ORIENTATIONS_RAPIDES_CAISSE.find((o) => o.value === (data.codeSalle ?? codeSalle))
-            ?.label ??
-          data.salleDestination ??
-          codeSalle;
-
-        setMessagePanneau(data.message ?? `Orienté vers ${label}.`);
-        setPatientSelectionne(null);
-        setResume(RESUME_CAISSE_VIDE);
-        definirOrientation("LABORATOIRE");
-
-        window.dispatchEvent(
-          new CustomEvent(EVENEMENT_CAISSE_PATIENTS_MODIFIES, {
-            detail: {
-              dossierId: patientSelectionne.dossierId,
-              orientation: label,
-              orientationCouleur:
-                COULEURS_ORIENTATION_CAISSE[label] ?? "bg-slate-100 text-slate-600",
-            },
-          })
-        );
-      } catch (error) {
-        setMessagePanneau(
-          error instanceof Error ? error.message : "Impossible d'orienter le patient."
-        );
-      } finally {
-        setModificationEnCours(false);
-      }
+      definirOrientation(codeSalle);
+      const label =
+        ORIENTATIONS_RAPIDES_CAISSE.find((o) => o.value === codeSalle)?.label ?? codeSalle;
+      setConfirmationOrientation({ codeSalle, label });
     },
     [patientSelectionne, modificationEnCours, definirOrientation]
   );
+
+  const annulerConfirmationOrientation = useCallback(() => {
+    setConfirmationOrientation(null);
+    if (patientSelectionne?.codeSalleDestination) {
+      definirOrientation(patientSelectionne.codeSalleDestination);
+    }
+  }, [patientSelectionne, definirOrientation]);
+
+  const confirmerOrientation = useCallback(async () => {
+    if (!patientSelectionne || !confirmationOrientation || modificationEnCours) return;
+
+    setModificationEnCours(true);
+    setMessagePanneau(null);
+
+    try {
+      const res = await fetch("/api/caisse/transferts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dossierId: patientSelectionne.dossierId,
+          orientation: confirmationOrientation.codeSalle,
+        }),
+      });
+      const data = (await res.json()) as {
+        message?: string;
+        salleDestination?: string;
+        codeSalle?: string;
+      };
+      if (!res.ok) throw new Error(data.message ?? "Orientation impossible.");
+
+      const label =
+        ORIENTATIONS_RAPIDES_CAISSE.find((o) => o.value === (data.codeSalle ?? confirmationOrientation.codeSalle))
+          ?.label ??
+        data.salleDestination ??
+        confirmationOrientation.label;
+
+      setMessagePanneau(data.message ?? `Orienté vers ${label}.`);
+      setConfirmationOrientation(null);
+      setPatientSelectionne(null);
+      setResume(RESUME_CAISSE_VIDE);
+      definirOrientation("LABORATOIRE");
+
+      window.dispatchEvent(
+        new CustomEvent(EVENEMENT_CAISSE_PATIENTS_MODIFIES, {
+          detail: {
+            dossierId: patientSelectionne.dossierId,
+            orientation: label,
+            orientationCouleur:
+              COULEURS_ORIENTATION_CAISSE[label] ?? "bg-slate-100 text-slate-600",
+          },
+        })
+      );
+    } catch (error) {
+      setMessagePanneau(
+        error instanceof Error ? error.message : "Impossible d'orienter le patient."
+      );
+    } finally {
+      setModificationEnCours(false);
+    }
+  }, [
+    patientSelectionne,
+    confirmationOrientation,
+    modificationEnCours,
+    definirOrientation,
+  ]);
 
   const synchroniserSelection = useCallback((patients: PatientTransfertCaisse[]) => {
     setPatientSelectionne((courant) => {
@@ -148,7 +180,10 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
       patientSelectionne,
       resume,
       selectionnerPatient,
-      orienterPatient,
+      demanderOrientation,
+      confirmerOrientation,
+      annulerConfirmationOrientation,
+      confirmationOrientation,
       synchroniserSelection,
       modificationEnCours,
       messagePanneau,
@@ -157,7 +192,10 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
       patientSelectionne,
       resume,
       selectionnerPatient,
-      orienterPatient,
+      demanderOrientation,
+      confirmerOrientation,
+      annulerConfirmationOrientation,
+      confirmationOrientation,
       synchroniserSelection,
       modificationEnCours,
       messagePanneau,

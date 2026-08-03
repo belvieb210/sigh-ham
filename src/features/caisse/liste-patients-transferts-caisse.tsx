@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import {
   ChevronLeft,
@@ -9,11 +8,11 @@ import {
   Download,
   Eye,
   Loader2,
-  Receipt,
   Search,
 } from "lucide-react";
 import { EVENEMENT_CAISSE_PATIENTS_MODIFIES } from "@/constants/caisse";
 import { useSelectionTransfertCaisse } from "@/features/caisse/contexte-selection-transfert-caisse";
+import { ModaleExamensCaisse } from "@/features/caisse/modale-examens-caisse";
 import { formaterMontantCaisse } from "@/features/caisse/utils-format";
 import type { PatientTransfertCaisse, StatsTransfertsCaisse } from "@/lib/caisse/types";
 import { cn } from "@/lib/utils";
@@ -35,6 +34,8 @@ export function ListePatientsTransfertsCaisse() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [recherche, setRecherche] = useState("");
   const [page, setPage] = useState(1);
+  const [patientExamens, setPatientExamens] = useState<PatientTransfertCaisse | null>(null);
+  const [modaleExamensOuverte, setModaleExamensOuverte] = useState(false);
 
   const charger = useCallback(
     async (options?: { silencieux?: boolean }) => {
@@ -224,7 +225,7 @@ export function ListePatientsTransfertsCaisse() {
                     {t("caisse.transferts.colTelephone")}
                   </th>
                   <th className="hidden px-4 py-2.5 font-semibold lg:table-cell">
-                    {t("caisse.transferts.colMotif")}
+                    {t("caisse.transferts.colProvenance")}
                   </th>
                   <th className="px-4 py-2.5 font-semibold">
                     {t("caisse.transferts.colOrientation")}
@@ -259,7 +260,7 @@ export function ListePatientsTransfertsCaisse() {
                         {p.telephone}
                       </td>
                       <td className="hidden max-w-[160px] truncate px-4 py-3 text-texte-secondaire lg:table-cell">
-                        {p.motif}
+                        {p.provenance}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -283,23 +284,18 @@ export function ListePatientsTransfertsCaisse() {
                       </td>
                       <td className="px-4 py-3 tabular-nums text-texte-secondaire">{p.heure}</td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => selectionnerPatient(p)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:text-bleu-medical"
-                            aria-label={t("caisse.transferts.voir")}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <Link
-                            href={`/sigh/caisse/facturation?dossier=${p.dossierId}`}
-                            className="inline-flex h-8 items-center gap-1 rounded-lg bg-bleu-medical px-2.5 text-xs font-semibold text-white hover:bg-bleu-medical/90"
-                          >
-                            <Receipt className="h-3.5 w-3.5" />
-                            {t("caisse.patients.facturer")}
-                          </Link>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            selectionnerPatient(p);
+                            setPatientExamens(p);
+                            setModaleExamensOuverte(true);
+                          }}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:border-bleu-medical/40 hover:text-bleu-medical"
+                          aria-label={t("caisse.transferts.voirExamens")}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
                       </td>
                     </tr>
                   );
@@ -339,6 +335,15 @@ export function ListePatientsTransfertsCaisse() {
           </div>
         </div>
       </section>
+
+      <ModaleExamensCaisse
+        patient={patientExamens}
+        ouverte={modaleExamensOuverte}
+        onFermer={() => {
+          setModaleExamensOuverte(false);
+          setPatientExamens(null);
+        }}
+      />
     </div>
   );
 }

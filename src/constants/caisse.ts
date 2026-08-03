@@ -76,6 +76,12 @@ export const DESTINATIONS_APRES_ENCAISSEMENT = [
   "AUCUNE",
 ] as const;
 
+/** Types de facture (UI) — suite métier à brancher plus tard */
+export const TYPES_FACTURE_CAISSE_UI = [
+  { id: "NORMALE" as const, destination: "LABORATOIRE" as const },
+  { id: "PHARMACIE" as const, destination: "PHARMACIE" as const },
+] as const;
+
 /** Orientations rapides — mêmes possibilités que la réception (+ laboratoire) */
 export const ORIENTATIONS_RAPIDES_CAISSE = [
   {

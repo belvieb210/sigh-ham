@@ -17,12 +17,13 @@ import {
 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
 import {
-  DESTINATIONS_APRES_ENCAISSEMENT,
   MODES_FACTURE_CAISSE,
   MODES_PAIEMENT_UI_CAISSE,
+  TYPES_FACTURE_CAISSE_UI,
 } from "@/constants/caisse";
 import { MiseEnPageCaisse, type UtilisateurCaisse } from "@/features/caisse/mise-en-page-caisse";
 import {
+  arrondirMontantCaisse,
   calculerAge,
   formaterDate,
   formaterHeure,
@@ -36,6 +37,7 @@ import type {
   DossierFacturationCaisse,
   ModeFactureCaisse,
   PatientFileCaisse,
+  TypeFactureCaisseUi,
 } from "@/lib/caisse/types";
 import type { ModePaiement } from "@/generated/prisma/client";
 
@@ -79,9 +81,13 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   );
   const [numeroRecu, setNumeroRecu] = useState("");
   const [transfererApres, setTransfererApres] = useState(true);
-  const [destinationApres, setDestinationApres] =
-    useState<DestinationApresEncaissement>("LABORATOIRE");
+  const [typeFactureUi, setTypeFactureUi] = useState<TypeFactureCaisseUi>("NORMALE");
   const [lignesMasquees, setLignesMasquees] = useState<Set<string>>(new Set());
+
+  const destinationApres: DestinationApresEncaissement = transfererApres
+    ? (TYPES_FACTURE_CAISSE_UI.find((t) => t.id === typeFactureUi)?.destination ??
+      "LABORATOIRE")
+    : "AUCUNE";
 
   const chargerFile = useCallback(async () => {
     setChargementFile(true);
@@ -120,9 +126,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           Math.max(0, data.dossier.remiseProposee || 0),
           total
         );
-        setRemise(remiseInitiale);
+        setRemise(arrondirMontantCaisse(remiseInitiale));
         setFraisDivers(0);
-        setMontantPaiement(Math.max(0, reste - remiseInitiale));
+        setMontantPaiement(arrondirMontantCaisse(Math.max(0, reste - remiseInitiale)));
       } catch (e) {
         setDossier(null);
         setErreur(
@@ -165,8 +171,13 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const resteAPayer = Math.max(0, totalAPayer - dejaPaye);
 
   useEffect(() => {
-    setMontantPaiement(resteAPayer);
+    setMontantPaiement(arrondirMontantCaisse(resteAPayer));
   }, [resteAPayer]);
+
+  const selectionnerPatientFile = (patient: PatientFileCaisse) => {
+    setDossierId(patient.dossierId);
+    router.replace(`/sigh/caisse/facturation?dossier=${patient.dossierId}`);
+  };
 
   const age = calculerAge(dossier?.dateNaissance ?? null);
   const modePrisma: ModePaiement =
@@ -252,7 +263,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               min={0}
               step="0.01"
               value={remise}
-              onChange={(e) => setRemise(Number(e.target.value) || 0)}
+              onChange={(e) => setRemise(arrondirMontantCaisse(Number(e.target.value) || 0))}
               className="w-24 rounded-lg border border-gris-bordure px-2 py-1.5 text-right text-sm"
             />
           </dd>
@@ -269,7 +280,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               min={0}
               step="0.01"
               value={fraisDivers}
-              onChange={(e) => setFraisDivers(Number(e.target.value) || 0)}
+              onChange={(e) =>
+                setFraisDivers(arrondirMontantCaisse(Number(e.target.value) || 0))
+              }
               className="w-24 rounded-lg border border-gris-bordure px-2 py-1.5 text-right text-sm"
             />
           </dd>
@@ -341,22 +354,109 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     >
       <div className="mx-auto w-full max-w-7xl space-y-4 pb-24 lg:pb-6">
         <Link
-          href="/sigh/caisse/patients"
+          href="/sigh/caisse/transferts"
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-bleu-medical hover:underline"
         >
           <ArrowLeft className="h-4 w-4" />
           {t("caisse.facturation.retourListe")}
         </Link>
 
-        {!dossierId ? (
-          <div className="rounded-xl border border-dashed border-gris-bordure bg-white px-6 py-16 text-center text-sm text-texte-secondaire">
-            {chargementFile ? (
-              <Loader2 className="mx-auto h-5 w-5 animate-spin" />
-            ) : (
-              t("caisse.facturation.selectionnerPatient")
-            )}
+        {/* Patients transférés vers la caisse */}
+        <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-3">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-texte-principal">
+              {t("caisse.facturation.fileAttenteTitre", { count: file.length })}
+            </h3>
+            <Link
+              href="/sigh/caisse/transferts"
+              className="text-xs font-semibold text-bleu-medical hover:underline"
+            >
+              {t("caisse.facturation.voirTout")}
+            </Link>
           </div>
-        ) : chargementDossier || !dossier ? (
+          {chargementFile ? (
+            <div className="flex items-center justify-center gap-2 py-10 text-sm text-texte-secondaire">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          ) : file.length === 0 ? (
+            <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
+              {t("caisse.facturation.selectionnerPatient")}
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
+                  <tr>
+                    <th className="px-4 py-2.5 font-semibold">N°</th>
+                    <th className="px-4 py-2.5 font-semibold">
+                      {t("caisse.facturation.colPatient")}
+                    </th>
+                    <th className="hidden px-4 py-2.5 font-semibold sm:table-cell">
+                      {t("caisse.facturation.colProvenance")}
+                    </th>
+                    <th className="px-4 py-2.5 font-semibold">
+                      {t("caisse.facturation.colPrestations")}
+                    </th>
+                    <th className="px-4 py-2.5 font-semibold">
+                      {t("caisse.facturation.colMontant")}
+                    </th>
+                    <th className="px-4 py-2.5 font-semibold">
+                      {t("caisse.facturation.colHeure")}
+                    </th>
+                    <th className="px-4 py-2.5 font-semibold">
+                      {t("caisse.facturation.colActions")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {file.slice(0, 8).map((p, index) => {
+                    const actif = dossierId === p.dossierId;
+                    return (
+                      <tr
+                        key={p.fileAttenteId}
+                        onClick={() => selectionnerPatientFile(p)}
+                        className={cn(
+                          "cursor-pointer border-t border-gris-bordure/70 transition-colors",
+                          actif ? "bg-bleu-medical-clair/50" : "hover:bg-slate-50"
+                        )}
+                      >
+                        <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                          {index + 1}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-texte-principal">
+                          {p.prenom} {p.nom}
+                        </td>
+                        <td className="hidden px-4 py-3 text-texte-secondaire sm:table-cell">
+                          {p.provenance}
+                        </td>
+                        <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                          {p.nombreExamens}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-texte-principal">
+                          {formaterMontantCaisse(p.montantEstime)}
+                        </td>
+                        <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                          {formaterHeure(p.arriveeLe)}
+                        </td>
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => selectionnerPatientFile(p)}
+                            className="rounded-lg border border-bleu-medical/30 px-3 py-1.5 text-xs font-semibold text-bleu-medical hover:bg-bleu-medical-clair/40"
+                          >
+                            {t("caisse.facturation.ouvrir")}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        {!dossierId ? null : chargementDossier || !dossier ? (
           <div className="flex items-center justify-center gap-2 rounded-xl border border-gris-bordure bg-white py-16 text-sm text-texte-secondaire">
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
@@ -618,7 +718,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                         min={0}
                         step="0.01"
                         value={montantPaiement}
-                        onChange={(e) => setMontantPaiement(Number(e.target.value) || 0)}
+                        onChange={(e) =>
+                          setMontantPaiement(arrondirMontantCaisse(Number(e.target.value) || 0))
+                        }
                         className="w-full rounded-lg border border-gris-bordure px-3 py-2.5 text-sm font-semibold"
                       />
                     </label>
@@ -692,38 +794,40 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               >
                 {resumePanel}
 
-                <label className="flex items-center gap-2 rounded-xl border border-gris-bordure bg-white px-4 py-3 text-sm shadow-sm">
-                  <input
-                    type="checkbox"
-                    checked={transfererApres}
-                    onChange={(e) => setTransfererApres(e.target.checked)}
-                    className="accent-bleu-medical"
-                  />
-                  <span>{t("caisse.facturation.transfererApres")}</span>
-                </label>
-                {transfererApres && (
-                  <div className="flex flex-wrap gap-1.5 px-1">
-                    {DESTINATIONS_APRES_ENCAISSEMENT.filter((d) => d !== "AUCUNE").map(
-                      (dest) => (
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 rounded-xl border border-gris-bordure bg-white px-4 py-3 text-sm shadow-sm">
+                    <input
+                      type="checkbox"
+                      checked={transfererApres}
+                      onChange={(e) => setTransfererApres(e.target.checked)}
+                      className="h-4 w-4 accent-bleu-medical"
+                    />
+                    <span className="font-medium text-texte-principal">
+                      {t("caisse.facturation.transfererApres")}
+                    </span>
+                  </label>
+                  {transfererApres && (
+                    <div className="flex flex-wrap gap-2">
+                      {TYPES_FACTURE_CAISSE_UI.map((type) => (
                         <button
-                          key={dest}
+                          key={type.id}
                           type="button"
-                          onClick={() => setDestinationApres(dest)}
+                          onClick={() => setTypeFactureUi(type.id)}
                           className={cn(
-                            "rounded-lg border px-2.5 py-1 text-xs font-medium",
-                            destinationApres === dest
-                              ? "border-bleu-medical bg-bleu-medical text-white"
-                              : "border-gris-bordure"
+                            "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                            typeFactureUi === type.id
+                              ? "bg-bleu-medical text-white"
+                              : "bg-slate-100 text-texte-principal hover:bg-slate-200"
                           )}
                         >
-                          {dest === "LABORATOIRE"
-                            ? t("caisse.facturation.destinationLabo")
-                            : t("caisse.facturation.destinationPharma")}
+                          {type.id === "NORMALE"
+                            ? t("caisse.facturation.factureNormale")
+                            : t("caisse.facturation.facturePharmacie")}
                         </button>
-                      )
-                    )}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -742,7 +846,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               <Bouton
                 type="button"
                 variante="contour"
-                onClick={() => router.push("/sigh/caisse/patients")}
+                onClick={() => router.push("/sigh/caisse/transferts")}
               >
                 {t("caisse.facturation.annuler")}
               </Bouton>

@@ -32,6 +32,12 @@ export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse
       (acc, ex) => acc + decimalVersNombre(ex.typeExamen.prix),
       0
     );
+    const medecin =
+      dossier.enregistrementsReception[0]?.medecinResponsable?.trim() || null;
+    const provenance =
+      transfert?.salleOrigine?.nom?.trim() ||
+      transfert?.salleOrigine?.code ||
+      "—";
 
     return {
       fileAttenteId: file.id,
@@ -51,6 +57,8 @@ export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse
       nombreExamens: examens.length,
       montantEstime,
       factureOuverte: dossiersAvecFacture.has(dossier.id),
+      provenance,
+      medecinResponsable: medecin,
     };
   });
 }

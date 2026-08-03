@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { CalendarPlus, Printer, Receipt, Search } from "lucide-react";
+import { ModaleConfirmation } from "@/components/ui/modale-confirmation";
 import { OrientationRapideCaisse } from "@/features/caisse/orientation-rapide-caisse";
 import { useOrientationCaisse } from "@/features/caisse/contexte-orientation-caisse";
 import {
@@ -11,13 +12,12 @@ import {
 import { cn } from "@/lib/utils";
 
 function useGestionOrientation() {
-  const { orientation, definirOrientation } = useOrientationCaisse();
+  const { orientation } = useOrientationCaisse();
   const selection = useSelectionTransfertCaisseOptionnel();
 
   const onOrientationChange = (code: string) => {
-    definirOrientation(code);
     if (selection?.patientSelectionne) {
-      void selection.orienterPatient(code);
+      selection.demanderOrientation(code);
     }
   };
 
@@ -136,10 +136,37 @@ function ResumeEtOrientation() {
   );
 }
 
+function ModaleConfirmationOrientation() {
+  const { t } = useTranslation();
+  const selection = useSelectionTransfertCaisseOptionnel();
+  if (!selection) return null;
+
+  const conf = selection.confirmationOrientation;
+  const patient = selection.patientSelectionne;
+
+  return (
+    <ModaleConfirmation
+      ouverte={Boolean(conf)}
+      onFermer={selection.annulerConfirmationOrientation}
+      onConfirmer={() => selection.confirmerOrientation()}
+      titre={t("caisse.transferts.confirmation.titre")}
+      description={t("caisse.transferts.confirmation.description", {
+        patient: patient?.nomComplet ?? "—",
+        destination: conf?.label ?? "—",
+      })}
+      libelleConfirmer={t("caisse.transferts.confirmation.confirmer")}
+      libelleAnnuler={t("caisse.transferts.confirmation.annuler")}
+      enCours={selection.modificationEnCours}
+      variante="info"
+    />
+  );
+}
+
 export function PanneauDroitCaisse() {
   return (
     <aside className="flex w-full shrink-0 flex-col gap-4">
       <ResumeEtOrientation />
+      <ModaleConfirmationOrientation />
     </aside>
   );
 }
@@ -148,6 +175,7 @@ export function SectionsMobileCaisseTransferts() {
   return (
     <div className="space-y-4 xl:hidden">
       <ResumeEtOrientation />
+      <ModaleConfirmationOrientation />
     </div>
   );
 }

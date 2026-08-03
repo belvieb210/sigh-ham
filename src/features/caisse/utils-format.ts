@@ -1,5 +1,10 @@
+export function arrondirMontantCaisse(montant: number) {
+  if (!Number.isFinite(montant)) return 0;
+  return Math.round(montant * 100) / 100;
+}
+
 export function formaterMontantCaisse(montant: number, devise = "USD", locale = "fr-FR") {
-  const n = Number.isFinite(montant) ? montant : 0;
+  const n = arrondirMontantCaisse(montant);
   const corps = n.toLocaleString(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

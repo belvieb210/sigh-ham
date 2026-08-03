@@ -298,6 +298,7 @@ export const receptionSw = {
       observations: "Maelezo",
       motifPrincipal: "Sababu kuu",
       descriptionMotif: "Maelezo ya sababu",
+      remise: "Remise",
     },
     placeholders: {
       nom: "KABAMBA",
@@ -317,6 +318,7 @@ export const receptionSw = {
       motifAutre: "Eleza sababu ya ziara...",
       descriptionMotif: "Eleza kwa ufupi sababu ya ziara...",
       medecinResponsable: "Ex. Dr KABAMBA Jean-Pierre",
+      remise: "0.00",
     },
     sexe: { MASCULIN: "Mwanaume", FEMININ: "Mwanamke" },
     nonRenseigne: "— Haijabainishwa —",
@@ -519,6 +521,11 @@ export const receptionSw = {
     succesDescription:
       "Patient {{numero}} — dossier {{enregistrement}}. Vous pouvez imprimer le devis ou l'envoyer à la caisse.",
     montantTotal: "Montant total",
+    sousTotal: "Sous-total",
+    remise: "Remise",
+    totalNet: "Total net",
+    remiseHint:
+      "Remise commerciale en USD. Appliquée sur le devis et proposée à la caisse.",
     imprimerDevis: "Imprimer le devis",
     envoyerCaisse: "Envoyer à la caisse",
     devisTitre: "Devis d'examens",

@@ -291,6 +291,7 @@ export const receptionFr = {
       motifPrincipal: "Motif principal",
       descriptionMotif: "Description du motif",
       medecinResponsable: "Médecin responsable",
+      remise: "Remise",
     },
     placeholders: {
       nom: "KABAMBA",
@@ -310,6 +311,7 @@ export const receptionFr = {
       motifAutre: "Précisez le motif de visite...",
       descriptionMotif: "Décrivez brièvement la raison de la visite...",
       medecinResponsable: "Ex. Dr KABAMBA Jean-Pierre",
+      remise: "0.00",
     },
     sexe: { MASCULIN: "Masculin", FEMININ: "Féminin" },
     nonRenseigne: "— Non renseigné —",
@@ -829,6 +831,11 @@ export const receptionFr = {
     succesDescription:
       "Patient {{numero}} — dossier {{enregistrement}}. Vous pouvez imprimer le devis ou l'envoyer à la caisse.",
     montantTotal: "Montant total",
+    sousTotal: "Sous-total",
+    remise: "Remise",
+    totalNet: "Total net",
+    remiseHint:
+      "Remise commerciale en USD. Appliquée sur le devis et proposée à la caisse.",
     imprimerDevis: "Imprimer Estimation",
     envoyerCaisse: "Envoyer à la caisse",
     devisTitre: "Devis d'examens",

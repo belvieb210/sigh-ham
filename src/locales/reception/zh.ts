@@ -298,6 +298,7 @@ export const receptionZh = {
       observations: "备注",
       motifPrincipal: "主要事由",
       descriptionMotif: "事由说明",
+      remise: "Remise",
     },
     placeholders: {
       nom: "KABAMBA",
@@ -317,6 +318,7 @@ export const receptionZh = {
       motifAutre: "请说明就诊事由...",
       descriptionMotif: "请简要描述就诊事由...",
       medecinResponsable: "Ex. Dr KABAMBA Jean-Pierre",
+      remise: "0.00",
     },
     sexe: { MASCULIN: "男", FEMININ: "女" },
     nonRenseigne: "— 未填写 —",
@@ -519,6 +521,11 @@ export const receptionZh = {
     succesDescription:
       "Patient {{numero}} — dossier {{enregistrement}}. Vous pouvez imprimer le devis ou l'envoyer à la caisse.",
     montantTotal: "Montant total",
+    sousTotal: "Sous-total",
+    remise: "Remise",
+    totalNet: "Total net",
+    remiseHint:
+      "Remise commerciale en USD. Appliquée sur le devis et proposée à la caisse.",
     imprimerDevis: "Imprimer le devis",
     envoyerCaisse: "Envoyer à la caisse",
     devisTitre: "Devis d'examens",

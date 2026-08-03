@@ -121,6 +121,7 @@ export function parserDonneesTransfert(body: unknown): Partial<DonneesTransfertA
       : [],
     medecinResponsable: String(b.medecinResponsable ?? "").trim(),
     estEstimation: b.estEstimation === true,
+    remise: Math.max(0, Number(b.remise) || 0),
     transfertManuel: b.transfertManuel === true,
   };
 }
@@ -180,6 +181,10 @@ export function validerDonneesTransfert(
 
   if (!donnees.medecinResponsable?.trim()) {
     return "Le médecin responsable est obligatoire.";
+  }
+
+  if (donnees.remise != null && (Number.isNaN(donnees.remise) || donnees.remise < 0)) {
+    return "La remise ne peut pas être négative.";
   }
 
   return null;
@@ -336,6 +341,7 @@ function donneesEnregistrementDepuisTransfert(
       : construireObservationsEnregistrement(donnees, donnees.descriptionMotif),
     medecinResponsable: donnees.medecinResponsable?.trim() ?? "",
     estEstimation: donnees.estEstimation ?? false,
+    remise: Math.max(0, Number(donnees.remise) || 0),
   };
 }
 

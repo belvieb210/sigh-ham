@@ -93,6 +93,11 @@ export async function obtenirDossierFacturation(
           },
         },
       },
+      enregistrementsReception: {
+        orderBy: { enregistreLe: "desc" },
+        take: 1,
+        select: { remise: true },
+      },
     },
   });
 
@@ -162,6 +167,10 @@ export async function obtenirDossierFacturation(
     })
   );
 
+  const remiseProposee = decimalVersNombre(
+    dossier.enregistrementsReception[0]?.remise ?? 0
+  );
+
   return {
     dossierId: dossier.id,
     numeroPatient: dossier.patient.numeroPatient,
@@ -182,6 +191,7 @@ export async function obtenirDossierFacturation(
     transferePar: transfert?.emetteur
       ? formaterCaissier(transfert.emetteur.prenom, transfert.emetteur.nom)
       : null,
+    remiseProposee,
     facture: {
       id: facture?.id ?? null,
       numeroFacture: facture?.numeroFacture ?? null,

@@ -290,6 +290,7 @@ export const receptionEn = {
       motifPrincipal: "Main reason",
       descriptionMotif: "Reason description",
       medecinResponsable: "Responsible doctor",
+      remise: "Discount",
     },
     placeholders: {
       nom: "KABAMBA",
@@ -309,6 +310,7 @@ export const receptionEn = {
       motifAutre: "Specify visit reason...",
       descriptionMotif: "Briefly describe the reason for the visit...",
       medecinResponsable: "Ex. Dr KABAMBA Jean-Pierre",
+      remise: "0.00",
     },
     sexe: { MASCULIN: "Male", FEMININ: "Female" },
     nonRenseigne: "— Not specified —",
@@ -825,6 +827,11 @@ export const receptionEn = {
     succesDescription:
       "Patient {{numero}} — record {{enregistrement}}. You can print the quote or send it to billing.",
     montantTotal: "Total amount",
+    sousTotal: "Subtotal",
+    remise: "Discount",
+    totalNet: "Net total",
+    remiseHint:
+      "Commercial discount in USD. Applied on the quote and suggested at billing.",
     imprimerDevis: "Print Estimate",
     envoyerCaisse: "Send to billing",
     devisTitre: "Exam quote",

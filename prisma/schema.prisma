@@ -520,6 +520,8 @@ model EnregistrementReception {
   observations       String?
   medecinResponsable String         @default("") @map("medecin_responsable")
   estEstimation      Boolean        @default(false) @map("est_estimation")
+  /** Remise commerciale appliquée à l'estimation / proposée à la caisse (USD) */
+  remise             Decimal        @default(0) @db.Decimal(12, 2)
   enregistreLe       DateTime       @default(now()) @map("enregistre_le")
 
   @@map("enregistrements_reception")

@@ -76,6 +76,8 @@ export interface DossierFacturationCaisse {
   transfertId: string | null;
   recuLe: string | null;
   transferePar: string | null;
+  /** Remise proposée à la réception (préremplit la facturation) */
+  remiseProposee: number;
   facture: FactureCaisseDetail;
 }
 

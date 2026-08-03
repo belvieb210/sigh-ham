@@ -296,6 +296,7 @@ export const receptionHi = {
       observations: "टिप्पणियाँ",
       motifPrincipal: "मुख्य कारण",
       descriptionMotif: "कारण का विवरण",
+      remise: "Remise",
     },
     placeholders: {
       nom: "KABAMBA",
@@ -315,6 +316,7 @@ export const receptionHi = {
       motifAutre: "विज़िट का कारण बताएँ...",
       descriptionMotif: "विज़िट का कारण संक्षेप में बताएँ...",
       medecinResponsable: "Ex. Dr KABAMBA Jean-Pierre",
+      remise: "0.00",
     },
     sexe: { MASCULIN: "पुरुष", FEMININ: "महिला" },
     nonRenseigne: "— निर्दिष्ट नहीं —",
@@ -832,6 +834,11 @@ export const receptionHi = {
     succesDescription:
       "Patient {{numero}} — dossier {{enregistrement}}. Vous pouvez imprimer le devis ou l'envoyer à la caisse.",
     montantTotal: "Montant total",
+    sousTotal: "Sous-total",
+    remise: "Remise",
+    totalNet: "Total net",
+    remiseHint:
+      "Remise commerciale en USD. Appliquée sur le devis et proposée à la caisse.",
     imprimerDevis: "Imprimer le devis",
     envoyerCaisse: "Envoyer à la caisse",
     devisTitre: "Devis d'examens",

@@ -86,6 +86,8 @@ export interface DonneesTransfertAccueil extends DonneesEnregistrementPatient {
   examensIds?: string[];
   medecinResponsable?: string;
   estEstimation?: boolean;
+  /** Remise en devise (USD), ≥ 0 */
+  remise?: number;
   transfertManuel?: boolean;
 }
 

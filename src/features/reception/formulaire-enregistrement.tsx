@@ -168,6 +168,7 @@ export const FormulaireEnregistrement = forwardRef<
   const [descriptionMotif, setDescriptionMotif] = useState("");
   const [examensSelectionnes, setExamensSelectionnes] = useState<TypeExamenReception[]>([]);
   const [medecinResponsable, setMedecinResponsable] = useState("");
+  const [remise, setRemise] = useState(0);
   const [modeEstimation, setModeEstimation] = useState(false);
   const [orientation, setOrientation] = useState<string>("INFIRMIERS");
 
@@ -398,6 +399,7 @@ export const FormulaireEnregistrement = forwardRef<
           examensIds: examensSelectionnes.map((e) => e.id),
           medecinResponsable: medecinResponsable.trim(),
           estEstimation: modeEstimation,
+          remise: Math.max(0, Number(remise) || 0),
         }),
       });
 
@@ -1051,6 +1053,8 @@ export const FormulaireEnregistrement = forwardRef<
               numeroEnregistrement={numeroEnregistrement}
               dateEnregistrement={aujourdhui}
               agentNom={agentNom}
+              remise={remise}
+              onRemiseChange={setRemise}
               onErreur={(message) => setErreur(message || null)}
             />
           </div>

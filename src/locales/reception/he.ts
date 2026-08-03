@@ -296,6 +296,7 @@ export const receptionHe = {
       observations: "הערות",
       motifPrincipal: "סיבה עיקרית",
       descriptionMotif: "תיאור הסיבה",
+      remise: "Remise",
     },
     placeholders: {
       nom: "KABAMBA",
@@ -315,6 +316,7 @@ export const receptionHe = {
       motifAutre: "פרטו את סיבת הביקור...",
       descriptionMotif: "תארו בקצרה את סיבת הביקור...",
       medecinResponsable: "Ex. Dr KABAMBA Jean-Pierre",
+      remise: "0.00",
     },
     sexe: { MASCULIN: "זכר", FEMININ: "נקבה" },
     nonRenseigne: "— לא צוין —",
@@ -832,6 +834,11 @@ export const receptionHe = {
     succesDescription:
       "Patient {{numero}} — dossier {{enregistrement}}. Vous pouvez imprimer le devis ou l'envoyer à la caisse.",
     montantTotal: "Montant total",
+    sousTotal: "Sous-total",
+    remise: "Remise",
+    totalNet: "Total net",
+    remiseHint:
+      "Remise commerciale en USD. Appliquée sur le devis et proposée à la caisse.",
     imprimerDevis: "Imprimer le devis",
     envoyerCaisse: "Envoyer à la caisse",
     devisTitre: "Devis d'examens",

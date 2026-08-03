@@ -115,9 +115,13 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         );
         const total = data.dossier.facture.lignes.reduce((a, l) => a + l.montant, 0);
         const reste = Math.max(0, total - data.dossier.facture.montantPaye);
-        setRemise(0);
+        const remiseInitiale = Math.min(
+          Math.max(0, data.dossier.remiseProposee || 0),
+          total
+        );
+        setRemise(remiseInitiale);
         setFraisDivers(0);
-        setMontantPaiement(reste);
+        setMontantPaiement(Math.max(0, reste - remiseInitiale));
       } catch (e) {
         setDossier(null);
         setErreur(

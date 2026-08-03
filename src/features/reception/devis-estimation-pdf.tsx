@@ -20,6 +20,8 @@ export interface DonneesDevisEstimation {
   dateEnregistrement: string;
   /** Utilisateur connecté (réception) qui émet le devis */
   agentNom?: string;
+  /** Remise commerciale en USD (≥ 0) */
+  remise?: number;
   labels: {
     titreTicket: string;
     numero: string;
@@ -323,7 +325,9 @@ interface PropsDocumentDevisEstimation {
 
 export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimation) {
   const L = INFOS_LEGALES_TICKET;
-  const montantTotal = donnees.examens.reduce((t, e) => t + e.prix, 0);
+  const sousTotal = donnees.examens.reduce((t, e) => t + e.prix, 0);
+  const remise = Math.min(Math.max(0, Number(donnees.remise) || 0), sousTotal);
+  const montantTotal = Math.max(0, sousTotal - remise);
   const patient = `${donnees.prenomPatient} ${donnees.nomPatient}`.trim();
   const tel = donnees.telephonePatient?.trim() || "—";
   const agent = donnees.agentNom?.trim() || "—";
@@ -468,11 +472,11 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
           <View style={styles.totaux}>
             <View style={styles.totalLigne}>
               <Text>Sous-total</Text>
-              <Text>{formaterPrix(montantTotal)}</Text>
+              <Text>{formaterPrix(sousTotal)}</Text>
             </View>
             <View style={styles.totalLigne}>
               <Text>Remise</Text>
-              <Text>$ 0</Text>
+              <Text>{formaterPrix(remise)}</Text>
             </View>
             <View style={styles.totalFinal}>
               <Text style={styles.totalFinalLabel}>MONTANT TOTAL</Text>

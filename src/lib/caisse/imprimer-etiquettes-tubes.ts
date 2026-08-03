@@ -18,8 +18,8 @@ function genererCodeBarreDataUrl(valeur: string): string {
   try {
     JsBarcode(canvas, valeur, {
       format: "CODE128",
-      width: 2.2,
-      height: 40,
+      width: 2,
+      height: 72,
       displayValue: false,
       margin: 0,
       background: "#ffffff",
@@ -62,7 +62,7 @@ export function construireHtmlEtiquettesTubes(
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       margin: 0;
-      padding: 8px;
+      padding: 0 8px 24px;
       font-family: Arial, Helvetica, sans-serif;
       background: #fff;
       color: #000;
@@ -70,7 +70,7 @@ export function construireHtmlEtiquettesTubes(
     .toolbar {
       position: sticky; top: 0; z-index: 2;
       display: flex; justify-content: space-between; align-items: center; gap: 8px;
-      padding: 8px 10px; margin: 0 0 10px;
+      padding: 8px 10px; margin: 0 0 16px;
       background: #0f2744; color: #fff; font-size: 12px;
       font-family: system-ui, sans-serif;
     }
@@ -78,30 +78,30 @@ export function construireHtmlEtiquettesTubes(
       border: 0; border-radius: 6px; padding: 7px 12px;
       background: #1d6ef5; color: #fff; font-weight: 700; cursor: pointer;
     }
-    /* Largeur étiquette tube ~ 55–58 mm, sans marges latérales inutiles */
+    /* Bloc centré ; largeur étiquette tube ~ 58 mm */
     .sheet {
       width: 58mm;
       max-width: 100%;
-      margin: 0;
+      margin: 24px auto 0;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      align-items: stretch;
+      gap: 14px;
+      align-items: center;
     }
     .label {
       width: 100%;
       background: #fff;
-      padding: 2px 0 8px;
+      padding: 4px 0 10px;
       page-break-inside: avoid;
-      text-align: left;
+      text-align: center;
     }
     .bc {
       display: block;
       width: 100%;
-      height: auto;
-      max-height: 46px;
+      height: 72px;
       object-fit: contain;
-      object-position: left center;
+      object-position: center;
+      margin: 0 auto;
     }
     .bc-fallback {
       font-family: monospace;
@@ -109,9 +109,9 @@ export function construireHtmlEtiquettesTubes(
       padding: 4px 0;
     }
     .l1, .l2, .l3, .l4 {
-      margin: 2px 0 0;
+      margin: 3px 0 0;
       font-size: 11px;
-      line-height: 1.2;
+      line-height: 1.25;
       font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
@@ -122,9 +122,9 @@ export function construireHtmlEtiquettesTubes(
     @media print {
       body { background: #fff; padding: 0; }
       .toolbar { display: none !important; }
-      .sheet { width: 50mm; }
+      .sheet { width: 50mm; margin: 8mm auto 0; }
       .label { padding-bottom: 6mm; }
-      .bc { height: 40px; }
+      .bc { height: 68px; }
     }
   </style>
 </head>

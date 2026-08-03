@@ -264,6 +264,10 @@ export const caisseEn = {
     totalFacture: "Invoice total",
     avanceInvalide: "Enter a valid advance amount (greater than 0).",
     avanceTropElevee: "The advance amount cannot exceed the amount due.",
+    modeSoldeObligatoire:
+      "An advance has already been collected on this invoice. Only Balance (Solde) mode is allowed to settle the remaining amount (total − advance − discount).",
+    modeSoldeVerrouille:
+      "Balance mode required: an advance was already paid. Other billing modes are blocked.",
     monnaie: "Currency",
     datePaiement: "Payment date",
     numeroRecu: "Receipt No.",

@@ -264,6 +264,10 @@ export const caisseFr = {
     totalFacture: "Total facture",
     avanceInvalide: "Saisissez un montant d'avance valide (supérieur à 0).",
     avanceTropElevee: "Le montant d'avance ne peut pas dépasser le total à payer.",
+    modeSoldeObligatoire:
+      "Une avance a déjà été encaissée sur cette facture. Seul le mode Solde est autorisé pour régler le montant restant (total − avance − remise).",
+    modeSoldeVerrouille:
+      "Mode Solde obligatoire : une avance a déjà été payée. Les autres modes sont refusés.",
     monnaie: "Monnaie",
     datePaiement: "Date paiement",
     numeroRecu: "N° Reçu",

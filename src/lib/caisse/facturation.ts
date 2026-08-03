@@ -448,6 +448,12 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
   const dejaPaye = detail.facture.montantPaye;
   const reste = Math.max(0, totalDu - dejaPaye);
 
+  if (dejaPaye > 0.01 && donnees.modeFacture !== "SOLDE") {
+    throw new Error(
+      "Une avance a déjà été encaissée. Seul le mode Solde est autorisé pour régler le reste à payer."
+    );
+  }
+
   if (montant > reste + 0.01) {
     throw new Error(
       `Le montant saisi (${montant}) dépasse le reste à payer (${reste}).`

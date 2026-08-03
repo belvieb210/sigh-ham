@@ -184,7 +184,51 @@ export function ContenuAvoirsCaisse({ utilisateur }: Props) {
                   {t("caisse.avoirs.vide")}
                 </p>
               ) : (
-                <div className="overflow-x-auto">
+                <>
+                  <ul className="divide-y divide-gris-bordure md:hidden">
+                    {pageLedger.map((l) => (
+                      <li key={l.id} className="px-4 py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-1 flex flex-wrap items-center gap-2">
+                              <span
+                                className={cn(
+                                  "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                                  l.type === "AVANCE" && "bg-amber-50 text-amber-700",
+                                  l.type === "SOLDE" && "bg-emerald-50 text-emerald-700",
+                                  l.type === "OUVERT" && "bg-rose-50 text-rose-700"
+                                )}
+                              >
+                                {t(`caisse.avoirs.types.${l.type}`)}
+                              </span>
+                              <span className="text-xs text-texte-secondaire">
+                                {formaterDate(l.payeLe ?? l.emiseLe ?? "")}
+                              </span>
+                            </div>
+                            <Link
+                              href={`/sigh/caisse/facturation?dossier=${l.dossierId}`}
+                              className="block truncate text-sm font-semibold text-bleu-medical"
+                            >
+                              {l.numeroFacture}
+                            </Link>
+                            <p className="mt-0.5 truncate text-sm font-medium text-texte-principal">
+                              {l.patient}
+                            </p>
+                            {l.reste > 0 ? (
+                              <p className="mt-1 text-xs text-amber-700">
+                                {t("caisse.avoirs.reste")}:{" "}
+                                {formaterMontantCaisse(l.reste, l.devise)}
+                              </p>
+                            ) : null}
+                          </div>
+                          <p className="shrink-0 text-sm font-bold tabular-nums text-texte-principal">
+                            {formaterMontantCaisse(l.montant, l.devise)}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="hidden overflow-x-auto md:block">
                   <table className="w-full min-w-[820px] text-left text-sm">
                     <thead className="bg-gris-tres-clair/80 text-[11px] uppercase tracking-wider text-texte-secondaire">
                       <tr>
@@ -248,7 +292,8 @@ export function ContenuAvoirsCaisse({ utilisateur }: Props) {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                  </div>
+                </>
               )}
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-4 py-3 text-xs text-texte-secondaire print:hidden">
                 <p>

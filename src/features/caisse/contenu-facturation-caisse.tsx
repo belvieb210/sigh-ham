@@ -143,17 +143,30 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           data.dossier.facture.numeroFacture?.replace(/^FAC-/, "REC-") ??
             `REC-${new Date().getFullYear()}-…`
         );
-        const total = data.dossier.facture.lignes.reduce((a, l) => a + l.montant, 0);
+        const lignes = data.dossier.facture.lignes;
+        const totalExamensCharge = lignes
+          .filter((l) => l.montant > 0 && l.libelle !== "Frais divers")
+          .reduce((a, l) => a + l.montant, 0);
+        const remiseDeja = lignes
+          .filter((l) => l.montant < 0)
+          .reduce((a, l) => a + Math.abs(l.montant), 0);
+        const fraisDeja = lignes
+          .filter((l) => l.libelle === "Frais divers")
+          .reduce((a, l) => a + l.montant, 0);
         const dejaPayeCharge = data.dossier.facture.montantPaye;
-        const reste = Math.max(0, total - dejaPayeCharge);
         const remiseInitiale = Math.min(
-          Math.max(0, data.dossier.remiseProposee || 0),
-          total
+          Math.max(0, data.dossier.remiseProposee || 0, remiseDeja),
+          totalExamensCharge
         );
+        const totalDu = Math.max(
+          0,
+          totalExamensCharge - remiseInitiale + fraisDeja
+        );
+        const reste = Math.max(0, totalDu - dejaPayeCharge);
         setRemise(arrondirMontantCaisse(remiseInitiale));
-        setFraisDivers(0);
+        setFraisDivers(arrondirMontantCaisse(fraisDeja));
         setMontantAvance(0);
-        // Avance déjà encaissée → mode Solde + montant = reste
+        // Avance déjà encaissée → mode Solde + montant = reste (après remise)
         if (
           dejaPayeCharge > 0 ||
           data.dossier.facture.statut === "PARTIELLEMENT_PAYEE"
@@ -162,9 +175,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         } else {
           setModeFacture("CASH");
         }
-        setMontantPaiement(
-          arrondirMontantCaisse(Math.max(0, reste - remiseInitiale))
-        );
+        setMontantPaiement(arrondirMontantCaisse(reste));
       } catch (e) {
         setDossier(null);
         setErreur(
@@ -194,7 +205,16 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
 
   const lignesVisibles = useMemo(() => {
     if (!dossier) return [];
-    return dossier.facture.lignes.filter((l) => l.montant > 0);
+    return dossier.facture.lignes.filter(
+      (l) => l.montant > 0 && l.libelle !== "Frais divers"
+    );
+  }, [dossier]);
+
+  const remiseDejaSurFacture = useMemo(() => {
+    if (!dossier) return 0;
+    return dossier.facture.lignes
+      .filter((l) => l.montant < 0)
+      .reduce((acc, l) => acc + Math.abs(l.montant), 0);
   }, [dossier]);
 
   const idsTypesExamenPresents = useMemo(
@@ -433,16 +453,20 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const totalAPayer = sousTotal + (fraisDivers || 0);
   const dejaPaye = dossier?.facture.montantPaye ?? 0;
   const resteAPayer = Math.max(0, totalAPayer - dejaPaye);
-  const estSoldeOuAvance =
-    modeFacture === "SOLDE" ||
-    dejaPaye > 0 ||
-    dossier?.facture.statut === "PARTIELLEMENT_PAYEE";
+  const soldeObligatoire =
+    dejaPaye > 0 || dossier?.facture.statut === "PARTIELLEMENT_PAYEE";
   /** Montant affiché comme « à payer » : reste si avance déjà payée, sinon total */
-  const montantDuJour = estSoldeOuAvance ? resteAPayer : totalAPayer;
+  const montantDuJour = soldeObligatoire || modeFacture === "SOLDE" ? resteAPayer : totalAPayer;
   const resteApresCePaiement = Math.max(
     0,
     resteAPayer - (modeFacture === "AVANCE" ? montantAvance : montantPaiement)
   );
+
+  useEffect(() => {
+    if (soldeObligatoire && modeFacture !== "SOLDE") {
+      setModeFacture("SOLDE");
+    }
+  }, [soldeObligatoire, modeFacture]);
 
   useEffect(() => {
     if (modeFacture === "AVANCE") {
@@ -477,6 +501,10 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     setErreur(null);
     setMessage(null);
     try {
+      if (soldeObligatoire && modeFacture !== "SOLDE") {
+        throw new Error(t("caisse.facturation.modeSoldeObligatoire"));
+      }
+
       if (modeFacture === "AVANCE") {
         if (montantAvance <= 0) {
           throw new Error(t("caisse.facturation.avanceInvalide"));
@@ -604,10 +632,19 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           <input
             id="remise-resume"
             type="number"
-            min={0}
+            min={soldeObligatoire ? remiseDejaSurFacture : 0}
             step="0.01"
+            max={totalExamens}
             value={remise}
-            onChange={(e) => setRemise(arrondirMontantCaisse(Number(e.target.value) || 0))}
+            onChange={(e) => {
+              const valeur = arrondirMontantCaisse(Number(e.target.value) || 0);
+              const plancher = soldeObligatoire ? remiseDejaSurFacture : 0;
+              setRemise(
+                arrondirMontantCaisse(
+                  Math.min(totalExamens, Math.max(plancher, valeur))
+                )
+              );
+            }}
             className="w-24 rounded-lg border border-gris-bordure px-2 py-1.5 text-right text-sm"
           />
         </div>
@@ -1099,12 +1136,30 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                   <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
                     {t("caisse.facturation.modeFacture")}
                   </h3>
+                  {soldeObligatoire && (
+                    <div
+                      role="status"
+                      className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900"
+                    >
+                      {t("caisse.facturation.modeSoldeVerrouille")}
+                    </div>
+                  )}
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {MODES_FACTURE_CAISSE.map((mode) => (
+                    {MODES_FACTURE_CAISSE.map((mode) => {
+                      const modeRefuse =
+                        soldeObligatoire && mode.id !== "SOLDE";
+                      return (
                       <button
                         key={mode.id}
                         type="button"
+                        aria-disabled={modeRefuse}
                         onClick={() => {
+                          if (modeRefuse) {
+                            setErreur(t("caisse.facturation.modeSoldeObligatoire"));
+                            setMessage(null);
+                            return;
+                          }
+                          setErreur(null);
                           setModeFacture(mode.id);
                           if (mode.id === "AVANCE") {
                             setMontantAvance((prev) =>
@@ -1116,7 +1171,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                           "rounded-xl border px-3 py-3 text-left transition-colors",
                           modeFacture === mode.id
                             ? "border-bleu-medical bg-bleu-medical-clair/40 ring-1 ring-bleu-medical"
-                            : "border-gris-bordure hover:bg-gris-tres-clair"
+                            : modeRefuse
+                              ? "cursor-not-allowed border-gris-bordure/70 bg-gris-tres-clair/60 opacity-55"
+                              : "border-gris-bordure hover:bg-gris-tres-clair"
                         )}
                       >
                         <div className="flex items-start gap-2">
@@ -1135,12 +1192,15 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                               {t(`caisse.modesFacture.${mode.id}`)}
                             </p>
                             <p className="mt-0.5 text-[11px] leading-snug text-texte-secondaire">
-                              {t(`caisse.modesFactureDesc.${mode.descriptionKey}`)}
+                              {modeRefuse
+                                ? t("caisse.facturation.modeSoldeVerrouille")
+                                : t(`caisse.modesFactureDesc.${mode.descriptionKey}`)}
                             </p>
                           </div>
                         </div>
                       </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 </section>
 

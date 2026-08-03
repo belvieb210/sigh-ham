@@ -254,7 +254,64 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
                 </p>
               ) : (
                 <>
-                <div className="overflow-x-auto">
+                <ul className="divide-y divide-gris-bordure md:hidden">
+                  {facturesPage.map((f) => {
+                    const statutUi = statutAffiche(f.statut);
+                    const actif = factureSelectionnee?.id === f.id;
+                    const nb = f.nombreLignes || f.nombreExamens;
+                    return (
+                      <li key={f.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectionId(f.id);
+                            setMenuOuvertId(null);
+                          }}
+                          className={cn(
+                            "flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition-colors",
+                            actif ? "bg-bleu-medical-clair/40" : "hover:bg-gris-tres-clair/60"
+                          )}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-bleu-medical">
+                              {f.numeroFacture}
+                            </p>
+                            <p className="mt-0.5 truncate text-sm font-medium text-texte-principal">
+                              {f.prenom} {f.nom}
+                            </p>
+                            <p className="mt-1 text-xs text-texte-secondaire">
+                              {t("caisse.factures.nbExamens", { count: nb })} ·{" "}
+                              {libelleModePaiement(f)}
+                            </p>
+                            <p className="mt-1 text-sm font-bold tabular-nums text-texte-principal">
+                              {formaterMontantCaisse(f.montantTotal, f.devise)}
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 flex-col items-end gap-2">
+                            <span
+                              className={cn(
+                                "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
+                                statutUi === "payee" && "bg-emerald-50 text-emerald-700",
+                                statutUi === "partielle" && "bg-amber-50 text-amber-700",
+                                statutUi === "impayee" && "bg-red-50 text-red-700"
+                              )}
+                            >
+                              {t(`caisse.factures.statutsUi.${statutUi}`)}
+                            </span>
+                            <Link
+                              href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex rounded-lg border border-bleu-medical px-2.5 py-1 text-xs font-semibold text-bleu-medical"
+                            >
+                              {t("caisse.factures.ouvrirFacturation")}
+                            </Link>
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="hidden overflow-x-auto md:block">
                   <table className="w-full min-w-[860px] text-left text-sm">
                     <thead className="bg-gris-tres-clair/80 text-[11px] uppercase tracking-wider text-texte-secondaire">
                       <tr>

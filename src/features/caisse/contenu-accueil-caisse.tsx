@@ -136,8 +136,8 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
   return (
     <MiseEnPageCaisse
       utilisateur={utilisateur}
-      titre={t("caisse.layout.titre")}
-      sousTitre={t("caisse.layout.sousTitre")}
+      titre={t("caisse.dashboard.titre")}
+      sousTitre={t("caisse.dashboard.sousTitre")}
     >
       <div className="mx-auto w-full max-w-7xl space-y-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -149,10 +149,10 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
           </div>
           <button
             type="button"
-            className="inline-flex items-center gap-2 self-start rounded-xl border border-gris-bordure bg-white px-3 py-2 text-sm font-medium capitalize text-texte-principal shadow-sm"
+            className="inline-flex max-w-full items-center gap-2 self-start rounded-xl border border-gris-bordure bg-white px-3 py-2 text-left text-xs font-medium capitalize text-texte-principal shadow-sm sm:text-sm"
           >
-            <CalendarDays className="h-4 w-4 text-bleu-medical" />
-            {dateLabel}
+            <CalendarDays className="h-4 w-4 shrink-0 text-bleu-medical" />
+            <span className="truncate">{dateLabel}</span>
           </button>
         </div>
 
@@ -290,72 +290,120 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                     {t("caisse.dashboard.voirTout")}
                   </Link>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-left text-sm">
-                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
-                      <tr>
-                        <th className="px-4 py-2.5 font-semibold">{t("caisse.dashboard.colNumero")}</th>
-                        <th className="px-4 py-2.5 font-semibold">{t("caisse.dashboard.colPatient")}</th>
-                        <th className="hidden px-4 py-2.5 font-semibold md:table-cell">
-                          {t("caisse.dashboard.colExamens")}
-                        </th>
-                        <th className="px-4 py-2.5 font-semibold">{t("caisse.dashboard.colMontant")}</th>
-                        <th className="px-4 py-2.5 font-semibold">{t("caisse.dashboard.colStatut")}</th>
-                        <th className="px-4 py-2.5 font-semibold">{t("caisse.dashboard.colAction")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(stats?.dernieresFactures ?? []).length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="px-4 py-8 text-center text-sm text-texte-secondaire">
-                            {t("caisse.dashboard.aucuneFacture")}
-                          </td>
-                        </tr>
-                      ) : (
-                        stats?.dernieresFactures.map((f) => (
-                          <tr key={f.id} className="border-t border-gris-bordure/70">
-                            <td className="px-4 py-3">
-                              <Link
-                                href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
-                                className="font-semibold text-bleu-medical hover:underline"
-                              >
+                {(stats?.dernieresFactures ?? []).length === 0 ? (
+                  <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
+                    {t("caisse.dashboard.aucuneFacture")}
+                  </p>
+                ) : (
+                  <>
+                    <ul className="divide-y divide-gris-bordure md:hidden">
+                      {stats?.dernieresFactures.map((f) => (
+                        <li key={f.id}>
+                          <Link
+                            href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
+                            className="flex items-start justify-between gap-3 px-4 py-3 transition-colors hover:bg-slate-50"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-semibold text-bleu-medical">
                                 {f.numeroFacture}
-                              </Link>
-                            </td>
-                            <td className="px-4 py-3 font-medium text-texte-principal">{f.patient}</td>
-                            <td className="hidden max-w-[180px] truncate px-4 py-3 text-texte-secondaire md:table-cell">
-                              {f.examens}
-                            </td>
-                            <td className="px-4 py-3 font-semibold text-texte-principal">
-                              {formaterMontantCaisse(f.montantTotal, f.devise === "USD" ? "USD" : "CDF")}
-                            </td>
-                            <td className="px-4 py-3">{badgeStatut(f.statutAffiche, labelsStatut)}</td>
-                            <td className="px-4 py-3">
-                              <Link
-                                href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:bg-slate-50 hover:text-bleu-medical"
-                                aria-label={t("caisse.dashboard.voirFacture")}
-                              >
+                              </p>
+                              <p className="mt-0.5 truncate text-sm font-medium text-texte-principal">
+                                {f.patient}
+                              </p>
+                              <p className="mt-1 text-xs font-semibold tabular-nums text-texte-principal">
+                                {formaterMontantCaisse(
+                                  f.montantTotal,
+                                  f.devise === "USD" ? "USD" : "CDF"
+                                )}
+                              </p>
+                            </div>
+                            <div className="flex shrink-0 flex-col items-end gap-2">
+                              {badgeStatut(f.statutAffiche, labelsStatut)}
+                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire">
                                 <Eye className="h-4 w-4" />
-                              </Link>
-                            </td>
+                              </span>
+                            </div>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="hidden overflow-x-auto md:block">
+                      <table className="min-w-full text-left text-sm">
+                        <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
+                          <tr>
+                            <th className="px-4 py-2.5 font-semibold">
+                              {t("caisse.dashboard.colNumero")}
+                            </th>
+                            <th className="px-4 py-2.5 font-semibold">
+                              {t("caisse.dashboard.colPatient")}
+                            </th>
+                            <th className="hidden px-4 py-2.5 font-semibold lg:table-cell">
+                              {t("caisse.dashboard.colExamens")}
+                            </th>
+                            <th className="px-4 py-2.5 font-semibold">
+                              {t("caisse.dashboard.colMontant")}
+                            </th>
+                            <th className="px-4 py-2.5 font-semibold">
+                              {t("caisse.dashboard.colStatut")}
+                            </th>
+                            <th className="px-4 py-2.5 font-semibold">
+                              {t("caisse.dashboard.colAction")}
+                            </th>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                        </thead>
+                        <tbody>
+                          {stats?.dernieresFactures.map((f) => (
+                            <tr key={f.id} className="border-t border-gris-bordure/70">
+                              <td className="px-4 py-3">
+                                <Link
+                                  href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
+                                  className="font-semibold text-bleu-medical hover:underline"
+                                >
+                                  {f.numeroFacture}
+                                </Link>
+                              </td>
+                              <td className="px-4 py-3 font-medium text-texte-principal">
+                                {f.patient}
+                              </td>
+                              <td className="hidden max-w-[180px] truncate px-4 py-3 text-texte-secondaire lg:table-cell">
+                                {f.examens}
+                              </td>
+                              <td className="px-4 py-3 font-semibold text-texte-principal">
+                                {formaterMontantCaisse(
+                                  f.montantTotal,
+                                  f.devise === "USD" ? "USD" : "CDF"
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                {badgeStatut(f.statutAffiche, labelsStatut)}
+                              </td>
+                              <td className="px-4 py-3">
+                                <Link
+                                  href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
+                                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:bg-slate-50 hover:text-bleu-medical"
+                                  aria-label={t("caisse.dashboard.voirFacture")}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </section>
 
               <section className="rounded-xl border border-gris-bordure bg-white shadow-sm xl:col-span-2">
-                <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-bleu-medical" />
-                    <h3 className="text-sm font-semibold text-texte-principal">
+                <div className="flex items-center justify-between gap-2 border-b border-gris-bordure px-4 py-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <TrendingUp className="h-4 w-4 shrink-0 text-bleu-medical" />
+                    <h3 className="truncate text-sm font-semibold text-texte-principal">
                       {t("caisse.dashboard.evolutionEncaissements")}
                     </h3>
                   </div>
-                  <span className="rounded-lg border border-gris-bordure bg-slate-50 px-2.5 py-1 text-xs font-medium text-texte-secondaire">
+                  <span className="shrink-0 rounded-lg border border-gris-bordure bg-slate-50 px-2 py-1 text-[10px] font-medium text-texte-secondaire sm:px-2.5 sm:text-xs">
                     {t("caisse.dashboard.septDerniersJours")}
                   </span>
                 </div>
@@ -385,55 +433,97 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                     {t("caisse.dashboard.voirListe")}
                   </Link>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-left text-sm">
-                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
-                      <tr>
-                        <th className="px-4 py-2.5 font-semibold">{t("caisse.dashboard.colPatient")}</th>
-                        <th className="px-4 py-2.5 font-semibold">{t("caisse.dashboard.colService")}</th>
-                        <th className="hidden px-4 py-2.5 font-semibold md:table-cell">
-                          {t("caisse.dashboard.colExamensDemandes")}
-                        </th>
-                        <th className="px-4 py-2.5 font-semibold">{t("caisse.dashboard.colTempsAttente")}</th>
-                        <th className="px-4 py-2.5 font-semibold">{t("caisse.dashboard.colAction")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(stats?.patientsAttente ?? []).length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="px-4 py-8 text-center text-sm text-texte-secondaire">
-                            {t("caisse.dashboard.aucunPatient")}
-                          </td>
-                        </tr>
-                      ) : (
-                        stats?.patientsAttente.map((p) => (
-                          <tr key={p.dossierId} className="border-t border-gris-bordure/70">
-                            <td className="px-4 py-3 font-medium text-texte-principal">{p.patient}</td>
-                            <td className="px-4 py-3 text-texte-secondaire">{p.service}</td>
-                            <td className="hidden max-w-[200px] truncate px-4 py-3 text-texte-secondaire md:table-cell">
-                              {p.examensDemandes}
-                            </td>
-                            <td
-                              className={`px-4 py-3 font-semibold ${
-                                p.minutesAttente >= 40 ? "text-rose-600" : "text-texte-principal"
+                {(stats?.patientsAttente ?? []).length === 0 ? (
+                  <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
+                    {t("caisse.dashboard.aucunPatient")}
+                  </p>
+                ) : (
+                  <>
+                    <ul className="divide-y divide-gris-bordure md:hidden">
+                      {stats?.patientsAttente.map((p) => (
+                        <li
+                          key={p.dossierId}
+                          className="flex items-start justify-between gap-3 px-4 py-3"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-texte-principal">
+                              {p.patient}
+                            </p>
+                            <p className="mt-0.5 truncate text-xs text-texte-secondaire">
+                              {p.service}
+                            </p>
+                            <p
+                              className={`mt-1 text-xs font-semibold ${
+                                p.minutesAttente >= 40 ? "text-rose-600" : "text-texte-secondaire"
                               }`}
                             >
                               {p.tempsAttenteLabel}
-                            </td>
-                            <td className="px-4 py-3">
-                              <Link
-                                href={`/sigh/caisse/facturation?dossier=${p.dossierId}`}
-                                className="inline-flex rounded-lg bg-bleu-medical px-3 py-1.5 text-xs font-semibold text-white hover:bg-bleu-medical/90"
-                              >
-                                {t("caisse.dashboard.facturer")}
-                              </Link>
-                            </td>
+                            </p>
+                          </div>
+                          <Link
+                            href={`/sigh/caisse/facturation?dossier=${p.dossierId}`}
+                            className="shrink-0 rounded-lg bg-bleu-medical px-3 py-1.5 text-xs font-semibold text-white hover:bg-bleu-medical/90"
+                          >
+                            {t("caisse.dashboard.facturer")}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="hidden overflow-x-auto md:block">
+                      <table className="min-w-full text-left text-sm">
+                        <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
+                          <tr>
+                            <th className="px-4 py-2.5 font-semibold">
+                              {t("caisse.dashboard.colPatient")}
+                            </th>
+                            <th className="px-4 py-2.5 font-semibold">
+                              {t("caisse.dashboard.colService")}
+                            </th>
+                            <th className="hidden px-4 py-2.5 font-semibold lg:table-cell">
+                              {t("caisse.dashboard.colExamensDemandes")}
+                            </th>
+                            <th className="px-4 py-2.5 font-semibold">
+                              {t("caisse.dashboard.colTempsAttente")}
+                            </th>
+                            <th className="px-4 py-2.5 font-semibold">
+                              {t("caisse.dashboard.colAction")}
+                            </th>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                        </thead>
+                        <tbody>
+                          {stats?.patientsAttente.map((p) => (
+                            <tr key={p.dossierId} className="border-t border-gris-bordure/70">
+                              <td className="px-4 py-3 font-medium text-texte-principal">
+                                {p.patient}
+                              </td>
+                              <td className="px-4 py-3 text-texte-secondaire">{p.service}</td>
+                              <td className="hidden max-w-[200px] truncate px-4 py-3 text-texte-secondaire lg:table-cell">
+                                {p.examensDemandes}
+                              </td>
+                              <td
+                                className={`px-4 py-3 font-semibold ${
+                                  p.minutesAttente >= 40
+                                    ? "text-rose-600"
+                                    : "text-texte-principal"
+                                }`}
+                              >
+                                {p.tempsAttenteLabel}
+                              </td>
+                              <td className="px-4 py-3">
+                                <Link
+                                  href={`/sigh/caisse/facturation?dossier=${p.dossierId}`}
+                                  className="inline-flex rounded-lg bg-bleu-medical px-3 py-1.5 text-xs font-semibold text-white hover:bg-bleu-medical/90"
+                                >
+                                  {t("caisse.dashboard.facturer")}
+                                </Link>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </section>
 
               <section className="rounded-xl border border-gris-bordure bg-white shadow-sm xl:col-span-2">
@@ -456,7 +546,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                           <Icone className="h-4 w-4" />
                         </span>
                         <p className="mt-2 text-sm font-semibold text-texte-principal">{r.titre}</p>
-                        <p className="mt-0.5 text-xs text-texte-secondaire">{r.desc}</p>
+                        <p className="mt-0.5 line-clamp-2 text-xs text-texte-secondaire">{r.desc}</p>
                       </Link>
                     );
                   })}

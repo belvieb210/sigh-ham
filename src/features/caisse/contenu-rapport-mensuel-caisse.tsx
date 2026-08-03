@@ -186,7 +186,44 @@ export function ContenuRapportMensuelCaisse({ utilisateur }: Props) {
                   {t("caisse.rapports.videLedger")}
                 </p>
               ) : (
-                <div className="overflow-x-auto">
+                <>
+                  <ul className="divide-y divide-gris-bordure md:hidden">
+                    {pageLedger.map((l) => (
+                      <li key={l.id} className="px-4 py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <Link
+                              href={`/sigh/caisse/facturation?dossier=${l.dossierId}`}
+                              className="block truncate text-sm font-semibold text-bleu-medical"
+                            >
+                              {l.numeroFacture}
+                            </Link>
+                            <p className="mt-0.5 truncate text-sm font-medium text-texte-principal">
+                              {l.patient}
+                            </p>
+                            <p className="mt-1 text-xs text-texte-secondaire">
+                              {formaterDate(l.payeLe)} · {t(`caisse.modesPaiement.${l.mode}`)}
+                            </p>
+                          </div>
+                          <p className="shrink-0 text-sm font-bold tabular-nums text-texte-principal">
+                            {formaterMontantCaisse(l.montant, l.devise)}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                    <li className="flex items-center justify-between gap-3 bg-gris-tres-clair/40 px-4 py-3">
+                      <span className="text-xs font-bold uppercase tracking-wide text-texte-secondaire">
+                        {t("caisse.rapports.resume.montantEncaisse")}
+                      </span>
+                      <span className="text-sm font-bold tabular-nums">
+                        {formaterMontantCaisse(
+                          rapport.agregats.encaissementsMontant,
+                          rapport.devise
+                        )}
+                      </span>
+                    </li>
+                  </ul>
+                  <div className="hidden overflow-x-auto md:block">
                   <table className="w-full min-w-[760px] text-left text-sm">
                     <thead className="bg-gris-tres-clair/80 text-[11px] uppercase tracking-wider text-texte-secondaire">
                       <tr>
@@ -257,7 +294,8 @@ export function ContenuRapportMensuelCaisse({ utilisateur }: Props) {
                       </tr>
                     </tfoot>
                   </table>
-                </div>
+                  </div>
+                </>
               )}
 
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-4 py-3 text-xs text-texte-secondaire print:hidden">

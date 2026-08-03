@@ -286,7 +286,76 @@ export function ListePatientsTransfertsCaisse() {
               : t("caisse.transferts.vide")}
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            <ul className="divide-y divide-gris-bordure md:hidden">
+              {pagePatients.map((p) => {
+                const selectionne = patientSelectionne?.cleListe === p.cleListe;
+                return (
+                  <li
+                    key={p.cleListe}
+                    onClick={() => selectionnerPatient(p)}
+                    className={cn(
+                      "cursor-pointer px-4 py-3 transition-colors",
+                      selectionne ? "bg-bleu-medical-clair/40" : "hover:bg-slate-50"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-texte-principal">
+                          {p.nomComplet}
+                        </p>
+                        <p className="mt-0.5 font-mono text-[11px] text-texte-secondaire">
+                          {p.numeroPatient}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                              p.orientationCouleur
+                            )}
+                          >
+                            {p.orientation}
+                          </span>
+                          <span
+                            className={cn(
+                              "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                              p.statutCouleur
+                            )}
+                          >
+                            {p.statut}
+                          </span>
+                          <span className="text-xs tabular-nums text-texte-secondaire">
+                            {p.heure}
+                          </span>
+                        </div>
+                      </div>
+                      <div
+                        className="flex shrink-0 items-center gap-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            selectionnerPatient(p);
+                            setPatientExamens(p);
+                            setModaleExamensOuverte(true);
+                          }}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:border-bleu-medical/40 hover:text-bleu-medical"
+                          aria-label={t("caisse.transferts.voirExamens")}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <MenuActionsTransfertCaisse
+                          patient={p}
+                          onRafraichir={() => void charger({ silencieux: true })}
+                        />
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="hidden overflow-x-auto md:block">
             <table className="min-w-full text-left text-sm">
               <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                 <tr>
@@ -381,7 +450,8 @@ export function ListePatientsTransfertsCaisse() {
                 })}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-4 py-3 text-xs text-texte-secondaire">

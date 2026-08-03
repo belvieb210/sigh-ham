@@ -129,6 +129,7 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
         message?: string;
         salleDestination?: string;
         codeSalle?: string;
+        transfertId?: string;
       };
       if (!res.ok) throw new Error(data.message ?? "Orientation impossible.");
 
@@ -138,22 +139,27 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
         data.salleDestination ??
         confirmationOrientation.label;
 
-      setMessagePanneau(data.message ?? `Orienté vers ${label}.`);
+      const codeFinal = data.codeSalle ?? confirmationOrientation.codeSalle;
+      setMessagePanneau(data.message ?? `Transfert vers ${label} — à confirmer après facture.`);
       setConfirmationOrientation(null);
-      setPatientSelectionne(null);
-      setResume(RESUME_CAISSE_VIDE);
-      definirOrientation("LABORATOIRE");
-
-      window.dispatchEvent(
-        new CustomEvent(EVENEMENT_CAISSE_PATIENTS_MODIFIES, {
-          detail: {
-            dossierId: patientSelectionne.dossierId,
-            orientation: label,
-            orientationCouleur:
-              COULEURS_ORIENTATION_CAISSE[label] ?? "bg-slate-100 text-slate-600",
-          },
-        })
+      setPatientSelectionne((courant) =>
+        courant
+          ? {
+              ...courant,
+              orientation: label,
+              orientationCouleur:
+                COULEURS_ORIENTATION_CAISSE[label] ?? "bg-slate-100 text-slate-600",
+              codeSalleDestination: codeFinal,
+              transfertSortantId: data.transfertId ?? courant.transfertSortantId,
+              statutTransfertSortant: "EN_ATTENTE",
+              statut: "À confirmer",
+              statutCouleur: "bg-orange-100 text-orange-800",
+            }
+          : courant
       );
+      definirOrientation(codeFinal);
+
+      window.dispatchEvent(new CustomEvent(EVENEMENT_CAISSE_PATIENTS_MODIFIES));
     } catch (error) {
       setMessagePanneau(
         error instanceof Error ? error.message : "Impossible d'orienter le patient."

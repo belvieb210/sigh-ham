@@ -17,7 +17,8 @@ export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse
   const facturesOuvertes = await prisma.facture.findMany({
     where: {
       dossierId: { in: dossierIds },
-      statut: { in: ["BROUILLON", "EMISE", "PARTIELLEMENT_PAYEE"] },
+      /** Facture établie (y compris payée) — requise pour confirmer un transfert caisse */
+      statut: { in: ["BROUILLON", "EMISE", "PARTIELLEMENT_PAYEE", "PAYEE"] },
     },
     select: { dossierId: true },
   });

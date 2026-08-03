@@ -47,7 +47,9 @@ export async function POST(request: Request) {
     );
 
     return NextResponse.json({
-      message: `Patient orienté vers ${resultat.salleDestination}.`,
+      message: resultat.transfertMisAJour
+        ? `Destination mise à jour : ${resultat.salleDestination}. Confirmez le transfert après établissement de la facture.`
+        : `Transfert créé vers ${resultat.salleDestination}. Établissez la facture puis confirmez via le menu ⋮.`,
       ...resultat,
     });
   } catch (e) {

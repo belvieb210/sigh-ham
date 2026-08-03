@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { EVENEMENT_CAISSE_PATIENTS_MODIFIES } from "@/constants/caisse";
 import { useSelectionTransfertCaisse } from "@/features/caisse/contexte-selection-transfert-caisse";
+import { MenuActionsTransfertCaisse } from "@/features/caisse/menu-actions-transfert-caisse";
 import { ModaleExamensCaisse } from "@/features/caisse/modale-examens-caisse";
 import { formaterMontantCaisse } from "@/features/caisse/utils-format";
 import type { PatientTransfertCaisse, StatsTransfertsCaisse } from "@/lib/caisse/types";
@@ -284,18 +285,24 @@ export function ListePatientsTransfertsCaisse() {
                       </td>
                       <td className="px-4 py-3 tabular-nums text-texte-secondaire">{p.heure}</td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            selectionnerPatient(p);
-                            setPatientExamens(p);
-                            setModaleExamensOuverte(true);
-                          }}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:border-bleu-medical/40 hover:text-bleu-medical"
-                          aria-label={t("caisse.transferts.voirExamens")}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              selectionnerPatient(p);
+                              setPatientExamens(p);
+                              setModaleExamensOuverte(true);
+                            }}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:border-bleu-medical/40 hover:text-bleu-medical"
+                            aria-label={t("caisse.transferts.voirExamens")}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <MenuActionsTransfertCaisse
+                            patient={p}
+                            onRafraichir={() => void charger({ silencieux: true })}
+                          />
+                        </div>
                       </td>
                     </tr>
                   );

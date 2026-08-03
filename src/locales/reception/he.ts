@@ -57,6 +57,8 @@ export const receptionHe = {
     orientationRapide: "הפניה מהירה",
     actionsRapides: "פעולות מהירות",
     modifierAvantConfirmer: "שנו את היעד לפני אישור ההעברה.",
+    creerTransfertRapide:
+      "בחרו יעד ליצירת העברה מהירה. היא תישאר ממתינה לאישור ברשימה.",
     destinationVerrouillee: "לא ניתן עוד לשנות את יעד ההעברה.",
     aucunPatient: "לא נבחר מטופל",
     age: "גיל",

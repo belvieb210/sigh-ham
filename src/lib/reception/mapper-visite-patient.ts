@@ -54,10 +54,10 @@ function mapperStatutTransfert(statut: StatutTransfert): {
 } {
   switch (statut) {
     case "ACCEPTE":
-    case "EN_TRAITEMENT":
-      return { statut: "En cours", statutCouleur: COULEURS_STATUT["En cours"] };
     case "TERMINE":
       return { statut: "Transféré", statutCouleur: COULEURS_STATUT.Transféré };
+    case "EN_TRAITEMENT":
+      return { statut: "En cours", statutCouleur: COULEURS_STATUT["En cours"] };
     case "REFUSE":
       return { statut: "Rejeté", statutCouleur: COULEURS_STATUT.Rejeté };
     case "EN_ATTENTE":

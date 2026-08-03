@@ -57,6 +57,8 @@ export const receptionAr = {
     orientationRapide: "توجيه سريع",
     actionsRapides: "إجراءات سريعة",
     modifierAvantConfirmer: "غيّر الوجهة قبل تأكيد التحويل.",
+    creerTransfertRapide:
+      "اختر وجهة لإنشاء التحويل السريع. سيبقى في انتظار التأكيد في القائمة.",
     destinationVerrouillee: "لا يمكن تغيير وجهة هذا التحويل بعد الآن.",
     aucunPatient: "لم يُحدَّد أي مريض",
     age: "العمر",

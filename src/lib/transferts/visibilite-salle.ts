@@ -71,11 +71,12 @@ export async function listerPatientsFileAttenteSalle(codeSalle: CodeSalle) {
 }
 
 /**
- * Supprime les files d'attente créées avant la confirmation obligatoire
- * (transfert encore EN_ATTENTE à la réception).
+ * Supprime les files d'attente créées trop tôt sur la salle *destination*
+ * d'un transfert encore EN_ATTENTE (invisible tant que non confirmé).
+ * Ne touche pas la file de la salle d'origine (ex. patient encore à la caisse).
  */
 export async function nettoyerFilesAttenteNonConfirmees(): Promise<number> {
-  const orphelines = await prisma.fileAttente.findMany({
+  const candidates = await prisma.fileAttente.findMany({
     where: {
       passage: {
         transferts: {
@@ -83,13 +84,30 @@ export async function nettoyerFilesAttenteNonConfirmees(): Promise<number> {
         },
       },
     },
-    select: { id: true },
+    select: {
+      id: true,
+      salleId: true,
+      passage: {
+        select: {
+          transferts: {
+            where: { statut: "EN_ATTENTE" },
+            select: { salleDestinationId: true },
+          },
+        },
+      },
+    },
   });
 
-  if (orphelines.length === 0) return 0;
+  const ids = candidates
+    .filter((f) =>
+      f.passage.transferts.some((t) => t.salleDestinationId === f.salleId)
+    )
+    .map((f) => f.id);
+
+  if (ids.length === 0) return 0;
 
   const result = await prisma.fileAttente.deleteMany({
-    where: { id: { in: orphelines.map((f) => f.id) } },
+    where: { id: { in: ids } },
   });
 
   return result.count;

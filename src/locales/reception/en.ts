@@ -56,7 +56,10 @@ export const receptionEn = {
     orientationRapide: "Quick routing",
     actionsRapides: "Quick actions",
     modifierAvantConfirmer: "Change the destination before confirming the transfer.",
-    destinationVerrouillee: "This transfer can no longer change destination.",
+    creerTransfertRapide:
+      "Choose a destination to create a quick transfer. It will remain pending confirmation in the list.",
+    destinationVerrouillee:
+      "Transfer already confirmed: quick routing can no longer be changed.",
     aucunPatient: "No patient selected",
     age: "Age",
     telephone: "Phone",

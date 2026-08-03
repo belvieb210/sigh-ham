@@ -57,6 +57,8 @@ export const receptionDe = {
     orientationRapide: "Schnelle Weiterleitung",
     actionsRapides: "Schnellaktionen",
     modifierAvantConfirmer: "Ändern Sie das Ziel, bevor Sie die Überweisung bestätigen.",
+    creerTransfertRapide:
+      "Wählen Sie ein Ziel, um eine Schnellüberweisung zu erstellen. Sie bleibt in der Liste zur Bestätigung.",
     destinationVerrouillee: "Diese Überweisung kann das Ziel nicht mehr ändern.",
     aucunPatient: "Kein Patient ausgewählt",
     age: "Alter",

@@ -59,6 +59,8 @@ export const receptionLn = {
     orientationRapide: "Orientation ya noki",
     actionsRapides: "Ba action ya noki",
     modifierAvantConfirmer: "Bobongola chambre liboso ya kondima transfert.",
+    creerTransfertRapide:
+      "Pona destination mpo na kosala transfert rapide. Ekozala na zelo ya kondima na liste.",
     destinationVerrouillee: "Transfert oyo ekoki kobongola destination lisusu te.",
     aucunPatient: "Patient moko te oyo eponami",
     age: "Mbula",

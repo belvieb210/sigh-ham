@@ -57,6 +57,8 @@ export const receptionLua = {
     orientationRapide: "Orientation ya noki",
     actionsRapides: "Ba action ya noki",
     modifierAvantConfirmer: "Bongola chambre kabidi ya kondima transfert.",
+    creerTransfertRapide:
+      "Pona destination kuenza transfert rapide. Kudi kuikala na zelo ya kondima na liste.",
     destinationVerrouillee: "Transfert uyu kudi kuenza kubongola destination ve.",
     aucunPatient: "Muntu wa maladi umwe ve wa kusala",
     age: "Myaka",

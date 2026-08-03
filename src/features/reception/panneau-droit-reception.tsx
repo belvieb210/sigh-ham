@@ -19,17 +19,73 @@ function useGestionOrientation(variante: "defaut" | "transferts") {
   const selection = useSelectionTransfertOptionnel();
 
   const onOrientationChange = (code: string) => {
-    definirOrientation(code);
-    if (variante === "transferts" && selection?.peutModifierOrientation) {
+    if (variante === "transferts") {
+      if (!selection?.peutAppliquerOrientationRapide) return;
+      definirOrientation(code);
       void selection.changerOrientationTransfert(code);
+      return;
     }
+    definirOrientation(code);
   };
+
+  const desactiveOrientation =
+    variante === "transferts" ? !(selection?.peutAppliquerOrientationRapide ?? false) : false;
 
   return {
     orientation,
     onOrientationChange,
     selection,
+    desactiveOrientation,
   };
+}
+
+function MessageAideOrientation({
+  selection,
+}: {
+  selection: NonNullable<ReturnType<typeof useSelectionTransfertOptionnel>>;
+}) {
+  const { t } = useTranslation();
+
+  if (!selection.patientSelectionne) {
+    return (
+      <p className="mb-2 text-xs text-texte-secondaire">{t("reception.panneau.aucunPatient")}</p>
+    );
+  }
+
+  if (selection.orientationVerrouillee) {
+    return (
+      <p className="mb-2 text-xs text-amber-700">{t("reception.panneau.destinationVerrouillee")}</p>
+    );
+  }
+
+  if (selection.peutCreerTransfertRapide) {
+    return (
+      <p className="mb-2 text-xs text-texte-secondaire">
+        {t("reception.panneau.creerTransfertRapide")}
+      </p>
+    );
+  }
+
+  return (
+    <p className="mb-2 text-xs text-texte-secondaire">
+      {t("reception.panneau.modifierAvantConfirmer")}
+    </p>
+  );
+}
+
+function MessageResultatOrientation({
+  message,
+}: {
+  message: string;
+}) {
+  const estErreur =
+    /impossible|invalide|déjà|ne peut|erreur|sélectionnez/i.test(message);
+
+  return (
+    <p className={cn("mt-2 text-xs", estErreur ? "text-red-600" : "text-emerald-700")}>
+      {message}
+    </p>
+  );
 }
 
 /** Sections du panneau droit — visibles sur mobile et tablette (< xl) */
@@ -38,7 +94,8 @@ export function SectionsMobileReception({
   afficherTransfertManuel = false,
 }: PropsPanneauDroit) {
   const { t } = useTranslation();
-  const { orientation, onOrientationChange, selection } = useGestionOrientation(variante);
+  const { orientation, onOrientationChange, selection, desactiveOrientation } =
+    useGestionOrientation(variante);
 
   return (
     <div className="space-y-4 xl:hidden">
@@ -46,31 +103,17 @@ export function SectionsMobileReception({
         <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
           {t("reception.panneau.orientationRapide")}
         </h2>
-        {variante === "transferts" && selection?.patientSelectionne && (
-          <p className="mb-2 text-xs text-texte-secondaire">
-            {selection.peutModifierOrientation
-              ? t("reception.panneau.modifierAvantConfirmer")
-              : t("reception.panneau.destinationVerrouillee")}
-          </p>
+        {variante === "transferts" && selection && (
+          <MessageAideOrientation selection={selection} />
         )}
         <OrientationRapide
           variante="liste"
           orientation={orientation}
           onOrientationChange={onOrientationChange}
-          desactive={selection?.modificationEnCours}
+          desactive={desactiveOrientation}
         />
         {selection?.messagePanneau && (
-          <p
-            className={cn(
-              "mt-2 text-xs",
-              selection.messagePanneau.includes("Impossible") ||
-                selection.messagePanneau.includes("invalide")
-                ? "text-red-600"
-                : "text-emerald-700"
-            )}
-          >
-            {selection.messagePanneau}
-          </p>
+          <MessageResultatOrientation message={selection.messagePanneau} />
         )}
       </section>
 
@@ -86,7 +129,8 @@ export function PanneauDroitReception({
 }: PropsPanneauDroit) {
   const { t } = useTranslation();
   const { resume } = useResumePatient();
-  const { orientation, onOrientationChange, selection } = useGestionOrientation(variante);
+  const { orientation, onOrientationChange, selection, desactiveOrientation } =
+    useGestionOrientation(variante);
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-4">
@@ -101,31 +145,17 @@ export function PanneauDroitReception({
         <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
           {t("reception.panneau.orientationRapide")}
         </h2>
-        {variante === "transferts" && selection?.patientSelectionne && (
-          <p className="mb-2 text-xs text-texte-secondaire">
-            {selection.peutModifierOrientation
-              ? t("reception.panneau.modifierAvantConfirmer")
-              : t("reception.panneau.destinationVerrouillee")}
-          </p>
+        {variante === "transferts" && selection && (
+          <MessageAideOrientation selection={selection} />
         )}
         <OrientationRapide
           variante="liste"
           orientation={orientation}
           onOrientationChange={onOrientationChange}
-          desactive={selection?.modificationEnCours}
+          desactive={desactiveOrientation}
         />
         {selection?.messagePanneau && (
-          <p
-            className={cn(
-              "mt-2 text-xs",
-              selection.messagePanneau.includes("Impossible") ||
-                selection.messagePanneau.includes("invalide")
-                ? "text-red-600"
-                : "text-emerald-700"
-            )}
-          >
-            {selection.messagePanneau}
-          </p>
+          <MessageResultatOrientation message={selection.messagePanneau} />
         )}
       </section>
 

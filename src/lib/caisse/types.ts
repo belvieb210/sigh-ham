@@ -151,7 +151,12 @@ export interface PatientTransfertCaisse {
   statutCouleur: string;
   heure: string;
   arriveeLe: string;
+  /** Transfert entrant vers la caisse (file) */
   transfertId: string | null;
+  /** Transfert sortant créé par orientation rapide caisse */
+  transfertSortantId: string | null;
+  statutTransfertSortant: string | null;
+  enRecuperation: boolean;
   passageId: string;
   numeroOrdre: number;
   nombreExamens: number;

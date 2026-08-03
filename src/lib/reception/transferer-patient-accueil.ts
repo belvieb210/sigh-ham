@@ -261,7 +261,9 @@ async function trouverDossierReutilisable(
 
     if (!dossier) return null;
     if (dossier.transferts.length > 0) {
-      throw new Error("Ce dossier a déjà été transféré.");
+      throw new Error(
+        "Ce transfert est déjà confirmé : l'orientation rapide ne peut plus être appliquée."
+      );
     }
     return dossier;
   }

@@ -59,6 +59,8 @@ export const receptionSw = {
     orientationRapide: "Uelekezaji wa haraka",
     actionsRapides: "Vitendo vya haraka",
     modifierAvantConfirmer: "Badilisha marudio kabla ya kuthibitisha uhamisho.",
+    creerTransfertRapide:
+      "Chagua marudio ili kuunda uhamisho wa haraka. Utasalia ukisubiri uthibitisho kwenye orodha.",
     destinationVerrouillee: "Uhamisho huu hauwezi tena kubadilisha marudio.",
     aucunPatient: "Hakuna mgonjwa aliyechaguliwa",
     age: "Umri",

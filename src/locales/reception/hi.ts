@@ -57,6 +57,8 @@ export const receptionHi = {
     orientationRapide: "त्वरित दिशा-निर्देश",
     actionsRapides: "त्वरित कार्य",
     modifierAvantConfirmer: "स्थानांतरण की पुष्टि करने से पहले गंतव्य बदलें।",
+    creerTransfertRapide:
+      "त्वरित स्थानांतरण बनाने के लिए गंतव्य चुनें। यह सूची में पुष्टि की प्रतीक्षा में रहेगा।",
     destinationVerrouillee: "यह स्थानांतरण अब गंतव्य नहीं बदल सकता।",
     aucunPatient: "कोई रोगी चयनित नहीं",
     age: "आयु",

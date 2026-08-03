@@ -39,6 +39,8 @@ export const caisseEn = {
     encaissements: "Payments",
     avoirsAvances: "Credits / Advances",
     historiqueCaisse: "Cashier history",
+    examensDisponibles: "Available exams",
+    impressionFacture: "Print invoice",
     rapportJournalier: "Daily report",
     rapportMensuel: "Monthly report",
     statistiques: "Statistics",

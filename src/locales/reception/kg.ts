@@ -1,4 +1,4 @@
-﻿/** Traductions KG — module SIGH Réception */
+/** Traductions KG — module SIGH Réception */
 
 import type { ReceptionFr } from "./fr";
 import { messagerieKg } from "./blocs/messagerie-kg";
@@ -28,6 +28,7 @@ export const receptionKg = {
     estimations: "Estimations",
     patientsEnregistres: "Bantu ya maladi enregistrés",
     patientsTransferes: "Bantu ya maladi transférés",
+    examensDisponibles: "Examens disponibles",
     rechercherPatient: "Kuluka muntu ya maladi",
     historique: "Historique",
     messagerie: "Bansangu",
@@ -118,6 +119,11 @@ export const receptionKg = {
       tableau: "Bantu ya maladi transférés lelo",
       chargement: "Kuzinga bantu ya maladi transférés…",
       placeholder: "Kuluka muntu ya maladi transféré...",
+    },
+    examensDisponibles: {
+      titre: "Examens disponibles",
+      description: "Consultez le catalogue des examens disponibles à la réception.",
+      fil: "Examens disponibles",
     },
     recherche: {
       titre: "Recherche patient",

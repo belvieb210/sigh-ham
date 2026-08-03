@@ -1,4 +1,4 @@
-﻿/** Tafsiri SW — moduli SIGH Mapokezi */
+/** Tafsiri SW — moduli SIGH Mapokezi */
 
 import type { ReceptionFr } from "./fr";
 import { messagerieSw } from "./blocs/messagerie-sw";
@@ -28,6 +28,7 @@ export const receptionSw = {
     estimations: "Estimations",
     patientsEnregistres: "Wagonjwa waliosajiliwa",
     patientsTransferes: "Wagonjwa waliohamishwa",
+    examensDisponibles: "Examens disponibles",
     rechercherPatient: "Tafuta mgonjwa",
     historique: "Historia",
     messagerie: "Ujumbe",
@@ -118,6 +119,11 @@ export const receptionSw = {
       tableau: "Wagonjwa waliohamishwa leo",
       chargement: "Inapakia wagonjwa waliohamishwa…",
       placeholder: "Tafuta mgonjwa aliyehamishwa...",
+    },
+    examensDisponibles: {
+      titre: "Examens disponibles",
+      description: "Consultez le catalogue des examens disponibles à la réception.",
+      fil: "Examens disponibles",
     },
     recherche: {
       titre: "Recherche patient",

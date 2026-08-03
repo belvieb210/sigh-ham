@@ -1,4 +1,4 @@
-﻿/** 中文翻译 — SIGH 接待模块 */
+/** 中文翻译 — SIGH 接待模块 */
 
 import type { ReceptionFr } from "./fr";
 import { messagerieZh } from "./blocs/messagerie-zh";
@@ -28,6 +28,7 @@ export const receptionZh = {
     estimations: "Estimations",
     patientsEnregistres: "已登记患者",
     patientsTransferes: "已转介患者",
+    examensDisponibles: "Examens disponibles",
     rechercherPatient: "搜索患者",
     historique: "历史记录",
     messagerie: "消息",
@@ -117,6 +118,11 @@ export const receptionZh = {
       tableau: "今日转介患者",
       chargement: "正在加载转介患者…",
       placeholder: "搜索已转介患者...",
+    },
+    examensDisponibles: {
+      titre: "Examens disponibles",
+      description: "Consultez le catalogue des examens disponibles à la réception.",
+      fil: "Examens disponibles",
     },
     recherche: {
       titre: "Recherche patient",

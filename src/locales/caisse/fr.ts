@@ -39,6 +39,8 @@ export const caisseFr = {
     encaissements: "Encaissements",
     avoirsAvances: "Avoirs / Avances",
     historiqueCaisse: "Historique caisse",
+    examensDisponibles: "Examens disponibles",
+    impressionFacture: "Impression facture",
     rapportJournalier: "Rapport journalier",
     rapportMensuel: "Rapport mensuel",
     statistiques: "Statistiques",

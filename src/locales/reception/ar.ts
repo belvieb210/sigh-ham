@@ -1,4 +1,4 @@
-﻿/** ترجمات عربية — وحدة SIGH الاستقبال */
+/** ترجمات عربية — وحدة SIGH الاستقبال */
 
 import type { ReceptionFr } from "./fr";
 
@@ -26,6 +26,7 @@ export const receptionAr = {
     estimations: "Estimations",
     patientsEnregistres: "المرضى المسجلون",
     patientsTransferes: "المرضى المحوّلون",
+    examensDisponibles: "Examens disponibles",
     rechercherPatient: "البحث عن مريض",
     historique: "السجل",
     messagerie: "الرسائل",
@@ -116,6 +117,11 @@ export const receptionAr = {
       tableau: "المرضى المحوّلون اليوم",
       chargement: "جارٍ تحميل المرضى المحوّلون…",
       placeholder: "البحث عن مريض محوّل...",
+    },
+    examensDisponibles: {
+      titre: "Examens disponibles",
+      description: "Consultez le catalogue des examens disponibles à la réception.",
+      fil: "Examens disponibles",
     },
     recherche: {
       titre: "Recherche patient",

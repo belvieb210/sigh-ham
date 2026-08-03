@@ -1,4 +1,4 @@
-﻿/** Traducciones ES — módulo SIGH Recepción */
+/** Traducciones ES — módulo SIGH Recepción */
 
 import type { ReceptionFr } from "./fr";
 
@@ -26,6 +26,7 @@ export const receptionEs = {
     estimations: "Estimations",
     patientsEnregistres: "Pacientes registrados",
     patientsTransferes: "Pacientes transferidos",
+    examensDisponibles: "Examens disponibles",
     rechercherPatient: "Buscar paciente",
     historique: "Historial",
     messagerie: "Mensajería",
@@ -116,6 +117,11 @@ export const receptionEs = {
       tableau: "Pacientes transferidos hoy",
       chargement: "Cargando pacientes transferidos…",
       placeholder: "Buscar un paciente transferido...",
+    },
+    examensDisponibles: {
+      titre: "Examens disponibles",
+      description: "Consultez le catalogue des examens disponibles à la réception.",
+      fil: "Examens disponibles",
     },
     recherche: {
       titre: "Recherche patient",

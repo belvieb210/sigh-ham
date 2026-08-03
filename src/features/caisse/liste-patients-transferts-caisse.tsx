@@ -23,7 +23,7 @@ import { formaterMontantCaisse } from "@/features/caisse/utils-format";
 import type { PatientTransfertCaisse, StatsTransfertsCaisse } from "@/lib/caisse/types";
 import { cn } from "@/lib/utils";
 
-const PAR_PAGE = 8;
+const PAR_PAGE = 5;
 
 export function ListePatientsTransfertsCaisse() {
   const { t } = useTranslation();

@@ -24,6 +24,7 @@ const ICONES_PAGES: Record<IdPageReceptionAvenir, LucideIcon> = {
   notifications: Bell,
   motifs: ClipboardList,
   examens: FlaskConical,
+  examensDisponibles: FlaskConical,
   utilisateurs: UserCog,
   parametres: Settings,
 };

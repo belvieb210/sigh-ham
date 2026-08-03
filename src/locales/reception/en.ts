@@ -25,6 +25,7 @@ export const receptionEn = {
     nouveauPatient: "New patient",
     patientsEnregistres: "Registered patients",
     patientsTransferes: "Transferred patients",
+    examensDisponibles: "Available exams",
     rechercherPatient: "Search patient",
     historique: "History",
     messagerie: "Messaging",
@@ -111,6 +112,11 @@ export const receptionEn = {
       tableau: "Patients transferred today",
       chargement: "Loading transferred patients…",
       placeholder: "Search for a transferred patient...",
+    },
+    examensDisponibles: {
+      titre: "Available exams",
+      description: "Browse the catalogue of exams available at reception.",
+      fil: "Available exams",
     },
     recherche: {
       titre: "Search patient",

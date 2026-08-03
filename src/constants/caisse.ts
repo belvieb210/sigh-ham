@@ -17,6 +17,8 @@ import {
   Bell,
   UserCircle,
   ArrowRightLeft,
+  FlaskConical,
+  Printer,
 } from "lucide-react";
 
 export const NAVIGATION_CAISSE = {
@@ -28,6 +30,8 @@ export const NAVIGATION_CAISSE = {
     { href: "/sigh/caisse/encaissements", id: "encaissements", icone: Wallet },
     { href: "/sigh/caisse/avoirs", id: "avoirsAvances", icone: CircleDollarSign },
     { href: "/sigh/caisse/historique", id: "historiqueCaisse", icone: History },
+    { href: "/sigh/caisse/examens-disponibles", id: "examensDisponibles", icone: FlaskConical },
+    { href: "/sigh/caisse/impression-facture", id: "impressionFacture", icone: Printer },
   ],
   rapports: [
     { href: "/sigh/caisse/rapports", id: "rapportJournalier", icone: BarChart3 },

@@ -1,4 +1,4 @@
-﻿/** अनुवाद HI — SIGH रिसेप्शन मॉड्यूल */
+/** अनुवाद HI — SIGH रिसेप्शन मॉड्यूल */
 
 import type { ReceptionFr } from "./fr";
 
@@ -26,6 +26,7 @@ export const receptionHi = {
     estimations: "Estimations",
     patientsEnregistres: "पंजीकृत रोगी",
     patientsTransferes: "स्थानांतरित रोगी",
+    examensDisponibles: "Examens disponibles",
     rechercherPatient: "रोगी खोजें",
     historique: "इतिहास",
     messagerie: "संदेश",
@@ -116,6 +117,11 @@ export const receptionHi = {
       tableau: "आज स्थानांतरित रोगी",
       chargement: "स्थानांतरित रोगी लोड हो रहे हैं…",
       placeholder: "स्थानांतरित रोगी खोजें...",
+    },
+    examensDisponibles: {
+      titre: "Examens disponibles",
+      description: "Consultez le catalogue des examens disponibles à la réception.",
+      fil: "Examens disponibles",
     },
     recherche: {
       titre: "Recherche patient",

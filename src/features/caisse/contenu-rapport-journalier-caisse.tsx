@@ -26,7 +26,7 @@ interface Props {
   utilisateur: UtilisateurCaisse;
 }
 
-const PAR_PAGE = 8;
+const PAR_PAGE = 5;
 
 function dateAujourdhuiIso() {
   const d = new Date();

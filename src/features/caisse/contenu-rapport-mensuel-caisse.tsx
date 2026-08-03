@@ -26,7 +26,7 @@ interface Props {
   utilisateur: UtilisateurCaisse;
 }
 
-const PAR_PAGE = 10;
+const PAR_PAGE = 5;
 
 function moisCourantIso() {
   const d = new Date();

@@ -1,4 +1,4 @@
-﻿/** תרגומים HE — מודול SIGH קבלה */
+/** תרגומים HE — מודול SIGH קבלה */
 
 import type { ReceptionFr } from "./fr";
 
@@ -26,6 +26,7 @@ export const receptionHe = {
     estimations: "Estimations",
     patientsEnregistres: "מטופלים רשומים",
     patientsTransferes: "מטופלים שהועברו",
+    examensDisponibles: "Examens disponibles",
     rechercherPatient: "חיפוש מטופל",
     historique: "היסטוריה",
     messagerie: "הודעות",
@@ -116,6 +117,11 @@ export const receptionHe = {
       tableau: "מטופלים שהועברו היום",
       chargement: "טוען מטופלים שהועברו…",
       placeholder: "חיפוש מטופל שהועבר...",
+    },
+    examensDisponibles: {
+      titre: "Examens disponibles",
+      description: "Consultez le catalogue des examens disponibles à la réception.",
+      fil: "Examens disponibles",
     },
     recherche: {
       titre: "Recherche patient",

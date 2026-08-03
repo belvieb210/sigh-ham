@@ -1,4 +1,4 @@
-﻿/** Traductions LUA — module SIGH Réception */
+/** Traductions LUA — module SIGH Réception */
 
 import type { ReceptionFr } from "./fr";
 
@@ -26,6 +26,7 @@ export const receptionLua = {
     estimations: "Estimations",
     patientsEnregistres: "Bantu ba maladi ba enregistrés",
     patientsTransferes: "Bantu ba maladi ba transférés",
+    examensDisponibles: "Examens disponibles",
     rechercherPatient: "Kuluka muntu wa maladi",
     historique: "Historique",
     messagerie: "Mensaje",
@@ -116,6 +117,11 @@ export const receptionLua = {
       tableau: "Bantu ba maladi ba transférés lelu",
       chargement: "Kubaka bantu ba maladi ba transférés…",
       placeholder: "Kuluka muntu wa maladi transféré...",
+    },
+    examensDisponibles: {
+      titre: "Examens disponibles",
+      description: "Consultez le catalogue des examens disponibles à la réception.",
+      fil: "Examens disponibles",
     },
     recherche: {
       titre: "Recherche patient",

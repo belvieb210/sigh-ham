@@ -28,6 +28,7 @@ export const NAVIGATION_RECEPTION = {
     { href: "/sigh/reception/nouveau", id: "nouveauPatient", icone: UserPlus },
     { href: "/sigh/reception/enregistres", id: "patientsEnregistres", icone: Users },
     { href: "/sigh/reception/transferts", id: "patientsTransferes", icone: ArrowRightLeft },
+    { href: "/sigh/reception/examens-disponibles", id: "examensDisponibles", icone: FlaskConical },
     { href: "/sigh/reception/recherche", id: "rechercherPatient", icone: Search },
     { href: "/sigh/reception/historique", id: "historique", icone: History },
   ],
@@ -64,6 +65,7 @@ export type IdPageReceptionAvenir =
   | "notifications"
   | "motifs"
   | "examens"
+  | "examensDisponibles"
   | "utilisateurs"
   | "parametres";
 

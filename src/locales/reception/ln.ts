@@ -1,4 +1,4 @@
-﻿/** Traductions LN — module SIGH Réception */
+/** Traductions LN — module SIGH Réception */
 
 import type { ReceptionFr } from "./fr";
 import { messagerieLn } from "./blocs/messagerie-ln";
@@ -28,6 +28,7 @@ export const receptionLn = {
     estimations: "Estimations",
     patientsEnregistres: "Ba patient enregistrés",
     patientsTransferes: "Ba patient transférés",
+    examensDisponibles: "Examens disponibles",
     rechercherPatient: "Koluka patient",
     historique: "Historique",
     messagerie: "Mesaje",
@@ -118,6 +119,11 @@ export const receptionLn = {
       tableau: "Ba patient transférés lelo",
       chargement: "Kozonga ba patient transférés…",
       placeholder: "Koluka patient transféré...",
+    },
+    examensDisponibles: {
+      titre: "Examens disponibles",
+      description: "Consultez le catalogue des examens disponibles à la réception.",
+      fil: "Examens disponibles",
     },
     recherche: {
       titre: "Recherche patient",

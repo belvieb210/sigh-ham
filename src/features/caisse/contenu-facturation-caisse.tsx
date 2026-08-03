@@ -8,8 +8,10 @@ import {
   ArrowLeft,
   Check,
   CheckCircle2,
+  FlaskConical,
   FolderOpen,
   Loader2,
+  Pill,
   Plus,
   Printer,
   RefreshCw,
@@ -794,8 +796,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               >
                 {resumePanel}
 
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 rounded-xl border border-gris-bordure bg-white px-4 py-3 text-sm shadow-sm">
+                <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
+                  <label className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
                       checked={transfererApres}
@@ -807,27 +809,37 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                     </span>
                   </label>
                   {transfererApres && (
-                    <div className="flex flex-wrap gap-2">
-                      {TYPES_FACTURE_CAISSE_UI.map((type) => (
-                        <button
-                          key={type.id}
-                          type="button"
-                          onClick={() => setTypeFactureUi(type.id)}
-                          className={cn(
-                            "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-                            typeFactureUi === type.id
-                              ? "bg-bleu-medical text-white"
-                              : "bg-slate-100 text-texte-principal hover:bg-slate-200"
-                          )}
-                        >
-                          {type.id === "NORMALE"
-                            ? t("caisse.facturation.factureNormale")
-                            : t("caisse.facturation.facturePharmacie")}
-                        </button>
-                      ))}
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {TYPES_FACTURE_CAISSE_UI.map((type) => {
+                        const selectionne = typeFactureUi === type.id;
+                        const Icone = type.id === "NORMALE" ? FlaskConical : Pill;
+                        return (
+                          <button
+                            key={type.id}
+                            type="button"
+                            onClick={() => setTypeFactureUi(type.id)}
+                            className={cn(
+                              "flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border p-3 text-center text-xs font-medium leading-tight transition-colors active:scale-[0.98]",
+                              selectionne
+                                ? "border-bleu-medical bg-bleu-medical-clair text-texte-principal ring-2 ring-bleu-medical/20"
+                                : "border-gris-bordure bg-[#f8fafc] text-texte-principal hover:border-bleu-medical hover:bg-bleu-medical-clair"
+                            )}
+                          >
+                            <Icone
+                              className="h-6 w-6 shrink-0 text-bleu-medical"
+                              strokeWidth={1.75}
+                            />
+                            <span>
+                              {type.id === "NORMALE"
+                                ? t("caisse.facturation.factureNormale")
+                                : t("caisse.facturation.facturePharmacie")}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
-                </div>
+                </section>
               </div>
             </div>
 

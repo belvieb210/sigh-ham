@@ -114,12 +114,16 @@ export function CartePatientEnregistre({
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
             >
-              <ActionsGestionPatient
-                patient={patient}
-                onApresSuppression={onRafraichirTransferts}
-              />
-              {patient.transfertId && onRafraichirTransferts && (
-                <MenuActionsTransfert patient={patient} onRafraichir={onRafraichirTransferts} />
+              {!patientTransfereConfirme(patient) && (
+                <>
+                  <ActionsGestionPatient
+                    patient={patient}
+                    onApresSuppression={onRafraichirTransferts}
+                  />
+                  {patient.transfertId && onRafraichirTransferts && (
+                    <MenuActionsTransfert patient={patient} onRafraichir={onRafraichirTransferts} />
+                  )}
+                </>
               )}
             </div>
             {!patient.transfertId && (
@@ -173,6 +177,12 @@ export function BadgeStatut({ patient }: { patient: PatientEnregistre }) {
 }
 
 export type VarianteActionsPatient = "defaut" | "transferts";
+
+/** Après confirmation, modifier / supprimer / menu ⋮ ne s'affichent plus */
+export function patientTransfereConfirme(patient: PatientEnregistre): boolean {
+  if (patient.statut === "Transféré") return true;
+  return patient.statutTransfert === "ACCEPTE" || patient.statutTransfert === "TERMINE";
+}
 
 function ActionsGestionPatient({
   patient,
@@ -477,6 +487,8 @@ export function ActionsPatient({
 }) {
   const { t } = useTranslation();
 
+  const transfere = patientTransfereConfirme(patient);
+
   if (variante === "transferts") {
     return (
       <div className="flex items-center gap-0.5">
@@ -492,7 +504,9 @@ export function ActionsPatient({
         >
           <Eye className="h-4 w-4" />
         </button>
-        <MenuActionsTransfert patient={patient} onRafraichir={onRafraichirTransferts} />
+        {!transfere && (
+          <MenuActionsTransfert patient={patient} onRafraichir={onRafraichirTransferts} />
+        )}
       </div>
     );
   }
@@ -526,9 +540,13 @@ export function ActionsPatient({
           <Eye className="h-4 w-4" />
         </button>
       )}
-      <ActionsGestionPatient patient={patient} onApresSuppression={onRafraichirTransferts} />
-      {patient.transfertId && onRafraichirTransferts && (
-        <MenuActionsTransfert patient={patient} onRafraichir={onRafraichirTransferts} />
+      {!transfere && (
+        <>
+          <ActionsGestionPatient patient={patient} onApresSuppression={onRafraichirTransferts} />
+          {patient.transfertId && onRafraichirTransferts && (
+            <MenuActionsTransfert patient={patient} onRafraichir={onRafraichirTransferts} />
+          )}
+        </>
       )}
       <button
         type="button"

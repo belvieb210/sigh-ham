@@ -114,7 +114,12 @@ export function MenuActionsTransfertCaisse({
     }
   };
 
-  if (!patient.factureOuverte || !patient.transfertSortantId) {
+  const transfere =
+    patient.statut === "Transféré" ||
+    patient.statutTransfertSortant === "ACCEPTE" ||
+    patient.statutTransfertSortant === "TERMINE";
+
+  if (transfere || !patient.factureOuverte || !patient.transfertSortantId) {
     return null;
   }
 

@@ -15,6 +15,9 @@ export const INFOS_LEGALES_TICKET = {
   adresseLigne1: "Sur 209 av/ lumiere entrée debonhomme",
   adresseLigne2: "3ème parcelle à droit commune matete",
   ville: "Kinshasa RD Congo",
+  /** Adresse complète (devis PDF / documents officiels) */
+  adresseComplete:
+    "259, Avenue Lumière, Entrée Debonhomme Troisième Parcelle À Droit Commune MATETE, Kinshasa, République démocratique du Congo",
   telephones: "+243 815 125 111 - 813 191 643",
   email: "obb5lab@gmail.com",
 } as const;

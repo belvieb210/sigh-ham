@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     paddingTop: 20,
     paddingHorizontal: 24,
-    paddingBottom: 36,
+    paddingBottom: 52,
     color: NOIR,
     backgroundColor: "#ffffff",
   },
@@ -326,14 +326,24 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: NOIR,
-    paddingVertical: 7,
-    paddingHorizontal: 28,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+  },
+  piedLigne: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 3,
   },
   piedTexte: {
     color: "#ffffff",
-    fontSize: 10,
+    fontSize: 9,
+  },
+  piedAdresse: {
+    color: "#ffffff",
+    fontSize: 8,
+    lineHeight: 1.3,
+    textAlign: "center",
   },
 });
 
@@ -519,8 +529,11 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
         </View>
 
         <View style={styles.pied} fixed>
-          <Text style={styles.piedTexte}>Merci de votre confiance !</Text>
-          <Text style={styles.piedTexte}>HAM LABORATOIRE — Kinshasa, RDC</Text>
+          <View style={styles.piedLigne}>
+            <Text style={styles.piedTexte}>Merci de votre confiance !</Text>
+            <Text style={styles.piedTexte}>HAM LABORATOIRE — Kinshasa, RDC</Text>
+          </View>
+          <Text style={styles.piedAdresse}>{L.adresseComplete}</Text>
         </View>
       </Page>
     </Document>

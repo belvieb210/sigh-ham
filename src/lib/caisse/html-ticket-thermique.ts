@@ -179,16 +179,6 @@ export async function construireHtmlTicketThermique(
     ${qrBlock}
     <pre class="ticket">${basHtml}</pre>
   </div>
-  <script>
-    (function () {
-      var q = new URLSearchParams(window.location.search);
-      if (q.get("print") === "1") {
-        window.addEventListener("load", function () {
-          setTimeout(function () { try { window.focus(); window.print(); } catch (e) {} }, 400);
-        });
-      }
-    })();
-  </script>
 </body>
 </html>`;
 }

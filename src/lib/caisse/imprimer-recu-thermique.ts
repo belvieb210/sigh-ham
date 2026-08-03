@@ -1,6 +1,6 @@
 /**
- * Bouton imprimante (caisse) → ticket thermique 80 mm dans le navigateur.
- * Le QR imprimé sur le ticket → page reçue digitale (scan téléphone / PC).
+ * Bouton imprimante (caisse) → une seule fenêtre : ticket thermique 80 mm.
+ * Le QR du ticket → page reçue publique (URL de production, jamais localhost).
  */
 
 import type { FactureResumeJour } from "@/lib/caisse/types";
@@ -12,7 +12,7 @@ function cheminSafe(token: string): string {
   return `/r/${encodeURIComponent(token)}`;
 }
 
-/** URL de la page reçue (scan QR) — sans auto-impression. */
+/** URL de la page reçue (scan QR). */
 export function urlRecuPublicFacture(facture: FactureResumeJour): string {
   if (!facture.tokenRecu) return "";
   const path = cheminSafe(facture.tokenRecu);
@@ -20,25 +20,36 @@ export function urlRecuPublicFacture(facture: FactureResumeJour): string {
   return `${window.location.origin}${path}`;
 }
 
-/** URL du ticket thermique 80 mm (bouton imprimante caisse). */
+/** URL du ticket thermique — sans auto-impression. */
 export function urlTicketThermiqueFacture(facture: FactureResumeJour): string {
   if (!facture.tokenRecu) return "";
-  const path = `${cheminSafe(facture.tokenRecu)}/ticket?print=1`;
+  const path = `${cheminSafe(facture.tokenRecu)}/ticket`;
   if (typeof window === "undefined") return path;
   return `${window.location.origin}${path}`;
 }
 
 /**
- * Ouvre le ticket thermique (image type reçu 80 mm) dans un nouvel onglet.
+ * Ouvre le ticket dans un seul onglet.
+ * Ne pas utiliser l'option `noopener` de window.open : elle renvoie null
+ * et déclenchait à tort une 2ᵉ navigation (2 onglets).
  */
 export function imprimerRecuCaisseThermique(facture: FactureResumeJour): boolean {
   if (typeof window === "undefined") return false;
   const url = urlTicketThermiqueFacture(facture);
   if (!url) return false;
 
-  const fenetre = window.open(url, "_blank", "noopener,noreferrer");
-  if (!fenetre) {
-    window.location.href = url;
+  const fenetre = window.open(url, "_blank");
+  if (fenetre) {
+    try {
+      fenetre.opener = null;
+    } catch {
+      /* ignore */
+    }
+    fenetre.focus();
+    return true;
   }
+
+  // Popup vraiment bloquée : même onglet uniquement
+  window.location.assign(url);
   return true;
 }

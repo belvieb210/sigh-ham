@@ -447,7 +447,9 @@ export function ContenuFacturesJourCaisse({
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                     setSelectionId(f.id);
                                     imprimerRecuCaisseThermique(f);
                                   }}

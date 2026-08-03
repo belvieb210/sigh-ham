@@ -3,6 +3,7 @@ import { construireHtmlRecuIntrouvable } from "@/lib/caisse/html-recu-public";
 import { construireHtmlTicketThermique } from "@/lib/caisse/html-ticket-thermique";
 import { chargerRecuPublicParToken } from "@/lib/caisse/recu-public";
 import { cheminRecuPublic } from "@/lib/caisse/token-recu-public";
+import { obtenirOriginePublique } from "@/lib/url-publique";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +26,8 @@ export async function GET(request: Request, context: ContexteRoute) {
     });
   }
 
-  const origin = new URL(request.url).origin;
-  // QR → page reçue digitale (pas le ticket), URL courte pour un QR aéré
+  // Toujours l'URL publique (jamais localhost derrière le proxy Apache)
+  const origin = obtenirOriginePublique(request);
   const urlRecu = `${origin}${cheminRecuPublic(token)}`;
   const html = await construireHtmlTicketThermique(detail, urlRecu);
 

@@ -11,7 +11,7 @@ interface ContexteRoute {
   params: Promise<{ token: string }>;
 }
 
-export async function GET(request: Request, context: ContexteRoute) {
+export async function GET(_request: Request, context: ContexteRoute) {
   const { token: tokenBrut } = await context.params;
   const token = decodeURIComponent(tokenBrut);
   const detail = await chargerRecuPublicParToken(token);

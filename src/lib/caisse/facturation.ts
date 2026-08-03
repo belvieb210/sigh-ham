@@ -655,6 +655,8 @@ export async function listerFacturesDuJour(): Promise<FactureResumeJour[]> {
         quantite: l.quantite,
       })),
       tokenRecu: creerTokenRecuFacture(f.id),
+      approuvee: Boolean(f.approuveeLe),
+      approuveeLe: f.approuveeLe?.toISOString() ?? null,
     };
   });
 }

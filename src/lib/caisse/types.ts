@@ -227,6 +227,20 @@ export interface FactureResumeJour {
   lignes: LigneFactureResume[];
   /** Jeton signé pour le QR / page publique `/r/[token]` (lié à cette facture). */
   tokenRecu: string;
+  /** Facture validée en caisse — autorise les codes-barres tubes */
+  approuvee: boolean;
+  approuveeLe: string | null;
+}
+
+/** Étiquette tube labo (code-barres) */
+export interface EtiquetteTubeLabo {
+  codeBarre: string;
+  ligneDateTube: string;
+  nomPatient: string;
+  ligneIdentite: string;
+  ligneDepartement: string;
+  typeTube: string;
+  departement: string;
 }
 
 export interface EncaissementResumeJour {

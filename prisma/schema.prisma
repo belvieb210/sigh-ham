@@ -338,6 +338,7 @@ model Utilisateur {
   messagesMasques          MessageMasque[]
   notifications            Notification[]
   preferencesNotification  PreferenceNotification?
+  facturesApprouvees       Facture[]               @relation("FactureApprouveePar")
   abonnementsPush          AbonnementPush[]
   sessionsCaisse           SessionCaisse[]
 
@@ -623,6 +624,10 @@ model Facture {
   montantPaye   Decimal        @default(0) @map("montant_paye") @db.Decimal(12, 2)
   devise        String         @default("CDF")
   emiseLe       DateTime?      @map("emise_le")
+  /** Validation caisse — débloque l'impression des codes-barres tubes */
+  approuveeLe    DateTime?    @map("approuvee_le")
+  approuveeParId String?      @map("approuvee_par_id")
+  approuveePar   Utilisateur? @relation("FactureApprouveePar", fields: [approuveeParId], references: [id])
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
 

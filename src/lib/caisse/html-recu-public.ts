@@ -50,7 +50,7 @@ function calculerAge(iso: string | null): string {
 
 const LIBELLES_STATUT: Record<string, string> = {
   PAYEE: "Payée",
-  PARTIELLEMENT_PAYEE: "Partiellement payée",
+  PARTIELLEMENT_PAYEE: "Payée avance",
   EMISE: "Émise",
   PRESCRIT: "Prescrit",
   PRELEVE: "Prélevé",
@@ -59,13 +59,18 @@ const LIBELLES_STATUT: Record<string, string> = {
   FACTURE: "Facturé",
 };
 
-function libelleStatut(code: string) {
+function libelleStatut(code: string, modeFacture?: string | null) {
+  if (code === "PARTIELLEMENT_PAYEE" || modeFacture === "AVANCE") {
+    return "Payée avance";
+  }
   return LIBELLES_STATUT[code] ?? code.replace(/_/g, " ");
 }
 
-function classeStatut(statut: string): string {
+function classeStatut(statut: string, modeFacture?: string | null): string {
   if (statut === "PAYEE") return "badge badge-ok";
-  if (statut === "PARTIELLEMENT_PAYEE") return "badge badge-warn";
+  if (statut === "PARTIELLEMENT_PAYEE" || modeFacture === "AVANCE") {
+    return "badge badge-avance";
+  }
   return "badge";
 }
 
@@ -256,6 +261,7 @@ export function construireDocumentHtmlRecuPublic(
     }
     .badge-ok { background: var(--ok-bg); color: var(--ok); }
     .badge-warn { background: var(--warn-bg); color: var(--warn); }
+    .badge-avance { background: #e0f2fe; color: #0369a1; }
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -374,7 +380,7 @@ export function construireDocumentHtmlRecuPublic(
           <h2 class="name">${nom}</h2>
           <p class="sub">${echapper(detail.patient.numeroPatient)}</p>
         </div>
-        <span class="${classeStatut(detail.statut)}">${echapper(libelleStatut(detail.statut))}</span>
+        <span class="${classeStatut(detail.statut, detail.modeFacture)}">${echapper(libelleStatut(detail.statut, detail.modeFacture))}</span>
       </div>
       <dl class="grid">
         <div><dt>Âge</dt><dd>${echapper(calculerAge(detail.patient.dateNaissance))}</dd></div>

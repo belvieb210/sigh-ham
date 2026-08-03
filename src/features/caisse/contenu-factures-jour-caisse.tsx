@@ -25,6 +25,7 @@ import {
   formaterMontantCaisse,
   initiales,
 } from "@/features/caisse/utils-format";
+import { imprimerEtiquettesTubesFacture } from "@/lib/caisse/imprimer-etiquettes-tubes";
 import { imprimerRecuCaisseThermique } from "@/lib/caisse/imprimer-recu-thermique";
 import type { FactureResumeJour } from "@/lib/caisse/types";
 import { cn } from "@/lib/utils";
@@ -39,10 +40,26 @@ interface PropsContenuFacturesJourCaisse {
 
 const PAR_PAGE = 5;
 
-function statutAffiche(statut: FactureResumeJour["statut"]) {
-  if (statut === "PAYEE") return "payee" as const;
-  if (statut === "PARTIELLEMENT_PAYEE") return "partielle" as const;
+function statutAffiche(fac: FactureResumeJour) {
+  if (fac.statut === "PAYEE") return "payee" as const;
+  if (
+    fac.statut === "PARTIELLEMENT_PAYEE" ||
+    fac.modeFacture === "AVANCE"
+  ) {
+    return "payeeAvance" as const;
+  }
+  if (fac.montantPaye > 0) return "partielle" as const;
   return "impayee" as const;
+}
+
+function classeStatutUi(statutUi: ReturnType<typeof statutAffiche>) {
+  return cn(
+    "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
+    statutUi === "payee" && "bg-emerald-50 text-emerald-700",
+    statutUi === "payeeAvance" && "bg-sky-50 text-sky-700",
+    statutUi === "partielle" && "bg-amber-50 text-amber-700",
+    statutUi === "impayee" && "bg-red-50 text-red-700"
+  );
 }
 
 function estFactureImprimable(fac: FactureResumeJour) {
@@ -77,6 +94,45 @@ export function ContenuFacturesJourCaisse({
   );
   const [menuOuvertId, setMenuOuvertId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [approbationId, setApprobationId] = useState<string | null>(null);
+  const [messageAction, setMessageAction] = useState<string | null>(null);
+
+  const approuverFacture = async (fac: FactureResumeJour) => {
+    setApprobationId(fac.id);
+    setMessageAction(null);
+    try {
+      const res = await fetch(`/api/caisse/factures/${fac.id}/approuver`, {
+        method: "POST",
+      });
+      const data = (await res.json()) as { erreur?: string };
+      if (!res.ok) {
+        setMessageAction(data.erreur || t("caisse.factures.approuverErreur"));
+        return;
+      }
+      setFactures((liste) =>
+        liste.map((f) =>
+          f.id === fac.id
+            ? { ...f, approuvee: true, approuveeLe: new Date().toISOString() }
+            : f
+        )
+      );
+      setMessageAction(t("caisse.factures.approuverOk"));
+      setMenuOuvertId(null);
+    } catch {
+      setMessageAction(t("caisse.factures.approuverErreur"));
+    } finally {
+      setApprobationId(null);
+    }
+  };
+
+  const ouvrirBarreCode = async (fac: FactureResumeJour) => {
+    setMenuOuvertId(null);
+    setMessageAction(null);
+    const resultat = await imprimerEtiquettesTubesFacture(fac.id);
+    if (!resultat.ok) {
+      setMessageAction(resultat.erreur || t("caisse.factures.barreCodeErreur"));
+    }
+  };
 
   useEffect(() => {
     let annule = false;
@@ -264,6 +320,15 @@ export function ContenuFacturesJourCaisse({
           />
         )}
 
+        {messageAction && (
+          <p
+            className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800"
+            role="status"
+          >
+            {messageAction}
+          </p>
+        )}
+
         {chargement ? (
           <div className="flex items-center justify-center gap-2 rounded-xl border border-gris-bordure bg-white py-16 text-sm text-texte-secondaire">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -283,7 +348,7 @@ export function ContenuFacturesJourCaisse({
                 <>
                 <ul className="divide-y divide-gris-bordure md:hidden">
                   {facturesPage.map((f) => {
-                    const statutUi = statutAffiche(f.statut);
+                    const statutUi = statutAffiche(f);
                     const actif = factureSelectionnee?.id === f.id;
                     const nb = f.nombreLignes || f.nombreExamens;
                     return (
@@ -315,14 +380,7 @@ export function ContenuFacturesJourCaisse({
                             </p>
                           </div>
                           <div className="flex shrink-0 flex-col items-end gap-2">
-                            <span
-                              className={cn(
-                                "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
-                                statutUi === "payee" && "bg-emerald-50 text-emerald-700",
-                                statutUi === "partielle" && "bg-amber-50 text-amber-700",
-                                statutUi === "impayee" && "bg-red-50 text-red-700"
-                              )}
-                            >
+                            <span className={classeStatutUi(statutUi)}>
                               {t(`caisse.factures.statutsUi.${statutUi}`)}
                             </span>
                             <div className="flex items-center gap-1.5">
@@ -381,7 +439,7 @@ export function ContenuFacturesJourCaisse({
                     </thead>
                     <tbody>
                       {facturesPage.map((f) => {
-                        const statutUi = statutAffiche(f.statut);
+                        const statutUi = statutAffiche(f);
                         const actif = factureSelectionnee?.id === f.id;
                         const nb = f.nombreLignes || f.nombreExamens;
                         return (
@@ -421,16 +479,7 @@ export function ContenuFacturesJourCaisse({
                               {libelleModePaiement(f)}
                             </td>
                             <td className="px-4 py-3">
-                              <span
-                                className={cn(
-                                  "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
-                                  statutUi === "payee" &&
-                                    "bg-emerald-50 text-emerald-700",
-                                  statutUi === "partielle" &&
-                                    "bg-amber-50 text-amber-700",
-                                  statutUi === "impayee" && "bg-red-50 text-red-700"
-                                )}
-                              >
+                              <span className={classeStatutUi(statutUi)}>
                                 {t(`caisse.factures.statutsUi.${statutUi}`)}
                               </span>
                             </td>
@@ -470,7 +519,7 @@ export function ContenuFacturesJourCaisse({
                                   <MoreVertical className="h-4 w-4" />
                                 </button>
                                 {menuOuvertId === f.id && (
-                                  <div className="absolute right-0 top-10 z-20 min-w-[180px] overflow-hidden rounded-lg border border-gris-bordure bg-white py-1 shadow-lg">
+                                  <div className="absolute right-0 top-10 z-20 min-w-[200px] overflow-hidden rounded-lg border border-gris-bordure bg-white py-1 shadow-lg">
                                     <Link
                                       href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
                                       className="block px-3 py-2 text-sm text-texte-principal hover:bg-gris-tres-clair"
@@ -478,6 +527,26 @@ export function ContenuFacturesJourCaisse({
                                     >
                                       {t("caisse.factures.ouvrirFacturation")}
                                     </Link>
+                                    {!f.approuvee ? (
+                                      <button
+                                        type="button"
+                                        disabled={approbationId === f.id}
+                                        onClick={() => void approuverFacture(f)}
+                                        className="block w-full px-3 py-2 text-left text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                                      >
+                                        {approbationId === f.id
+                                          ? t("caisse.factures.approuverEnCours")
+                                          : t("caisse.factures.approuver")}
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => void ouvrirBarreCode(f)}
+                                        className="block w-full px-3 py-2 text-left text-sm font-medium text-bleu-medical hover:bg-bleu-medical-clair"
+                                      >
+                                        {t("caisse.factures.barreCode")}
+                                      </button>
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -592,19 +661,9 @@ export function ContenuFacturesJourCaisse({
                         <span className="text-texte-secondaire">
                           {t("caisse.factures.statut")}
                         </span>
-                        <span
-                          className={cn(
-                            "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                            statutAffiche(factureSelectionnee.statut) === "payee" &&
-                              "bg-emerald-50 text-emerald-700",
-                            statutAffiche(factureSelectionnee.statut) ===
-                              "partielle" && "bg-amber-50 text-amber-700",
-                            statutAffiche(factureSelectionnee.statut) === "impayee" &&
-                              "bg-red-50 text-red-700"
-                          )}
-                        >
+                        <span className={classeStatutUi(statutAffiche(factureSelectionnee))}>
                           {t(
-                            `caisse.factures.statutsUi.${statutAffiche(factureSelectionnee.statut)}`
+                            `caisse.factures.statutsUi.${statutAffiche(factureSelectionnee)}`
                           )}
                         </span>
                       </div>

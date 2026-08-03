@@ -86,9 +86,10 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const [numeroRecu, setNumeroRecu] = useState("");
   const [transfererApres, setTransfererApres] = useState(true);
   const [typeFactureUi, setTypeFactureUi] = useState<TypeFactureCaisseUi>("NORMALE");
-  const [lignesMasquees, setLignesMasquees] = useState<Set<string>>(new Set());
   const [rechercheExamenOuverte, setRechercheExamenOuverte] = useState(false);
   const [ajoutExamenEnCours, setAjoutExamenEnCours] = useState(false);
+  const [suppressionLigneId, setSuppressionLigneId] = useState<string | null>(null);
+  const [montantAvance, setMontantAvance] = useState(0);
 
   const destinationApres: DestinationApresEncaissement = transfererApres
     ? (TYPES_FACTURE_CAISSE_UI.find((t) => t.id === typeFactureUi)?.destination ??
@@ -110,8 +111,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     async (id: string) => {
       setChargementDossier(true);
       setErreur(null);
-      setLignesMasquees(new Set());
       setRechercheExamenOuverte(false);
+      setMontantAvance(0);
       try {
         const res = await fetch(`/api/caisse/patients/${id}`);
         const data = (await res.json()) as {
@@ -165,8 +166,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
 
   const lignesVisibles = useMemo(() => {
     if (!dossier) return [];
-    return dossier.facture.lignes.filter((l) => !lignesMasquees.has(l.id));
-  }, [dossier, lignesMasquees]);
+    return dossier.facture.lignes.filter((l) => l.montant > 0);
+  }, [dossier]);
 
   const idsTypesExamenPresents = useMemo(
     () => new Set(dossier?.idsTypesExamen ?? []),
@@ -221,6 +222,39 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     [dossierId, t, chargerFile]
   );
 
+  const retirerExamen = useCallback(
+    async (ligne: { id: string; source: "EXAMEN" | "FACTURE" }) => {
+      if (!dossierId) return;
+      setSuppressionLigneId(ligne.id);
+      setErreur(null);
+      setMessage(null);
+      try {
+        const res = await fetch(`/api/caisse/dossiers/${dossierId}/examens`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ligneId: ligne.id, source: ligne.source }),
+        });
+        const data = (await res.json()) as {
+          dossier?: DossierFacturationCaisse;
+          message?: string;
+        };
+        if (!res.ok || !data.dossier) {
+          throw new Error(data.message ?? t("caisse.facturation.examensChargement"));
+        }
+        setDossier(data.dossier);
+        setMessage(data.message ?? t("caisse.facturation.examenRetire"));
+        void chargerFile();
+      } catch (e) {
+        setErreur(
+          e instanceof Error ? e.message : t("caisse.facturation.examensChargement")
+        );
+      } finally {
+        setSuppressionLigneId(null);
+      }
+    },
+    [dossierId, t, chargerFile]
+  );
+
   const totalExamens = useMemo(
     () => lignesVisibles.reduce((acc, l) => acc + l.montant, 0),
     [lignesVisibles]
@@ -231,8 +265,12 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const resteAPayer = Math.max(0, totalAPayer - dejaPaye);
 
   useEffect(() => {
-    setMontantPaiement(arrondirMontantCaisse(resteAPayer));
-  }, [resteAPayer]);
+    if (modeFacture === "AVANCE") {
+      setMontantPaiement(arrondirMontantCaisse(montantAvance));
+    } else {
+      setMontantPaiement(arrondirMontantCaisse(resteAPayer));
+    }
+  }, [resteAPayer, modeFacture, montantAvance]);
 
   const selectionnerPatientFile = (patient: PatientFileCaisse) => {
     setDossierId(patient.dossierId);
@@ -254,6 +292,15 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     setErreur(null);
     setMessage(null);
     try {
+      if (modeFacture === "AVANCE") {
+        if (montantAvance <= 0) {
+          throw new Error(t("caisse.facturation.avanceInvalide"));
+        }
+        if (montantAvance > resteAPayer + 0.01) {
+          throw new Error(t("caisse.facturation.avanceTropElevee"));
+        }
+      }
+
       if (!dossier?.facture.id) {
         const prep = await fetch("/api/caisse/factures", {
           method: "POST",
@@ -268,12 +315,15 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         setDossier(prepData.dossier);
       }
 
+      const montantAEncaisser =
+        modeFacture === "AVANCE" ? montantAvance : montantPaiement;
+
       const res = await fetch("/api/caisse/factures/encaisser", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dossierId,
-          montant: montantPaiement,
+          montant: montantAEncaisser,
           modePaiement: modePrisma,
           modeFacture,
           remise,
@@ -281,6 +331,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
             `recu=${numeroRecu}`,
             `devise=${devise}`,
             fraisDivers > 0 ? `frais=${fraisDivers}` : null,
+            modeFacture === "AVANCE" ? `avance=${montantAvance}` : null,
             notes.trim() || null,
           ]
             .filter(Boolean)
@@ -315,6 +366,27 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           <dt className="text-texte-secondaire">{t("caisse.facturation.totalExamens")}</dt>
           <dd className="font-medium">{formaterMontantCaisse(totalExamens, devise)}</dd>
         </div>
+        {modeFacture === "AVANCE" && (
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-texte-secondaire">
+              {t("caisse.facturation.montantAvance")}
+            </dt>
+            <dd>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                max={resteAPayer}
+                value={montantAvance}
+                onChange={(e) =>
+                  setMontantAvance(arrondirMontantCaisse(Number(e.target.value) || 0))
+                }
+                className="w-24 rounded-lg border border-bleu-medical px-2 py-1.5 text-right text-sm ring-1 ring-bleu-medical/20"
+                aria-label={t("caisse.facturation.montantAvance")}
+              />
+            </dd>
+          </div>
+        )}
         <div className="flex items-center justify-between gap-3">
           <dt className="text-texte-secondaire">{t("caisse.facturation.remise")}</dt>
           <dd>
@@ -325,6 +397,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               value={remise}
               onChange={(e) => setRemise(arrondirMontantCaisse(Number(e.target.value) || 0))}
               className="w-24 rounded-lg border border-gris-bordure px-2 py-1.5 text-right text-sm"
+              aria-label={t("caisse.facturation.remise")}
             />
           </dd>
         </div>
@@ -616,16 +689,13 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                   ) : (
                     <>
                       <div className="hidden overflow-x-auto md:block">
-                        <table className="w-full min-w-[560px] text-left text-sm">
+                        <table className="w-full min-w-[480px] text-left text-sm">
                           <thead className="bg-gris-tres-clair/80 text-[11px] uppercase tracking-wider text-texte-secondaire">
                             <tr>
                               <th className="px-3 py-2.5">{t("caisse.facturation.numero")}</th>
                               <th className="px-3 py-2.5">{t("caisse.facturation.examen")}</th>
                               <th className="px-3 py-2.5 text-right">
                                 {t("caisse.facturation.prixUnit")}
-                              </th>
-                              <th className="px-3 py-2.5 text-right">
-                                {t("caisse.facturation.quantite")}
                               </th>
                               <th className="px-3 py-2.5 text-right">
                                 {t("caisse.facturation.montant")}
@@ -641,7 +711,6 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                                 <td className="px-3 py-2.5 text-right">
                                   {formaterMontantCaisse(l.prixUnitaire, devise)}
                                 </td>
-                                <td className="px-3 py-2.5 text-right">{l.quantite}</td>
                                 <td className="px-3 py-2.5 text-right font-semibold">
                                   {formaterMontantCaisse(l.montant, devise)}
                                 </td>
@@ -649,12 +718,15 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                                   <button
                                     type="button"
                                     aria-label={t("caisse.facturation.supprimerLigne")}
-                                    onClick={() =>
-                                      setLignesMasquees((prev) => new Set(prev).add(l.id))
-                                    }
-                                    className="rounded p-1.5 text-red-500 hover:bg-red-50"
+                                    disabled={suppressionLigneId === l.id || enCours}
+                                    onClick={() => void retirerExamen(l)}
+                                    className="rounded p-1.5 text-red-500 hover:bg-red-50 disabled:opacity-50"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    {suppressionLigneId === l.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-4 w-4" />
+                                    )}
                                   </button>
                                 </td>
                               </tr>
@@ -671,7 +743,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                             <div>
                               <p className="text-sm font-semibold">{l.libelle}</p>
                               <p className="text-xs text-texte-secondaire">
-                                {l.quantite}× {formaterMontantCaisse(l.prixUnitaire, devise)}
+                                {formaterMontantCaisse(l.prixUnitaire, devise)}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -680,12 +752,16 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                               </p>
                               <button
                                 type="button"
-                                onClick={() =>
-                                  setLignesMasquees((prev) => new Set(prev).add(l.id))
-                                }
-                                className="rounded p-1 text-red-500"
+                                aria-label={t("caisse.facturation.supprimerLigne")}
+                                disabled={suppressionLigneId === l.id || enCours}
+                                onClick={() => void retirerExamen(l)}
+                                className="rounded p-1 text-red-500 disabled:opacity-50"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                {suppressionLigneId === l.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
                               </button>
                             </div>
                           </li>
@@ -732,7 +808,14 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                       <button
                         key={mode.id}
                         type="button"
-                        onClick={() => setModeFacture(mode.id)}
+                        onClick={() => {
+                          setModeFacture(mode.id);
+                          if (mode.id === "AVANCE") {
+                            setMontantAvance((prev) =>
+                              prev > 0 ? prev : 0
+                            );
+                          }
+                        }}
                         className={cn(
                           "rounded-xl border px-3 py-3 text-left transition-colors",
                           modeFacture === mode.id
@@ -783,17 +866,27 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                     </label>
                     <label className="text-sm">
                       <span className="mb-1 block text-xs font-medium text-texte-principal">
-                        {t("caisse.facturation.montantPaye")} *
+                        {modeFacture === "AVANCE"
+                          ? `${t("caisse.facturation.montantAvance")} *`
+                          : `${t("caisse.facturation.montantPaye")} *`}
                       </span>
                       <input
                         type="number"
                         min={0}
                         step="0.01"
-                        value={montantPaiement}
-                        onChange={(e) =>
-                          setMontantPaiement(arrondirMontantCaisse(Number(e.target.value) || 0))
-                        }
-                        className="w-full rounded-lg border border-gris-bordure px-3 py-2.5 text-sm font-semibold"
+                        max={resteAPayer}
+                        value={modeFacture === "AVANCE" ? montantAvance : montantPaiement}
+                        onChange={(e) => {
+                          const valeur = arrondirMontantCaisse(Number(e.target.value) || 0);
+                          if (modeFacture === "AVANCE") setMontantAvance(valeur);
+                          else setMontantPaiement(valeur);
+                        }}
+                        className={cn(
+                          "w-full rounded-lg border px-3 py-2.5 text-sm font-semibold",
+                          modeFacture === "AVANCE"
+                            ? "border-bleu-medical ring-1 ring-bleu-medical/20"
+                            : "border-gris-bordure"
+                        )}
                       />
                     </label>
                     <label className="text-sm">
@@ -943,7 +1036,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               <Bouton
                 type="button"
                 onClick={() => void encaisser()}
-                disabled={enCours || resteAPayer <= 0 || montantPaiement <= 0}
+                disabled={
+                  enCours ||
+                  resteAPayer <= 0 ||
+                  (modeFacture === "AVANCE" ? montantAvance <= 0 : montantPaiement <= 0)
+                }
                 className="ml-auto"
               >
                 {enCours ? (
@@ -968,7 +1065,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               <Bouton
                 type="button"
                 onClick={() => void encaisser()}
-                disabled={enCours || resteAPayer <= 0 || montantPaiement <= 0}
+                disabled={
+                  enCours ||
+                  resteAPayer <= 0 ||
+                  (modeFacture === "AVANCE" ? montantAvance <= 0 : montantPaiement <= 0)
+                }
                 className="w-full justify-center"
               >
                 {enCours ? (

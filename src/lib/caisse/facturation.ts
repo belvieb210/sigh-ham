@@ -318,6 +318,101 @@ export async function ajouterExamenAuDossierCaisse(
   return detail;
 }
 
+/** Retire une ligne d'examen de la facturation (annule la prescription + ligne facture). */
+export async function retirerLigneFacturationCaisse(
+  dossierId: string,
+  ligneId: string,
+  source: "EXAMEN" | "FACTURE"
+) {
+  const dossier = await prisma.dossierPatient.findUnique({
+    where: { id: dossierId },
+    select: { id: true },
+  });
+  if (!dossier) throw new Error("Dossier introuvable.");
+
+  const factureOuverte = await prisma.facture.findFirst({
+    where: {
+      dossierId,
+      statut: { in: ["BROUILLON", "EMISE", "PARTIELLEMENT_PAYEE"] },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (source === "EXAMEN") {
+    const examen = await prisma.examenLaboratoire.findFirst({
+      where: { id: ligneId, dossierId, statut: { not: "ANNULE" } },
+      include: { typeExamen: true },
+    });
+    if (!examen) throw new Error("Examen introuvable.");
+
+    await prisma.$transaction(async (tx) => {
+      await tx.examenLaboratoire.update({
+        where: { id: examen.id },
+        data: { statut: "ANNULE" },
+      });
+
+      if (factureOuverte) {
+        const ligne = await tx.ligneFacture.findFirst({
+          where: {
+            factureId: factureOuverte.id,
+            libelle: examen.typeExamen.libelle,
+            montant: { gt: 0 },
+          },
+          orderBy: { id: "asc" },
+        });
+        if (ligne) {
+          const montantLigne = decimalVersNombre(ligne.montant);
+          await tx.ligneFacture.delete({ where: { id: ligne.id } });
+          await tx.facture.update({
+            where: { id: factureOuverte.id },
+            data: { montantTotal: { decrement: montantLigne } },
+          });
+        }
+      }
+    });
+  } else {
+    const ligne = await prisma.ligneFacture.findFirst({
+      where: { id: ligneId, facture: { dossierId } },
+      include: { facture: true },
+    });
+    if (!ligne) throw new Error("Ligne introuvable.");
+    if (ligne.facture.statut === "PAYEE" || ligne.facture.statut === "ANNULEE") {
+      throw new Error("Impossible de modifier une facture clôturée.");
+    }
+    if (decimalVersNombre(ligne.montant) <= 0) {
+      throw new Error("Cette ligne ne peut pas être retirée ici.");
+    }
+
+    await prisma.$transaction(async (tx) => {
+      const examen = await tx.examenLaboratoire.findFirst({
+        where: {
+          dossierId,
+          statut: { not: "ANNULE" },
+          typeExamen: { libelle: ligne.libelle },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      if (examen) {
+        await tx.examenLaboratoire.update({
+          where: { id: examen.id },
+          data: { statut: "ANNULE" },
+        });
+      }
+
+      const montantLigne = decimalVersNombre(ligne.montant);
+      await tx.ligneFacture.delete({ where: { id: ligne.id } });
+      await tx.facture.update({
+        where: { id: ligne.factureId },
+        data: { montantTotal: { decrement: montantLigne } },
+      });
+    });
+  }
+
+  const detail = await obtenirDossierFacturation(dossierId);
+  if (!detail) throw new Error("Dossier introuvable après suppression.");
+  return detail;
+}
+
 export interface DonneesEncaissement {
   dossierId: string;
   montant: number;

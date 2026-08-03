@@ -206,21 +206,37 @@ export async function obtenirDossierFacturation(
   };
 }
 
-export async function preparerFactureDossier(dossierId: string) {
+export async function preparerFactureDossier(
+  dossierId: string,
+  options?: { devise?: string }
+) {
   const detail = await obtenirDossierFacturation(dossierId);
   if (!detail) throw new Error("Dossier introuvable.");
 
   if (detail.facture.id && detail.facture.statut !== "ANNULEE") {
+    if (options?.devise) {
+      const devise = options.devise === "USD" ? "USD" : "CDF";
+      if (detail.facture.devise !== devise) {
+        await prisma.facture.update({
+          where: { id: detail.facture.id },
+          data: { devise },
+        });
+        return obtenirDossierFacturation(dossierId);
+      }
+    }
     return detail;
   }
 
-  if (detail.facture.lignes.length === 0) {
+  const lignesPositives = detail.facture.lignes.filter((l) => l.montant > 0);
+  if (lignesPositives.length === 0) {
     throw new Error("Aucune prestation facturable pour ce dossier.");
   }
 
+  const devise = options?.devise === "USD" ? "USD" : "CDF";
+  const montantTotal = lignesPositives.reduce((acc, l) => acc + l.montant, 0);
+
   const facture = await prisma.$transaction(async (tx) => {
     const numeroFacture = await genererNumeroFacture(tx);
-    const montantTotal = detail.facture.lignes.reduce((acc, l) => acc + l.montant, 0);
 
     return tx.facture.create({
       data: {
@@ -229,10 +245,10 @@ export async function preparerFactureDossier(dossierId: string) {
         statut: "EMISE",
         montantTotal,
         montantPaye: 0,
-        devise: "CDF",
+        devise,
         emiseLe: new Date(),
         lignes: {
-          create: detail.facture.lignes.map((l) => ({
+          create: lignesPositives.map((l) => ({
             libelle: l.libelle,
             quantite: l.quantite,
             prixUnitaire: l.prixUnitaire,
@@ -419,73 +435,120 @@ export interface DonneesEncaissement {
   modePaiement: ModePaiement;
   modeFacture: ModeFactureCaisse;
   remise: number;
+  fraisDivers?: number;
+  devise?: string;
   reference?: string;
   destinationApres: DestinationApresEncaissement;
 }
 
 export async function encaisserFacture(caissierId: string, donnees: DonneesEncaissement) {
-  if (donnees.montant <= 0) {
+  const montant = Math.round(donnees.montant * 100) / 100;
+  const remise = Math.max(0, Math.round((donnees.remise || 0) * 100) / 100);
+  const fraisDivers = Math.max(0, Math.round((donnees.fraisDivers || 0) * 100) / 100);
+
+  if (montant <= 0) {
     throw new Error("Le montant du paiement doit être supérieur à zéro.");
   }
-  if (donnees.remise < 0) {
-    throw new Error("La remise ne peut pas être négative.");
+
+  let detail = await preparerFactureDossier(donnees.dossierId, {
+    devise: donnees.devise,
+  });
+  if (!detail?.facture.id) {
+    throw new Error("Impossible d'enregistrer la facture.");
   }
 
-  let detail = await obtenirDossierFacturation(donnees.dossierId);
-  if (!detail) throw new Error("Dossier introuvable.");
+  const factureId = detail.facture.id;
+  const remiseDeja = detail.facture.lignes
+    .filter((l) => l.montant < 0)
+    .reduce((acc, l) => acc + Math.abs(l.montant), 0);
+  const fraisDeja = detail.facture.lignes
+    .filter((l) => l.libelle === "Frais divers")
+    .reduce((acc, l) => acc + l.montant, 0);
 
-  if (!detail.facture.id) {
-    detail = await preparerFactureDossier(donnees.dossierId);
-    if (!detail?.facture.id) throw new Error("Impossible de préparer la facture.");
-  }
+  const totalLignesPositives = detail.facture.lignes
+    .filter((l) => l.montant > 0)
+    .reduce((acc, l) => acc + l.montant, 0);
 
-  const factureId = detail.facture.id!;
-  const totalApresRemise = Math.max(0, detail.facture.montantTotal - donnees.remise);
+  const fraisAAjouter = Math.max(0, fraisDivers - fraisDeja);
+  const remiseAAppliquer = Math.max(0, remise - remiseDeja);
+  const totalDu = Math.max(
+    0,
+    totalLignesPositives + fraisAAjouter - remise
+  );
   const dejaPaye = detail.facture.montantPaye;
-  const reste = Math.max(0, totalApresRemise - dejaPaye);
+  const reste = Math.max(0, totalDu - dejaPaye);
 
-  if (donnees.montant > reste + 0.01) {
-    throw new Error("Le montant saisi dépasse le reste à payer.");
+  if (montant > reste + 0.01) {
+    throw new Error(
+      `Le montant saisi (${montant}) dépasse le reste à payer (${reste}).`
+    );
   }
 
   const referenceParts = [
     `modeFacture=${donnees.modeFacture}`,
-    donnees.remise > 0 ? `remise=${donnees.remise}` : null,
+    remise > 0 ? `remise=${remise}` : null,
+    fraisDivers > 0 ? `frais=${fraisDivers}` : null,
     donnees.reference?.trim() ? `ref=${donnees.reference.trim()}` : null,
   ].filter(Boolean);
 
   const resultat = await prisma.$transaction(async (tx) => {
     const facture = await tx.facture.findUniqueOrThrow({ where: { id: factureId } });
 
-    if (donnees.remise > 0 && decimalVersNombre(facture.montantTotal) === detail!.facture.montantTotal) {
+    if (facture.statut === "ANNULEE") {
+      throw new Error("Cette facture est annulée.");
+    }
+
+    if (fraisAAjouter > 0) {
+      await tx.ligneFacture.create({
+        data: {
+          factureId,
+          libelle: "Frais divers",
+          quantite: 1,
+          prixUnitaire: fraisAAjouter,
+          montant: fraisAAjouter,
+        },
+      });
+    }
+
+    if (remiseAAppliquer > 0) {
       await tx.ligneFacture.create({
         data: {
           factureId,
           libelle: "Remise",
           quantite: 1,
-          prixUnitaire: -donnees.remise,
-          montant: -donnees.remise,
+          prixUnitaire: -remiseAAppliquer,
+          montant: -remiseAAppliquer,
         },
       });
-      await tx.facture.update({
-        where: { id: factureId },
-        data: { montantTotal: totalApresRemise },
-      });
     }
+
+    await tx.facture.update({
+      where: { id: factureId },
+      data: {
+        montantTotal: totalDu,
+        devise:
+          donnees.devise === "USD"
+            ? "USD"
+            : donnees.devise === "CDF"
+              ? "CDF"
+              : facture.devise,
+        emiseLe: facture.emiseLe ?? new Date(),
+      },
+    });
 
     const paiement = await tx.paiement.create({
       data: {
         factureId,
-        montant: donnees.montant,
+        montant,
         mode: donnees.modePaiement,
         reference: referenceParts.join("|") || null,
         caissierId,
       },
     });
 
-    const nouveauMontantPaye = dejaPaye + donnees.montant;
+    const nouveauMontantPaye = dejaPaye + montant;
     const statut =
-      nouveauMontantPaye + 0.01 >= totalApresRemise
+      nouveauMontantPaye + 0.01 >= totalDu
         ? "PAYEE"
         : nouveauMontantPaye > 0
           ? "PARTIELLEMENT_PAYEE"
@@ -496,7 +559,6 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
       data: {
         montantPaye: nouveauMontantPaye,
         statut,
-        emiseLe: facture.emiseLe ?? new Date(),
       },
     });
 
@@ -537,55 +599,82 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
       });
     }
 
-    let transfertSuivantId: string | null = null;
-
-    if (donnees.destinationApres !== "AUCUNE" && passage && statut === "PAYEE") {
-      const codeSalle = donnees.destinationApres as CodeSalle;
-      const salleDestination = await tx.salle.findUnique({ where: { code: codeSalle } });
-      const salleOrigine = await tx.salle.findUnique({ where: { code: "CAISSE" } });
-
-      if (salleDestination && salleOrigine) {
-        const transfert = await tx.transfert.create({
-          data: {
-            dossierId: donnees.dossierId,
-            passageId: passage.id,
-            salleOrigineId: salleOrigine.id,
-            salleDestinationId: salleDestination.id,
-            emetteurId: caissierId,
-            statut: "ACCEPTE",
-            motif: `Paiement validé — orientation vers ${salleDestination.nom}`,
-            accepteLe: new Date(),
-            recepteurId: caissierId,
-          },
-        });
-
-        await tx.passage.update({
-          where: { id: passage.id },
-          data: {
-            statut: "EN_ATTENTE",
-            motif: `Transfert vers ${salleDestination.nom}`,
-          },
-        });
-
-        await inscrireFileAttenteDestination(tx, passage.id, salleDestination.id);
-        transfertSuivantId = transfert.id;
-      }
-    }
-
     return {
       paiementId: paiement.id,
       factureId,
+      numeroFacture: facture.numeroFacture,
       statut,
-      transfertSuivantId,
+      passageId: passage?.id ?? null,
     };
   });
+
+  // Orientation après commit : ne doit jamais annuler l'encaissement
+  let transfertSuivantId: string | null = null;
+  if (
+    donnees.destinationApres !== "AUCUNE" &&
+    resultat.statut === "PAYEE" &&
+    resultat.passageId
+  ) {
+    try {
+      transfertSuivantId = await orienterApresEncaissement(
+        caissierId,
+        donnees.dossierId,
+        resultat.passageId,
+        donnees.destinationApres
+      );
+    } catch (e) {
+      console.error("[encaisserFacture] orientation après paiement", e);
+    }
+  }
 
   const dossierMisAJour = await obtenirDossierFacturation(donnees.dossierId);
 
   return {
     ...resultat,
+    transfertSuivantId,
     dossier: dossierMisAJour,
   };
+}
+
+async function orienterApresEncaissement(
+  caissierId: string,
+  dossierId: string,
+  passageId: string,
+  destination: Exclude<DestinationApresEncaissement, "AUCUNE">
+) {
+  const codeSalle = destination as CodeSalle;
+  const [salleDestination, salleOrigine] = await Promise.all([
+    prisma.salle.findUnique({ where: { code: codeSalle } }),
+    prisma.salle.findUnique({ where: { code: "CAISSE" } }),
+  ]);
+  if (!salleDestination || !salleOrigine) return null;
+
+  return prisma.$transaction(async (tx) => {
+    const transfert = await tx.transfert.create({
+      data: {
+        dossierId,
+        passageId,
+        salleOrigineId: salleOrigine.id,
+        salleDestinationId: salleDestination.id,
+        emetteurId: caissierId,
+        statut: "ACCEPTE",
+        motif: `Paiement validé — orientation vers ${salleDestination.nom}`,
+        accepteLe: new Date(),
+        recepteurId: caissierId,
+      },
+    });
+
+    await tx.passage.update({
+      where: { id: passageId },
+      data: {
+        statut: "EN_ATTENTE",
+        motif: `Transfert vers ${salleDestination.nom}`,
+      },
+    });
+
+    await inscrireFileAttenteDestination(tx, passageId, salleDestination.id);
+    return transfert.id;
+  });
 }
 
 export async function listerFacturesDuJour(): Promise<FactureResumeJour[]> {

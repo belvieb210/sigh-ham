@@ -43,6 +43,8 @@ export async function POST(request: Request) {
       modePaiement?: string;
       modeFacture?: string;
       remise?: number;
+      fraisDivers?: number;
+      devise?: string;
       reference?: string;
       destinationApres?: string;
     };
@@ -76,11 +78,18 @@ export async function POST(request: Request) {
       modePaiement: corps.modePaiement as ModePaiement,
       modeFacture,
       remise: Number(corps.remise) || 0,
+      fraisDivers: Number(corps.fraisDivers) || 0,
+      devise: corps.devise === "USD" ? "USD" : "CDF",
       reference: corps.reference,
       destinationApres,
     });
 
-    return NextResponse.json(resultat);
+    return NextResponse.json({
+      ...resultat,
+      message: resultat.numeroFacture
+        ? `Facture ${resultat.numeroFacture} enregistrée.`
+        : "Facture enregistrée.",
+    });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Erreur lors de l'encaissement.";
     console.error("[api/caisse/factures/encaisser]", e);

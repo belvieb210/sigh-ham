@@ -15,6 +15,7 @@ import {
   Plus,
   Printer,
   RefreshCw,
+  SlidersHorizontal,
   Trash2,
 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
@@ -23,6 +24,12 @@ import {
   MODES_PAIEMENT_UI_CAISSE,
   TYPES_FACTURE_CAISSE_UI,
 } from "@/constants/caisse";
+import {
+  compterFiltresActifs,
+  FILTRES_FACTURATION_VIDES,
+  FormulaireFiltresFacturationCaisse,
+  type FiltresFacturationCaisse,
+} from "@/features/caisse/formulaire-filtres-facturation-caisse";
 import { MiseEnPageCaisse, type UtilisateurCaisse } from "@/features/caisse/mise-en-page-caisse";
 import {
   arrondirMontantCaisse,
@@ -38,6 +45,7 @@ import { cn } from "@/lib/utils";
 import type {
   DestinationApresEncaissement,
   DossierFacturationCaisse,
+  FactureResumeJour,
   ModeFactureCaisse,
   PatientFileCaisse,
   TypeFactureCaisseUi,
@@ -90,6 +98,13 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const [ajoutExamenEnCours, setAjoutExamenEnCours] = useState(false);
   const [suppressionLigneId, setSuppressionLigneId] = useState<string | null>(null);
   const [montantAvance, setMontantAvance] = useState(0);
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillonFiltres, setBrouillonFiltres] = useState<FiltresFacturationCaisse>(
+    FILTRES_FACTURATION_VIDES
+  );
+  const [filtresAppliques, setFiltresAppliques] = useState<FiltresFacturationCaisse>(
+    FILTRES_FACTURATION_VIDES
+  );
 
   const destinationApres: DestinationApresEncaissement = transfererApres
     ? (TYPES_FACTURE_CAISSE_UI.find((t) => t.id === typeFactureUi)?.destination ??
@@ -187,6 +202,143 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     () => file.filter((p) => !p.factureOuverte),
     [file]
   );
+
+  const fileFiltree = useMemo(() => {
+    const f = filtresAppliques;
+    return fileSansFacture.filter((p) => {
+      if (f.nom.trim() && !p.nom.toLowerCase().includes(f.nom.trim().toLowerCase())) {
+        return false;
+      }
+      if (
+        f.prenom.trim() &&
+        !p.prenom.toLowerCase().includes(f.prenom.trim().toLowerCase())
+      ) {
+        return false;
+      }
+      if (f.telephone.trim()) {
+        const tel = (p.telephone ?? "").replace(/\s+/g, "");
+        if (!tel.includes(f.telephone.trim().replace(/\s+/g, ""))) return false;
+      }
+      if (f.numeroEnreg.trim()) {
+        const enreg = f.numeroEnreg.trim().toLowerCase();
+        if (
+          !p.numeroDossier.toLowerCase().includes(enreg) &&
+          !p.numeroPatient.toLowerCase().includes(enreg)
+        ) {
+          return false;
+        }
+      }
+      if (f.idEntite.trim()) {
+        const id = f.idEntite.trim().toLowerCase();
+        if (
+          !p.dossierId.toLowerCase().includes(id) &&
+          !p.numeroPatient.toLowerCase().includes(id) &&
+          !p.numeroDossier.toLowerCase().includes(id)
+        ) {
+          return false;
+        }
+      }
+      if (f.dateDu || f.dateAu) {
+        const jour = p.arriveeLe.slice(0, 10);
+        if (f.dateDu && jour < f.dateDu) return false;
+        if (f.dateAu && jour > f.dateAu) return false;
+      }
+      return true;
+    });
+  }, [fileSansFacture, filtresAppliques]);
+
+  const nbFiltresActifs = compterFiltresActifs(filtresAppliques);
+
+  const appliquerFiltres = useCallback(async () => {
+    setErreur(null);
+    setMessage(null);
+    setFiltresAppliques(brouillonFiltres);
+
+    const numFac = brouillonFiltres.numeroFacture.trim();
+    if (numFac) {
+      try {
+        const res = await fetch("/api/caisse/factures");
+        const data = (await res.json()) as { factures?: FactureResumeJour[] };
+        if (res.ok) {
+          const trouvee = (data.factures ?? []).find((fac) =>
+            fac.numeroFacture.toLowerCase().includes(numFac.toLowerCase())
+          );
+          if (trouvee) {
+            setDossierId(trouvee.dossierId);
+            router.replace(
+              `/sigh/caisse/facturation?dossier=${trouvee.dossierId}`
+            );
+            setMessage(t("caisse.facturation.filtres.resultatFacture"));
+            setFiltresOuverts(false);
+            return;
+          }
+          setErreur(t("caisse.facturation.filtres.factureIntrouvable"));
+        }
+      } catch {
+        setErreur(t("caisse.facturation.filtres.factureIntrouvable"));
+      }
+      return;
+    }
+
+    const matches = fileSansFacture.filter((p) => {
+      const f = brouillonFiltres;
+      if (f.nom.trim() && !p.nom.toLowerCase().includes(f.nom.trim().toLowerCase())) {
+        return false;
+      }
+      if (
+        f.prenom.trim() &&
+        !p.prenom.toLowerCase().includes(f.prenom.trim().toLowerCase())
+      ) {
+        return false;
+      }
+      if (f.telephone.trim()) {
+        const tel = (p.telephone ?? "").replace(/\s+/g, "");
+        if (!tel.includes(f.telephone.trim().replace(/\s+/g, ""))) return false;
+      }
+      if (f.numeroEnreg.trim()) {
+        const enreg = f.numeroEnreg.trim().toLowerCase();
+        if (
+          !p.numeroDossier.toLowerCase().includes(enreg) &&
+          !p.numeroPatient.toLowerCase().includes(enreg)
+        ) {
+          return false;
+        }
+      }
+      if (f.idEntite.trim()) {
+        const id = f.idEntite.trim().toLowerCase();
+        if (
+          !p.dossierId.toLowerCase().includes(id) &&
+          !p.numeroPatient.toLowerCase().includes(id) &&
+          !p.numeroDossier.toLowerCase().includes(id)
+        ) {
+          return false;
+        }
+      }
+      if (f.dateDu || f.dateAu) {
+        const jour = p.arriveeLe.slice(0, 10);
+        if (f.dateDu && jour < f.dateDu) return false;
+        if (f.dateAu && jour > f.dateAu) return false;
+      }
+      return true;
+    });
+
+    if (compterFiltresActifs(brouillonFiltres) > 0 && matches.length === 0) {
+      setErreur(t("caisse.facturation.filtres.aucunResultat"));
+      return;
+    }
+
+    if (matches.length === 1) {
+      setDossierId(matches[0].dossierId);
+      router.replace(`/sigh/caisse/facturation?dossier=${matches[0].dossierId}`);
+      setFiltresOuverts(false);
+    }
+  }, [brouillonFiltres, fileSansFacture, router, t]);
+
+  const reinitialiserFiltres = () => {
+    setBrouillonFiltres(FILTRES_FACTURATION_VIDES);
+    setFiltresAppliques(FILTRES_FACTURATION_VIDES);
+    setErreur(null);
+  };
 
   const ajouterExamenAuDossier = useCallback(
     async (examen: TypeExamenReception) => {
@@ -288,6 +440,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
 
   const encaisser = async () => {
     if (!dossierId) return;
+    if (lignesVisibles.length === 0) {
+      setErreur(t("caisse.facturation.aucuneLigne"));
+      return;
+    }
+
     setEnCours(true);
     setErreur(null);
     setMessage(null);
@@ -301,23 +458,31 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         }
       }
 
-      if (!dossier?.facture.id) {
-        const prep = await fetch("/api/caisse/factures", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dossierId }),
-        });
-        const prepData = (await prep.json()) as {
-          dossier?: DossierFacturationCaisse;
-          erreur?: string;
-        };
-        if (!prep.ok || !prepData.dossier) throw new Error(prepData.erreur);
-        setDossier(prepData.dossier);
-      }
-
       const montantAEncaisser =
         modeFacture === "AVANCE" ? montantAvance : montantPaiement;
 
+      if (montantAEncaisser <= 0) {
+        throw new Error(t("caisse.facturation.erreurEncaissement"));
+      }
+
+      // 1) Enregistrer / préparer la facture
+      const prep = await fetch("/api/caisse/factures", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dossierId, devise }),
+      });
+      const prepData = (await prep.json()) as {
+        dossier?: DossierFacturationCaisse;
+        erreur?: string;
+      };
+      if (!prep.ok || !prepData.dossier?.facture.id) {
+        throw new Error(
+          prepData.erreur ?? t("caisse.facturation.erreurEnregistrementFacture")
+        );
+      }
+      setDossier(prepData.dossier);
+
+      // 2) Encaisser le paiement sur la facture enregistrée
       const res = await fetch("/api/caisse/factures/encaisser", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -327,6 +492,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           modePaiement: modePrisma,
           modeFacture,
           remise,
+          fraisDivers,
+          devise,
           reference: [
             `recu=${numeroRecu}`,
             `devise=${devise}`,
@@ -341,14 +508,28 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
       });
       const data = (await res.json()) as {
         dossier?: DossierFacturationCaisse;
+        numeroFacture?: string;
+        message?: string;
         erreur?: string;
       };
       if (!res.ok || !data.dossier) {
         throw new Error(data.erreur ?? t("caisse.facturation.erreurEncaissement"));
       }
+
+      const numero =
+        data.numeroFacture ?? data.dossier.facture.numeroFacture ?? "";
       setDossier(data.dossier);
-      setMessage(t("caisse.facturation.succesEncaissement"));
+      setMessage(
+        numero
+          ? t("caisse.facturation.succesFactureEnregistree", { numero })
+          : data.message ?? t("caisse.facturation.succesEncaissement")
+      );
       await chargerFile();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      window.setTimeout(() => {
+        router.push("/sigh/caisse/factures");
+      }, 1200);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : t("caisse.facturation.erreurEncaissement"));
     } finally {
@@ -496,95 +677,137 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
 
         {/* Patients confirmés à la caisse, sans facture — visible hors dossier ouvert */}
         {!dossierId && (
-          <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-            <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-3">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-texte-principal">
-                {t("caisse.facturation.patientsAttentePaiement", {
-                  count: fileSansFacture.length,
-                })}
-              </h3>
-              <Link
-                href="/sigh/caisse/transferts"
-                className="text-xs font-semibold text-bleu-medical hover:underline"
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setFiltresOuverts((o) => !o)}
+                aria-expanded={filtresOuverts}
+                aria-label={
+                  filtresOuverts
+                    ? t("caisse.facturation.fermerFiltres")
+                    : t("caisse.facturation.ouvrirFiltres")
+                }
+                className={cn(
+                  "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+                  filtresOuverts
+                    ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                    : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
+                )}
               >
-                {t("caisse.facturation.voirTout")}
-              </Link>
+                <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
+                <span
+                  className={cn(
+                    "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
+                    nbFiltresActifs > 0 ? "bg-red-500" : "bg-slate-400"
+                  )}
+                >
+                  {nbFiltresActifs}
+                </span>
+              </button>
             </div>
-            {chargementFile ? (
-              <div className="flex items-center justify-center gap-2 py-10 text-sm text-texte-secondaire">
-                <Loader2 className="h-4 w-4 animate-spin" />
-              </div>
-            ) : fileSansFacture.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
-                {t("caisse.facturation.aucunPatientSansFacture")}
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
-                  <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
-                    <tr>
-                      <th className="px-4 py-2.5 font-semibold">N°</th>
-                      <th className="px-4 py-2.5 font-semibold">
-                        {t("caisse.facturation.colPatient")}
-                      </th>
-                      <th className="hidden px-4 py-2.5 font-semibold sm:table-cell">
-                        {t("caisse.facturation.colProvenance")}
-                      </th>
-                      <th className="px-4 py-2.5 font-semibold">
-                        {t("caisse.facturation.colPrestations")}
-                      </th>
-                      <th className="px-4 py-2.5 font-semibold">
-                        {t("caisse.facturation.colMontant")}
-                      </th>
-                      <th className="px-4 py-2.5 font-semibold">
-                        {t("caisse.facturation.colHeure")}
-                      </th>
-                      <th className="px-4 py-2.5 font-semibold">
-                        {t("caisse.facturation.colActions")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {fileSansFacture.map((p, index) => (
-                      <tr
-                        key={p.fileAttenteId}
-                        onClick={() => selectionnerPatientFile(p)}
-                        className="cursor-pointer border-t border-gris-bordure/70 transition-colors hover:bg-slate-50"
-                      >
-                        <td className="px-4 py-3 tabular-nums text-texte-secondaire">
-                          {index + 1}
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-texte-principal">
-                          {p.prenom} {p.nom}
-                        </td>
-                        <td className="hidden px-4 py-3 text-texte-secondaire sm:table-cell">
-                          {p.provenance}
-                        </td>
-                        <td className="px-4 py-3 tabular-nums text-texte-secondaire">
-                          {p.nombreExamens}
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-texte-principal">
-                          {formaterMontantCaisse(p.montantEstime)}
-                        </td>
-                        <td className="px-4 py-3 tabular-nums text-texte-secondaire">
-                          {formaterHeure(p.arriveeLe)}
-                        </td>
-                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            onClick={() => selectionnerPatientFile(p)}
-                            className="rounded-lg border border-bleu-medical/30 px-3 py-1.5 text-xs font-semibold text-bleu-medical hover:bg-bleu-medical-clair/40"
-                          >
-                            {t("caisse.facturation.ouvrir")}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+
+            {filtresOuverts && (
+              <FormulaireFiltresFacturationCaisse
+                valeurs={brouillonFiltres}
+                onChange={setBrouillonFiltres}
+                onRechercher={() => void appliquerFiltres()}
+                onReinitialiser={reinitialiserFiltres}
+              />
             )}
-          </section>
+
+            <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-3">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-texte-principal">
+                  {t("caisse.facturation.patientsAttentePaiement", {
+                    count: fileFiltree.length,
+                  })}
+                </h3>
+                <Link
+                  href="/sigh/caisse/transferts"
+                  className="text-xs font-semibold text-bleu-medical hover:underline"
+                >
+                  {t("caisse.facturation.voirTout")}
+                </Link>
+              </div>
+              {chargementFile ? (
+                <div className="flex items-center justify-center gap-2 py-10 text-sm text-texte-secondaire">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              ) : fileFiltree.length === 0 ? (
+                <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
+                  {nbFiltresActifs > 0
+                    ? t("caisse.facturation.filtres.aucunResultat")
+                    : t("caisse.facturation.aucunPatientSansFacture")}
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
+                      <tr>
+                        <th className="px-4 py-2.5 font-semibold">N°</th>
+                        <th className="px-4 py-2.5 font-semibold">
+                          {t("caisse.facturation.colPatient")}
+                        </th>
+                        <th className="hidden px-4 py-2.5 font-semibold sm:table-cell">
+                          {t("caisse.facturation.colProvenance")}
+                        </th>
+                        <th className="px-4 py-2.5 font-semibold">
+                          {t("caisse.facturation.colPrestations")}
+                        </th>
+                        <th className="px-4 py-2.5 font-semibold">
+                          {t("caisse.facturation.colMontant")}
+                        </th>
+                        <th className="px-4 py-2.5 font-semibold">
+                          {t("caisse.facturation.colHeure")}
+                        </th>
+                        <th className="px-4 py-2.5 font-semibold">
+                          {t("caisse.facturation.colActions")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fileFiltree.map((p, index) => (
+                        <tr
+                          key={p.fileAttenteId}
+                          onClick={() => selectionnerPatientFile(p)}
+                          className="cursor-pointer border-t border-gris-bordure/70 transition-colors hover:bg-slate-50"
+                        >
+                          <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                            {index + 1}
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-texte-principal">
+                            {p.prenom} {p.nom}
+                          </td>
+                          <td className="hidden px-4 py-3 text-texte-secondaire sm:table-cell">
+                            {p.provenance}
+                          </td>
+                          <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                            {p.nombreExamens}
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-texte-principal">
+                            {formaterMontantCaisse(p.montantEstime)}
+                          </td>
+                          <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                            {formaterHeure(p.arriveeLe)}
+                          </td>
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => selectionnerPatientFile(p)}
+                              className="rounded-lg border border-bleu-medical/30 px-3 py-1.5 text-xs font-semibold text-bleu-medical hover:bg-bleu-medical-clair/40"
+                            >
+                              {t("caisse.facturation.ouvrir")}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </div>
         )}
 
         {!dossierId ? null : chargementDossier || !dossier ? (
@@ -1016,6 +1239,15 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{erreur}</p>
             )}
 
+            {filtresOuverts && (
+              <FormulaireFiltresFacturationCaisse
+                valeurs={brouillonFiltres}
+                onChange={setBrouillonFiltres}
+                onRechercher={() => void appliquerFiltres()}
+                onReinitialiser={reinitialiserFiltres}
+              />
+            )}
+
             {/* Actions desktop */}
             <div className="hidden flex-wrap items-center gap-2 lg:flex">
               <Bouton
@@ -1033,23 +1265,50 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                 <Printer className="h-4 w-4" />
                 {t("caisse.facturation.imprimerFacture")}
               </Bouton>
-              <Bouton
-                type="button"
-                onClick={() => void encaisser()}
-                disabled={
-                  enCours ||
-                  resteAPayer <= 0 ||
-                  (modeFacture === "AVANCE" ? montantAvance <= 0 : montantPaiement <= 0)
-                }
-                className="ml-auto"
-              >
-                {enCours ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="h-4 w-4" />
-                )}
-                {t("caisse.facturation.validerEncaisser")}
-              </Bouton>
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFiltresOuverts((o) => !o)}
+                  aria-expanded={filtresOuverts}
+                  aria-label={
+                    filtresOuverts
+                      ? t("caisse.facturation.fermerFiltres")
+                      : t("caisse.facturation.ouvrirFiltres")
+                  }
+                  className={cn(
+                    "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+                    filtresOuverts
+                      ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                      : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
+                  )}
+                >
+                  <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
+                  <span
+                    className={cn(
+                      "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
+                      nbFiltresActifs > 0 ? "bg-red-500" : "bg-slate-400"
+                    )}
+                  >
+                    {nbFiltresActifs}
+                  </span>
+                </button>
+                <Bouton
+                  type="button"
+                  onClick={() => void encaisser()}
+                  disabled={
+                    enCours ||
+                    resteAPayer <= 0 ||
+                    (modeFacture === "AVANCE" ? montantAvance <= 0 : montantPaiement <= 0)
+                  }
+                >
+                  {enCours ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                  {t("caisse.facturation.validerEncaisser")}
+                </Bouton>
+              </div>
             </div>
 
             {/* Sticky mobile CTA */}
@@ -1062,22 +1321,52 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                   {formaterMontantCaisse(totalAPayer, devise)}
                 </span>
               </div>
-              <Bouton
-                type="button"
-                onClick={() => void encaisser()}
-                disabled={
-                  enCours ||
-                  resteAPayer <= 0 ||
-                  (modeFacture === "AVANCE" ? montantAvance <= 0 : montantPaiement <= 0)
-                }
-                className="w-full justify-center"
-              >
-                {enCours ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  t("caisse.facturation.encaisserPaiement")
-                )}
-              </Bouton>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFiltresOuverts((o) => !o);
+                    window.scrollTo({ top: document.body.scrollHeight / 2, behavior: "smooth" });
+                  }}
+                  aria-label={
+                    filtresOuverts
+                      ? t("caisse.facturation.fermerFiltres")
+                      : t("caisse.facturation.ouvrirFiltres")
+                  }
+                  className={cn(
+                    "relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border",
+                    filtresOuverts
+                      ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                      : "border-gris-bordure bg-white text-texte-principal"
+                  )}
+                >
+                  <SlidersHorizontal className="h-5 w-5" />
+                  <span
+                    className={cn(
+                      "absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[9px] font-bold text-white",
+                      nbFiltresActifs > 0 ? "bg-red-500" : "bg-slate-400"
+                    )}
+                  >
+                    {nbFiltresActifs}
+                  </span>
+                </button>
+                <Bouton
+                  type="button"
+                  onClick={() => void encaisser()}
+                  disabled={
+                    enCours ||
+                    resteAPayer <= 0 ||
+                    (modeFacture === "AVANCE" ? montantAvance <= 0 : montantPaiement <= 0)
+                  }
+                  className="w-full justify-center"
+                >
+                  {enCours ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    t("caisse.facturation.encaisserPaiement")
+                  )}
+                </Bouton>
+              </div>
             </div>
 
             {/* Remplace l'ancien historique : file patients confirmés sans facture */}
@@ -1085,7 +1374,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-3">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-texte-principal">
                   {t("caisse.facturation.patientsAttentePaiement", {
-                    count: fileSansFacture.length,
+                    count: fileFiltree.length,
                   })}
                 </h3>
                 <Link
@@ -1095,9 +1384,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                   {t("caisse.facturation.voirTout")}
                 </Link>
               </div>
-              {fileSansFacture.length === 0 ? (
+              {fileFiltree.length === 0 ? (
                 <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
-                  {t("caisse.facturation.aucunPatientSansFacture")}
+                  {nbFiltresActifs > 0
+                    ? t("caisse.facturation.filtres.aucunResultat")
+                    : t("caisse.facturation.aucunPatientSansFacture")}
                 </p>
               ) : (
                 <div className="overflow-x-auto">
@@ -1126,7 +1417,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                       </tr>
                     </thead>
                     <tbody>
-                      {fileSansFacture.map((p, index) => {
+                      {fileFiltree.map((p, index) => {
                         const actif = dossierId === p.dossierId;
                         return (
                           <tr

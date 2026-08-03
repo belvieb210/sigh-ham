@@ -30,13 +30,23 @@ export async function POST(request: Request) {
   }
 
   try {
-    const corps = (await request.json()) as { dossierId?: string };
+    const corps = (await request.json()) as { dossierId?: string; devise?: string };
     if (!corps.dossierId?.trim()) {
       return NextResponse.json({ erreur: "dossierId requis." }, { status: 400 });
     }
 
-    const dossier = await preparerFactureDossier(corps.dossierId.trim());
-    return NextResponse.json({ dossier });
+    const dossier = await preparerFactureDossier(corps.dossierId.trim(), {
+      devise: corps.devise,
+    });
+    if (!dossier) {
+      return NextResponse.json({ erreur: "Dossier introuvable." }, { status: 404 });
+    }
+    return NextResponse.json({
+      dossier,
+      message: dossier.facture.numeroFacture
+        ? `Facture ${dossier.facture.numeroFacture} préparée.`
+        : "Facture préparée.",
+    });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Erreur lors de la préparation de la facture.";
     console.error("[api/caisse/factures POST]", e);

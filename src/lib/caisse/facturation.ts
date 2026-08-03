@@ -677,14 +677,10 @@ async function orienterApresEncaissement(
   });
 }
 
+/** Liste toutes les factures non annulées (historique complet), plus récentes d'abord. */
 export async function listerFacturesDuJour(): Promise<FactureResumeJour[]> {
-  const debutJour = new Date();
-  debutJour.setHours(0, 0, 0, 0);
-  const finJour = new Date();
-  finJour.setHours(23, 59, 59, 999);
-
   const factures = await prisma.facture.findMany({
-    where: { createdAt: { gte: debutJour, lte: finJour }, statut: { not: "ANNULEE" } },
+    where: { statut: { not: "ANNULEE" } },
     include: {
       lignes: { orderBy: { id: "asc" } },
       paiements: { orderBy: { payeLe: "desc" }, take: 1 },

@@ -349,9 +349,9 @@ export const caisseFr = {
     CHEQUE: "Chèque",
   },
   factures: {
-    titre: "Factures du jour",
-    sousTitre: "Factures émises aujourd'hui",
-    vide: "Aucune facture aujourd'hui.",
+    titre: "Factures",
+    sousTitre: "Toutes les factures émises",
+    vide: "Aucune facture enregistrée.",
     numero: "N° facture",
     patient: "Patient",
     examens: "Examens / Prestations",
@@ -375,6 +375,9 @@ export const caisseFr = {
     selectionnerFacture: "Sélectionnez une facture pour afficher le résumé.",
     nbExamens: "{{count}} examen",
     nbExamens_plural: "{{count}} examens",
+    pagination: "Affichage {{debut}}-{{fin}} sur {{total}} factures",
+    prec: "Préc.",
+    suiv: "Suiv.",
     statutsUi: {
       payee: "Payée",
       partielle: "Partielle",

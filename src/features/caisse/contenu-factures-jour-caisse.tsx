@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import {
+  ChevronLeft,
+  ChevronRight,
   Eye,
   Loader2,
   MoreVertical,
@@ -30,6 +32,8 @@ interface PropsContenuFacturesJourCaisse {
   utilisateur: UtilisateurCaisse;
 }
 
+const PAR_PAGE = 5;
+
 function statutAffiche(statut: FactureResumeJour["statut"]) {
   if (statut === "PAYEE") return "payee" as const;
   if (statut === "PARTIELLEMENT_PAYEE") return "partielle" as const;
@@ -49,6 +53,7 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
     FILTRES_FACTURATION_VIDES
   );
   const [menuOuvertId, setMenuOuvertId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     let annule = false;
@@ -126,6 +131,15 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
 
   const nbFiltresActifs = compterFiltresActifs(filtresAppliques);
 
+  const totalPages = Math.max(1, Math.ceil(facturesFiltrees.length / PAR_PAGE));
+  const pageCourante = Math.min(page, totalPages);
+  const debut = (pageCourante - 1) * PAR_PAGE;
+  const facturesPage = facturesFiltrees.slice(debut, debut + PAR_PAGE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filtresAppliques]);
+
   const factureSelectionnee = useMemo(
     () =>
       facturesFiltrees.find((f) => f.id === selectionId) ??
@@ -151,11 +165,13 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
 
   const appliquerFiltres = () => {
     setFiltresAppliques(brouillonFiltres);
+    setPage(1);
   };
 
   const reinitialiserFiltres = () => {
     setBrouillonFiltres(FILTRES_FACTURATION_VIDES);
     setFiltresAppliques(FILTRES_FACTURATION_VIDES);
+    setPage(1);
   };
 
   const libelleModePaiement = (fac: FactureResumeJour) => {
@@ -237,6 +253,7 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
                   {t("caisse.facturation.filtres.aucunResultat")}
                 </p>
               ) : (
+                <>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[860px] text-left text-sm">
                     <thead className="bg-gris-tres-clair/80 text-[11px] uppercase tracking-wider text-texte-secondaire">
@@ -265,7 +282,7 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
                       </tr>
                     </thead>
                     <tbody>
-                      {facturesFiltrees.map((f) => {
+                      {facturesPage.map((f) => {
                         const statutUi = statutAffiche(f.statut);
                         const actif = factureSelectionnee?.id === f.id;
                         const nb = f.nombreLignes || f.nombreExamens;
@@ -368,6 +385,36 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
                     </tbody>
                   </table>
                 </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-4 py-3 text-xs text-texte-secondaire">
+                  <p>
+                    {t("caisse.factures.pagination", {
+                      debut: facturesFiltrees.length === 0 ? 0 : debut + 1,
+                      fin: Math.min(debut + PAR_PAGE, facturesFiltrees.length),
+                      total: facturesFiltrees.length,
+                    })}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={pageCourante <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      className="inline-flex items-center gap-1 rounded-lg border border-gris-bordure px-3 py-1.5 disabled:opacity-40"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                      {t("caisse.factures.prec")}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={pageCourante >= totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      className="inline-flex items-center gap-1 rounded-lg border border-gris-bordure px-3 py-1.5 disabled:opacity-40"
+                    >
+                      {t("caisse.factures.suiv")}
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+                </>
               )}
             </section>
 

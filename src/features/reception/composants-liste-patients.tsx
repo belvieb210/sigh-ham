@@ -589,7 +589,7 @@ export function TableauPatients({
     <section className="rounded-xl border border-gris-bordure bg-white shadow-sm">
       {afficherEnTete && (
         <div className="border-b border-gris-bordure px-4 py-3 lg:px-5 lg:py-4">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-bleu-medical lg:text-texte-secondaire">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
             {titre}
           </h2>
         </div>

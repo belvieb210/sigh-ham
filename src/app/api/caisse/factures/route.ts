@@ -17,7 +17,7 @@ export async function GET() {
   } catch (e) {
     console.error("[api/caisse/factures GET]", e);
     return NextResponse.json(
-      { erreur: "Impossible de charger les factures du jour." },
+      { erreur: "Impossible de charger les factures." },
       { status: 500 }
     );
   }

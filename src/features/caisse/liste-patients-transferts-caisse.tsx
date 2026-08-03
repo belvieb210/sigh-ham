@@ -5,13 +5,18 @@ import { useTranslation } from "react-i18next";
 import {
   ChevronLeft,
   ChevronRight,
-  Download,
   Eye,
   Loader2,
-  Search,
+  SlidersHorizontal,
 } from "lucide-react";
 import { EVENEMENT_CAISSE_PATIENTS_MODIFIES } from "@/constants/caisse";
 import { useSelectionTransfertCaisse } from "@/features/caisse/contexte-selection-transfert-caisse";
+import {
+  compterFiltresActifs,
+  FILTRES_FACTURATION_VIDES,
+  FormulaireFiltresFacturationCaisse,
+  type FiltresFacturationCaisse,
+} from "@/features/caisse/formulaire-filtres-facturation-caisse";
 import { MenuActionsTransfertCaisse } from "@/features/caisse/menu-actions-transfert-caisse";
 import { ModaleExamensCaisse } from "@/features/caisse/modale-examens-caisse";
 import { formaterMontantCaisse } from "@/features/caisse/utils-format";
@@ -33,7 +38,13 @@ export function ListePatientsTransfertsCaisse() {
   });
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [recherche, setRecherche] = useState("");
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillonFiltres, setBrouillonFiltres] = useState<FiltresFacturationCaisse>(
+    FILTRES_FACTURATION_VIDES
+  );
+  const [filtresAppliques, setFiltresAppliques] = useState<FiltresFacturationCaisse>(
+    FILTRES_FACTURATION_VIDES
+  );
   const [page, setPage] = useState(1);
   const [patientExamens, setPatientExamens] = useState<PatientTransfertCaisse | null>(null);
   const [modaleExamensOuverte, setModaleExamensOuverte] = useState(false);
@@ -90,22 +101,73 @@ export function ListePatientsTransfertsCaisse() {
   }, [charger]);
 
   const filtres = useMemo(() => {
-    const terme = recherche.trim().toLowerCase();
-    if (!terme) return patients;
-    return patients.filter(
-      (p) =>
-        p.nomComplet.toLowerCase().includes(terme) ||
-        p.numeroPatient.toLowerCase().includes(terme) ||
-        p.numeroDossier.toLowerCase().includes(terme) ||
-        p.telephone.toLowerCase().includes(terme) ||
-        p.motif.toLowerCase().includes(terme)
-    );
-  }, [patients, recherche]);
+    const f = filtresAppliques;
+    return patients.filter((p) => {
+      if (f.nom.trim() && !p.nom.toLowerCase().includes(f.nom.trim().toLowerCase())) {
+        return false;
+      }
+      if (
+        f.prenom.trim() &&
+        !p.prenom.toLowerCase().includes(f.prenom.trim().toLowerCase())
+      ) {
+        return false;
+      }
+      if (f.telephone.trim()) {
+        const tel = (p.telephone ?? "").replace(/\s+/g, "");
+        if (!tel.includes(f.telephone.trim().replace(/\s+/g, ""))) return false;
+      }
+      if (f.numeroEnreg.trim()) {
+        const enreg = f.numeroEnreg.trim().toLowerCase();
+        if (
+          !p.numeroDossier.toLowerCase().includes(enreg) &&
+          !p.numeroPatient.toLowerCase().includes(enreg)
+        ) {
+          return false;
+        }
+      }
+      if (f.idEntite.trim()) {
+        const id = f.idEntite.trim().toLowerCase();
+        if (
+          !p.dossierId.toLowerCase().includes(id) &&
+          !p.numeroPatient.toLowerCase().includes(id) &&
+          !p.cleListe.toLowerCase().includes(id)
+        ) {
+          return false;
+        }
+      }
+      if (f.dateDu || f.dateAu) {
+        const jour = (p.arriveeLe ?? "").slice(0, 10);
+        if (!jour) return false;
+        if (f.dateDu && jour < f.dateDu) return false;
+        if (f.dateAu && jour > f.dateAu) return false;
+      }
+      return true;
+    });
+  }, [patients, filtresAppliques]);
+
+  const nbFiltresActifs = compterFiltresActifs(filtresAppliques, {
+    ignorerNumeroFacture: true,
+  });
 
   const totalPages = Math.max(1, Math.ceil(filtres.length / PAR_PAGE));
   const pageCourante = Math.min(page, totalPages);
   const debut = (pageCourante - 1) * PAR_PAGE;
   const pagePatients = filtres.slice(debut, debut + PAR_PAGE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filtresAppliques]);
+
+  const appliquerFiltres = () => {
+    setFiltresAppliques(brouillonFiltres);
+    setPage(1);
+  };
+
+  const reinitialiserFiltres = () => {
+    setBrouillonFiltres(FILTRES_FACTURATION_VIDES);
+    setFiltresAppliques(FILTRES_FACTURATION_VIDES);
+    setPage(1);
+  };
 
   if (chargement) {
     return (
@@ -170,39 +232,45 @@ export function ListePatientsTransfertsCaisse() {
         ))}
       </div>
 
-      <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
-            <input
-              value={recherche}
-              onChange={(e) => {
-                setRecherche(e.target.value);
-                setPage(1);
-              }}
-              placeholder={t("caisse.transferts.placeholder")}
-              className="w-full rounded-lg border border-gris-bordure py-2.5 pl-10 pr-3 text-sm focus:border-bleu-medical focus:outline-none focus:ring-2 focus:ring-bleu-medical/15"
-            />
-          </div>
-          <button
-            type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gris-bordure px-4 py-2.5 text-sm font-medium text-texte-principal hover:bg-slate-50"
-          >
-            <Download className="h-4 w-4" />
-            {t("caisse.transferts.exporter")}
-          </button>
-        </div>
+      <div className="flex justify-end">
         <button
           type="button"
-          onClick={() => {
-            setRecherche("");
-            setPage(1);
-          }}
-          className="mt-3 text-xs font-semibold text-bleu-medical hover:underline"
+          onClick={() => setFiltresOuverts((o) => !o)}
+          aria-expanded={filtresOuverts}
+          aria-label={
+            filtresOuverts
+              ? t("caisse.facturation.fermerFiltres")
+              : t("caisse.facturation.ouvrirFiltres")
+          }
+          className={cn(
+            "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+            filtresOuverts
+              ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+              : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
+          )}
         >
-          {t("caisse.transferts.reinitialiserFiltres")}
+          <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
+          <span
+            className={cn(
+              "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
+              nbFiltresActifs > 0 ? "bg-red-500" : "bg-slate-400"
+            )}
+          >
+            {nbFiltresActifs}
+          </span>
         </button>
       </div>
+
+      {filtresOuverts && (
+        <FormulaireFiltresFacturationCaisse
+          valeurs={brouillonFiltres}
+          onChange={setBrouillonFiltres}
+          onRechercher={appliquerFiltres}
+          onReinitialiser={reinitialiserFiltres}
+          idPrefix="filtre-transferts"
+          masquerNumeroFacture
+        />
+      )}
 
       <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
         <div className="border-b border-gris-bordure px-4 py-3">
@@ -213,7 +281,9 @@ export function ListePatientsTransfertsCaisse() {
 
         {pagePatients.length === 0 ? (
           <p className="px-4 py-12 text-center text-sm text-texte-secondaire">
-            {t("caisse.transferts.vide")}
+            {nbFiltresActifs > 0
+              ? t("caisse.facturation.filtres.aucunResultat")
+              : t("caisse.transferts.vide")}
           </p>
         ) : (
           <div className="overflow-x-auto">

@@ -29,14 +29,17 @@ export const FILTRES_FACTURATION_VIDES: FiltresFacturationCaisse = {
   telephone: "",
 };
 
-export function compterFiltresActifs(filtres: FiltresFacturationCaisse): number {
+export function compterFiltresActifs(
+  filtres: FiltresFacturationCaisse,
+  options?: { ignorerNumeroFacture?: boolean }
+): number {
   let n = 0;
   if (filtres.dateDu) n += 1;
   if (filtres.dateAu) n += 1;
   if (filtres.typeEntite !== "TOUS") n += 1;
   if (filtres.nom.trim()) n += 1;
   if (filtres.prenom.trim()) n += 1;
-  if (filtres.numeroFacture.trim()) n += 1;
+  if (!options?.ignorerNumeroFacture && filtres.numeroFacture.trim()) n += 1;
   if (filtres.numeroEnreg.trim()) n += 1;
   if (filtres.idEntite.trim()) n += 1;
   if (filtres.telephone.trim()) n += 1;
@@ -47,7 +50,7 @@ const CLASSE_CHAMP =
   "w-full rounded-lg border border-gris-bordure bg-white px-3 py-2.5 text-sm text-texte-principal placeholder:text-texte-secondaire/70 focus:border-bleu-medical focus:outline-none focus:ring-2 focus:ring-bleu-medical/15";
 
 const CLASSE_LABEL =
-  "mb-1 block text-[10px] font-bold uppercase tracking-wider text-sky-600/80";
+  "mb-1 block text-[10px] font-bold uppercase tracking-wider text-texte-secondaire";
 
 interface PropsFormulaireFiltresFacturationCaisse {
   valeurs: FiltresFacturationCaisse;
@@ -55,6 +58,10 @@ interface PropsFormulaireFiltresFacturationCaisse {
   onRechercher: () => void;
   onReinitialiser: () => void;
   className?: string;
+  /** Préfixe pour les id HTML (évite les doublons si plusieurs formulaires). */
+  idPrefix?: string;
+  /** Masque le champ N° facture (ex. page transferts). */
+  masquerNumeroFacture?: boolean;
 }
 
 export function FormulaireFiltresFacturationCaisse({
@@ -63,6 +70,8 @@ export function FormulaireFiltresFacturationCaisse({
   onRechercher,
   onReinitialiser,
   className,
+  idPrefix = "filtre-caisse",
+  masquerNumeroFacture = false,
 }: PropsFormulaireFiltresFacturationCaisse) {
   const { t } = useTranslation();
 
@@ -70,6 +79,8 @@ export function FormulaireFiltresFacturationCaisse({
     cle: K,
     valeur: FiltresFacturationCaisse[K]
   ) => onChange({ ...valeurs, [cle]: valeur });
+
+  const id = (suffixe: string) => `${idPrefix}-${suffixe}`;
 
   return (
     <section
@@ -80,11 +91,11 @@ export function FormulaireFiltresFacturationCaisse({
     >
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <label className={CLASSE_LABEL} htmlFor="filtre-caisse-du">
+          <label className={CLASSE_LABEL} htmlFor={id("du")}>
             {t("caisse.facturation.filtres.dateDu")}
           </label>
           <input
-            id="filtre-caisse-du"
+            id={id("du")}
             type="date"
             value={valeurs.dateDu}
             onChange={(e) => maj("dateDu", e.target.value)}
@@ -92,11 +103,11 @@ export function FormulaireFiltresFacturationCaisse({
           />
         </div>
         <div>
-          <label className={CLASSE_LABEL} htmlFor="filtre-caisse-au">
+          <label className={CLASSE_LABEL} htmlFor={id("au")}>
             {t("caisse.facturation.filtres.dateAu")}
           </label>
           <input
-            id="filtre-caisse-au"
+            id={id("au")}
             type="date"
             value={valeurs.dateAu}
             onChange={(e) => maj("dateAu", e.target.value)}
@@ -104,11 +115,11 @@ export function FormulaireFiltresFacturationCaisse({
           />
         </div>
         <div>
-          <label className={CLASSE_LABEL} htmlFor="filtre-caisse-type">
+          <label className={CLASSE_LABEL} htmlFor={id("type")}>
             {t("caisse.facturation.filtres.typeEntite")}
           </label>
           <select
-            id="filtre-caisse-type"
+            id={id("type")}
             value={valeurs.typeEntite}
             onChange={(e) =>
               maj("typeEntite", e.target.value as FiltresFacturationCaisse["typeEntite"])
@@ -120,11 +131,11 @@ export function FormulaireFiltresFacturationCaisse({
           </select>
         </div>
         <div>
-          <label className={CLASSE_LABEL} htmlFor="filtre-caisse-nom">
+          <label className={CLASSE_LABEL} htmlFor={id("nom")}>
             {t("caisse.facturation.filtres.nom")}
           </label>
           <input
-            id="filtre-caisse-nom"
+            id={id("nom")}
             type="text"
             value={valeurs.nom}
             onChange={(e) => maj("nom", e.target.value)}
@@ -134,11 +145,11 @@ export function FormulaireFiltresFacturationCaisse({
           />
         </div>
         <div>
-          <label className={CLASSE_LABEL} htmlFor="filtre-caisse-prenom">
+          <label className={CLASSE_LABEL} htmlFor={id("prenom")}>
             {t("caisse.facturation.filtres.prenom")}
           </label>
           <input
-            id="filtre-caisse-prenom"
+            id={id("prenom")}
             type="text"
             value={valeurs.prenom}
             onChange={(e) => maj("prenom", e.target.value)}
@@ -147,26 +158,28 @@ export function FormulaireFiltresFacturationCaisse({
             autoComplete="off"
           />
         </div>
+        {!masquerNumeroFacture && (
+          <div>
+            <label className={CLASSE_LABEL} htmlFor={id("facture")}>
+              {t("caisse.facturation.filtres.numeroFacture")}
+            </label>
+            <input
+              id={id("facture")}
+              type="text"
+              value={valeurs.numeroFacture}
+              onChange={(e) => maj("numeroFacture", e.target.value)}
+              placeholder={t("caisse.facturation.filtres.placeholderFacture")}
+              className={CLASSE_CHAMP}
+              autoComplete="off"
+            />
+          </div>
+        )}
         <div>
-          <label className={CLASSE_LABEL} htmlFor="filtre-caisse-facture">
-            {t("caisse.facturation.filtres.numeroFacture")}
-          </label>
-          <input
-            id="filtre-caisse-facture"
-            type="text"
-            value={valeurs.numeroFacture}
-            onChange={(e) => maj("numeroFacture", e.target.value)}
-            placeholder={t("caisse.facturation.filtres.placeholderFacture")}
-            className={CLASSE_CHAMP}
-            autoComplete="off"
-          />
-        </div>
-        <div>
-          <label className={CLASSE_LABEL} htmlFor="filtre-caisse-enreg">
+          <label className={CLASSE_LABEL} htmlFor={id("enreg")}>
             {t("caisse.facturation.filtres.numeroEnreg")}
           </label>
           <input
-            id="filtre-caisse-enreg"
+            id={id("enreg")}
             type="text"
             value={valeurs.numeroEnreg}
             onChange={(e) => maj("numeroEnreg", e.target.value)}
@@ -176,11 +189,11 @@ export function FormulaireFiltresFacturationCaisse({
           />
         </div>
         <div>
-          <label className={CLASSE_LABEL} htmlFor="filtre-caisse-id">
+          <label className={CLASSE_LABEL} htmlFor={id("id")}>
             {t("caisse.facturation.filtres.idEntite")}
           </label>
           <input
-            id="filtre-caisse-id"
+            id={id("id")}
             type="text"
             value={valeurs.idEntite}
             onChange={(e) => maj("idEntite", e.target.value)}
@@ -190,11 +203,11 @@ export function FormulaireFiltresFacturationCaisse({
           />
         </div>
         <div className="sm:col-span-2 lg:col-span-1">
-          <label className={CLASSE_LABEL} htmlFor="filtre-caisse-tel">
+          <label className={CLASSE_LABEL} htmlFor={id("tel")}>
             {t("caisse.facturation.filtres.telephone")}
           </label>
           <input
-            id="filtre-caisse-tel"
+            id={id("tel")}
             type="tel"
             value={valeurs.telephone}
             onChange={(e) => maj("telephone", e.target.value)}

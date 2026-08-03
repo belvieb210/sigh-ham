@@ -349,9 +349,9 @@ export const caisseEn = {
     CHEQUE: "Cheque",
   },
   factures: {
-    titre: "Today's invoices",
-    sousTitre: "Invoices issued today",
-    vide: "No invoice today.",
+    titre: "Invoices",
+    sousTitre: "All issued invoices",
+    vide: "No invoices recorded.",
     numero: "Invoice No.",
     patient: "Patient",
     examens: "Exams / Services",
@@ -375,6 +375,9 @@ export const caisseEn = {
     selectionnerFacture: "Select an invoice to show the summary.",
     nbExamens: "{{count}} exam",
     nbExamens_plural: "{{count}} exams",
+    pagination: "Showing {{debut}}-{{fin}} of {{total}} invoices",
+    prec: "Prev.",
+    suiv: "Next",
     statutsUi: {
       payee: "Paid",
       partielle: "Partial",

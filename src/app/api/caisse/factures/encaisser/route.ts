@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     }
 
     const montant = Number(corps.montant);
-    if (!Number.isFinite(montant) || montant <= 0) {
+    if (!Number.isFinite(montant) || montant < 0) {
       return NextResponse.json({ erreur: "Montant invalide." }, { status: 400 });
     }
 
@@ -65,6 +65,11 @@ export async function POST(request: Request) {
     const modeFacture = (corps.modeFacture ?? "CASH") as ModeFactureCaisse;
     if (!MODES_FACTURE.includes(modeFacture)) {
       return NextResponse.json({ erreur: "Mode de facture invalide." }, { status: 400 });
+    }
+
+    // Montant 0 autorisé uniquement en mode Solde (clôture quand l'avance couvre déjà tout)
+    if (montant <= 0 && modeFacture !== "SOLDE") {
+      return NextResponse.json({ erreur: "Montant invalide." }, { status: 400 });
     }
 
     const destinationApres = (corps.destinationApres ?? "LABORATOIRE") as DestinationApresEncaissement;

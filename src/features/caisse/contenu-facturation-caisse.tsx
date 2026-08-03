@@ -455,6 +455,15 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const resteAPayer = Math.max(0, totalAPayer - dejaPaye);
   const soldeObligatoire =
     dejaPaye > 0 || dossier?.facture.statut === "PARTIELLEMENT_PAYEE";
+  /** Avance déjà couverte (reste 0) : permettre de clôturer sans nouveau paiement */
+  const peutCloturerSoldeAZero = soldeObligatoire && modeFacture === "SOLDE" && resteAPayer <= 0.01;
+  const encaissementDesactive =
+    enCours ||
+    (modeFacture === "AVANCE"
+      ? montantAvance <= 0
+      : peutCloturerSoldeAZero
+        ? false
+        : resteAPayer <= 0 || montantPaiement <= 0);
   /** Montant affiché comme « à payer » : reste si avance déjà payée, sinon total */
   const montantDuJour = soldeObligatoire || modeFacture === "SOLDE" ? resteAPayer : totalAPayer;
   const resteApresCePaiement = Math.max(
@@ -517,7 +526,10 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
       const montantAEncaisser =
         modeFacture === "AVANCE" ? montantAvance : montantPaiement;
 
-      if (montantAEncaisser <= 0) {
+      const clotureSoldeSansPaiement =
+        modeFacture === "SOLDE" && resteAPayer <= 0.01;
+
+      if (!clotureSoldeSansPaiement && montantAEncaisser <= 0) {
         throw new Error(t("caisse.facturation.erreurEncaissement"));
       }
 
@@ -544,7 +556,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dossierId,
-          montant: montantAEncaisser,
+          montant: clotureSoldeSansPaiement ? 0 : montantAEncaisser,
           modePaiement: modePrisma,
           modeFacture,
           remise,
@@ -1428,18 +1440,16 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                 <Bouton
                   type="button"
                   onClick={() => void encaisser()}
-                  disabled={
-                    enCours ||
-                    resteAPayer <= 0 ||
-                    (modeFacture === "AVANCE" ? montantAvance <= 0 : montantPaiement <= 0)
-                  }
+                  disabled={encaissementDesactive}
                 >
                   {enCours ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <Check className="h-4 w-4" />
                   )}
-                  {t("caisse.facturation.validerEncaisser")}
+                  {peutCloturerSoldeAZero
+                    ? t("caisse.facturation.cloturerFacture")
+                    : t("caisse.facturation.validerEncaisser")}
                 </Bouton>
               </div>
             </div>
@@ -1486,15 +1496,13 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                 <Bouton
                   type="button"
                   onClick={() => void encaisser()}
-                  disabled={
-                    enCours ||
-                    resteAPayer <= 0 ||
-                    (modeFacture === "AVANCE" ? montantAvance <= 0 : montantPaiement <= 0)
-                  }
+                  disabled={encaissementDesactive}
                   className="w-full justify-center"
                 >
                   {enCours ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : peutCloturerSoldeAZero ? (
+                    t("caisse.facturation.cloturerFacture")
                   ) : (
                     t("caisse.facturation.encaisserPaiement")
                   )}

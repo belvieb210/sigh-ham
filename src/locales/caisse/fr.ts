@@ -285,6 +285,7 @@ export const caisseFr = {
     imprimerProforma: "Imprimer proforma",
     imprimerFacture: "Imprimer facture",
     validerEncaisser: "Valider et encaisser",
+    cloturerFacture: "Clôturer la facture",
     encaisserPaiement: "Encaisser le paiement",
     ouvrirFiltres: "Ouvrir les filtres",
     fermerFiltres: "Fermer les filtres",

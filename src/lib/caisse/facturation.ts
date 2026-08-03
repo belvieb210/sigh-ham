@@ -1,5 +1,5 @@
 import "server-only";
-import type { ModePaiement } from "@/generated/prisma/client";
+import type { ModePaiement, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { genererNumeroFacture } from "@/lib/caisse/numeros";
 import { reorienterPatientDepuisCaisse } from "@/lib/caisse/reorienter-patient-caisse";
@@ -17,6 +17,39 @@ function decimalVersNombre(valeur: { toNumber?: () => number } | number | string
   if (typeof valeur === "string") return Number.parseFloat(valeur) || 0;
   if (valeur && typeof valeur.toNumber === "function") return valeur.toNumber();
   return Number(valeur) || 0;
+}
+
+/** Si l'avance couvre déjà le nouveau total (ligne retirée / remise), passer en PAYEE. */
+async function reconcilerStatutFactureApresAjustement(
+  tx: Prisma.TransactionClient,
+  factureId: string
+) {
+  const facture = await tx.facture.findUnique({
+    where: { id: factureId },
+    include: { lignes: true },
+  });
+  if (!facture || facture.statut === "ANNULEE" || facture.statut === "PAYEE") {
+    return;
+  }
+
+  const totalDu = Math.max(
+    0,
+    facture.lignes.reduce((acc, l) => acc + decimalVersNombre(l.montant), 0)
+  );
+  const paye = decimalVersNombre(facture.montantPaye);
+  const statut =
+    paye + 0.01 >= totalDu && paye > 0
+      ? "PAYEE"
+      : paye > 0
+        ? "PARTIELLEMENT_PAYEE"
+        : facture.statut === "BROUILLON"
+          ? "BROUILLON"
+          : "EMISE";
+
+  await tx.facture.update({
+    where: { id: factureId },
+    data: { montantTotal: totalDu, statut },
+  });
 }
 
 function formaterCaissier(prenom: string, nom: string) {
@@ -350,10 +383,11 @@ export async function retirerLigneFacturationCaisse(
         if (ligne) {
           const montantLigne = decimalVersNombre(ligne.montant);
           await tx.ligneFacture.delete({ where: { id: ligne.id } });
-          await tx.facture.update({
+          const factureMaj = await tx.facture.update({
             where: { id: factureOuverte.id },
             data: { montantTotal: { decrement: montantLigne } },
           });
+          await reconcilerStatutFactureApresAjustement(tx, factureMaj.id);
         }
       }
     });
@@ -388,10 +422,11 @@ export async function retirerLigneFacturationCaisse(
 
       const montantLigne = decimalVersNombre(ligne.montant);
       await tx.ligneFacture.delete({ where: { id: ligne.id } });
-      await tx.facture.update({
+      const factureMaj = await tx.facture.update({
         where: { id: ligne.factureId },
         data: { montantTotal: { decrement: montantLigne } },
       });
+      await reconcilerStatutFactureApresAjustement(tx, factureMaj.id);
     });
   }
 
@@ -417,8 +452,8 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
   const remise = Math.max(0, Math.round((donnees.remise || 0) * 100) / 100);
   const fraisDivers = Math.max(0, Math.round((donnees.fraisDivers || 0) * 100) / 100);
 
-  if (montant <= 0) {
-    throw new Error("Le montant du paiement doit être supérieur à zéro.");
+  if (montant < 0) {
+    throw new Error("Le montant du paiement est invalide.");
   }
 
   const detail = await preparerFactureDossier(donnees.dossierId, {
@@ -448,6 +483,14 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
   );
   const dejaPaye = detail.facture.montantPaye;
   const reste = Math.max(0, totalDu - dejaPaye);
+
+  /** Avance déjà couverte (remise / lignes) : clôturer sans nouveau paiement. */
+  const clotureSansPaiement =
+    donnees.modeFacture === "SOLDE" && montant <= 0.01 && reste <= 0.01;
+
+  if (!clotureSansPaiement && montant <= 0) {
+    throw new Error("Le montant du paiement doit être supérieur à zéro.");
+  }
 
   if (dejaPaye > 0.01 && donnees.modeFacture !== "SOLDE") {
     throw new Error(
@@ -513,17 +556,23 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
       },
     });
 
-    const paiement = await tx.paiement.create({
-      data: {
-        factureId,
-        montant,
-        mode: donnees.modePaiement,
-        reference: referenceParts.join("|") || null,
-        caissierId,
-      },
-    });
+    let paiementId: string | null = null;
+    const montantEncaisse = clotureSansPaiement ? 0 : montant;
 
-    const nouveauMontantPaye = dejaPaye + montant;
+    if (montantEncaisse > 0.01) {
+      const paiement = await tx.paiement.create({
+        data: {
+          factureId,
+          montant: montantEncaisse,
+          mode: donnees.modePaiement,
+          reference: referenceParts.join("|") || null,
+          caissierId,
+        },
+      });
+      paiementId = paiement.id;
+    }
+
+    const nouveauMontantPaye = dejaPaye + montantEncaisse;
     const statut =
       nouveauMontantPaye + 0.01 >= totalDu
         ? "PAYEE"
@@ -562,7 +611,7 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
     // Les avances (PARTIELLEMENT_PAYEE) restent aussi pour établir le solde.
 
     return {
-      paiementId: paiement.id,
+      paiementId,
       factureId,
       numeroFacture: facture.numeroFacture,
       statut,

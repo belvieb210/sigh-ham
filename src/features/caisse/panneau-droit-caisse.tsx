@@ -45,16 +45,18 @@ function ResumeEtOrientation() {
             </p>
           )}
         </div>
-        <dl className="mt-4 space-y-2 text-left text-xs">
+        <div className="mt-4 space-y-2 text-left text-xs">
           <div className="flex justify-between gap-2">
-            <dt className="text-texte-secondaire">{t("caisse.transferts.age")}</dt>
-            <dd className="font-medium text-texte-principal">{resume?.age ?? "—"}</dd>
+            <span className="text-texte-secondaire">{t("caisse.transferts.age")}</span>
+            <span className="font-medium text-texte-principal">{resume?.age ?? "—"}</span>
           </div>
           <div className="flex justify-between gap-2">
-            <dt className="text-texte-secondaire">{t("caisse.transferts.telephone")}</dt>
-            <dd className="font-medium text-texte-principal">{resume?.telephone ?? "—"}</dd>
+            <span className="text-texte-secondaire">{t("caisse.transferts.telephone")}</span>
+            <span className="font-medium text-texte-principal">
+              {resume?.telephone ?? "—"}
+            </span>
           </div>
-        </dl>
+        </div>
       </section>
 
       <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">

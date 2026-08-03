@@ -252,10 +252,12 @@ export function ListePatientsTransfertsCaisse() {
                         {p.numeroPatient}
                       </td>
                       <td className="px-4 py-3">
-                        <p className="font-semibold text-texte-principal">{p.nomComplet}</p>
-                        <p className="text-[11px] text-texte-secondaire">
+                        <span className="block font-semibold text-texte-principal">
+                          {p.nomComplet}
+                        </span>
+                        <span className="block text-[11px] text-texte-secondaire">
                           {p.nombreExamens} examen(s) · {formaterMontantCaisse(p.montantEstime)}
-                        </p>
+                        </span>
                       </td>
                       <td className="hidden px-4 py-3 text-texte-secondaire md:table-cell">
                         {p.telephone}

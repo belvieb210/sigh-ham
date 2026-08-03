@@ -63,14 +63,14 @@ export function OrientationRapide({
                   : "border-gris-bordure bg-white hover:bg-gris-tres-clair"
               )}
             >
-              <div
+              <span
                 className={cn(
                   "flex h-10 w-10 items-center justify-center rounded-lg",
                   selectionne ? "bg-bleu-medical text-white" : "bg-gris-tres-clair text-bleu-medical"
                 )}
               >
                 <Icone className="h-5 w-5" />
-              </div>
+              </span>
               <span className="text-xs font-semibold text-texte-principal">
                 {t(`reception.orientations.${opt.value}.label`)}
               </span>
@@ -112,12 +112,12 @@ export function OrientationRapide({
               {selectionne && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
             </span>
             <Icone className="h-4 w-4 shrink-0" />
-            <div>
+            <span className="min-w-0 flex-1">
               <span className="block">{t(`reception.orientations.${opt.value}.label`)}</span>
-              <span className="text-xs font-normal text-texte-secondaire">
+              <span className="block text-xs font-normal text-texte-secondaire">
                 {t(`reception.orientations.${opt.value}.description`)}
               </span>
-            </div>
+            </span>
           </button>
         );
       })}

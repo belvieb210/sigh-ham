@@ -60,6 +60,12 @@ export function MenuActionsTransfertCaisse({
     });
   }, []);
 
+  useEffect(() => {
+    if (transfere || !patient.transfertSortantId) {
+      setOuvert(false);
+    }
+  }, [transfere, patient.transfertSortantId]);
+
   useLayoutEffect(() => {
     if (!ouvert) return;
     mettreAJourPosition();
@@ -127,76 +133,6 @@ export function MenuActionsTransfertCaisse({
     return null;
   }
 
-  const menu =
-    monte &&
-    ouvert &&
-    createPortal(
-      <div
-        ref={menuRef}
-        style={{ top: position.top, left: position.left }}
-        className="fixed z-[100] min-w-[200px] rounded-lg border border-gris-bordure bg-white py-1 shadow-lg"
-        role="menu"
-      >
-        {peutConfirmer && (
-          <button
-            type="button"
-            disabled={enCours}
-            onClick={(e) => {
-              e.stopPropagation();
-              void executerAction("confirmer");
-            }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-50"
-            role="menuitem"
-          >
-            <Check className="h-3.5 w-3.5" />
-            {t("caisse.transferts.confirmer")}
-            {!patient.factureOuverte && (
-              <span className="ml-auto text-[10px] text-amber-600">facture</span>
-            )}
-          </button>
-        )}
-        {peutRejeter && (
-          <button
-            type="button"
-            disabled={enCours}
-            onClick={(e) => {
-              e.stopPropagation();
-              void executerAction("rejeter");
-            }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-700 transition-colors hover:bg-red-50 disabled:opacity-50"
-            role="menuitem"
-          >
-            <X className="h-3.5 w-3.5" />
-            {t("caisse.transferts.rejeter")}
-          </button>
-        )}
-        {peutRestaurer && (
-          <button
-            type="button"
-            disabled={enCours}
-            onClick={(e) => {
-              e.stopPropagation();
-              void executerAction("recuperer");
-            }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-bleu-medical transition-colors hover:bg-bleu-medical-clair/40 disabled:opacity-50"
-            role="menuitem"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            {t("caisse.transferts.restaurer")}
-          </button>
-        )}
-        {!peutConfirmer && !peutRejeter && !peutRestaurer && (
-          <p className="px-3 py-2 text-xs text-texte-secondaire">
-            {t("caisse.transferts.aucuneAction")}
-          </p>
-        )}
-        {erreur && (
-          <p className="border-t border-gris-bordure px-3 py-2 text-xs text-red-600">{erreur}</p>
-        )}
-      </div>,
-      document.body
-    );
-
   return (
     <>
       <button
@@ -214,7 +150,76 @@ export function MenuActionsTransfertCaisse({
       >
         <MoreVertical className="h-4 w-4" />
       </button>
-      {menu}
+      {monte &&
+        ouvert &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{ top: position.top, left: position.left }}
+            className="fixed z-[100] min-w-[200px] rounded-lg border border-gris-bordure bg-white py-1 shadow-lg"
+            role="menu"
+          >
+            {peutConfirmer && (
+              <button
+                type="button"
+                disabled={enCours}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void executerAction("confirmer");
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-50"
+                role="menuitem"
+              >
+                <Check className="h-3.5 w-3.5" />
+                <span>{t("caisse.transferts.confirmer")}</span>
+                {!patient.factureOuverte && (
+                  <span className="ml-auto text-[10px] text-amber-600">facture</span>
+                )}
+              </button>
+            )}
+            {peutRejeter && (
+              <button
+                type="button"
+                disabled={enCours}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void executerAction("rejeter");
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-700 transition-colors hover:bg-red-50 disabled:opacity-50"
+                role="menuitem"
+              >
+                <X className="h-3.5 w-3.5" />
+                <span>{t("caisse.transferts.rejeter")}</span>
+              </button>
+            )}
+            {peutRestaurer && (
+              <button
+                type="button"
+                disabled={enCours}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void executerAction("recuperer");
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-bleu-medical transition-colors hover:bg-bleu-medical-clair/40 disabled:opacity-50"
+                role="menuitem"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span>{t("caisse.transferts.restaurer")}</span>
+              </button>
+            )}
+            {!peutConfirmer && !peutRejeter && !peutRestaurer && (
+              <span className="block px-3 py-2 text-xs text-texte-secondaire">
+                {t("caisse.transferts.aucuneAction")}
+              </span>
+            )}
+            {erreur && (
+              <span className="block border-t border-gris-bordure px-3 py-2 text-xs text-red-600">
+                {erreur}
+              </span>
+            )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }

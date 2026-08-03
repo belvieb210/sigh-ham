@@ -73,16 +73,16 @@ export function OrientationRapideCaisse({
               {selectionne && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
             </span>
             <Icone className="h-4 w-4 shrink-0" />
-            <div>
+            <span className="min-w-0 flex-1">
               <span className="block">
                 {t(`caisse.orientations.${opt.value}.label`, { defaultValue: opt.label })}
               </span>
-              <span className="text-xs font-normal text-texte-secondaire">
+              <span className="block text-xs font-normal text-texte-secondaire">
                 {t(`caisse.orientations.${opt.value}.description`, {
                   defaultValue: opt.description,
                 })}
               </span>
-            </div>
+            </span>
           </button>
         );
       })}

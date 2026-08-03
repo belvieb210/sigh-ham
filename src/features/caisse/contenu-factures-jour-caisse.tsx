@@ -394,32 +394,32 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
                         })}
                       </p>
                     </div>
-                    <dl className="mt-5 space-y-2.5 border-t border-gris-bordure/70 pt-4 text-sm">
+                    <div className="mt-5 space-y-2.5 border-t border-gris-bordure/70 pt-4 text-sm">
                       <div className="flex justify-between gap-3">
-                        <dt className="text-texte-secondaire">{t("caisse.factures.age")}</dt>
-                        <dd className="font-medium text-texte-principal">
+                        <span className="text-texte-secondaire">{t("caisse.factures.age")}</span>
+                        <span className="font-medium text-texte-principal">
                           {age != null
                             ? t("caisse.facturation.age", { age })
                             : "—"}
-                        </dd>
+                        </span>
                       </div>
                       <div className="flex justify-between gap-3">
-                        <dt className="text-texte-secondaire">
+                        <span className="text-texte-secondaire">
                           {t("caisse.factures.telephone")}
-                        </dt>
-                        <dd className="font-medium text-texte-principal">
+                        </span>
+                        <span className="font-medium text-texte-principal">
                           {factureSelectionnee.telephone || "—"}
-                        </dd>
+                        </span>
                       </div>
                       <div className="flex justify-between gap-3">
-                        <dt className="text-texte-secondaire">
+                        <span className="text-texte-secondaire">
                           {t("caisse.factures.dossier")}
-                        </dt>
-                        <dd className="font-medium text-texte-principal">
+                        </span>
+                        <span className="font-medium text-texte-principal">
                           {factureSelectionnee.numeroDossier}
-                        </dd>
+                        </span>
                       </div>
-                    </dl>
+                    </div>
                   </section>
 
                   <section className="rounded-2xl border border-gris-bordure bg-white p-5 shadow-sm">
@@ -429,46 +429,44 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
                         {t("caisse.factures.detailsFacture")}
                       </h3>
                     </div>
-                    <dl className="space-y-2.5 text-sm">
+                    <div className="space-y-2.5 text-sm">
                       <div className="flex justify-between gap-3">
-                        <dt className="text-texte-secondaire">
+                        <span className="text-texte-secondaire">
                           {t("caisse.factures.numero")}
-                        </dt>
-                        <dd className="font-semibold text-bleu-medical">
+                        </span>
+                        <span className="font-semibold text-bleu-medical">
                           {factureSelectionnee.numeroFacture}
-                        </dd>
+                        </span>
                       </div>
                       <div className="flex justify-between gap-3">
-                        <dt className="text-texte-secondaire">
+                        <span className="text-texte-secondaire">
                           {t("caisse.factures.statut")}
-                        </dt>
-                        <dd>
-                          <span
-                            className={cn(
-                              "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                              statutAffiche(factureSelectionnee.statut) === "payee" &&
-                                "bg-emerald-50 text-emerald-700",
-                              statutAffiche(factureSelectionnee.statut) ===
-                                "partielle" && "bg-amber-50 text-amber-700",
-                              statutAffiche(factureSelectionnee.statut) === "impayee" &&
-                                "bg-red-50 text-red-700"
-                            )}
-                          >
-                            {t(
-                              `caisse.factures.statutsUi.${statutAffiche(factureSelectionnee.statut)}`
-                            )}
-                          </span>
-                        </dd>
+                        </span>
+                        <span
+                          className={cn(
+                            "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                            statutAffiche(factureSelectionnee.statut) === "payee" &&
+                              "bg-emerald-50 text-emerald-700",
+                            statutAffiche(factureSelectionnee.statut) ===
+                              "partielle" && "bg-amber-50 text-amber-700",
+                            statutAffiche(factureSelectionnee.statut) === "impayee" &&
+                              "bg-red-50 text-red-700"
+                          )}
+                        >
+                          {t(
+                            `caisse.factures.statutsUi.${statutAffiche(factureSelectionnee.statut)}`
+                          )}
+                        </span>
                       </div>
                       <div className="flex justify-between gap-3">
-                        <dt className="text-texte-secondaire">
+                        <span className="text-texte-secondaire">
                           {t("caisse.factures.modePaiement")}
-                        </dt>
-                        <dd className="font-medium">
+                        </span>
+                        <span className="font-medium">
                           {libelleModePaiement(factureSelectionnee)}
-                        </dd>
+                        </span>
                       </div>
-                    </dl>
+                    </div>
 
                     <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto border-t border-gris-bordure/70 pt-3">
                       {factureSelectionnee.lignes.length === 0 ? (

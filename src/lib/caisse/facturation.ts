@@ -450,7 +450,7 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
     throw new Error("Le montant du paiement doit être supérieur à zéro.");
   }
 
-  let detail = await preparerFactureDossier(donnees.dossierId, {
+  const detail = await preparerFactureDossier(donnees.dossierId, {
     devise: donnees.devise,
   });
   if (!detail?.facture.id) {

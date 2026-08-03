@@ -3,6 +3,7 @@ import type { ModePaiement } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { genererNumeroFacture } from "@/lib/caisse/numeros";
 import { reorienterPatientDepuisCaisse } from "@/lib/caisse/reorienter-patient-caisse";
+import { creerTokenRecuFacture } from "@/lib/caisse/token-recu-public";
 import type {
   DestinationApresEncaissement,
   DossierFacturationCaisse,
@@ -653,6 +654,7 @@ export async function listerFacturesDuJour(): Promise<FactureResumeJour[]> {
         montant: decimalVersNombre(l.montant),
         quantite: l.quantite,
       })),
+      tokenRecu: creerTokenRecuFacture(f.id),
     };
   });
 }

@@ -225,6 +225,8 @@ export interface FactureResumeJour {
   modePaiement: ModePaiement | null;
   modeFacture: string | null;
   lignes: LigneFactureResume[];
+  /** Jeton signé pour le QR / page publique `/r/[token]` (lié à cette facture). */
+  tokenRecu: string;
 }
 
 export interface EncaissementResumeJour {

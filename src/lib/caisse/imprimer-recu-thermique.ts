@@ -1,11 +1,11 @@
 /**
- * Reçu de caisse thermique 80 mm — Xprinter XP-C230 (ESC/POS via pilote Windows).
- * Fenêtre isolée + HTML monospace : n'altère pas le DOM React de l'app.
+ * Reçu de caisse thermique 80 mm — Xprinter XP-C230.
+ * Aperçu dans la même fenêtre + impression via iframe cachée (pas de about:blank).
  */
 
+import QRCode from "qrcode";
 import {
   INFOS_LEGALES_TICKET,
-  LARGEUR_TICKET_THERMIQUE,
   SEPARATEUR_ETOILES,
   SEPARATEUR_TIRETS,
   centrerLigne,
@@ -13,6 +13,8 @@ import {
   ligneDeuxColonnes,
 } from "@/constants/ticket-thermique";
 import type { FactureResumeJour } from "@/lib/caisse/types";
+
+const ID_OVERLAY_RECU = "sigh-overlay-recu-caisse";
 
 function echapperHtml(texte: string): string {
   return texte
@@ -51,8 +53,20 @@ function nomPatientTicket(facture: FactureResumeJour): string {
   return nom.replace(/\s+/g, " ").toUpperCase();
 }
 
-/** Construit le corps texte du ticket (aligné ~42 car. monospace). */
-export function construireLignesRecuCaisse(facture: FactureResumeJour): string[] {
+export function urlRecuPublicFacture(facture: FactureResumeJour): string {
+  if (!facture.tokenRecu) return "";
+  if (typeof window === "undefined") return `/r/${facture.tokenRecu}`;
+  return `${window.location.origin}/r/${facture.tokenRecu}`;
+}
+
+function construirePartiesRecu(facture: FactureResumeJour): {
+  haut: string[];
+  bas: string[];
+  libelleEncaisse: string;
+  total: number;
+  paye: number;
+  reste: number;
+} {
   const L = INFOS_LEGALES_TICKET;
   const devise = facture.devise || "USD";
   const total = Math.max(0, facture.montantTotal);
@@ -61,7 +75,7 @@ export function construireLignesRecuCaisse(facture: FactureResumeJour): string[]
   const libelleEncaisse =
     reste > 0 || facture.modeFacture === "AVANCE" ? "Avance" : "Payé";
 
-  const lignes: string[] = [
+  const haut: string[] = [
     centrerLigne(L.ligne1),
     centrerLigne(L.ligne2),
     centrerLigne(L.rccm),
@@ -84,16 +98,20 @@ export function construireLignesRecuCaisse(facture: FactureResumeJour): string[]
   ];
 
   for (const ligne of facture.lignes) {
-    lignes.push(
+    haut.push(
       ligneDeuxColonnes(ligne.libelle, formaterPrixTicket(ligne.montant, devise))
     );
   }
 
-  lignes.push(
+  haut.push(
     SEPARATEUR_ETOILES,
     ligneDeuxColonnes("Total:", formaterPrixTicket(total, devise)),
     ligneDeuxColonnes(`${libelleEncaisse}:`, formaterPrixTicket(paye, devise)),
     ligneDeuxColonnes("Reste:", formaterPrixTicket(reste, devise)),
+    SEPARATEUR_TIRETS
+  );
+
+  const bas: string[] = [
     SEPARATEUR_TIRETS,
     "",
     centrerLigne(L.sloganPied),
@@ -103,20 +121,28 @@ export function construireLignesRecuCaisse(facture: FactureResumeJour): string[]
     centrerLigne(L.telephones),
     centrerLigne(L.email),
     "",
-    SEPARATEUR_TIRETS
-  );
+    SEPARATEUR_TIRETS,
+  ];
 
-  return lignes;
+  return { haut, bas, libelleEncaisse, total, paye, reste };
 }
 
-export function construireHtmlRecuCaisse(facture: FactureResumeJour): string {
-  const corps = construireLignesRecuCaisse(facture)
-    .map((l) => echapperHtml(l))
-    .join("\n");
+export function construireHtmlRecuCaisse(
+  facture: FactureResumeJour,
+  options: { qrDataUrl?: string; urlRecu?: string } = {}
+): string {
+  const { haut, bas } = construirePartiesRecu(facture);
+  const hautHtml = haut.map((l) => echapperHtml(l)).join("\n");
+  const basHtml = bas.map((l) => echapperHtml(l)).join("\n");
   const titre = echapperHtml(`Reçu ${facture.numeroFacture}`);
-  const gen = echapperHtml(
-    `Généré le ${formaterDateHeureTicket(null).replace(" ", " à ")}`
-  );
+  const ref = echapperHtml(`#${facture.numeroFacture}#`);
+  const qrBlock = options.qrDataUrl
+    ? `<div class="qr-block">
+        <img class="qr" src="${options.qrDataUrl}" width="140" height="140" alt="QR code reçu" />
+        <p class="qr-ref">${ref}</p>
+        <p class="qr-hint">Scannez pour voir la facture et les examens</p>
+      </div>`
+    : "";
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -125,168 +151,195 @@ export function construireHtmlRecuCaisse(facture: FactureResumeJour): string {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${titre}</title>
   <style>
-    @page {
-      size: 80mm auto;
-      margin: 0;
-    }
+    @page { size: 80mm auto; margin: 0; }
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
       padding: 0;
-      background: #e8edf2;
+      background: #fff;
       color: #000;
       font-family: "Courier New", Courier, ui-monospace, monospace;
-    }
-    .toolbar {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 14px;
-      background: #0f2744;
-      color: #fff;
-      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-      font-size: 13px;
-    }
-    .toolbar p { margin: 0; opacity: 0.9; }
-    .toolbar .actions { display: flex; gap: 8px; }
-    .toolbar button {
-      border: 0;
-      border-radius: 6px;
-      padding: 8px 14px;
-      font-weight: 600;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    .toolbar .btn-print {
-      background: #1d6ef5;
-      color: #fff;
-    }
-    .toolbar .btn-close {
-      background: #fff;
-      color: #0f2744;
     }
     .sheet {
       width: 80mm;
       max-width: 100%;
-      margin: 16px auto 24px;
-      padding: 8px 6px 12px;
+      margin: 0 auto;
+      padding: 2mm 2.5mm 4mm;
       background: #fff;
-      box-shadow: 0 8px 24px rgba(15, 39, 68, 0.12);
     }
     .ticket {
       margin: 0;
       padding: 0;
       width: 100%;
-      font-size: 11.5px;
-      line-height: 1.35;
+      font-size: 11px;
+      line-height: 1.28;
       white-space: pre;
       overflow-x: hidden;
-      letter-spacing: 0;
     }
-    .meta {
-      width: 80mm;
-      max-width: 100%;
-      margin: 0 auto 28px;
-      padding: 8px 10px;
+    .qr-block {
       text-align: center;
-      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      padding: 6px 0 4px;
+    }
+    .qr {
+      display: block;
+      margin: 0 auto;
+      width: 140px;
+      height: 140px;
+      image-rendering: pixelated;
+    }
+    .qr-ref {
+      margin: 6px 0 0;
       font-size: 11px;
-      color: #64748b;
-      background: #f1f5f9;
-      border-radius: 6px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .qr-hint {
+      margin: 2px 0 0;
+      font-size: 9px;
+      font-family: system-ui, sans-serif;
+      color: #334155;
     }
     @media print {
-      html, body {
-        background: #fff !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .toolbar, .meta, .no-print { display: none !important; }
-      .sheet {
-        width: 80mm;
-        margin: 0;
-        padding: 2mm 2.5mm;
-        box-shadow: none;
-      }
-      .ticket {
-        font-size: 11px;
-        line-height: 1.28;
-      }
+      html, body { background: #fff !important; }
+      .sheet { width: 80mm; margin: 0; padding: 1.5mm 2mm; }
+      .qr-hint { display: none; }
     }
   </style>
 </head>
 <body>
-  <div class="toolbar no-print">
-    <p>Aperçu reçu · Xprinter XP-C230 (80 mm)</p>
-    <div class="actions">
-      <button type="button" class="btn-print" onclick="window.print()">Imprimer</button>
-      <button type="button" class="btn-close" onclick="window.close()">Fermer</button>
-    </div>
-  </div>
   <div class="sheet">
-    <pre class="ticket">${corps}</pre>
+    <pre class="ticket">${hautHtml}</pre>
+    ${qrBlock}
+    <pre class="ticket">${basHtml}</pre>
   </div>
-  <p class="meta no-print">${gen}</p>
-  <script>
-    window.addEventListener("load", function () {
-      setTimeout(function () {
-        try { window.focus(); window.print(); } catch (e) {}
-      }, 280);
-    });
-    window.addEventListener("afterprint", function () {
-      /* laisse la fenêtre ouverte pour réimpression éventuelle */
-    });
-  </script>
 </body>
 </html>`;
 }
 
-/**
- * Ouvre un aperçu isolé et lance le dialogue d'impression.
- * À appeler depuis un gestionnaire de clic (synchrone) pour éviter le bloqueur de popups.
- */
-export function imprimerRecuCaisseThermique(facture: FactureResumeJour): boolean {
-  if (typeof window === "undefined") return false;
+function fermerOverlayRecu() {
+  document.getElementById(ID_OVERLAY_RECU)?.remove();
+}
 
-  const html = construireHtmlRecuCaisse(facture);
-  const fenetre = window.open(
-    "",
-    "_blank",
-    "noopener,noreferrer,width=420,height=780"
-  );
+function imprimerViaIframe(html: string): boolean {
+  const existant = document.getElementById("sigh-iframe-print-recu");
+  if (existant) existant.remove();
 
-  if (!fenetre) {
-    // Fallback : iframe cachée si popup bloquée
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("aria-hidden", "true");
-    iframe.style.cssText =
-      "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
-    document.body.appendChild(iframe);
-    const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
-    if (!doc) {
-      document.body.removeChild(iframe);
-      return false;
-    }
-    doc.open();
-    doc.write(html);
-    doc.close();
-    iframe.contentWindow?.focus();
-    setTimeout(() => {
-      iframe.contentWindow?.print();
-      setTimeout(() => {
-        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-      }, 1500);
-    }, 300);
-    return true;
+  const iframe = document.createElement("iframe");
+  iframe.id = "sigh-iframe-print-recu";
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.setAttribute("title", "Impression reçu");
+  iframe.style.cssText =
+    "position:fixed;inset:0;width:0;height:0;border:0;opacity:0;pointer-events:none;";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
+  if (!doc) {
+    iframe.remove();
+    return false;
   }
 
-  fenetre.document.open();
-  fenetre.document.write(html);
-  fenetre.document.close();
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  const lancer = () => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch {
+      /* ignore */
+    }
+    window.setTimeout(() => {
+      iframe.remove();
+    }, 2000);
+  };
+
+  // Attendre le chargement de l'image QR
+  window.setTimeout(lancer, 350);
+  return true;
+}
+
+function afficherApercuRecu(html: string) {
+  fermerOverlayRecu();
+
+  const overlay = document.createElement("div");
+  overlay.id = ID_OVERLAY_RECU;
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+  overlay.setAttribute("aria-label", "Aperçu du reçu");
+  overlay.innerHTML = `
+    <div data-backdrop style="position:fixed;inset:0;z-index:99990;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:12px;">
+      <div style="width:min(420px,100%);max-height:92vh;display:flex;flex-direction:column;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 20px 50px rgba(15,23,42,.28);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:#0f2744;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;">
+          <div>
+            <p style="margin:0;font-size:13px;font-weight:700;">Aperçu reçu · 80 mm</p>
+            <p style="margin:2px 0 0;font-size:11px;opacity:.85;">Xprinter XP-C230</p>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button type="button" data-print style="border:0;border-radius:8px;padding:8px 14px;background:#1d6ef5;color:#fff;font-weight:600;font-size:13px;cursor:pointer;">Imprimer</button>
+            <button type="button" data-close style="border:0;border-radius:8px;padding:8px 14px;background:#fff;color:#0f2744;font-weight:600;font-size:13px;cursor:pointer;">Fermer</button>
+          </div>
+        </div>
+        <iframe title="Aperçu reçu thermique" style="flex:1;width:100%;min-height:60vh;border:0;background:#f1f5f9;"></iframe>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const cadre = overlay.querySelector("iframe");
+  const boutonImprimer = overlay.querySelector("[data-print]");
+  const boutonFermer = overlay.querySelector("[data-close]");
+  const backdrop = overlay.querySelector("[data-backdrop]");
+
+  if (cadre?.contentDocument) {
+    cadre.contentDocument.open();
+    cadre.contentDocument.write(html);
+    cadre.contentDocument.close();
+  }
+
+  const onClose = () => fermerOverlayRecu();
+  boutonFermer?.addEventListener("click", onClose);
+  backdrop?.addEventListener("click", (e) => {
+    if (e.target === backdrop) onClose();
+  });
+  boutonImprimer?.addEventListener("click", () => {
+    imprimerViaIframe(html);
+  });
+
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      onClose();
+      window.removeEventListener("keydown", onKey);
+    }
+  };
+  window.addEventListener("keydown", onKey);
+}
+
+/**
+ * Affiche l'aperçu du reçu (même onglet) avec QR, puis impression via iframe.
+ */
+export async function imprimerRecuCaisseThermique(
+  facture: FactureResumeJour
+): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+
+  const urlRecu = urlRecuPublicFacture(facture);
+  let qrDataUrl = "";
+  if (urlRecu) {
+    try {
+      qrDataUrl = await QRCode.toDataURL(urlRecu, {
+        width: 280,
+        margin: 1,
+        errorCorrectionLevel: "M",
+        color: { dark: "#000000", light: "#ffffff" },
+      });
+    } catch {
+      qrDataUrl = "";
+    }
+  }
+
+  const html = construireHtmlRecuCaisse(facture, { qrDataUrl, urlRecu });
+  afficherApercuRecu(html);
   return true;
 }

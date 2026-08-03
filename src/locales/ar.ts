@@ -3,6 +3,7 @@ import { communAr } from "./commun/ar";
 import { pagesAr } from "./pages/ar";
 import { receptionAr } from "./reception/ar";
 import { caisseAr } from "./caisse/ar";
+import { laboratoireAr } from "./laboratoire/ar";
 
 const ar: { translation: TraductionsSite } = {
   translation: {
@@ -151,6 +152,7 @@ const ar: { translation: TraductionsSite } = {
     pages: pagesAr,
     reception: receptionAr,
     caisse: caisseAr,
+    laboratoire: laboratoireAr,
     ...communAr,
   },
 };

@@ -3,6 +3,7 @@ import { communLn } from "./commun/ln";
 import { pagesLn } from "./pages/ln";
 import { receptionLn } from "./reception/ln";
 import { caisseLn } from "./caisse/ln";
+import { laboratoireLn } from "./laboratoire/ln";
 
 /** Lingala — traductions principales du site public */
 const ln: { translation: TraductionsSite } = {
@@ -155,6 +156,7 @@ const ln: { translation: TraductionsSite } = {
     pages: pagesLn,
     reception: receptionLn,
     caisse: caisseLn,
+    laboratoire: laboratoireLn,
     ...communLn,
   },
 };

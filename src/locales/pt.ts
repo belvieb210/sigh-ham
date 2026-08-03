@@ -3,6 +3,7 @@ import { communPt } from "./commun/pt";
 import { pagesPt } from "./pages/pt";
 import { receptionPt } from "./reception/pt";
 import { caissePt } from "./caisse/pt";
+import { laboratoirePt } from "./laboratoire/pt";
 
 const pt: { translation: TraductionsSite } = {
   translation: {
@@ -151,6 +152,7 @@ const pt: { translation: TraductionsSite } = {
     pages: pagesPt,
     reception: receptionPt,
     caisse: caissePt,
+    laboratoire: laboratoirePt,
     ...communPt,
   },
 };

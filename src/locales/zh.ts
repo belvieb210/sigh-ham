@@ -3,6 +3,7 @@ import { communZh } from "./commun/zh";
 import { pagesZh } from "./pages/zh";
 import { receptionZh } from "./reception/zh";
 import { caisseZh } from "./caisse/zh";
+import { laboratoireZh } from "./laboratoire/zh";
 
 const zh: { translation: TraductionsSite } = {
   translation: {
@@ -151,6 +152,7 @@ const zh: { translation: TraductionsSite } = {
     pages: pagesZh,
     reception: receptionZh,
     caisse: caisseZh,
+    laboratoire: laboratoireZh,
     ...communZh,
   },
 };

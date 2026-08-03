@@ -20,6 +20,7 @@ import { AvatarUtilisateur } from "@/components/ui/avatar-utilisateur";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 import { MiseEnPageReception, type UtilisateurReception } from "@/features/reception/mise-en-page-reception";
 import { MiseEnPageCaisse } from "@/features/caisse/mise-en-page-caisse";
+import { MiseEnPageLaboratoire } from "@/features/laboratoire/mise-en-page-laboratoire";
 import { traduireRoleHospitalier } from "@/features/messagerie/traduire-role";
 import type { ProfilUtilisateurPublic } from "@/lib/auth/types-profil";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
@@ -28,7 +29,7 @@ import { cn } from "@/lib/utils";
 interface PropsContenuProfilUtilisateur {
   utilisateur: UtilisateurReception;
   /** Shell de salle (défaut: réception) */
-  salle?: "reception" | "caisse";
+  salle?: "reception" | "caisse" | "laboratoire";
 }
 
 function formaterDate(iso: string | null, locale: string) {
@@ -50,15 +51,30 @@ export function ContenuProfilUtilisateur({
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const inputPhotoRef = useRef<HTMLInputElement>(null);
-  const Layout = salle === "caisse" ? MiseEnPageCaisse : MiseEnPageReception;
+  const Layout =
+    salle === "caisse"
+      ? MiseEnPageCaisse
+      : salle === "laboratoire"
+        ? MiseEnPageLaboratoire
+        : MiseEnPageReception;
   const titreLayout =
-    salle === "caisse" ? t("caisse.pages.profil.titre") : t("reception.pages.profil.titre");
+    salle === "caisse"
+      ? t("caisse.pages.profil.titre")
+      : salle === "laboratoire"
+        ? t("laboratoire.pages.profil.titre")
+        : t("reception.pages.profil.titre");
   const sousTitreLayout =
-    salle === "caisse" ? t("caisse.layout.sousTitre") : t("reception.layout.sousTitre");
+    salle === "caisse"
+      ? t("caisse.layout.sousTitre")
+      : salle === "laboratoire"
+        ? t("laboratoire.layout.sousTitre")
+        : t("reception.layout.sousTitre");
   const filAccueil =
     salle === "caisse"
       ? { label: t("caisse.layout.caisse"), href: "/sigh/caisse" }
-      : { label: t("reception.common.reception"), href: "/sigh/reception" };
+      : salle === "laboratoire"
+        ? { label: t("laboratoire.layout.titre"), href: "/sigh/laboratoire" }
+        : { label: t("reception.common.reception"), href: "/sigh/reception" };
 
   const [profil, setProfil] = useState<ProfilUtilisateurPublic | null>(null);
   const [chargement, setChargement] = useState(true);
@@ -258,12 +274,16 @@ export function ContenuProfilUtilisateur({
           titre={
             salle === "caisse"
               ? t("caisse.pages.profil.titre")
-              : t("reception.pages.profil.titre")
+              : salle === "laboratoire"
+                ? t("laboratoire.pages.profil.titre")
+                : t("reception.pages.profil.titre")
           }
           description={
             salle === "caisse"
               ? t("caisse.pages.profil.description")
-              : t("reception.pages.profil.description")
+              : salle === "laboratoire"
+                ? t("laboratoire.pages.profil.description")
+                : t("reception.pages.profil.description")
           }
           fil={[
             filAccueil,

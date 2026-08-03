@@ -3,6 +3,7 @@ import { communKg } from "./commun/kg";
 import { pagesKg } from "./pages/kg";
 import { receptionKg } from "./reception/kg";
 import { caisseKg } from "./caisse/kg";
+import { laboratoireKg } from "./laboratoire/kg";
 
 /** Kikongo — traductions principales du site public */
 const kg: { translation: TraductionsSite } = {
@@ -155,6 +156,7 @@ const kg: { translation: TraductionsSite } = {
     pages: pagesKg,
     reception: receptionKg,
     caisse: caisseKg,
+    laboratoire: laboratoireKg,
     ...communKg,
   },
 };

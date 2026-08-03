@@ -3,6 +3,7 @@ import { communSw } from "./commun/sw";
 import { pagesSw } from "./pages/sw";
 import { receptionSw } from "./reception/sw";
 import { caisseSw } from "./caisse/sw";
+import { laboratoireSw } from "./laboratoire/sw";
 
 const sw: { translation: TraductionsSite } = {
   translation: {
@@ -151,6 +152,7 @@ const sw: { translation: TraductionsSite } = {
     pages: pagesSw,
     reception: receptionSw,
     caisse: caisseSw,
+    laboratoire: laboratoireSw,
     ...communSw,
   },
 };

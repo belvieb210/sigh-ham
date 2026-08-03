@@ -3,6 +3,7 @@ import { communDe } from "./commun/de";
 import { pagesDe } from "./pages/de";
 import { receptionDe } from "./reception/de";
 import { caisseDe } from "./caisse/de";
+import { laboratoireDe } from "./laboratoire/de";
 
 const de: { translation: TraductionsSite } = {
   translation: {
@@ -151,6 +152,7 @@ const de: { translation: TraductionsSite } = {
     pages: pagesDe,
     reception: receptionDe,
     caisse: caisseDe,
+    laboratoire: laboratoireDe,
     ...communDe,
   },
 };

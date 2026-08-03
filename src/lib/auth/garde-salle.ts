@@ -26,3 +26,14 @@ export async function verifierAccesCaisse() {
 
   return session.utilisateur;
 }
+
+export async function verifierAccesLaboratoire() {
+  const session = await lireSessionDepuisCookie();
+  if (!session) redirect("/connexion");
+
+  if (!utilisateurPeutAccederSalle("LABORATOIRE", session.utilisateur.role)) {
+    redirect(obtenirRouteApresConnexion(session.utilisateur.role));
+  }
+
+  return session.utilisateur;
+}

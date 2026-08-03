@@ -113,7 +113,7 @@ export const caisseEn = {
     telephone: "Phone",
     orientationRapide: "Quick orientation",
     aideOrientation:
-      "Choose a destination to create the transfer. Confirmation (⋮ menu) is only possible after the invoice is created.",
+      "Choose a destination: the transfer is created immediately. Confirm it via the ⋮ menu after billing.",
     selectionnerPourOrienter: "Select a patient in the list to orient them.",
     actionsRapides: "Quick actions",
     actionRechercher: "Search patient",
@@ -127,13 +127,8 @@ export const caisseEn = {
     plusActions: "Actions for {{nom}}",
     actionImpossible: "Action not possible.",
     erreurInattendue: "Unexpected error.",
-    confirmation: {
-      titre: "Confirm orientation",
-      description:
-        "Create a transfer for {{patient}} to {{destination}}? It will remain pending confirmation after billing.",
-      confirmer: "Create transfer",
-      annuler: "Cancel",
-    },
+    factureRequisePourConfirmer:
+      "Create the patient's invoice first before confirming the transfer.",
     modaleExamens: {
       titre: "Patient exams",
       fermer: "Close",
@@ -263,6 +258,8 @@ export const caisseEn = {
     validerEncaisser: "Validate and collect",
     encaisserPaiement: "Collect payment",
     historiquePaiements: "Patient payment history",
+    patientsAttentePaiement: "Patients waiting for payment ({{count}})",
+    aucunPatientSansFacture: "No confirmed patient waiting for an invoice.",
     voirTout: "See all",
     aucunPaiement: "No payment recorded.",
     type: "Type",

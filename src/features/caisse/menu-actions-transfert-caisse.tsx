@@ -13,6 +13,11 @@ interface PropsMenuActionsTransfertCaisse {
   onRafraichir?: () => void;
 }
 
+/**
+ * Menu ⋮ comme à la réception : Confirmer / Rejeter / Restaurer.
+ * Visible dès qu'un transfert sortant existe (pas encore confirmé définitivement).
+ * La confirmation serveur exige toujours une facture établie.
+ */
 export function MenuActionsTransfertCaisse({
   patient,
   onRafraichir,
@@ -26,18 +31,17 @@ export function MenuActionsTransfertCaisse({
   const boutonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const transfere =
+    patient.statut === "Transféré" ||
+    patient.statutTransfertSortant === "ACCEPTE" ||
+    patient.statutTransfertSortant === "TERMINE";
+
   const peutConfirmer =
-    patient.factureOuverte &&
-    patient.statutTransfertSortant === "EN_ATTENTE" &&
-    !patient.enRecuperation;
+    patient.statutTransfertSortant === "EN_ATTENTE" && !patient.enRecuperation;
   const peutRejeter =
-    patient.factureOuverte &&
-    patient.statutTransfertSortant === "EN_ATTENTE" &&
-    !patient.enRecuperation;
+    patient.statutTransfertSortant === "EN_ATTENTE" && !patient.enRecuperation;
   const peutRestaurer =
-    patient.factureOuverte &&
-    patient.enRecuperation === true &&
-    patient.statutTransfertSortant === "REFUSE";
+    patient.enRecuperation === true && patient.statutTransfertSortant === "REFUSE";
 
   const mettreAJourPosition = useCallback(() => {
     const bouton = boutonRef.current;
@@ -86,6 +90,11 @@ export function MenuActionsTransfertCaisse({
   const executerAction = async (action: "confirmer" | "rejeter" | "recuperer") => {
     if (!patient.transfertSortantId || enCours) return;
 
+    if (action === "confirmer" && !patient.factureOuverte) {
+      setErreur(t("caisse.transferts.factureRequisePourConfirmer"));
+      return;
+    }
+
     setEnCours(true);
     setErreur(null);
 
@@ -114,12 +123,7 @@ export function MenuActionsTransfertCaisse({
     }
   };
 
-  const transfere =
-    patient.statut === "Transféré" ||
-    patient.statutTransfertSortant === "ACCEPTE" ||
-    patient.statutTransfertSortant === "TERMINE";
-
-  if (transfere || !patient.factureOuverte || !patient.transfertSortantId) {
+  if (transfere || !patient.transfertSortantId) {
     return null;
   }
 
@@ -130,7 +134,7 @@ export function MenuActionsTransfertCaisse({
       <div
         ref={menuRef}
         style={{ top: position.top, left: position.left }}
-        className="fixed z-[100] min-w-[180px] rounded-lg border border-gris-bordure bg-white py-1 shadow-lg"
+        className="fixed z-[100] min-w-[200px] rounded-lg border border-gris-bordure bg-white py-1 shadow-lg"
         role="menu"
       >
         {peutConfirmer && (
@@ -146,6 +150,9 @@ export function MenuActionsTransfertCaisse({
           >
             <Check className="h-3.5 w-3.5" />
             {t("caisse.transferts.confirmer")}
+            {!patient.factureOuverte && (
+              <span className="ml-auto text-[10px] text-amber-600">facture</span>
+            )}
           </button>
         )}
         {peutRejeter && (

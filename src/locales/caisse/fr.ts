@@ -113,7 +113,7 @@ export const caisseFr = {
     telephone: "Téléphone",
     orientationRapide: "Orientation rapide",
     aideOrientation:
-      "Choisissez une destination pour créer le transfert. La confirmation (menu ⋮) n'est possible qu'après établissement de la facture.",
+      "Choisissez une destination : le transfert est créé tout de suite. Confirmez-le via le menu ⋮ après la facture.",
     selectionnerPourOrienter: "Sélectionnez un patient dans la liste pour l'orienter.",
     actionsRapides: "Actions rapides",
     actionRechercher: "Rechercher patient",
@@ -127,13 +127,8 @@ export const caisseFr = {
     plusActions: "Actions pour {{nom}}",
     actionImpossible: "Action impossible.",
     erreurInattendue: "Erreur inattendue.",
-    confirmation: {
-      titre: "Confirmer l'orientation",
-      description:
-        "Créer un transfert de {{patient}} vers {{destination}} ? Il restera à confirmer après la facture.",
-      confirmer: "Créer le transfert",
-      annuler: "Annuler",
-    },
+    factureRequisePourConfirmer:
+      "Établissez d'abord la facture de ce patient avant de confirmer le transfert.",
     modaleExamens: {
       titre: "Examens du patient",
       fermer: "Fermer",
@@ -263,6 +258,8 @@ export const caisseFr = {
     validerEncaisser: "Valider et encaisser",
     encaisserPaiement: "Encaisser le paiement",
     historiquePaiements: "Historique des paiements du patient",
+    patientsAttentePaiement: "Patients en attente de paiement ({{count}})",
+    aucunPatientSansFacture: "Aucun patient confirmé en attente de facture.",
     voirTout: "Voir tout",
     aucunPaiement: "Aucun paiement enregistré.",
     type: "Type",

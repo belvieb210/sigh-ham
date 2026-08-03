@@ -3,12 +3,9 @@
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { CalendarPlus, Printer, Receipt, Search } from "lucide-react";
-import { ModaleConfirmation } from "@/components/ui/modale-confirmation";
 import { OrientationRapideCaisse } from "@/features/caisse/orientation-rapide-caisse";
 import { useOrientationCaisse } from "@/features/caisse/contexte-orientation-caisse";
-import {
-  useSelectionTransfertCaisseOptionnel,
-} from "@/features/caisse/contexte-selection-transfert-caisse";
+import { useSelectionTransfertCaisseOptionnel } from "@/features/caisse/contexte-selection-transfert-caisse";
 import { cn } from "@/lib/utils";
 
 function useGestionOrientation() {
@@ -17,7 +14,7 @@ function useGestionOrientation() {
 
   const onOrientationChange = (code: string) => {
     if (selection?.patientSelectionne) {
-      selection.demanderOrientation(code);
+      void selection.demanderOrientation(code);
     }
   };
 
@@ -100,9 +97,9 @@ function ResumeEtOrientation() {
         <div className="grid grid-cols-2 gap-2">
           <Link
             href="/sigh/caisse/transferts"
-            className="flex flex-col items-center gap-1.5 rounded-lg border border-gris-bordure p-3 text-center text-xs font-medium text-texte-principal hover:bg-slate-50"
+            className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-gris-bordure bg-[#f8fafc] p-3 text-center text-xs font-medium text-texte-principal hover:border-bleu-medical hover:bg-bleu-medical-clair"
           >
-            <Search className="h-4 w-4 text-bleu-medical" />
+            <Search className="h-6 w-6 text-bleu-medical" strokeWidth={1.75} />
             {t("caisse.transferts.actionRechercher")}
           </Link>
           <Link
@@ -111,23 +108,23 @@ function ResumeEtOrientation() {
                 ? `/sigh/caisse/facturation?dossier=${selection.resume.dossierId}`
                 : "/sigh/caisse/facturation"
             }
-            className="flex flex-col items-center gap-1.5 rounded-lg border border-gris-bordure p-3 text-center text-xs font-medium text-texte-principal hover:bg-slate-50"
+            className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-gris-bordure bg-[#f8fafc] p-3 text-center text-xs font-medium text-texte-principal hover:border-bleu-medical hover:bg-bleu-medical-clair"
           >
-            <Receipt className="h-4 w-4 text-bleu-medical" />
+            <Receipt className="h-6 w-6 text-bleu-medical" strokeWidth={1.75} />
             {t("caisse.transferts.actionFacturer")}
           </Link>
           <button
             type="button"
-            className="flex flex-col items-center gap-1.5 rounded-lg border border-gris-bordure p-3 text-center text-xs font-medium text-texte-principal hover:bg-slate-50"
+            className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-gris-bordure bg-[#f8fafc] p-3 text-center text-xs font-medium text-texte-principal hover:border-bleu-medical hover:bg-bleu-medical-clair"
           >
-            <Printer className="h-4 w-4 text-bleu-medical" />
+            <Printer className="h-6 w-6 text-bleu-medical" strokeWidth={1.75} />
             {t("caisse.transferts.actionImprimer")}
           </button>
           <button
             type="button"
-            className="flex flex-col items-center gap-1.5 rounded-lg border border-gris-bordure p-3 text-center text-xs font-medium text-texte-principal hover:bg-slate-50"
+            className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-gris-bordure bg-[#f8fafc] p-3 text-center text-xs font-medium text-texte-principal hover:border-bleu-medical hover:bg-bleu-medical-clair"
           >
-            <CalendarPlus className="h-4 w-4 text-bleu-medical" />
+            <CalendarPlus className="h-6 w-6 text-bleu-medical" strokeWidth={1.75} />
             {t("caisse.transferts.actionRdv")}
           </button>
         </div>
@@ -136,37 +133,10 @@ function ResumeEtOrientation() {
   );
 }
 
-function ModaleConfirmationOrientation() {
-  const { t } = useTranslation();
-  const selection = useSelectionTransfertCaisseOptionnel();
-  if (!selection) return null;
-
-  const conf = selection.confirmationOrientation;
-  const patient = selection.patientSelectionne;
-
-  return (
-    <ModaleConfirmation
-      ouverte={Boolean(conf)}
-      onFermer={selection.annulerConfirmationOrientation}
-      onConfirmer={() => selection.confirmerOrientation()}
-      titre={t("caisse.transferts.confirmation.titre")}
-      description={t("caisse.transferts.confirmation.description", {
-        patient: patient?.nomComplet ?? "—",
-        destination: conf?.label ?? "—",
-      })}
-      libelleConfirmer={t("caisse.transferts.confirmation.confirmer")}
-      libelleAnnuler={t("caisse.transferts.confirmation.annuler")}
-      enCours={selection.modificationEnCours}
-      variante="info"
-    />
-  );
-}
-
 export function PanneauDroitCaisse() {
   return (
     <aside className="flex w-full shrink-0 flex-col gap-4">
       <ResumeEtOrientation />
-      <ModaleConfirmationOrientation />
     </aside>
   );
 }
@@ -175,7 +145,6 @@ export function SectionsMobileCaisseTransferts() {
   return (
     <div className="space-y-4 xl:hidden">
       <ResumeEtOrientation />
-      <ModaleConfirmationOrientation />
     </div>
   );
 }

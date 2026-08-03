@@ -169,12 +169,6 @@ export async function rejeterTransfertCaisse(
     throw new Error("Seuls les transferts en attente peuvent être rejetés.");
   }
 
-  if (!dossierAFactureEtablie(transfert.dossier.factures)) {
-    throw new Error(
-      "Établissez d'abord la facture de ce patient pour gérer ce transfert."
-    );
-  }
-
   if (transfert.recuperation?.statut === "EN_RECUPERATION") {
     throw new Error("Ce transfert est déjà en récupération.");
   }
@@ -223,12 +217,6 @@ export async function recupererTransfertCaisse(agentId: string, transfertId: str
   const recuperation = transfert.recuperation;
   if (!recuperation || recuperation.statut !== "EN_RECUPERATION") {
     throw new Error("Aucune donnée en récupération pour ce transfert.");
-  }
-
-  if (!dossierAFactureEtablie(transfert.dossier.factures)) {
-    throw new Error(
-      "Établissez d'abord la facture de ce patient pour restaurer ce transfert."
-    );
   }
 
   return prisma.$transaction(async (tx) => {

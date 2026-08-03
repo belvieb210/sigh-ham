@@ -163,6 +163,12 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     return dossier.facture.lignes.filter((l) => !lignesMasquees.has(l.id));
   }, [dossier, lignesMasquees]);
 
+  /** Confirmés à la caisse, sans facture encore — les EN_ATTENTE restent sur /transferts */
+  const fileSansFacture = useMemo(
+    () => file.filter((p) => !p.factureOuverte),
+    [file]
+  );
+
   const totalExamens = useMemo(
     () => lignesVisibles.reduce((acc, l) => acc + l.montant, 0),
     [lignesVisibles]
@@ -363,64 +369,62 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           {t("caisse.facturation.retourListe")}
         </Link>
 
-        {/* Patients transférés vers la caisse */}
-        <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-3">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-texte-principal">
-              {t("caisse.facturation.fileAttenteTitre", { count: file.length })}
-            </h3>
-            <Link
-              href="/sigh/caisse/transferts"
-              className="text-xs font-semibold text-bleu-medical hover:underline"
-            >
-              {t("caisse.facturation.voirTout")}
-            </Link>
-          </div>
-          {chargementFile ? (
-            <div className="flex items-center justify-center gap-2 py-10 text-sm text-texte-secondaire">
-              <Loader2 className="h-4 w-4 animate-spin" />
+        {/* Patients confirmés à la caisse, sans facture — visible hors dossier ouvert */}
+        {!dossierId && (
+          <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-3">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-texte-principal">
+                {t("caisse.facturation.patientsAttentePaiement", {
+                  count: fileSansFacture.length,
+                })}
+              </h3>
+              <Link
+                href="/sigh/caisse/transferts"
+                className="text-xs font-semibold text-bleu-medical hover:underline"
+              >
+                {t("caisse.facturation.voirTout")}
+              </Link>
             </div>
-          ) : file.length === 0 ? (
-            <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
-              {t("caisse.facturation.selectionnerPatient")}
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
-                  <tr>
-                    <th className="px-4 py-2.5 font-semibold">N°</th>
-                    <th className="px-4 py-2.5 font-semibold">
-                      {t("caisse.facturation.colPatient")}
-                    </th>
-                    <th className="hidden px-4 py-2.5 font-semibold sm:table-cell">
-                      {t("caisse.facturation.colProvenance")}
-                    </th>
-                    <th className="px-4 py-2.5 font-semibold">
-                      {t("caisse.facturation.colPrestations")}
-                    </th>
-                    <th className="px-4 py-2.5 font-semibold">
-                      {t("caisse.facturation.colMontant")}
-                    </th>
-                    <th className="px-4 py-2.5 font-semibold">
-                      {t("caisse.facturation.colHeure")}
-                    </th>
-                    <th className="px-4 py-2.5 font-semibold">
-                      {t("caisse.facturation.colActions")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {file.slice(0, 8).map((p, index) => {
-                    const actif = dossierId === p.dossierId;
-                    return (
+            {chargementFile ? (
+              <div className="flex items-center justify-center gap-2 py-10 text-sm text-texte-secondaire">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            ) : fileSansFacture.length === 0 ? (
+              <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
+                {t("caisse.facturation.aucunPatientSansFacture")}
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
+                    <tr>
+                      <th className="px-4 py-2.5 font-semibold">N°</th>
+                      <th className="px-4 py-2.5 font-semibold">
+                        {t("caisse.facturation.colPatient")}
+                      </th>
+                      <th className="hidden px-4 py-2.5 font-semibold sm:table-cell">
+                        {t("caisse.facturation.colProvenance")}
+                      </th>
+                      <th className="px-4 py-2.5 font-semibold">
+                        {t("caisse.facturation.colPrestations")}
+                      </th>
+                      <th className="px-4 py-2.5 font-semibold">
+                        {t("caisse.facturation.colMontant")}
+                      </th>
+                      <th className="px-4 py-2.5 font-semibold">
+                        {t("caisse.facturation.colHeure")}
+                      </th>
+                      <th className="px-4 py-2.5 font-semibold">
+                        {t("caisse.facturation.colActions")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fileSansFacture.map((p, index) => (
                       <tr
                         key={p.fileAttenteId}
                         onClick={() => selectionnerPatientFile(p)}
-                        className={cn(
-                          "cursor-pointer border-t border-gris-bordure/70 transition-colors",
-                          actif ? "bg-bleu-medical-clair/50" : "hover:bg-slate-50"
-                        )}
+                        className="cursor-pointer border-t border-gris-bordure/70 transition-colors hover:bg-slate-50"
                       >
                         <td className="px-4 py-3 tabular-nums text-texte-secondaire">
                           {index + 1}
@@ -450,13 +454,13 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                           </button>
                         </td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
 
         {!dossierId ? null : chargementDossier || !dossier ? (
           <div className="flex items-center justify-center gap-2 rounded-xl border border-gris-bordure bg-white py-16 text-sm text-texte-secondaire">
@@ -909,71 +913,93 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               </Bouton>
             </div>
 
-            {/* Historique paiements patient */}
+            {/* Remplace l'ancien historique : file patients confirmés sans facture */}
             <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-3">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-                  {t("caisse.facturation.historiquePaiements")}
+                <h3 className="text-xs font-bold uppercase tracking-widest text-texte-principal">
+                  {t("caisse.facturation.patientsAttentePaiement", {
+                    count: fileSansFacture.length,
+                  })}
                 </h3>
-                <button
-                  type="button"
+                <Link
+                  href="/sigh/caisse/transferts"
                   className="text-xs font-semibold text-bleu-medical hover:underline"
                 >
                   {t("caisse.facturation.voirTout")}
-                </button>
+                </Link>
               </div>
-              {dossier.facture.historiquePaiements.length === 0 ? (
+              {fileSansFacture.length === 0 ? (
                 <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
-                  {t("caisse.facturation.aucunPaiement")}
+                  {t("caisse.facturation.aucunPatientSansFacture")}
                 </p>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[720px] text-left text-sm">
-                    <thead className="bg-gris-tres-clair/80 text-[11px] uppercase tracking-wider text-texte-secondaire">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
-                        <th className="px-4 py-2.5">{t("caisse.facturation.numeroRecu")}</th>
-                        <th className="px-4 py-2.5">{t("caisse.facturation.date")}</th>
-                        <th className="px-4 py-2.5 text-right">
-                          {t("caisse.facturation.montant")}
+                        <th className="px-4 py-2.5 font-semibold">N°</th>
+                        <th className="px-4 py-2.5 font-semibold">
+                          {t("caisse.facturation.colPatient")}
                         </th>
-                        <th className="px-4 py-2.5">{t("caisse.facturation.mode")}</th>
-                        <th className="px-4 py-2.5">{t("caisse.facturation.type")}</th>
-                        <th className="px-4 py-2.5">{t("caisse.facturation.utilisateur")}</th>
-                        <th className="px-4 py-2.5">{t("caisse.facturation.statut")}</th>
+                        <th className="hidden px-4 py-2.5 font-semibold sm:table-cell">
+                          {t("caisse.facturation.colProvenance")}
+                        </th>
+                        <th className="px-4 py-2.5 font-semibold">
+                          {t("caisse.facturation.colPrestations")}
+                        </th>
+                        <th className="px-4 py-2.5 font-semibold">
+                          {t("caisse.facturation.colMontant")}
+                        </th>
+                        <th className="px-4 py-2.5 font-semibold">
+                          {t("caisse.facturation.colHeure")}
+                        </th>
+                        <th className="px-4 py-2.5 font-semibold">
+                          {t("caisse.facturation.colActions")}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {dossier.facture.historiquePaiements.map((p) => (
-                        <tr key={p.id} className="border-t border-gris-bordure">
-                          <td className="px-4 py-2.5 font-medium text-bleu-medical">
-                            {p.numeroRecu}
-                          </td>
-                          <td className="px-4 py-2.5 text-texte-secondaire">
-                            {formaterDate(p.payeLe)}
-                          </td>
-                          <td className="px-4 py-2.5 text-right font-semibold">
-                            {formaterMontantCaisse(p.montant, devise)}
-                          </td>
-                          <td className="px-4 py-2.5">
-                            {t(`caisse.modesPaiement.${p.mode === "VIREMENT" ? "VIREMENT" : p.mode}`, {
-                              defaultValue: p.mode,
-                            })}
-                          </td>
-                          <td className="px-4 py-2.5 text-texte-secondaire">
-                            {p.typeFacture
-                              ? t(`caisse.modesFacture.${p.typeFacture}`, {
-                                  defaultValue: p.typeFacture,
-                                })
-                              : "—"}
-                          </td>
-                          <td className="px-4 py-2.5 text-texte-secondaire">{p.caissier}</td>
-                          <td className="px-4 py-2.5">
-                            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
-                              {t("caisse.facturation.paye")}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      {fileSansFacture.map((p, index) => {
+                        const actif = dossierId === p.dossierId;
+                        return (
+                          <tr
+                            key={`bas-${p.fileAttenteId}`}
+                            onClick={() => selectionnerPatientFile(p)}
+                            className={cn(
+                              "cursor-pointer border-t border-gris-bordure/70 transition-colors",
+                              actif ? "bg-bleu-medical-clair/50" : "hover:bg-slate-50"
+                            )}
+                          >
+                            <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                              {index + 1}
+                            </td>
+                            <td className="px-4 py-3 font-semibold text-texte-principal">
+                              {p.prenom} {p.nom}
+                            </td>
+                            <td className="hidden px-4 py-3 text-texte-secondaire sm:table-cell">
+                              {p.provenance}
+                            </td>
+                            <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                              {p.nombreExamens}
+                            </td>
+                            <td className="px-4 py-3 font-semibold text-texte-principal">
+                              {formaterMontantCaisse(p.montantEstime)}
+                            </td>
+                            <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                              {formaterHeure(p.arriveeLe)}
+                            </td>
+                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                onClick={() => selectionnerPatientFile(p)}
+                                className="rounded-lg border border-bleu-medical/30 px-3 py-1.5 text-xs font-semibold text-bleu-medical hover:bg-bleu-medical-clair/40"
+                              >
+                                {t("caisse.facturation.ouvrir")}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

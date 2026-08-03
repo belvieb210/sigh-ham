@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   },
   enTeteDroite: {
     width: "38%",
-    alignItems: "flex-end",
+    alignItems: "stretch",
   },
   badgeTitre: {
     borderWidth: 1.5,
@@ -122,6 +122,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 10,
     marginBottom: 4,
+    alignSelf: "flex-end",
   },
   badgeTitreTexte: {
     color: NOIR,
@@ -129,17 +130,31 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
   },
-  numeroDoc: {
-    color: NOIR,
-    fontSize: 11,
-    fontWeight: "bold",
-    marginBottom: 2,
+  metaLigne: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 1,
   },
-  metaDroite: {
+  metaLabel: {
     fontSize: 9,
     color: NOIR,
-    marginBottom: 1,
+  },
+  metaValeur: {
+    fontSize: 9,
+    color: NOIR,
     textAlign: "right",
+    flexShrink: 1,
+    paddingLeft: 6,
+  },
+  metaValeurBold: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: NOIR,
+    textAlign: "right",
+    flexShrink: 1,
+    paddingLeft: 6,
   },
   cartes: {
     flexDirection: "row",
@@ -341,14 +356,28 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
             <View style={styles.badgeTitre}>
               <Text style={styles.badgeTitreTexte}>{donnees.labels.titreTicket}</Text>
             </View>
-            <Text style={styles.numeroDoc}>
-              N° {donnees.numeroEnregistrement || "—"}
-            </Text>
-            <Text style={styles.metaDroite}>
-              Date : {donnees.dateEnregistrement || "—"}
-            </Text>
-            <Text style={styles.metaDroite}>Valable pour : 15 jours</Text>
-            <Text style={styles.metaDroite}>Devise : USD ($)</Text>
+            <View style={styles.metaLigne}>
+              <Text style={[styles.metaLabel, { fontWeight: "bold", fontSize: 11 }]}>
+                N°
+              </Text>
+              <Text style={styles.metaValeurBold}>
+                {donnees.numeroEnregistrement || "—"}
+              </Text>
+            </View>
+            <View style={styles.metaLigne}>
+              <Text style={styles.metaLabel}>Date</Text>
+              <Text style={styles.metaValeur}>
+                {donnees.dateEnregistrement || "—"}
+              </Text>
+            </View>
+            <View style={styles.metaLigne}>
+              <Text style={styles.metaLabel}>Valable pour</Text>
+              <Text style={styles.metaValeur}>15 jours</Text>
+            </View>
+            <View style={styles.metaLigne}>
+              <Text style={styles.metaLabel}>Devise</Text>
+              <Text style={styles.metaValeur}>USD ($)</Text>
+            </View>
           </View>
         </View>
 

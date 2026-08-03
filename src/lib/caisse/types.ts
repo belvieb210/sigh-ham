@@ -191,6 +191,12 @@ export interface TableauDeBordAccueilCaisse extends StatsCaisseJour {
   dernierPaiementId: string | null;
 }
 
+export interface LigneFactureResume {
+  libelle: string;
+  montant: number;
+  quantite: number;
+}
+
 export interface FactureResumeJour {
   id: string;
   dossierId: string;
@@ -201,7 +207,18 @@ export interface FactureResumeJour {
   devise: string;
   emiseLe: string | null;
   patient: string;
+  prenom: string;
+  nom: string;
   numeroPatient: string;
+  numeroDossier: string;
+  telephone: string | null;
+  dateNaissance: string | null;
+  sexe: string | null;
+  nombreExamens: number;
+  nombreLignes: number;
+  modePaiement: ModePaiement | null;
+  modeFacture: string | null;
+  lignes: LigneFactureResume[];
 }
 
 export interface EncaissementResumeJour {

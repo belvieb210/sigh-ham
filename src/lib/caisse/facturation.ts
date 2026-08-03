@@ -684,25 +684,61 @@ export async function listerFacturesDuJour(): Promise<FactureResumeJour[]> {
   finJour.setHours(23, 59, 59, 999);
 
   const factures = await prisma.facture.findMany({
-    where: { createdAt: { gte: debutJour, lte: finJour } },
+    where: { createdAt: { gte: debutJour, lte: finJour }, statut: { not: "ANNULEE" } },
     include: {
-      dossier: { include: { patient: true } },
+      lignes: { orderBy: { id: "asc" } },
+      paiements: { orderBy: { payeLe: "desc" }, take: 1 },
+      dossier: {
+        include: {
+          patient: true,
+          examensLaboratoire: {
+            where: { statut: { not: "ANNULE" } },
+            select: { id: true },
+          },
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
 
-  return factures.map((f) => ({
-    id: f.id,
-    dossierId: f.dossierId,
-    numeroFacture: f.numeroFacture,
-    statut: f.statut,
-    montantTotal: decimalVersNombre(f.montantTotal),
-    montantPaye: decimalVersNombre(f.montantPaye),
-    devise: f.devise,
-    emiseLe: f.emiseLe?.toISOString() ?? null,
-    patient: `${f.dossier.patient.prenom} ${f.dossier.patient.nom}`,
-    numeroPatient: f.dossier.patient.numeroPatient,
-  }));
+  return factures.map((f) => {
+    const dernierPaiement = f.paiements[0] ?? null;
+    const modeFacture =
+      dernierPaiement?.reference
+        ?.split("|")
+        .find((part) => part.startsWith("modeFacture="))
+        ?.replace("modeFacture=", "") ?? null;
+
+    const lignesPositives = f.lignes.filter((l) => decimalVersNombre(l.montant) > 0);
+
+    return {
+      id: f.id,
+      dossierId: f.dossierId,
+      numeroFacture: f.numeroFacture,
+      statut: f.statut,
+      montantTotal: decimalVersNombre(f.montantTotal),
+      montantPaye: decimalVersNombre(f.montantPaye),
+      devise: f.devise,
+      emiseLe: f.emiseLe?.toISOString() ?? null,
+      patient: `${f.dossier.patient.prenom} ${f.dossier.patient.nom}`,
+      prenom: f.dossier.patient.prenom,
+      nom: f.dossier.patient.nom,
+      numeroPatient: f.dossier.patient.numeroPatient,
+      numeroDossier: f.dossier.numeroDossier,
+      telephone: f.dossier.patient.telephone,
+      dateNaissance: f.dossier.patient.dateNaissance?.toISOString() ?? null,
+      sexe: f.dossier.patient.sexe ?? null,
+      nombreExamens: f.dossier.examensLaboratoire.length,
+      nombreLignes: lignesPositives.length,
+      modePaiement: dernierPaiement?.mode ?? null,
+      modeFacture,
+      lignes: lignesPositives.map((l) => ({
+        libelle: l.libelle,
+        montant: decimalVersNombre(l.montant),
+        quantite: l.quantite,
+      })),
+    };
+  });
 }
 
 export async function listerEncaissementsDuJour(): Promise<EncaissementResumeJour[]> {

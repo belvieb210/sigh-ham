@@ -542,64 +542,66 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
       <h3 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
         {t("caisse.facturation.resumeFacture")}
       </h3>
-      <dl className="space-y-2.5 text-sm">
+      <div className="space-y-2.5 text-sm">
         <div className="flex justify-between gap-3">
-          <dt className="text-texte-secondaire">{t("caisse.facturation.totalExamens")}</dt>
-          <dd className="font-medium">{formaterMontantCaisse(totalExamens, devise)}</dd>
+          <span className="text-texte-secondaire">{t("caisse.facturation.totalExamens")}</span>
+          <span className="font-medium">{formaterMontantCaisse(totalExamens, devise)}</span>
         </div>
         {modeFacture === "AVANCE" && (
           <div className="flex items-center justify-between gap-3">
-            <dt className="text-texte-secondaire">
+            <label
+              htmlFor="montant-avance-resume"
+              className="text-texte-secondaire"
+            >
               {t("caisse.facturation.montantAvance")}
-            </dt>
-            <dd>
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                max={resteAPayer}
-                value={montantAvance}
-                onChange={(e) =>
-                  setMontantAvance(arrondirMontantCaisse(Number(e.target.value) || 0))
-                }
-                className="w-24 rounded-lg border border-bleu-medical px-2 py-1.5 text-right text-sm ring-1 ring-bleu-medical/20"
-                aria-label={t("caisse.facturation.montantAvance")}
-              />
-            </dd>
+            </label>
+            <input
+              id="montant-avance-resume"
+              type="number"
+              min={0}
+              step="0.01"
+              max={resteAPayer}
+              value={montantAvance}
+              onChange={(e) =>
+                setMontantAvance(arrondirMontantCaisse(Number(e.target.value) || 0))
+              }
+              className="w-24 rounded-lg border border-bleu-medical px-2 py-1.5 text-right text-sm ring-1 ring-bleu-medical/20"
+            />
           </div>
         )}
         <div className="flex items-center justify-between gap-3">
-          <dt className="text-texte-secondaire">{t("caisse.facturation.remise")}</dt>
-          <dd>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={remise}
-              onChange={(e) => setRemise(arrondirMontantCaisse(Number(e.target.value) || 0))}
-              className="w-24 rounded-lg border border-gris-bordure px-2 py-1.5 text-right text-sm"
-              aria-label={t("caisse.facturation.remise")}
-            />
-          </dd>
+          <label htmlFor="remise-resume" className="text-texte-secondaire">
+            {t("caisse.facturation.remise")}
+          </label>
+          <input
+            id="remise-resume"
+            type="number"
+            min={0}
+            step="0.01"
+            value={remise}
+            onChange={(e) => setRemise(arrondirMontantCaisse(Number(e.target.value) || 0))}
+            className="w-24 rounded-lg border border-gris-bordure px-2 py-1.5 text-right text-sm"
+          />
         </div>
         <div className="flex justify-between gap-3">
-          <dt className="text-texte-secondaire">{t("caisse.facturation.sousTotal")}</dt>
-          <dd className="font-medium">{formaterMontantCaisse(sousTotal, devise)}</dd>
+          <span className="text-texte-secondaire">{t("caisse.facturation.sousTotal")}</span>
+          <span className="font-medium">{formaterMontantCaisse(sousTotal, devise)}</span>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <dt className="text-texte-secondaire">{t("caisse.facturation.fraisDivers")}</dt>
-          <dd>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={fraisDivers}
-              onChange={(e) =>
-                setFraisDivers(arrondirMontantCaisse(Number(e.target.value) || 0))
-              }
-              className="w-24 rounded-lg border border-gris-bordure px-2 py-1.5 text-right text-sm"
-            />
-          </dd>
+          <label htmlFor="frais-divers-resume" className="text-texte-secondaire">
+            {t("caisse.facturation.fraisDivers")}
+          </label>
+          <input
+            id="frais-divers-resume"
+            type="number"
+            min={0}
+            step="0.01"
+            value={fraisDivers}
+            onChange={(e) =>
+              setFraisDivers(arrondirMontantCaisse(Number(e.target.value) || 0))
+            }
+            className="w-24 rounded-lg border border-gris-bordure px-2 py-1.5 text-right text-sm"
+          />
         </div>
         <div className="border-t border-gris-bordure pt-3">
           <p className="text-[11px] font-bold uppercase tracking-wider text-texte-secondaire">
@@ -610,14 +612,14 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           </p>
         </div>
         <div className="flex justify-between gap-3 pt-1">
-          <dt className="text-texte-secondaire">{t("caisse.facturation.montantPaye")}</dt>
-          <dd className="font-medium">
+          <span className="text-texte-secondaire">{t("caisse.facturation.montantPaye")}</span>
+          <span className="font-medium">
             {formaterMontantCaisse(montantPaiement, devise)}
-          </dd>
+          </span>
         </div>
         <div className="flex justify-between gap-3">
-          <dt className="text-texte-secondaire">{t("caisse.facturation.resteAPayer")}</dt>
-          <dd
+          <span className="text-texte-secondaire">{t("caisse.facturation.resteAPayer")}</span>
+          <span
             className={cn(
               "font-bold",
               Math.max(0, resteAPayer - montantPaiement) <= 0
@@ -626,9 +628,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
             )}
           >
             {formaterMontantCaisse(Math.max(0, resteAPayer - montantPaiement), devise)}
-          </dd>
+          </span>
         </div>
-      </dl>
+      </div>
 
       <div>
         <p className="mb-2 text-xs font-bold uppercase tracking-widest text-texte-secondaire">

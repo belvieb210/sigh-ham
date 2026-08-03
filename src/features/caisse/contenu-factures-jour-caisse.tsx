@@ -331,7 +331,7 @@ export function ContenuFacturesJourCaisse({
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectionId(f.id);
-                                  void imprimerRecuCaisseThermique(f);
+                                  imprimerRecuCaisseThermique(f);
                                 }}
                                 className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire"
                                 aria-label={t("caisse.factures.imprimer")}
@@ -449,7 +449,7 @@ export function ContenuFacturesJourCaisse({
                                   type="button"
                                   onClick={() => {
                                     setSelectionId(f.id);
-                                    void imprimerRecuCaisseThermique(f);
+                                    imprimerRecuCaisseThermique(f);
                                   }}
                                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:bg-gris-tres-clair hover:text-bleu-medical"
                                   aria-label={t("caisse.factures.imprimer")}
@@ -680,7 +680,7 @@ export function ContenuFacturesJourCaisse({
                     <div className="mt-4 grid gap-2">
                       <button
                         type="button"
-                        onClick={() => void imprimerRecuCaisseThermique(factureSelectionnee)}
+                        onClick={() => imprimerRecuCaisseThermique(factureSelectionnee)}
                         className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-bleu-medical bg-white px-4 py-2.5 text-sm font-semibold text-bleu-medical hover:bg-bleu-medical-clair"
                       >
                         <Printer className="h-4 w-4" />

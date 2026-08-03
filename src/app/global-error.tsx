@@ -15,16 +15,41 @@ export default function ErreurGlobale({
 
   return (
     <html lang="fr">
-      <body className="flex min-h-screen flex-col items-center justify-center bg-[#f1f5f9] px-4 font-sans text-center">
-        <h1 className="text-xl font-bold text-slate-900">Erreur critique</h1>
-        <p className="mt-2 max-w-md text-sm text-slate-600">
-          L&apos;application n&apos;a pas pu s&apos;afficher correctement.
-        </p>
-        <button
-          type="button"
-          onClick={reset}
-          className="mt-6 rounded-lg bg-[#1e6fd9] px-6 py-2.5 text-sm font-semibold text-white hover:opacity-90"
-        >
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <style>{`
+          body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+            text-align: center;
+          }
+          h1 { margin: 0; font-size: 1.25rem; }
+          p { margin: 12px 0 0; max-width: 28rem; color: #64748b; font-size: 0.95rem; }
+          button {
+            margin-top: 24px;
+            border: 0;
+            border-radius: 10px;
+            padding: 12px 20px;
+            background: #1e6fd9;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+          }
+        `}</style>
+      </head>
+      <body>
+        <h1>Erreur critique</h1>
+        <p>L&apos;application n&apos;a pas pu s&apos;afficher correctement.</p>
+        <button type="button" onClick={reset}>
           Réessayer
         </button>
       </body>

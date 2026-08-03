@@ -22,6 +22,10 @@ function estRouteAuth(pathname: string) {
   return pathname === "/connexion" || pathname.startsWith("/connexion/");
 }
 
+function estRoutePubliqueRecu(pathname: string) {
+  return pathname === "/r" || pathname.startsWith("/r/");
+}
+
 export function FournisseurRecherche({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [ouverte, setOuverte] = useState(false);
@@ -31,7 +35,7 @@ export function FournisseurRecherche({ children }: { children: ReactNode }) {
   const basculer = useCallback(() => setOuverte((v) => !v), []);
 
   useEffect(() => {
-    if (estRouteAuth(pathname)) return;
+    if (estRouteAuth(pathname) || estRoutePubliqueRecu(pathname)) return;
 
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -46,7 +50,7 @@ export function FournisseurRecherche({ children }: { children: ReactNode }) {
   return (
     <RechercheContext.Provider value={{ ouvrir, fermer }}>
       {children}
-      {!estRouteAuth(pathname) && (
+      {!estRouteAuth(pathname) && !estRoutePubliqueRecu(pathname) && (
         <ModaleRecherche ouverte={ouverte} onFermer={fermer} />
       )}
     </RechercheContext.Provider>

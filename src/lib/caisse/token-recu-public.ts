@@ -28,25 +28,43 @@ function signaturesEgales(a: string, b: string): boolean {
   }
 }
 
-/** Jeton opaque liant le QR à une facture précise (pas au patient entier). */
+/**
+ * Jeton opaque liant le QR à une facture précise.
+ * Séparateur `~` (évite les problèmes de « extension » avec `.` dans certains clients).
+ */
 export function creerTokenRecuFacture(factureId: string): string {
   const exp = Math.floor(Date.now() / 1000) + DUREE_TOKEN_SECONDES;
   const payload = Buffer.from(
-    JSON.stringify({ f: factureId, e: exp, v: 1 }),
+    JSON.stringify({ f: factureId, e: exp, v: 2 }),
     "utf8"
   ).toString("base64url");
-  return `${payload}.${signer(payload)}`;
+  return `${payload}~${signer(payload)}`;
+}
+
+function decouperToken(token: string): { payload: string; sig: string } | null {
+  // v2: payload~sig — v1 (ancien): payload.sig
+  if (token.includes("~")) {
+    const i = token.indexOf("~");
+    const payload = token.slice(0, i);
+    const sig = token.slice(i + 1);
+    return payload && sig ? { payload, sig } : null;
+  }
+  const i = token.indexOf(".");
+  if (i <= 0) return null;
+  const payload = token.slice(0, i);
+  const sig = token.slice(i + 1);
+  return payload && sig ? { payload, sig } : null;
 }
 
 /** Retourne l'id facture si le jeton est valide, sinon null. */
 export function verifierTokenRecuFacture(token: string): string | null {
-  const [payload, sig] = token.split(".");
-  if (!payload || !sig) return null;
-  if (!signaturesEgales(sig, signer(payload))) return null;
+  const parts = decouperToken(token.trim());
+  if (!parts) return null;
+  if (!signaturesEgales(parts.sig, signer(parts.payload))) return null;
 
   try {
     const data = JSON.parse(
-      Buffer.from(payload, "base64url").toString("utf8")
+      Buffer.from(parts.payload, "base64url").toString("utf8")
     ) as { f?: string; e?: number };
     if (!data.f || typeof data.e !== "number") return null;
     if (data.e < Math.floor(Date.now() / 1000)) return null;

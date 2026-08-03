@@ -18,7 +18,7 @@ export function ContenuMessagerieReception({ utilisateur, estAdmin }: PropsConte
     <MiseEnPageReception
       utilisateur={utilisateur}
       titre={t("reception.pages.messagerie.titre")}
-      sousTitre={t("reception.pages.messagerie.description")}
+      sousTitre={t("reception.layout.sousTitre")}
     >
       <Suspense
         fallback={

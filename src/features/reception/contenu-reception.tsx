@@ -117,7 +117,7 @@ export function ContenuReception({ utilisateur }: PropsContenuReception) {
   return (
     <MiseEnPageReception
       utilisateur={utilisateur}
-      titre={t("reception.layout.titre")}
+      titre={t("reception.pages.accueil.titre")}
       sousTitre={t("reception.layout.sousTitre")}
       panneauDroit={<PanneauDroitReception afficherTransfertManuel />}
     >

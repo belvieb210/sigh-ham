@@ -14,7 +14,7 @@ export function ContenuNotificationsReception({
     <MiseEnPageReception
       utilisateur={utilisateur}
       titre={t("reception.pages.notifications.titre")}
-      sousTitre={t("reception.pages.notifications.description")}
+      sousTitre={t("reception.layout.sousTitre")}
     >
       <InterfaceNotifications />
     </MiseEnPageReception>

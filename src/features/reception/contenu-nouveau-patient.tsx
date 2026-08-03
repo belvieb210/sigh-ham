@@ -74,7 +74,11 @@ export function ContenuNouveauPatient({ utilisateur }: PropsContenuNouveauPatien
   return (
     <MiseEnPageReception
       utilisateur={utilisateur}
-      titre={t("reception.layout.titre")}
+      titre={
+        modeEdition
+          ? t("reception.pages.nouveau.titreModification")
+          : t("reception.pages.nouveau.titre")
+      }
       sousTitre={t("reception.layout.sousTitre")}
       panneauDroit={<PanneauDroitReception />}
     >

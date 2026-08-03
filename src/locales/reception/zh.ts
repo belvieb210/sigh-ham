@@ -1,4 +1,4 @@
-/** 中文翻译 — SIGH 接待模块 */
+﻿/** 中文翻译 — SIGH 接待模块 */
 
 import type { ReceptionFr } from "./fr";
 import { messagerieZh } from "./blocs/messagerie-zh";
@@ -470,6 +470,24 @@ export const receptionZh = {
   tableau: {
     recents: "最近登记的患者",
     chargement: "加载中…",
+    sousTitreNonConfirmes: "{{count}} patient(s) awaiting transfer confirmation",
+    videNonConfirmes: "No patients awaiting confirmation. Confirmed transfers no longer appear here.",
+    ouvrirFiltres: "Open filters",
+    fermerFiltres: "Close filters",
+    filtres: {
+      dateDu: "From (date)",
+      dateAu: "To (date)",
+      nom: "Last name",
+      prenom: "First name",
+      telephone: "Phone",
+      numeroPatient: "Patient No.",
+      placeholderNom: "E.g. KABILA",
+      placeholderPrenom: "E.g. Joseph",
+      placeholderTelephone: "E.g. 089…",
+      placeholderNumero: "E.g. PAT-2026-…",
+      reinitialiser: "Reset",
+      rechercher: "Search",
+    },
   },
   profil: {
     sections: {

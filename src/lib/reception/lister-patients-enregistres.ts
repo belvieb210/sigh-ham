@@ -19,6 +19,16 @@ export interface ListePatientsEnregistresResultat {
   stats: StatsPatientsEnregistres;
 }
 
+/** Transfert pas encore confirmé (ou patient pas encore orienté). */
+export function estPatientTransfertNonConfirme(patient: PatientEnregistre): boolean {
+  const statut = patient.statutTransfert;
+  if (!statut) return true;
+  if (statut === "ACCEPTE" || statut === "TERMINE") return false;
+  if (statut === "REFUSE") return Boolean(patient.enRecuperation);
+  // EN_ATTENTE, EN_TRAITEMENT, etc.
+  return true;
+}
+
 function calculerStats(dossiers: DossierVisite[]): StatsPatientsEnregistres {
   const debutJour = new Date();
   debutJour.setHours(0, 0, 0, 0);
@@ -52,7 +62,14 @@ export async function listerPatientsEnregistres(
   };
 }
 
-export async function listerPatientsRecents(limite = 4): Promise<PatientEnregistre[]> {
-  const { patients } = await listerPatientsEnregistres(limite);
-  return patients;
+/**
+ * Accueil réception : patients dont le transfert n'est pas encore confirmé.
+ * Une fois confirmé (ACCEPTE), ils disparaissent de cette liste.
+ */
+export async function listerPatientsRecents(limite = 40): Promise<PatientEnregistre[]> {
+  const dossiers = await chargerDossiersAccueil(Math.max(limite * 6, 60));
+  const patients = dedupliquerParPatient(dossiersVersPatients(dossiers)).filter(
+    estPatientTransfertNonConfirme
+  );
+  return patients.slice(0, limite);
 }

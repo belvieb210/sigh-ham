@@ -1,4 +1,4 @@
-/** Traductions LN — module SIGH Réception */
+﻿/** Traductions LN — module SIGH Réception */
 
 import type { ReceptionFr } from "./fr";
 import { messagerieLn } from "./blocs/messagerie-ln";
@@ -471,6 +471,24 @@ export const receptionLn = {
   tableau: {
     recents: "Ba patient enregistrés ya sika",
     chargement: "Kozonga…",
+    sousTitreNonConfirmes: "{{count}} patient(s) awaiting transfer confirmation",
+    videNonConfirmes: "No patients awaiting confirmation. Confirmed transfers no longer appear here.",
+    ouvrirFiltres: "Open filters",
+    fermerFiltres: "Close filters",
+    filtres: {
+      dateDu: "From (date)",
+      dateAu: "To (date)",
+      nom: "Last name",
+      prenom: "First name",
+      telephone: "Phone",
+      numeroPatient: "Patient No.",
+      placeholderNom: "E.g. KABILA",
+      placeholderPrenom: "E.g. Joseph",
+      placeholderTelephone: "E.g. 089…",
+      placeholderNumero: "E.g. PAT-2026-…",
+      reinitialiser: "Reset",
+      rechercher: "Search",
+    },
   },
   profil: {
     sections: {

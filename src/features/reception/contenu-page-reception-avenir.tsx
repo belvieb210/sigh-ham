@@ -43,7 +43,7 @@ export function ContenuPageReceptionAvenir({
   return (
     <MiseEnPageReception
       utilisateur={utilisateur}
-      titre={t("reception.layout.titre")}
+      titre={t(`reception.pages.${page}.titre`)}
       sousTitre={t("reception.layout.sousTitre")}
     >
       <div className="mx-auto w-full max-w-[900px]">

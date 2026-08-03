@@ -247,6 +247,8 @@ export interface PatientEnregistre {
   enRecuperation?: boolean;
   /** Code Prisma de la salle destination (transfert actif) */
   codeSalleDestination?: string;
+  /** Date/heure d'activité ISO (enregistrement ou transfert) pour filtres */
+  dateActivite?: string;
 }
 
 function avecCleListe(patient: Omit<PatientEnregistre, "cleListe" | "dossierId">): PatientEnregistre {

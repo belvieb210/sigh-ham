@@ -230,6 +230,7 @@ export function mapperDossierVisite(dossier: DossierVisite): PatientEnregistre {
     statut,
     statutCouleur,
     heure: formaterHeure(dateActiviteVisite(dossier)),
+    dateActivite: dateActiviteVisite(dossier).toISOString(),
     transfertId: transfertActuel?.id,
     statutTransfert: transfertActuel?.statut,
     enRecuperation,

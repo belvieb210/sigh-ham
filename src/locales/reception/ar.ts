@@ -1,4 +1,4 @@
-/** ترجمات عربية — وحدة SIGH الاستقبال */
+﻿/** ترجمات عربية — وحدة SIGH الاستقبال */
 
 import type { ReceptionFr } from "./fr";
 
@@ -784,6 +784,24 @@ export const receptionAr = {
   tableau: {
     recents: "المرضى المسجلون مؤخراً",
     chargement: "جارٍ التحميل…",
+    sousTitreNonConfirmes: "{{count}} patient(s) awaiting transfer confirmation",
+    videNonConfirmes: "No patients awaiting confirmation. Confirmed transfers no longer appear here.",
+    ouvrirFiltres: "Open filters",
+    fermerFiltres: "Close filters",
+    filtres: {
+      dateDu: "From (date)",
+      dateAu: "To (date)",
+      nom: "Last name",
+      prenom: "First name",
+      telephone: "Phone",
+      numeroPatient: "Patient No.",
+      placeholderNom: "E.g. KABILA",
+      placeholderPrenom: "E.g. Joseph",
+      placeholderTelephone: "E.g. 089…",
+      placeholderNumero: "E.g. PAT-2026-…",
+      reinitialiser: "Reset",
+      rechercher: "Search",
+    },
   },
   profil: {
     sections: {

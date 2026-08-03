@@ -780,6 +780,24 @@ export const receptionFr = {
   tableau: {
     recents: "Patients récemment enregistrés",
     chargement: "Chargement…",
+    sousTitreNonConfirmes: "{{count}} patient(s) en attente de confirmation de transfert",
+    videNonConfirmes: "Aucun patient en attente de confirmation. Les transferts confirmés n'apparaissent plus ici.",
+    ouvrirFiltres: "Ouvrir les filtres",
+    fermerFiltres: "Fermer les filtres",
+    filtres: {
+      dateDu: "Du (date)",
+      dateAu: "Au (date)",
+      nom: "Nom",
+      prenom: "Prénom",
+      telephone: "Téléphone",
+      numeroPatient: "N° patient",
+      placeholderNom: "Ex. KABILA",
+      placeholderPrenom: "Ex. Joseph",
+      placeholderTelephone: "Ex. 089…",
+      placeholderNumero: "Ex. PAT-2026-…",
+      reinitialiser: "Réinitialiser",
+      rechercher: "Rechercher",
+    },
   },
   profil: {
     sections: {

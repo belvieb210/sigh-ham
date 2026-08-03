@@ -160,6 +160,7 @@ export function ListePatientsTransferes() {
           },
         ]}
         afficherFiltreStatut={false}
+        idPrefixFiltres="filtre-transferts"
         varianteActions="transferts"
         onRafraichirTransferts={() => void charger({ silencieux: true })}
         patientSelectionneId={patientSelectionne?.id ?? null}

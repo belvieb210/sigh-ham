@@ -1109,11 +1109,11 @@ export const FormulaireEnregistrement = forwardRef<
         )}
       </div>
 
-      {/* Pied mobile */}
+      {/* Pied mobile — au-dessus de la navigation basse */}
       <div
         className={cn(
-          "sticky bottom-0 z-20 flex items-center gap-2 border-t border-gris-bordure bg-white/95 p-3 backdrop-blur-sm lg:hidden",
-          estComplet && "bottom-[calc(3.5rem+env(safe-area-inset-bottom))]"
+          "sticky z-20 flex items-center gap-2 border-t border-gris-bordure bg-white/95 p-3 backdrop-blur-sm lg:hidden",
+          "bottom-[calc(3.75rem+env(safe-area-inset-bottom))]"
         )}
       >
         <Bouton

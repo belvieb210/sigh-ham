@@ -20,7 +20,7 @@ export function ContenuPatientsTransferes({ utilisateur }: PropsContenuPatientsT
   return (
     <MiseEnPageReception
       utilisateur={utilisateur}
-      titre={t("reception.layout.titre")}
+      titre={t("reception.pages.transferts.titre")}
       sousTitre={t("reception.layout.sousTitre")}
       panneauDroit={<PanneauDroitReception variante="transferts" />}
       activerSelectionTransfert

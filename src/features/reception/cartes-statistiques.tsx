@@ -40,7 +40,7 @@ export function CartesStatistiquesReception() {
   return (
     <>
       {/* Mobile : défilement horizontal */}
-      <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 snap-x snap-mandatory lg:hidden">
+      <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 snap-x snap-mandatory md:hidden">
         {stats.map((stat) => {
           const Icone = stat.icone;
           return (
@@ -68,7 +68,7 @@ export function CartesStatistiquesReception() {
       </div>
 
       {/* Desktop : grille */}
-      <div className="hidden gap-4 lg:grid lg:grid-cols-3">
+      <div className="hidden gap-4 md:grid md:grid-cols-3">
         {stats.map((stat) => {
           const Icone = stat.icone;
           return (

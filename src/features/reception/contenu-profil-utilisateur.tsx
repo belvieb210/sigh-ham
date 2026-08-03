@@ -52,7 +52,7 @@ export function ContenuProfilUtilisateur({
   const inputPhotoRef = useRef<HTMLInputElement>(null);
   const Layout = salle === "caisse" ? MiseEnPageCaisse : MiseEnPageReception;
   const titreLayout =
-    salle === "caisse" ? t("caisse.layout.titre") : t("reception.layout.titre");
+    salle === "caisse" ? t("caisse.pages.profil.titre") : t("reception.pages.profil.titre");
   const sousTitreLayout =
     salle === "caisse" ? t("caisse.layout.sousTitre") : t("reception.layout.sousTitre");
   const filAccueil =

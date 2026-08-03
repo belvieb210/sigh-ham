@@ -67,16 +67,16 @@ export function CartePatientEnregistre({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-texte-principal">{patient.nom}</p>
-          <p className="mt-0.5 font-mono text-[11px] text-texte-secondaire">{patient.id}</p>
-          <p className="mt-1 text-xs text-texte-secondaire">{patient.telephone}</p>
+          <p className="truncate font-semibold text-texte-principal">{patient.nom}</p>
+          <p className="mt-0.5 truncate font-mono text-[11px] text-texte-secondaire">{patient.id}</p>
+          <p className="mt-1 truncate text-xs text-texte-secondaire">{patient.telephone}</p>
         </div>
         <span className="shrink-0 text-xs font-medium tabular-nums text-texte-secondaire">
           {patient.heure}
         </span>
       </div>
 
-      <p className="mt-2 text-sm text-texte-secondaire">{patient.motif}</p>
+      <p className="mt-2 line-clamp-2 text-sm text-texte-secondaire">{patient.motif}</p>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <BadgeOrientation patient={patient} />
@@ -595,8 +595,8 @@ export function TableauPatients({
         </div>
       )}
 
-      {/* Cartes mobile */}
-      <div className={`space-y-3 lg:hidden ${compact ? "p-3" : "p-3 sm:p-4"}`}>
+      {/* Cartes mobile / tablette */}
+      <div className={`space-y-3 md:hidden ${compact ? "p-3" : "p-3 sm:p-4"}`}>
         {patients.length === 0 ? (
           <p className="py-8 text-center text-sm text-texte-secondaire">
             {t("reception.erreurs.aucunPatientCourt")}
@@ -617,7 +617,7 @@ export function TableauPatients({
       </div>
 
       {/* Tableau desktop */}
-      <div className="hidden overflow-x-auto lg:block">
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead>
             <tr className="border-b border-gris-bordure bg-gris-tres-clair/80 text-xs font-semibold uppercase tracking-wide text-texte-secondaire">

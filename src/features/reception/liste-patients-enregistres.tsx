@@ -139,6 +139,7 @@ export function ListePatientsEnregistres() {
           { cle: "resultats", label: t("reception.liste.stats.resultats"), valeur: 0, accent: "bleu" },
           { cle: "enAttente", label: t("reception.liste.stats.enAttente"), valeur: stats.enAttente, accent: "ambre" },
         ]}
+        idPrefixFiltres="filtre-enregistres"
         afficherFiltreStatut
         placeholderRecherche={t("reception.pages.enregistres.placeholder")}
         patientSelectionneId={patientSelectionne?.id ?? null}

@@ -254,7 +254,7 @@ export function EnTeteSigh({ titre, sousTitre, utilisateur, onMenu }: PropsEnTet
   return (
     <header className="sticky top-0 z-30 shrink-0 border-b border-gris-bordure bg-white">
       {/* Mobile */}
-      <div className="flex items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3 lg:hidden">
+      <div className="flex items-center gap-1.5 px-2.5 py-2 sm:gap-2 sm:px-4 sm:py-2.5 lg:hidden">
         <button
           type="button"
           onClick={onMenu}
@@ -263,16 +263,17 @@ export function EnTeteSigh({ titre, sousTitre, utilisateur, onMenu }: PropsEnTet
         >
           <Menu className="h-5 w-5" />
         </button>
-        <LogoHam taille="petit" href="/sigh/reception" afficherTexte={false} />
+        <LogoHam
+          taille="petit"
+          href="/sigh/reception"
+          afficherTexte={false}
+          className="hidden shrink-0 sm:block"
+        />
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-sm font-bold text-bleu-medical sm:text-base">
-            {t("reception.layout.reception")}
-          </h1>
-          <p className="truncate text-[10px] text-texte-secondaire sm:text-[11px]">
-            {sousTitre}
-          </p>
+          <h1 className="truncate text-sm font-bold text-texte-principal">{titre}</h1>
+          <p className="truncate text-[10px] text-texte-secondaire">{sousTitre}</p>
         </div>
-        <SelecteurLangue variante="compacte" className="shrink-0" />
+        <SelecteurLangue variante="compacte" className="hidden shrink-0 sm:block" />
         <BoutonNotificationsEnTete />
         <MenuProfilEntete utilisateur={utilisateur} compact />
       </div>

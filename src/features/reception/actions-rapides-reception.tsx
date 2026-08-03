@@ -160,7 +160,7 @@ export function ActionsRapidesReception({
       {erreur && <p className="mt-3 text-xs text-red-600">{erreur}</p>}
       {message && !erreur && <p className="mt-3 text-xs text-emerald-700">{message}</p>}
       {afficherTransfertManuel && (
-        <p className="mt-3 text-[11px] leading-relaxed text-texte-secondaire">
+        <p className="mt-3 text-[11px] leading-relaxed text-red-600">
           {t("reception.actions.aideTransfertManuel")}
         </p>
       )}

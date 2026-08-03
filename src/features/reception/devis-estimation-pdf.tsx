@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   },
   enTeteDroite: {
     width: "40%",
-    alignItems: "stretch",
+    alignItems: "flex-end",
   },
   badgeTitre: {
     borderWidth: 1.5,
@@ -126,7 +126,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 8,
     marginBottom: 2,
-    alignSelf: "flex-end",
   },
   badgeTitreTexte: {
     color: NOIR,
@@ -135,19 +134,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 1,
   },
-  /** Bloc meta compact : 1 Text multi-lignes (évite l'espace extra des View flex) */
+  /** Bloc meta compact, aligné sous le badge ESTIMATION (à droite) */
   metaBloc: {
-    width: "100%",
     marginTop: 0,
     marginBottom: 0,
     paddingTop: 0,
     paddingBottom: 0,
+    textAlign: "right",
   },
   metaLigneTexte: {
     fontSize: 9,
     color: NOIR,
     lineHeight: 1.15,
     marginBottom: 0,
+    textAlign: "right",
   },
   metaLigneNumero: {
     fontSize: 10,
@@ -155,6 +155,7 @@ const styles = StyleSheet.create({
     color: ROUGE,
     lineHeight: 1.15,
     marginBottom: 0,
+    textAlign: "right",
   },
   separateurEnTete: {
     borderBottomWidth: 1.5,

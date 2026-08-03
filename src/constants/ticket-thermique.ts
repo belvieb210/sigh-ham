@@ -55,10 +55,14 @@ export function ligneDeuxColonnes(
   return `${g}${" ".repeat(espaces)}${d}`;
 }
 
-export function formaterPrixTicket(prix: number): string {
-  const n = prix.toLocaleString("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
-  return `${n}$`;
+export function formaterPrixTicket(prix: number, devise = "USD"): string {
+  const n = Math.round(prix * 100) / 100;
+  const corps = Number.isInteger(n)
+    ? String(n)
+    : n.toLocaleString("en-US", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      });
+  if (devise === "CDF") return `${corps} FCFA`;
+  return `${corps}$`;
 }

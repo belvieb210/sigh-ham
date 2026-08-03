@@ -25,6 +25,7 @@ import {
   formaterMontantCaisse,
   initiales,
 } from "@/features/caisse/utils-format";
+import { imprimerRecuCaisseThermique } from "@/lib/caisse/imprimer-recu-thermique";
 import type { FactureResumeJour } from "@/lib/caisse/types";
 import { cn } from "@/lib/utils";
 
@@ -324,13 +325,27 @@ export function ContenuFacturesJourCaisse({
                             >
                               {t(`caisse.factures.statutsUi.${statutUi}`)}
                             </span>
-                            <Link
-                              href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="inline-flex rounded-lg border border-bleu-medical px-2.5 py-1 text-xs font-semibold text-bleu-medical"
-                            >
-                              {t("caisse.factures.ouvrirFacturation")}
-                            </Link>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectionId(f.id);
+                                  imprimerRecuCaisseThermique(f);
+                                }}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire"
+                                aria-label={t("caisse.factures.imprimer")}
+                              >
+                                <Printer className="h-3.5 w-3.5" />
+                              </button>
+                              <Link
+                                href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex rounded-lg border border-bleu-medical px-2.5 py-1 text-xs font-semibold text-bleu-medical"
+                              >
+                                {t("caisse.factures.ouvrirFacturation")}
+                              </Link>
+                            </div>
                           </div>
                         </button>
                       </li>
@@ -432,7 +447,10 @@ export function ContenuFacturesJourCaisse({
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => window.print()}
+                                  onClick={() => {
+                                    setSelectionId(f.id);
+                                    imprimerRecuCaisseThermique(f);
+                                  }}
                                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:bg-gris-tres-clair hover:text-bleu-medical"
                                   aria-label={t("caisse.factures.imprimer")}
                                   title={t("caisse.factures.imprimer")}
@@ -659,12 +677,22 @@ export function ContenuFacturesJourCaisse({
                       </div>
                     </div>
 
-                    <Link
-                      href={`/sigh/caisse/facturation?dossier=${factureSelectionnee.dossierId}`}
-                      className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-bleu-medical px-4 py-2.5 text-sm font-semibold text-white hover:bg-bleu-medical-fonce"
-                    >
-                      {t("caisse.factures.ouvrirFacturation")}
-                    </Link>
+                    <div className="mt-4 grid gap-2">
+                      <button
+                        type="button"
+                        onClick={() => imprimerRecuCaisseThermique(factureSelectionnee)}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-bleu-medical bg-white px-4 py-2.5 text-sm font-semibold text-bleu-medical hover:bg-bleu-medical-clair"
+                      >
+                        <Printer className="h-4 w-4" />
+                        {t("caisse.factures.imprimer")}
+                      </button>
+                      <Link
+                        href={`/sigh/caisse/facturation?dossier=${factureSelectionnee.dossierId}`}
+                        className="inline-flex w-full items-center justify-center rounded-lg bg-bleu-medical px-4 py-2.5 text-sm font-semibold text-white hover:bg-bleu-medical-fonce"
+                      >
+                        {t("caisse.factures.ouvrirFacturation")}
+                      </Link>
+                    </div>
                   </section>
                 </>
               ) : (

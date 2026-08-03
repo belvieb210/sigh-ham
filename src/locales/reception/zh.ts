@@ -300,6 +300,11 @@ export const receptionZh = {
       descriptionMotif: "事由说明",
       remise: "Remise",
     },
+    date: {
+      jour: "Jour",
+      mois: "Mois",
+      annee: "Année",
+    },
     placeholders: {
       nom: "KABAMBA",
       prenom: "Gracia",

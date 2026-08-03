@@ -298,6 +298,11 @@ export const receptionDe = {
       descriptionMotif: "Grundbeschreibung",
       remise: "Remise",
     },
+    date: {
+      jour: "Jour",
+      mois: "Mois",
+      annee: "Année",
+    },
     placeholders: {
       nom: "KABAMBA",
       prenom: "Grace",

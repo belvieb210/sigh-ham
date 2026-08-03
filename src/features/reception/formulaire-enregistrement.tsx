@@ -24,6 +24,7 @@ import { useTraductionsReception } from "@/hooks/use-traductions-reception";
 import { ZonePhotoPatient } from "@/features/reception/zone-photo-patient";
 import { SelectionExamensInitiaux } from "@/features/reception/selection-examens-initiaux";
 import { SectionEstimationExamens } from "@/features/reception/section-estimation-examens";
+import { ChampDateNaissance } from "@/features/reception/champ-date-naissance";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import { cn } from "@/lib/utils";
 import type { DonneesFormulairePatient, TypeExamenReception } from "@/lib/reception/types";
@@ -692,11 +693,16 @@ export const FormulaireEnregistrement = forwardRef<
                   </div>
                 </div>
                 <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
+                  <label className={CLASSE_LABEL_RECEPTION} htmlFor="date-naissance-jour">
                     {t("reception.formulaire.champs.dateNaissance")}
                     <span className="text-red-500">*</span>
                   </label>
-                  <input type="date" className={CLASSE_CHAMP_RECEPTION} {...propsChamp("dateNaissance")} />
+                  <ChampDateNaissance
+                    id="date-naissance"
+                    value={formulaire.dateNaissance}
+                    onChange={(valeur) => majFormulaire("dateNaissance", valeur)}
+                    required
+                  />
                 </div>
                 <div>
                   <label className={CLASSE_LABEL_RECEPTION}>

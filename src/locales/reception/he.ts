@@ -298,6 +298,11 @@ export const receptionHe = {
       descriptionMotif: "תיאור הסיבה",
       remise: "Remise",
     },
+    date: {
+      jour: "Jour",
+      mois: "Mois",
+      annee: "Année",
+    },
     placeholders: {
       nom: "KABAMBA",
       prenom: "Grâce",

@@ -298,6 +298,11 @@ export const receptionAr = {
       descriptionMotif: "وصف سبب الزيارة",
       remise: "Remise",
     },
+    date: {
+      jour: "Jour",
+      mois: "Mois",
+      annee: "Année",
+    },
     placeholders: {
       nom: "KABAMBA",
       prenom: "Gracia",

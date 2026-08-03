@@ -293,6 +293,11 @@ export const receptionFr = {
       medecinResponsable: "Médecin responsable",
       remise: "Remise",
     },
+    date: {
+      jour: "Jour",
+      mois: "Mois",
+      annee: "Année",
+    },
     placeholders: {
       nom: "KABAMBA",
       prenom: "Grâce",

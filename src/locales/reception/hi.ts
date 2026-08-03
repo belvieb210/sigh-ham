@@ -298,6 +298,11 @@ export const receptionHi = {
       descriptionMotif: "कारण का विवरण",
       remise: "Remise",
     },
+    date: {
+      jour: "Jour",
+      mois: "Mois",
+      annee: "Année",
+    },
     placeholders: {
       nom: "KABAMBA",
       prenom: "Grace",

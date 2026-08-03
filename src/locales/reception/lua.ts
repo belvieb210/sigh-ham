@@ -298,6 +298,11 @@ export const receptionLua = {
       descriptionMotif: "Description ya motif",
       remise: "Remise",
     },
+    date: {
+      jour: "Jour",
+      mois: "Mois",
+      annee: "Année",
+    },
     placeholders: {
       nom: "KABAMBA",
       prenom: "Grâce",

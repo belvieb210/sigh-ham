@@ -292,6 +292,11 @@ export const receptionEn = {
       medecinResponsable: "Responsible doctor",
       remise: "Discount",
     },
+    date: {
+      jour: "Day",
+      mois: "Month",
+      annee: "Year",
+    },
     placeholders: {
       nom: "KABAMBA",
       prenom: "Grace",

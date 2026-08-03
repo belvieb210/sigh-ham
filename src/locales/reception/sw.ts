@@ -300,6 +300,11 @@ export const receptionSw = {
       descriptionMotif: "Maelezo ya sababu",
       remise: "Remise",
     },
+    date: {
+      jour: "Jour",
+      mois: "Mois",
+      annee: "Année",
+    },
     placeholders: {
       nom: "KABAMBA",
       prenom: "Grace",

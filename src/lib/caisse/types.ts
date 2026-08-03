@@ -59,6 +59,8 @@ export interface FactureCaisseDetail {
   devise: string;
   lignes: LigneFacturable[];
   historiquePaiements: HistoriquePaiementCaisse[];
+  /** True si une facture d'avance a déjà été encaissée pour ces examens */
+  aUneAvance: boolean;
 }
 
 export interface HistoriquePaiementCaisse {

@@ -270,6 +270,8 @@ export const caisseEn = {
       "An advance has already been collected on this invoice. Only Balance (Solde) mode is allowed to settle the remaining amount (total − advance − discount).",
     modeSoldeVerrouille:
       "Balance mode required: an advance was already paid. Other billing modes are blocked.",
+    modeSoldeIndisponible:
+      "Available only after an advance invoice for these exams.",
     monnaie: "Currency",
     datePaiement: "Payment date",
     numeroRecu: "Receipt No.",

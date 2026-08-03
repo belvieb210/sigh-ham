@@ -270,6 +270,8 @@ export const caisseFr = {
       "Une avance a déjà été encaissée sur cette facture. Seul le mode Solde est autorisé pour régler le montant restant (total − avance − remise).",
     modeSoldeVerrouille:
       "Mode Solde obligatoire : une avance a déjà été payée. Les autres modes sont refusés.",
+    modeSoldeIndisponible:
+      "Disponible uniquement après une facture d'avance pour ces examens.",
     monnaie: "Monnaie",
     datePaiement: "Date paiement",
     numeroRecu: "N° Reçu",

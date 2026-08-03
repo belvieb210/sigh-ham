@@ -171,6 +171,14 @@ export async function obtenirDossierFacturation(
     })
   );
 
+  const paiementsFactureOuverte = facture?.paiements ?? [];
+  const aUneAvanceExplicite = paiementsFactureOuverte.some((p) =>
+    p.reference?.split("|").some((part) => part === "modeFacture=AVANCE")
+  );
+  /** Avance détectée (référence) ou ancien cas PARTIELLEMENT_PAYEE sans tag */
+  const aUneAvance =
+    aUneAvanceExplicite || facture?.statut === "PARTIELLEMENT_PAYEE";
+
   const remiseProposee = decimalVersNombre(
     dossier.enregistrementsReception[0]?.remise ?? 0
   );
@@ -206,6 +214,7 @@ export async function obtenirDossierFacturation(
       devise: facture?.devise ?? "USD",
       lignes,
       historiquePaiements,
+      aUneAvance,
     },
   };
 }
@@ -492,7 +501,15 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
     throw new Error("Le montant du paiement doit être supérieur à zéro.");
   }
 
-  if (dejaPaye > 0.01 && donnees.modeFacture !== "SOLDE") {
+  const aUneAvance = detail.facture.aUneAvance;
+
+  if (donnees.modeFacture === "SOLDE" && !aUneAvance) {
+    throw new Error(
+      "Le mode Solde n'est disponible qu'après une facture d'avance pour ces examens."
+    );
+  }
+
+  if (aUneAvance && donnees.modeFacture !== "SOLDE") {
     throw new Error(
       "Une avance a déjà été encaissée. Seul le mode Solde est autorisé pour régler le reste à payer."
     );

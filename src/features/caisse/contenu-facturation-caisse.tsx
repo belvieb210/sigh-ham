@@ -167,10 +167,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         setFraisDivers(arrondirMontantCaisse(fraisDeja));
         setMontantAvance(0);
         // Avance déjà encaissée → mode Solde + montant = reste (après remise)
-        if (
-          dejaPayeCharge > 0 ||
-          data.dossier.facture.statut === "PARTIELLEMENT_PAYEE"
-        ) {
+        if (data.dossier.facture.aUneAvance) {
           setModeFacture("SOLDE");
         } else {
           setModeFacture("CASH");
@@ -453,8 +450,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const totalAPayer = sousTotal + (fraisDivers || 0);
   const dejaPaye = dossier?.facture.montantPaye ?? 0;
   const resteAPayer = Math.max(0, totalAPayer - dejaPaye);
-  const soldeObligatoire =
-    dejaPaye > 0 || dossier?.facture.statut === "PARTIELLEMENT_PAYEE";
+  const soldeObligatoire = Boolean(dossier?.facture.aUneAvance);
   /** Avance déjà couverte (reste 0) : permettre de clôturer sans nouveau paiement */
   const peutCloturerSoldeAZero = soldeObligatoire && modeFacture === "SOLDE" && resteAPayer <= 0.01;
   const encaissementDesactive =
@@ -512,6 +508,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     try {
       if (soldeObligatoire && modeFacture !== "SOLDE") {
         throw new Error(t("caisse.facturation.modeSoldeObligatoire"));
+      }
+      if (!soldeObligatoire && modeFacture === "SOLDE") {
+        throw new Error(t("caisse.facturation.modeSoldeIndisponible"));
       }
 
       if (modeFacture === "AVANCE") {
@@ -1159,7 +1158,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {MODES_FACTURE_CAISSE.map((mode) => {
                       const modeRefuse =
-                        soldeObligatoire && mode.id !== "SOLDE";
+                        (soldeObligatoire && mode.id !== "SOLDE") ||
+                        (!soldeObligatoire && mode.id === "SOLDE");
+                      const messageRefuse = soldeObligatoire
+                        ? t("caisse.facturation.modeSoldeVerrouille")
+                        : t("caisse.facturation.modeSoldeIndisponible");
                       return (
                       <button
                         key={mode.id}
@@ -1167,7 +1170,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                         aria-disabled={modeRefuse}
                         onClick={() => {
                           if (modeRefuse) {
-                            setErreur(t("caisse.facturation.modeSoldeObligatoire"));
+                            setErreur(
+                              soldeObligatoire
+                                ? t("caisse.facturation.modeSoldeObligatoire")
+                                : t("caisse.facturation.modeSoldeIndisponible")
+                            );
                             setMessage(null);
                             return;
                           }
@@ -1205,7 +1212,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                             </p>
                             <p className="mt-0.5 text-[11px] leading-snug text-texte-secondaire">
                               {modeRefuse
-                                ? t("caisse.facturation.modeSoldeVerrouille")
+                                ? messageRefuse
                                 : t(`caisse.modesFactureDesc.${mode.descriptionKey}`)}
                             </p>
                           </div>

@@ -8,6 +8,7 @@ import type {
   FiltresRapportCaisse,
   LigneLedgerRapport,
   OptionCaissierRapport,
+  PeriodeRapportCaisse,
   PointSerieRapport,
   RapportCaissePayload,
   RepartitionModeRapport,
@@ -237,7 +238,12 @@ export async function genererRapportCaisse(
   filtres: FiltresRapportCaisse
 ): Promise<RapportCaissePayload> {
   const maintenant = new Date();
-  const periode = filtres.periode === "mensuel" ? "mensuel" : "journalier";
+  const periode: PeriodeRapportCaisse =
+    filtres.periode === "mensuel"
+      ? "mensuel"
+      : filtres.periode === "plage"
+        ? "plage"
+        : "journalier";
 
   let debut: Date;
   let fin: Date;
@@ -254,6 +260,30 @@ export async function genererRapportCaisse(
     const montantPrec = await montantEncaissementsSimple(debutPrec, finPrec);
     comparaison = {
       labelPrecedent: labelPeriodeMensuel(debutPrec),
+      encaissementsMontantPrecedent: montantPrec,
+      variationPct: null,
+    };
+  } else if (periode === "plage") {
+    const du = parserDateIso(filtres.dateDu, (() => {
+      const d = new Date(maintenant);
+      d.setDate(d.getDate() - 29);
+      return d;
+    })());
+    const au = parserDateIso(filtres.dateAu, maintenant);
+    debut = debutJournee(du <= au ? du : au);
+    fin = finJournee(du <= au ? au : du);
+    const fmt = (d: Date) =>
+      d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
+    labelPeriode = `${fmt(debut)} → ${fmt(fin)}`;
+    const dureeMs = fin.getTime() - debut.getTime();
+    const finPrec = new Date(debut.getTime() - 1);
+    const debutPrec = new Date(finPrec.getTime() - dureeMs);
+    const montantPrec = await montantEncaissementsSimple(
+      debutJournee(debutPrec),
+      finJournee(finPrec)
+    );
+    comparaison = {
+      labelPrecedent: `${fmt(debutPrec)} → ${fmt(finPrec)}`,
       encaissementsMontantPrecedent: montantPrec,
       variationPct: null,
     };
@@ -392,17 +422,16 @@ export async function genererRapportCaisse(
   });
 
   const serie =
-    periode === "mensuel"
-      ? construireSerieMensuelle(
+    periode === "journalier"
+      ? construireSerieJournaliere(
+          paiementsRows.map((p) => ({ payeLe: p.payeLe, montant: p.montant }))
+        )
+      : construireSerieMensuelle(
           debut,
           fin,
           paiementsRows.map((p) => ({ payeLe: p.payeLe, montant: p.montant }))
-        )
-      : construireSerieJournaliere(
-          paiementsRows.map((p) => ({ payeLe: p.payeLe, montant: p.montant }))
         );
 
-  // Recalculer comparaison avec les agrégats filtrés déjà obtenus
   comparaison = {
     ...comparaison,
     variationPct: variationPct(

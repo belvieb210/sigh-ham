@@ -12,6 +12,12 @@ const MODES_VALIDES = new Set<ModePaiement>([
   "CHEQUE",
 ]);
 
+function parserPeriode(raw: string | null): PeriodeRapportCaisse {
+  if (raw === "mensuel") return "mensuel";
+  if (raw === "plage") return "plage";
+  return "journalier";
+}
+
 export async function GET(request: Request) {
   const session = await obtenirSessionApiCaisse();
   if (!session) {
@@ -20,9 +26,7 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const periodeParam = (searchParams.get("periode") ?? "journalier") as PeriodeRapportCaisse;
-    const periode: PeriodeRapportCaisse =
-      periodeParam === "mensuel" ? "mensuel" : "journalier";
+    const periode = parserPeriode(searchParams.get("periode"));
     const modeRaw = searchParams.get("mode") ?? "";
     const mode =
       modeRaw && MODES_VALIDES.has(modeRaw as ModePaiement)
@@ -33,6 +37,8 @@ export async function GET(request: Request) {
       periode,
       date: searchParams.get("date") ?? undefined,
       mois: searchParams.get("mois") ?? undefined,
+      dateDu: searchParams.get("dateDu") ?? undefined,
+      dateAu: searchParams.get("dateAu") ?? undefined,
       mode,
       caissierId: searchParams.get("caissierId") ?? undefined,
       q: searchParams.get("q") ?? undefined,

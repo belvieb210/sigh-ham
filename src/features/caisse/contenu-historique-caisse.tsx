@@ -11,14 +11,14 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import {
-  compterFiltresJournalier,
-  filtresJournalierVides,
-  FormulaireFiltresRapportJournalierCaisse,
-  type FiltresRapportJournalierUi,
-} from "@/features/caisse/formulaire-filtres-rapport-journalier-caisse";
+  compterFiltresHistorique,
+  filtresHistoriqueVides,
+  FormulaireFiltresHistoriqueCaisse,
+  type FiltresHistoriqueCaisseUi,
+} from "@/features/caisse/formulaire-filtres-historique-caisse";
 import { MiseEnPageCaisse, type UtilisateurCaisse } from "@/features/caisse/mise-en-page-caisse";
 import { ResumeRapportCaisse } from "@/features/caisse/resume-rapport-caisse";
-import { formaterHeure, formaterMontantCaisse } from "@/features/caisse/utils-format";
+import { formaterDate, formaterMontantCaisse } from "@/features/caisse/utils-format";
 import type { RapportCaissePayload } from "@/lib/caisse/types";
 import { cn } from "@/lib/utils";
 
@@ -26,35 +26,40 @@ interface Props {
   utilisateur: UtilisateurCaisse;
 }
 
-const PAR_PAGE = 8;
+const PAR_PAGE = 10;
 
-function dateAujourdhuiIso() {
-  const d = new Date();
+function isoDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
+export function ContenuHistoriqueCaisse({ utilisateur }: Props) {
   const { t } = useTranslation();
-  const dateDefaut = useMemo(() => dateAujourdhuiIso(), []);
+  const plageDefaut = useMemo(() => {
+    const au = new Date();
+    const du = new Date();
+    du.setDate(du.getDate() - 29);
+    return { dateDu: isoDate(du), dateAu: isoDate(au) };
+  }, []);
   const [rapport, setRapport] = useState<RapportCaissePayload | null>(null);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [filtresOuverts, setFiltresOuverts] = useState(false);
-  const [brouillon, setBrouillon] = useState<FiltresRapportJournalierUi>(() =>
-    filtresJournalierVides(dateDefaut)
+  const [brouillon, setBrouillon] = useState<FiltresHistoriqueCaisseUi>(() =>
+    filtresHistoriqueVides(plageDefaut.dateDu, plageDefaut.dateAu)
   );
-  const [appliques, setAppliques] = useState<FiltresRapportJournalierUi>(() =>
-    filtresJournalierVides(dateDefaut)
+  const [appliques, setAppliques] = useState<FiltresHistoriqueCaisseUi>(() =>
+    filtresHistoriqueVides(plageDefaut.dateDu, plageDefaut.dateAu)
   );
   const [page, setPage] = useState(1);
 
   const charger = useCallback(
-    async (f: FiltresRapportJournalierUi) => {
+    async (f: FiltresHistoriqueCaisseUi) => {
       setChargement(true);
       setErreur(null);
       try {
-        const params = new URLSearchParams({ periode: "journalier" });
-        if (f.date) params.set("date", f.date);
+        const params = new URLSearchParams({ periode: "plage" });
+        if (f.dateDu) params.set("dateDu", f.dateDu);
+        if (f.dateAu) params.set("dateAu", f.dateAu);
         if (f.mode) params.set("mode", f.mode);
         if (f.caissierId) params.set("caissierId", f.caissierId);
         if (f.q.trim()) params.set("q", f.q.trim());
@@ -64,12 +69,12 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
           erreur?: string;
         };
         if (!res.ok || !data.rapport) {
-          throw new Error(data.erreur ?? t("caisse.encaissements.erreur"));
+          throw new Error(data.erreur ?? t("caisse.historique.erreur"));
         }
         setRapport(data.rapport);
         setPage(1);
       } catch (e) {
-        setErreur(e instanceof Error ? e.message : t("caisse.encaissements.erreur"));
+        setErreur(e instanceof Error ? e.message : t("caisse.historique.erreur"));
         setRapport(null);
       } finally {
         setChargement(false);
@@ -82,7 +87,7 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
     void charger(appliques);
   }, [appliques, charger]);
 
-  const nbFiltres = compterFiltresJournalier(appliques, dateDefaut);
+  const nbFiltres = compterFiltresHistorique(appliques, plageDefaut);
   const ledger = rapport?.ledger ?? [];
   const totalPages = Math.max(1, Math.ceil(ledger.length / PAR_PAGE));
   const pageCourante = Math.min(page, totalPages);
@@ -92,17 +97,17 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
   return (
     <MiseEnPageCaisse
       utilisateur={utilisateur}
-      titre={t("caisse.encaissements.titre")}
-      sousTitre={t("caisse.encaissements.sousTitre")}
+      titre={t("caisse.historique.titre")}
+      sousTitre={t("caisse.historique.sousTitre")}
     >
       <div className="mx-auto w-full max-w-7xl space-y-4 pb-8">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-xl font-bold text-texte-principal">
-              {t("caisse.encaissements.titre")}
+              {t("caisse.historique.titre")}
             </h2>
             <p className="mt-1 text-sm text-texte-secondaire">
-              {rapport?.labelPeriode ?? t("caisse.encaissements.sousTitre")}
+              {rapport?.labelPeriode ?? t("caisse.historique.sousTitre")}
             </p>
           </div>
           <div className="flex items-center gap-2 print:hidden">
@@ -112,7 +117,7 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
               className="inline-flex h-11 items-center gap-2 rounded-lg border border-gris-bordure bg-white px-3 text-sm font-medium text-texte-principal hover:bg-gris-tres-clair"
             >
               <Printer className="h-4 w-4" />
-              {t("caisse.encaissements.imprimer")}
+              {t("caisse.historique.imprimer")}
             </button>
             <button
               type="button"
@@ -139,13 +144,13 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
         </div>
 
         {filtresOuverts && (
-          <FormulaireFiltresRapportJournalierCaisse
+          <FormulaireFiltresHistoriqueCaisse
             valeurs={brouillon}
             onChange={setBrouillon}
             optionsCaissiers={rapport?.optionsCaissiers ?? []}
             onRechercher={() => setAppliques(brouillon)}
             onReinitialiser={() => {
-              const vides = filtresJournalierVides(dateDefaut);
+              const vides = filtresHistoriqueVides(plageDefaut.dateDu, plageDefaut.dateAu);
               setBrouillon(vides);
               setAppliques(vides);
             }}
@@ -155,7 +160,7 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
         {chargement ? (
           <div className="flex items-center justify-center gap-2 rounded-xl border border-gris-bordure bg-white py-16 text-sm text-texte-secondaire">
             <Loader2 className="h-5 w-5 animate-spin" />
-            {t("caisse.encaissements.chargement")}
+            {t("caisse.historique.chargement")}
           </div>
         ) : erreur ? (
           <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-8 text-center">
@@ -165,7 +170,7 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
               onClick={() => void charger(appliques)}
               className="mt-4 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700"
             >
-              {t("caisse.encaissements.reessayer")}
+              {t("caisse.historique.reessayer")}
             </button>
           </div>
         ) : rapport ? (
@@ -173,25 +178,25 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
             <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
               <div className="border-b border-gris-bordure px-4 py-3">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-                  {t("caisse.encaissements.ledger")}
+                  {t("caisse.historique.ledger")}
                 </h3>
               </div>
               {pageLedger.length === 0 ? (
                 <p className="px-4 py-12 text-center text-sm text-texte-secondaire">
-                  {t("caisse.encaissements.vide")}
+                  {t("caisse.historique.vide")}
                 </p>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[720px] text-left text-sm">
+                  <table className="w-full min-w-[760px] text-left text-sm">
                     <thead className="bg-gris-tres-clair/80 text-[11px] uppercase tracking-wider text-texte-secondaire">
                       <tr>
-                        <th className="px-4 py-3 font-semibold">{t("caisse.encaissements.heure")}</th>
-                        <th className="px-4 py-3 font-semibold">{t("caisse.encaissements.facture")}</th>
-                        <th className="px-4 py-3 font-semibold">{t("caisse.encaissements.patient")}</th>
-                        <th className="px-4 py-3 font-semibold">{t("caisse.encaissements.mode")}</th>
-                        <th className="px-4 py-3 font-semibold">{t("caisse.encaissements.caissier")}</th>
+                        <th className="px-4 py-3 font-semibold">{t("caisse.historique.date")}</th>
+                        <th className="px-4 py-3 font-semibold">{t("caisse.historique.facture")}</th>
+                        <th className="px-4 py-3 font-semibold">{t("caisse.historique.patient")}</th>
+                        <th className="px-4 py-3 font-semibold">{t("caisse.historique.mode")}</th>
+                        <th className="px-4 py-3 font-semibold">{t("caisse.historique.caissier")}</th>
                         <th className="px-4 py-3 text-right font-semibold">
-                          {t("caisse.encaissements.montant")}
+                          {t("caisse.historique.montant")}
                         </th>
                       </tr>
                     </thead>
@@ -202,7 +207,7 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
                           className="border-t border-gris-bordure/80 hover:bg-gris-tres-clair/50"
                         >
                           <td className="px-4 py-3 tabular-nums text-texte-secondaire">
-                            {formaterHeure(l.payeLe)}
+                            {formaterDate(l.payeLe)}
                           </td>
                           <td className="px-4 py-3">
                             <Link
@@ -231,7 +236,7 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
                           colSpan={5}
                           className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-texte-secondaire"
                         >
-                          {t("caisse.encaissements.totalJour")}
+                          {t("caisse.historique.totalPeriode")}
                         </td>
                         <td className="px-4 py-3 text-right text-sm font-bold tabular-nums">
                           {formaterMontantCaisse(
@@ -246,7 +251,7 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
               )}
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-4 py-3 text-xs text-texte-secondaire print:hidden">
                 <p>
-                  {t("caisse.encaissements.pagination", {
+                  {t("caisse.historique.pagination", {
                     debut: ledger.length === 0 ? 0 : debut + 1,
                     fin: Math.min(debut + PAR_PAGE, ledger.length),
                     total: ledger.length,
@@ -260,7 +265,7 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
                     className="inline-flex items-center gap-1 rounded-lg border border-gris-bordure px-3 py-1.5 disabled:opacity-40"
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
-                    {t("caisse.encaissements.prec")}
+                    {t("caisse.historique.prec")}
                   </button>
                   <button
                     type="button"
@@ -268,7 +273,7 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     className="inline-flex items-center gap-1 rounded-lg border border-gris-bordure px-3 py-1.5 disabled:opacity-40"
                   >
-                    {t("caisse.encaissements.suiv")}
+                    {t("caisse.historique.suiv")}
                     <ChevronRight className="h-3.5 w-3.5" />
                   </button>
                 </div>

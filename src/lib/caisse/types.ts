@@ -232,7 +232,7 @@ export interface EncaissementResumeJour {
   caissier: string;
 }
 
-export type PeriodeRapportCaisse = "journalier" | "mensuel";
+export type PeriodeRapportCaisse = "journalier" | "mensuel" | "plage";
 
 export interface FiltresRapportCaisse {
   periode: PeriodeRapportCaisse;
@@ -240,6 +240,10 @@ export interface FiltresRapportCaisse {
   date?: string;
   /** YYYY-MM — mensuel */
   mois?: string;
+  /** YYYY-MM-DD — plage */
+  dateDu?: string;
+  /** YYYY-MM-DD — plage */
+  dateAu?: string;
   mode?: ModePaiement | "";
   caissierId?: string;
   q?: string;
@@ -324,5 +328,45 @@ export interface RapportCaissePayload {
   serie: PointSerieRapport[];
   ledger: LigneLedgerRapport[];
   facturesOuvertes: FactureOuverteRapport[];
+  optionsCaissiers: OptionCaissierRapport[];
+}
+
+export type TypeMouvementAvoir = "AVANCE" | "SOLDE" | "OUVERT";
+
+export interface LigneAvoirAvance {
+  id: string;
+  type: TypeMouvementAvoir;
+  payeLe: string | null;
+  emiseLe: string | null;
+  numeroFacture: string;
+  dossierId: string;
+  patient: string;
+  mode: ModePaiement | null;
+  modeFacture: string | null;
+  caissier: string | null;
+  montant: number;
+  montantTotal: number;
+  montantPaye: number;
+  reste: number;
+  devise: string;
+  statutFacture: StatutFacture;
+}
+
+export interface AgregatsAvoirsCaisse {
+  avancesCount: number;
+  avancesMontant: number;
+  soldesCount: number;
+  soldesMontant: number;
+  ouvertesCount: number;
+  resteDu: number;
+}
+
+export interface RapportAvoirsPayload {
+  debut: string;
+  fin: string;
+  labelPeriode: string;
+  devise: string;
+  agregats: AgregatsAvoirsCaisse;
+  ledger: LigneAvoirAvance[];
   optionsCaissiers: OptionCaissierRapport[];
 }

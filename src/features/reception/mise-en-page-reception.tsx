@@ -37,7 +37,7 @@ export function MiseEnPageReception({
   const [menuOuvert, setMenuOuvert] = useState(false);
 
   const contenu = (
-      <div className="flex h-[100dvh] w-full overflow-hidden bg-[#f1f5f9]">
+      <div className="flex h-full min-h-0 w-full flex-1 overflow-hidden bg-[#f1f5f9]">
       <BarreLateraleReception
         utilisateur={utilisateur}
         ouvert={menuOuvert}

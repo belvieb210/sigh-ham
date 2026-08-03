@@ -10,7 +10,7 @@ interface Props {
 
 export function ContenuNotificationsTransversal({ utilisateur }: Props) {
   return (
-    <div className="flex h-[100dvh] flex-col bg-[#f1f5f9]">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#f1f5f9]">
       <header className="flex shrink-0 items-center gap-3 border-b border-gris-bordure bg-white px-4 py-3">
         <Link
           href="/sigh/reception"

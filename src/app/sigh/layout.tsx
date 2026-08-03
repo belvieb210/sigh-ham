@@ -9,6 +9,8 @@ export default function LayoutSigh({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className="flex min-h-screen flex-col bg-[#f1f5f9]">{children}</div>
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-[#f1f5f9]">
+      {children}
+    </div>
   );
 }

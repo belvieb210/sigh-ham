@@ -51,7 +51,7 @@ export function MiseEnPageCaisse({
 
   return (
     <FournisseurNotifications>
-      <div className="flex h-[100dvh] w-full overflow-hidden bg-[#f1f5f9]">
+      <div className="flex h-full min-h-0 w-full flex-1 overflow-hidden bg-[#f1f5f9]">
         <BarreLateraleCaisse
           utilisateur={utilisateur}
           ouvert={menuOuvert}

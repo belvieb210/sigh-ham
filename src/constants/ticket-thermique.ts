@@ -18,7 +18,7 @@ export const INFOS_LEGALES_TICKET = {
   /** Adresse complète (devis PDF / documents officiels) */
   adresseComplete:
     "259, Avenue Lumière, Entrée Debonhomme Troisième Parcelle À Droit Commune MATETE, Kinshasa, République démocratique du Congo",
-  telephones: "+243 815 125 111 - 813 191 643",
+  telephones: "+243 815 129 111 - 813 191 643",
   email: "obb5lab@gmail.com",
 } as const;
 

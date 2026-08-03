@@ -58,7 +58,7 @@ export const receptionEs = {
     actionsRapides: "Acciones r√°pidas",
     modifierAvantConfirmer: "Cambie el destino antes de confirmar la transferencia.",
     creerTransfertRapide:
-      "Elija un destino para crear la transferencia r·pida. Quedar· pendiente de confirmaciÛn en la lista.",
+      "Elija un destino para crear la transferencia r√°pida. Quedar√° pendiente de confirmaci√≥n en la lista.",
     destinationVerrouillee: "Esta transferencia ya no puede cambiar de destino.",
     aucunPatient: "Ning√∫n paciente seleccionado",
     age: "Edad",

@@ -49,7 +49,10 @@ export default function ErreurGlobale({
       <body>
         <h1>Erreur critique</h1>
         <p>L&apos;application n&apos;a pas pu s&apos;afficher correctement.</p>
-        <button type="button" onClick={reset}>
+        <p style={{ marginTop: 8, fontSize: "0.85rem" }}>
+          Sur téléphone : fermez l&apos;onglet, videz le cache du site, puis rouvrez.
+        </p>
+        <button type="button" onClick={() => window.location.reload()}>
           Réessayer
         </button>
       </body>

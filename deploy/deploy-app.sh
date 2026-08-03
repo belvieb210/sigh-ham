@@ -40,12 +40,12 @@ run_as_sigh() {
   fi
 }
 
-echo "==> Arrêt des services (évite ENOTEMPTY sur node_modules)"
-if command -v systemctl >/dev/null 2>&1 && [[ "${EUID:-0}" -eq 0 ]]; then
-  systemctl stop sigh-web sigh-socket 2>/dev/null || true
+services_running=false
+if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet sigh-web 2>/dev/null; then
+  services_running=true
 fi
 
-echo "==> Git pull (branche main)"
+echo "==> Git pull (branche main) — site reste en ligne"
 if [[ "${EUID:-0}" -eq 0 ]]; then
   sudo -u sigh git -C "${APP_DIR}" pull origin main
 else
@@ -53,8 +53,14 @@ else
 fi
 
 echo "==> Dépendances npm"
+# Essayer sans couper le site ; en cas de verrouillage node_modules, arrêt bref.
 if ! run_as_sigh 'npm ci || { echo "⚠️  package-lock désynchronisé — npm install"; npm install; }'; then
-  echo "⚠️  node_modules corrompu — réinstallation propre"
+  echo "⚠️  node_modules verrouillé — arrêt temporaire des services"
+  if command -v systemctl >/dev/null 2>&1 && [[ "${EUID:-0}" -eq 0 ]]; then
+    systemctl stop sigh-web sigh-socket 2>/dev/null || true
+    services_running=false
+  fi
+  echo "⚠️  Réinstallation propre de node_modules"
   rm -rf "${APP_DIR}/node_modules"
   if [[ "${EUID:-0}" -eq 0 ]]; then
     chown -R sigh:sigh "${APP_DIR}"
@@ -72,20 +78,36 @@ if [[ "${SEED}" == "true" ]]; then
   run_as_sigh "npm run db:seed:messagerie || true"
 fi
 
-echo "==> Build Next.js"
-if [[ "${EUID:-0}" -eq 0 ]]; then
-  rm -rf "${APP_DIR}/.next"
+echo "==> Build Next.js (dossier .next-new — l'ancien .next reste servi)"
+rm -rf "${APP_DIR}/.next-new"
+run_as_sigh "NEXT_DIST_DIR=.next-new npm run build"
+
+if [[ ! -f "${APP_DIR}/.next-new/BUILD_ID" ]]; then
+  echo "❌ Build échoué (.next-new/BUILD_ID absent) — site inchangé"
+  exit 1
 fi
-run_as_sigh "npm run build"
 
 echo "==> Permissions uploads"
 run_as_sigh "mkdir -p public/uploads/messagerie && chmod -R 775 public/uploads"
 
-echo "==> Redémarrage services"
+echo "==> Bascule atomique .next-new → .next (coupure ~1–3 s)"
+if command -v systemctl >/dev/null 2>&1 && [[ "${EUID:-0}" -eq 0 ]]; then
+  systemctl stop sigh-web sigh-socket 2>/dev/null || true
+fi
+
+rm -rf "${APP_DIR}/.next-old"
+if [[ -d "${APP_DIR}/.next" ]]; then
+  mv "${APP_DIR}/.next" "${APP_DIR}/.next-old"
+fi
+mv "${APP_DIR}/.next-new" "${APP_DIR}/.next"
+if [[ "${EUID:-0}" -eq 0 ]]; then
+  chown -R sigh:sigh "${APP_DIR}/.next"
+fi
+
 if command -v systemctl >/dev/null 2>&1; then
   if [[ "${EUID:-0}" -eq 0 ]]; then
     systemctl enable sigh-web sigh-socket 2>/dev/null || true
-    systemctl restart sigh-web sigh-socket
+    systemctl start sigh-web sigh-socket
     systemctl status sigh-web --no-pager -l || true
   else
     sudo systemctl enable sigh-web sigh-socket 2>/dev/null || true
@@ -95,6 +117,9 @@ if command -v systemctl >/dev/null 2>&1; then
 else
   echo "⚠️  systemd non disponible — lancez manuellement : npm run start & npx tsx server/socket-server.ts"
 fi
+
+# Nettoyage après démarrage réussi
+rm -rf "${APP_DIR}/.next-old"
 
 echo ""
 echo "✅ Déploiement terminé — https://hamlab5.duckdns.org"

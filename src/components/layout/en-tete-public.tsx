@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, User } from "lucide-react";
-import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { LogoHam } from "@/components/brand/logo-ham";
 import { MenuLateralMobile } from "@/components/layout/menu-lateral-mobile";

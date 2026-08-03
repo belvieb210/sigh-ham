@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CLASSE_CHAMP_RECEPTION } from "@/constants/reception";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,7 @@ function joursDansMois(annee: number, mois: number): number {
 function parserDateIso(valeur: string): { jour: string; mois: string; annee: string } {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valeur?.trim() ?? "");
   if (!m) return { jour: "", mois: "", annee: "" };
-  return { annee: m[1], mois: m[2], jour: m[3] };
+  return { annee: m[1]!, mois: m[2]!, jour: m[3]! };
 }
 
 function composerDateIso(jour: string, mois: string, annee: string): string {
@@ -42,6 +42,15 @@ function composerDateIso(jour: string, mois: string, annee: string): string {
   return `${String(a).padStart(4, "0")}-${String(mo).padStart(2, "0")}-${String(jourValide).padStart(2, "0")}`;
 }
 
+function detecterMobile(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(pointer: coarse)").matches ||
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.maxTouchPoints > 0 && window.innerWidth < 768)
+  );
+}
+
 interface PropsChampDateNaissance {
   id?: string;
   value: string;
@@ -51,8 +60,9 @@ interface PropsChampDateNaissance {
 }
 
 /**
- * Date de naissance avec listes Jour / Mois / Année
- * (évite le long parcours du calendrier natif pour choisir l'année).
+ * Date de naissance :
+ * - Mobile : input type="date" natif (format téléphone fiable)
+ * - Desktop : listes Jour / Mois / Année (choix d'année rapide)
  */
 export function ChampDateNaissance({
   id = "date-naissance",
@@ -62,7 +72,22 @@ export function ChampDateNaissance({
   required = false,
 }: PropsChampDateNaissance) {
   const { t } = useTranslation();
-  const { jour, mois, annee } = parserDateIso(value);
+  const [mobile, setMobile] = useState(false);
+  const parse = parserDateIso(value);
+  const [jour, setJour] = useState(parse.jour);
+  const [mois, setMois] = useState(parse.mois);
+  const [annee, setAnnee] = useState(parse.annee);
+
+  useEffect(() => {
+    setMobile(detecterMobile());
+  }, []);
+
+  useEffect(() => {
+    const suivant = parserDateIso(value);
+    setJour(suivant.jour);
+    setMois(suivant.mois);
+    setAnnee(suivant.annee);
+  }, [value]);
 
   const anneeCourante = new Date().getFullYear();
   const annees = useMemo(() => {
@@ -77,12 +102,31 @@ export function ChampDateNaissance({
     [nbJours]
   );
 
-  const maj = (suivant: { jour?: string; mois?: string; annee?: string }) => {
-    const j = suivant.jour ?? jour;
-    const m = suivant.mois ?? mois;
-    const a = suivant.annee ?? annee;
+  const publier = (j: string, m: string, a: string) => {
+    setJour(j);
+    setMois(m);
+    setAnnee(a);
     onChange(composerDateIso(j, m, a));
   };
+
+  const classeSelect = cn(CLASSE_CHAMP_RECEPTION, "min-h-11 text-base sm:text-sm");
+
+  if (mobile) {
+    return (
+      <div className={className}>
+        <input
+          id={id}
+          type="date"
+          value={value || ""}
+          required={required}
+          max={`${anneeCourante}-12-31`}
+          min="1920-01-01"
+          onChange={(e) => onChange(e.target.value)}
+          className={cn(CLASSE_CHAMP_RECEPTION, "min-h-11 text-base")}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={cn("grid grid-cols-3 gap-2", className)}>
@@ -94,8 +138,8 @@ export function ChampDateNaissance({
           id={`${id}-jour`}
           value={jour}
           required={required}
-          onChange={(e) => maj({ jour: e.target.value })}
-          className={CLASSE_CHAMP_RECEPTION}
+          onChange={(e) => publier(e.target.value, mois, annee)}
+          className={classeSelect}
         >
           <option value="">
             {t("reception.formulaire.date.jour", { defaultValue: "Jour" })}
@@ -116,8 +160,8 @@ export function ChampDateNaissance({
           id={`${id}-mois`}
           value={mois}
           required={required}
-          onChange={(e) => maj({ mois: e.target.value })}
-          className={CLASSE_CHAMP_RECEPTION}
+          onChange={(e) => publier(jour, e.target.value, annee)}
+          className={classeSelect}
         >
           <option value="">
             {t("reception.formulaire.date.mois", { defaultValue: "Mois" })}
@@ -141,8 +185,8 @@ export function ChampDateNaissance({
           id={`${id}-annee`}
           value={annee}
           required={required}
-          onChange={(e) => maj({ annee: e.target.value })}
-          className={CLASSE_CHAMP_RECEPTION}
+          onChange={(e) => publier(jour, mois, e.target.value)}
+          className={classeSelect}
         >
           <option value="">
             {t("reception.formulaire.date.annee", { defaultValue: "Année" })}

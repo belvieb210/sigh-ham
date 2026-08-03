@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { obtenirSessionApiCaisse } from "@/lib/auth/garde-api-caisse";
-import { obtenirStatsCaisseJour } from "@/lib/caisse/lister-patients-caisse";
+import { obtenirTableauDeBordAccueilCaisse } from "@/lib/caisse/tableau-de-bord";
 
 export async function GET() {
   const session = await obtenirSessionApiCaisse();
@@ -9,7 +9,7 @@ export async function GET() {
   }
 
   try {
-    const stats = await obtenirStatsCaisseJour();
+    const stats = await obtenirTableauDeBordAccueilCaisse();
     return NextResponse.json({ stats });
   } catch (e) {
     console.error("[api/caisse/stats]", e);

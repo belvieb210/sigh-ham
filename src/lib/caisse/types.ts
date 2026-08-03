@@ -88,6 +88,62 @@ export interface StatsCaisseJour {
   montantEncaisseDuJour: number;
 }
 
+export type StatutFactureAffiche = "PAYEE" | "PARTIELLE" | "IMPAYEE";
+
+export interface KpiNombreMontant {
+  count: number;
+  montantTotal: number;
+  variationPct: number | null;
+}
+
+export interface KpiMontantSeul {
+  montant: number;
+  variationPct: number | null;
+}
+
+export interface PointEvolutionEncaissement {
+  /** YYYY-MM-DD */
+  date: string;
+  label: string;
+  montant: number;
+}
+
+export interface FactureAccueilResume {
+  id: string;
+  dossierId: string;
+  numeroFacture: string;
+  patient: string;
+  examens: string;
+  montantTotal: number;
+  devise: string;
+  statut: StatutFacture;
+  statutAffiche: StatutFactureAffiche;
+}
+
+export interface PatientAttenteAccueil {
+  dossierId: string;
+  patient: string;
+  service: string;
+  examensDemandes: string;
+  minutesAttente: number;
+  tempsAttenteLabel: string;
+}
+
+export interface TableauDeBordAccueilCaisse extends StatsCaisseJour {
+  dateReference: string;
+  kpis: {
+    facturesDuJour: KpiNombreMontant;
+    paiementsDuJour: KpiNombreMontant;
+    montantEncaisse: KpiMontantSeul;
+    patientsEnAttente: { count: number };
+    facturesImpayees: { count: number; montantTotal: number };
+  };
+  dernieresFactures: FactureAccueilResume[];
+  evolutionEncaissements: PointEvolutionEncaissement[];
+  patientsAttente: PatientAttenteAccueil[];
+  dernierPaiementId: string | null;
+}
+
 export interface FactureResumeJour {
   id: string;
   dossierId: string;

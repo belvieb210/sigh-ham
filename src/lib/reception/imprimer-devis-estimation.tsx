@@ -9,19 +9,6 @@ export type { DonneesDevisEstimation };
 
 const ID_OVERLAY_PDF = "sigh-overlay-pdf-estimation";
 
-function blobVersDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === "string") resolve(reader.result);
-      else reject(new Error("Lecture PDF impossible"));
-    };
-    reader.onerror = () =>
-      reject(reader.error ?? new Error("Lecture PDF impossible"));
-    reader.readAsDataURL(blob);
-  });
-}
-
 function sanitiserNomFichier(texte: string): string {
   return texte
     .normalize("NFD")
@@ -40,42 +27,75 @@ function nomFichierEstimation(donnees: DonneesDevisEstimation): string {
   return `estimation-${numero}.pdf`;
 }
 
-function fermerOverlayPdf() {
-  document.getElementById(ID_OVERLAY_PDF)?.remove();
-}
-
-function ouvrirPdfSansTelechargement(dataUrl: string): void {
-  // Sans attribut download : le navigateur tente d'afficher le PDF
-  const a = document.createElement("a");
-  a.href = dataUrl;
-  a.target = "_blank";
-  a.rel = "noopener noreferrer";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-function telechargerPdf(dataUrl: string, nomFichier: string): void {
-  const a = document.createElement("a");
-  a.href = dataUrl;
-  a.download = nomFichier;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-/**
- * Aperçu PDF sans URL blob:.
- * Mobile : ouvrir d'abord (pas de téléchargement auto).
- */
-function afficherApercuPdf(dataUrl: string, nomFichier: string): void {
-  fermerOverlayPdf();
-
-  const estMobile =
+function estAppareilMobile(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return (
     /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
     ) ||
-    (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
+    (navigator.maxTouchPoints > 0 && window.innerWidth < 1024)
+  );
+}
+
+function fermerOverlayPdf(urlARevoquer?: string | null) {
+  document.getElementById(ID_OVERLAY_PDF)?.remove();
+  if (urlARevoquer?.startsWith("blob:")) {
+    try {
+      URL.revokeObjectURL(urlARevoquer);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+async function partagerFichierPdf(blob: Blob, nomFichier: string): Promise<boolean> {
+  try {
+    const fichier = new File([blob], nomFichier, { type: "application/pdf" });
+    const nav = navigator as Navigator & {
+      canShare?: (data?: ShareData) => boolean;
+      share?: (data: ShareData) => Promise<void>;
+    };
+    if (typeof nav.share !== "function") return false;
+    if (typeof nav.canShare === "function" && !nav.canShare({ files: [fichier] })) {
+      return false;
+    }
+    await nav.share({
+      files: [fichier],
+      title: nomFichier,
+      text: "Estimation / devis",
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function telechargerViaBlob(blob: Blob, nomFichier: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nomFichier;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+function ouvrirDansNouvelOnglet(url: string): boolean {
+  const fenetre = window.open(url, "_blank", "noopener,noreferrer");
+  return Boolean(fenetre);
+}
+
+/**
+ * Aperçu PDF via blob: (plus fiable que data: sur mobile).
+ * Pas d'ouverture auto après génération async (bloquée hors geste utilisateur).
+ */
+function afficherApercuPdf(blob: Blob, nomFichier: string): void {
+  fermerOverlayPdf();
+
+  const estMobile = estAppareilMobile();
+  const blobUrl = URL.createObjectURL(blob);
 
   const overlay = document.createElement("div");
   overlay.id = ID_OVERLAY_PDF;
@@ -128,7 +148,7 @@ function afficherApercuPdf(dataUrl: string, nomFichier: string): void {
   const styleBouton = {
     border: "none",
     borderRadius: "8px",
-    padding: "8px 12px",
+    padding: "10px 12px",
     fontSize: "13px",
     fontWeight: "600",
     cursor: "pointer",
@@ -141,7 +161,25 @@ function afficherApercuPdf(dataUrl: string, nomFichier: string): void {
     background: "#2563eb",
     color: "#fff",
   });
-  btnOuvrir.onclick = () => ouvrirPdfSansTelechargement(dataUrl);
+  btnOuvrir.onclick = () => {
+    const ok = ouvrirDansNouvelOnglet(blobUrl);
+    if (!ok) {
+      // Popup bloquée : bascule sur téléchargement (reste dans l'app)
+      telechargerViaBlob(blob, nomFichier);
+    }
+  };
+
+  const btnPartager = document.createElement("button");
+  btnPartager.type = "button";
+  btnPartager.textContent = "Partager";
+  Object.assign(btnPartager.style, styleBouton, {
+    background: "#7c3aed",
+    color: "#fff",
+    display: estMobile ? "inline-block" : "none",
+  });
+  btnPartager.onclick = () => {
+    void partagerFichierPdf(blob, nomFichier);
+  };
 
   const btnTelecharger = document.createElement("button");
   btnTelecharger.type = "button";
@@ -150,7 +188,7 @@ function afficherApercuPdf(dataUrl: string, nomFichier: string): void {
     background: "#0f766e",
     color: "#fff",
   });
-  btnTelecharger.onclick = () => telechargerPdf(dataUrl, nomFichier);
+  btnTelecharger.onclick = () => telechargerViaBlob(blob, nomFichier);
 
   const btnFermer = document.createElement("button");
   btnFermer.type = "button";
@@ -159,9 +197,9 @@ function afficherApercuPdf(dataUrl: string, nomFichier: string): void {
     background: "#e2e8f0",
     color: "#0f172a",
   });
-  btnFermer.onclick = () => fermerOverlayPdf();
+  btnFermer.onclick = () => fermerOverlayPdf(blobUrl);
 
-  actions.append(btnOuvrir, btnTelecharger, btnFermer);
+  actions.append(btnOuvrir, btnPartager, btnTelecharger, btnFermer);
   barre.append(titre, actions);
 
   const cadre = document.createElement("div");
@@ -173,24 +211,13 @@ function afficherApercuPdf(dataUrl: string, nomFichier: string): void {
     flexDirection: "column",
   } as CSSStyleDeclaration);
 
-  const iframe = document.createElement("iframe");
-  iframe.title = nomFichier;
-  iframe.src = dataUrl;
-  Object.assign(iframe.style, {
-    width: "100%",
-    height: "100%",
-    border: "none",
-    display: "block",
-    flex: "1",
-  } as CSSStyleDeclaration);
-
   const fallback = document.createElement("div");
   Object.assign(fallback.style, {
     display: estMobile ? "flex" : "none",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    gap: "12px",
+    gap: "14px",
     padding: "28px 16px",
     textAlign: "center",
     color: "#0f172a",
@@ -200,16 +227,13 @@ function afficherApercuPdf(dataUrl: string, nomFichier: string): void {
   } as CSSStyleDeclaration);
 
   const p1 = document.createElement("p");
-  p1.style.cssText = "margin:0;font-size:15px;font-weight:600";
-  p1.textContent = estMobile
-    ? "Votre devis est prêt"
-    : "Aperçu PDF indisponible sur ce navigateur.";
+  p1.style.cssText = "margin:0;font-size:16px;font-weight:700";
+  p1.textContent = "Votre devis est prêt";
 
   const p2 = document.createElement("p");
-  p2.style.cssText = "margin:0;font-size:13px;color:#475569;max-width:320px";
-  p2.textContent = estMobile
-    ? "Touchez « Ouvrir » pour afficher le PDF, ou « Télécharger » pour l'enregistrer."
-    : "Utilisez Ouvrir ou Télécharger pour consulter le devis.";
+  p2.style.cssText = "margin:0;font-size:14px;color:#475569;max-width:340px;line-height:1.45";
+  p2.textContent =
+    "Touchez « Ouvrir » pour afficher le PDF, « Partager » pour l’envoyer, ou « Télécharger » pour l’enregistrer.";
 
   const btnOuvrirGrand = document.createElement("button");
   btnOuvrirGrand.type = "button";
@@ -218,40 +242,58 @@ function afficherApercuPdf(dataUrl: string, nomFichier: string): void {
     background: "#2563eb",
     color: "#fff",
     width: "100%",
-    maxWidth: "280px",
+    maxWidth: "300px",
     padding: "14px 16px",
-    fontSize: "15px",
+    fontSize: "16px",
   });
-  btnOuvrirGrand.onclick = () => ouvrirPdfSansTelechargement(dataUrl);
+  btnOuvrirGrand.onclick = () => {
+    const ok = ouvrirDansNouvelOnglet(blobUrl);
+    if (!ok) telechargerViaBlob(blob, nomFichier);
+  };
 
-  fallback.append(p1, p2, btnOuvrirGrand);
+  const btnTelechargerGrand = document.createElement("button");
+  btnTelechargerGrand.type = "button";
+  btnTelechargerGrand.textContent = "Télécharger le PDF";
+  Object.assign(btnTelechargerGrand.style, styleBouton, {
+    background: "#0f766e",
+    color: "#fff",
+    width: "100%",
+    maxWidth: "300px",
+    padding: "14px 16px",
+    fontSize: "16px",
+  });
+  btnTelechargerGrand.onclick = () => telechargerViaBlob(blob, nomFichier);
 
-  if (estMobile) {
-    // Sur mobile l'iframe PDF est souvent vide : écran d'actions clair, sans auto-download
-    iframe.style.display = "none";
-  }
+  fallback.append(p1, p2, btnOuvrirGrand, btnTelechargerGrand);
+
+  const iframe = document.createElement("iframe");
+  iframe.title = nomFichier;
+  iframe.src = blobUrl;
+  Object.assign(iframe.style, {
+    width: "100%",
+    height: "100%",
+    border: "none",
+    display: estMobile ? "none" : "block",
+    flex: "1",
+  } as CSSStyleDeclaration);
 
   cadre.append(iframe, fallback);
   overlay.append(barre, cadre);
 
   const onTouche = (e: KeyboardEvent) => {
     if (e.key === "Escape") {
-      fermerOverlayPdf();
+      fermerOverlayPdf(blobUrl);
       window.removeEventListener("keydown", onTouche);
     }
   };
   window.addEventListener("keydown", onTouche);
 
   document.body.appendChild(overlay);
-
-  // Mobile : ouvrir automatiquement en visualisation (pas de téléchargement forcé)
-  if (estMobile) {
-    window.setTimeout(() => ouvrirPdfSansTelechargement(dataUrl), 180);
-  }
 }
 
 /**
- * Génère un devis PDF A4 et l'affiche sans jamais utiliser d'URL blob:.
+ * Génère un devis PDF A4 et l'affiche.
+ * Utilise une URL blob: (évite les data: trop longs bloqués sur mobile).
  */
 export async function imprimerDevisEstimation(
   donnees: DonneesDevisEstimation
@@ -262,10 +304,12 @@ export async function imprimerDevisEstimation(
     enregistrerPolicesPdf();
 
     const blob = await pdf(<DocumentDevisEstimation donnees={donnees} />).toBlob();
-    const nomFichier = nomFichierEstimation(donnees);
-    const dataUrl = await blobVersDataUrl(blob);
+    if (!blob || blob.size < 100) {
+      throw new Error("PDF vide ou invalide");
+    }
 
-    afficherApercuPdf(dataUrl, nomFichier);
+    const nomFichier = nomFichierEstimation(donnees);
+    afficherApercuPdf(blob, nomFichier);
     return true;
   } catch (error) {
     console.error("[imprimerDevisEstimation]", error);

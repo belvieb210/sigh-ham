@@ -4,7 +4,7 @@ export function formaterMontantCaisse(montant: number, devise = "USD", locale = 
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  if (devise === "CDF") return `${corps} CDF`;
+  if (devise === "CDF") return `${corps} FCFA`;
   return `${corps} $`;
 }
 

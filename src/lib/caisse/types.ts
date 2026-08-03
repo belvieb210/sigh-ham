@@ -28,6 +28,12 @@ export interface PatientFileCaisse {
   nombreExamens: number;
   montantEstime: number;
   factureOuverte: boolean;
+  /** Statut facture si établie */
+  statutFacture: StatutFacture | null;
+  montantFacture: number;
+  montantPaye: number;
+  resteAPayer: number;
+  modeFacture: string | null;
   /** Salle / service d'origine du transfert */
   provenance: string;
   medecinResponsable: string | null;
@@ -230,6 +236,15 @@ export interface EncaissementResumeJour {
   numeroFacture: string;
   patient: string;
   caissier: string;
+}
+
+export interface SessionCaisseActive {
+  id: string;
+  caissierId: string;
+  numeroCaisse: string;
+  soldeOuverture: number;
+  ouverteLe: string;
+  caissierNom: string;
 }
 
 export type PeriodeRapportCaisse = "journalier" | "mensuel" | "plage";

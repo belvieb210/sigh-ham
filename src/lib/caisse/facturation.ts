@@ -1,7 +1,8 @@
 import "server-only";
-import type { CodeSalle, ModePaiement, Prisma } from "@/generated/prisma/client";
+import type { ModePaiement } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { genererNumeroFacture } from "@/lib/caisse/numeros";
+import { reorienterPatientDepuisCaisse } from "@/lib/caisse/reorienter-patient-caisse";
 import type {
   DestinationApresEncaissement,
   DossierFacturationCaisse,
@@ -19,37 +20,6 @@ function decimalVersNombre(valeur: { toNumber?: () => number } | number | string
 
 function formaterCaissier(prenom: string, nom: string) {
   return `${prenom} ${nom}`.trim();
-}
-
-async function inscrireFileAttenteDestination(
-  tx: Prisma.TransactionClient,
-  passageId: string,
-  salleDestinationId: string
-) {
-  const existante = await tx.fileAttente.findUnique({ where: { passageId } });
-  if (existante) {
-    return tx.fileAttente.update({
-      where: { passageId },
-      data: {
-        salleId: salleDestinationId,
-        serviLe: null,
-        arriveLe: new Date(),
-      },
-    });
-  }
-
-  const ordreMax = await tx.fileAttente.aggregate({
-    where: { salleId: salleDestinationId },
-    _max: { numeroOrdre: true },
-  });
-
-  return tx.fileAttente.create({
-    data: {
-      salleId: salleDestinationId,
-      passageId,
-      numeroOrdre: (ordreMax._max.numeroOrdre ?? 0) + 1,
-    },
-  });
 }
 
 export async function obtenirDossierFacturation(
@@ -581,23 +551,8 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
       },
     });
 
-    if (passage?.fileAttente && !passage.fileAttente.serviLe) {
-      await tx.fileAttente.update({
-        where: { id: passage.fileAttente.id },
-        data: { serviLe: new Date() },
-      });
-    }
-
-    if (passage?.transferts[0]) {
-      await tx.transfert.update({
-        where: { id: passage.transferts[0].id },
-        data: {
-          statut: "TERMINE",
-          termineLe: new Date(),
-          recepteurId: caissierId,
-        },
-      });
-    }
+    // Le patient reste en file caisse jusqu'à confirmation / transfert (menu ⋮).
+    // Les avances (PARTIELLEMENT_PAYEE) restent aussi pour établir le solde.
 
     return {
       paiementId: paiement.id,
@@ -608,7 +563,7 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
     };
   });
 
-  // Orientation après commit : ne doit jamais annuler l'encaissement
+  // Après paiement total : transfert EN_ATTENTE (le patient reste en file)
   let transfertSuivantId: string | null = null;
   if (
     donnees.destinationApres !== "AUCUNE" &&
@@ -616,12 +571,12 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
     resultat.passageId
   ) {
     try {
-      transfertSuivantId = await orienterApresEncaissement(
+      const orient = await reorienterPatientDepuisCaisse(
         caissierId,
         donnees.dossierId,
-        resultat.passageId,
         donnees.destinationApres
       );
+      transfertSuivantId = orient.transfertId;
     } catch (e) {
       console.error("[encaisserFacture] orientation après paiement", e);
     }
@@ -634,47 +589,6 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
     transfertSuivantId,
     dossier: dossierMisAJour,
   };
-}
-
-async function orienterApresEncaissement(
-  caissierId: string,
-  dossierId: string,
-  passageId: string,
-  destination: Exclude<DestinationApresEncaissement, "AUCUNE">
-) {
-  const codeSalle = destination as CodeSalle;
-  const [salleDestination, salleOrigine] = await Promise.all([
-    prisma.salle.findUnique({ where: { code: codeSalle } }),
-    prisma.salle.findUnique({ where: { code: "CAISSE" } }),
-  ]);
-  if (!salleDestination || !salleOrigine) return null;
-
-  return prisma.$transaction(async (tx) => {
-    const transfert = await tx.transfert.create({
-      data: {
-        dossierId,
-        passageId,
-        salleOrigineId: salleOrigine.id,
-        salleDestinationId: salleDestination.id,
-        emetteurId: caissierId,
-        statut: "ACCEPTE",
-        motif: `Paiement validé — orientation vers ${salleDestination.nom}`,
-        accepteLe: new Date(),
-        recepteurId: caissierId,
-      },
-    });
-
-    await tx.passage.update({
-      where: { id: passageId },
-      data: {
-        statut: "EN_ATTENTE",
-        motif: `Transfert vers ${salleDestination.nom}`,
-      },
-    });
-
-    await inscrireFileAttenteDestination(tx, passageId, salleDestination.id);
-    return transfert.id;
-  });
 }
 
 /** Liste toutes les factures non annulées (historique complet), plus récentes d'abord. */

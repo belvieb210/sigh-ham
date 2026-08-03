@@ -339,6 +339,7 @@ model Utilisateur {
   notifications            Notification[]
   preferencesNotification  PreferenceNotification?
   abonnementsPush          AbonnementPush[]
+  sessionsCaisse           SessionCaisse[]
 
   @@map("utilisateurs")
 }
@@ -595,6 +596,22 @@ model PrescriptionActe {
 }
 
 // ─── Caisse ───────────────────────────────────────────────────────────────────
+
+model SessionCaisse {
+  id             String       @id @default(cuid())
+  caissierId     String       @map("caissier_id")
+  caissier       Utilisateur  @relation(fields: [caissierId], references: [id])
+  numeroCaisse   String       @default("01") @map("numero_caisse")
+  soldeOuverture Decimal      @map("solde_ouverture") @db.Decimal(12, 2)
+  ouverteLe      DateTime     @default(now()) @map("ouverte_le")
+  clotureeLe     DateTime?    @map("cloturee_le")
+  soldeCloture   Decimal?     @map("solde_cloture") @db.Decimal(12, 2)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@index([caissierId, clotureeLe])
+  @@map("sessions_caisse")
+}
 
 model Facture {
   id            String         @id @default(cuid())

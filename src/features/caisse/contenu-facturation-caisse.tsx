@@ -197,9 +197,14 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     [dossier]
   );
 
-  /** Confirmés à la caisse, sans facture encore — les EN_ATTENTE restent sur /transferts */
+  /** File caisse : à facturer, émises, ou avances (solde restant) — hors payées intégralement */
   const fileSansFacture = useMemo(
-    () => file.filter((p) => !p.factureOuverte),
+    () =>
+      file.filter((p) => {
+        if (!p.factureOuverte || !p.statutFacture) return true;
+        if (p.statutFacture === "PAYEE") return false;
+        return true;
+      }),
     [file]
   );
 
@@ -761,6 +766,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                           {t("caisse.facturation.colMontant")}
                         </th>
                         <th className="px-4 py-2.5 font-semibold">
+                          {t("caisse.facturation.colStatut")}
+                        </th>
+                        <th className="px-4 py-2.5 font-semibold">
                           {t("caisse.facturation.colHeure")}
                         </th>
                         <th className="px-4 py-2.5 font-semibold">
@@ -788,7 +796,26 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                             {p.nombreExamens}
                           </td>
                           <td className="px-4 py-3 font-semibold text-texte-principal">
-                            {formaterMontantCaisse(p.montantEstime)}
+                            {formaterMontantCaisse(
+                              p.factureOuverte ? p.resteAPayer : p.montantEstime
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={cn(
+                                "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                                !p.statutFacture && "bg-amber-50 text-amber-700",
+                                p.statutFacture === "BROUILLON" && "bg-slate-100 text-slate-700",
+                                p.statutFacture === "EMISE" && "bg-blue-50 text-blue-700",
+                                p.statutFacture === "PARTIELLEMENT_PAYEE" &&
+                                  "bg-amber-50 text-amber-800",
+                                p.statutFacture === "PAYEE" && "bg-emerald-50 text-emerald-700"
+                              )}
+                            >
+                              {p.statutFacture
+                                ? t(`caisse.statutsFacture.${p.statutFacture}`)
+                                : t("caisse.facturation.statutSansFacture")}
+                            </span>
                           </td>
                           <td className="px-4 py-3 tabular-nums text-texte-secondaire">
                             {formaterHeure(p.arriveeLe)}
@@ -1411,6 +1438,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                           {t("caisse.facturation.colMontant")}
                         </th>
                         <th className="px-4 py-2.5 font-semibold">
+                          {t("caisse.facturation.colStatut")}
+                        </th>
+                        <th className="px-4 py-2.5 font-semibold">
                           {t("caisse.facturation.colHeure")}
                         </th>
                         <th className="px-4 py-2.5 font-semibold">
@@ -1443,7 +1473,26 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                               {p.nombreExamens}
                             </td>
                             <td className="px-4 py-3 font-semibold text-texte-principal">
-                              {formaterMontantCaisse(p.montantEstime)}
+                              {formaterMontantCaisse(
+                                p.factureOuverte ? p.resteAPayer : p.montantEstime
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={cn(
+                                  "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                                  !p.statutFacture && "bg-amber-50 text-amber-700",
+                                  p.statutFacture === "BROUILLON" && "bg-slate-100 text-slate-700",
+                                  p.statutFacture === "EMISE" && "bg-blue-50 text-blue-700",
+                                  p.statutFacture === "PARTIELLEMENT_PAYEE" &&
+                                    "bg-amber-50 text-amber-800",
+                                  p.statutFacture === "PAYEE" && "bg-emerald-50 text-emerald-700"
+                                )}
+                              >
+                                {p.statutFacture
+                                  ? t(`caisse.statutsFacture.${p.statutFacture}`)
+                                  : t("caisse.facturation.statutSansFacture")}
+                              </span>
                             </td>
                             <td className="px-4 py-3 tabular-nums text-texte-secondaire">
                               {formaterHeure(p.arriveeLe)}

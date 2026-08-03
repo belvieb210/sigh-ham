@@ -15,6 +15,7 @@ import { BadgeMessagerieSidebar } from "@/features/messagerie/badge-messagerie-s
 import { BadgeNotificationsSidebar } from "@/features/notifications/badge-notifications-sidebar";
 import { BoutonNotificationsEnTete } from "@/features/notifications/composants/bouton-notifications-entete";
 import { useNavigationCaisse } from "@/hooks/use-navigation-caisse";
+import { PanneauSessionCaisse } from "@/features/caisse/panneau-session-caisse";
 import type { UtilisateurCaisse } from "@/lib/auth/props-utilisateur-caisse";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +40,6 @@ function LiensNavigation({
   const router = useRouter();
   const { tableauDeBord, caisse, rapports, communication, parametres } =
     useNavigationCaisse();
-  const heureOuverture = "08:15";
 
   const estActif = (href: string) => {
     if (href === "/sigh/caisse") return pathname === href;
@@ -145,25 +145,7 @@ function LiensNavigation({
       </nav>
 
       <div className="space-y-2 border-t border-gris-bordure p-3">
-        <div className="rounded-xl border border-bleu-medical/20 bg-bleu-medical-clair/30 p-3">
-          <p className="text-xs font-semibold text-bleu-medical">
-            {t("caisse.layout.sessionEnCours")}
-          </p>
-          <p className="mt-1 text-[11px] text-texte-secondaire">
-            {t("caisse.layout.ouverteA", { heure: heureOuverture })} ·{" "}
-            {t("caisse.layout.caisseNumero")}
-          </p>
-          <p className="mt-2 text-[11px] text-texte-secondaire">
-            {t("caisse.layout.soldeOuverture")}
-          </p>
-          <p className="text-sm font-bold text-texte-principal">500,00 $</p>
-          <button
-            type="button"
-            className="mt-2 w-full rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100"
-          >
-            {t("caisse.layout.cloturerSession")}
-          </button>
-        </div>
+        <PanneauSessionCaisse />
 
         <Link
           href="/sigh/caisse/profil"

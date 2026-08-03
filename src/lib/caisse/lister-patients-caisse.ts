@@ -1,4 +1,5 @@
 import "server-only";
+import type { StatutFacture } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { listerPatientsFileAttenteSalle } from "@/lib/transferts/visibilite-salle";
 import type { PatientFileCaisse, StatsCaisseJour } from "@/lib/caisse/types";
@@ -10,19 +11,88 @@ function decimalVersNombre(valeur: { toNumber?: () => number } | number | string
   return Number(valeur) || 0;
 }
 
+function extraireModeFacture(reference: string | null | undefined): string | null {
+  if (!reference) return null;
+  return (
+    reference
+      .split("|")
+      .find((part) => part.startsWith("modeFacture="))
+      ?.replace("modeFacture=", "") ?? null
+  );
+}
+
+/**
+ * Réintègre en file caisse les patients sortis trop tôt (encaissement avant confirm),
+ * tant qu'aucun transfert sortant n'a été confirmé depuis la caisse.
+ */
+async function reintegrerPatientsCaisseNonConfirmes() {
+  const sortis = await prisma.fileAttente.findMany({
+    where: {
+      salle: { code: "CAISSE" },
+      serviLe: { not: null },
+    },
+    select: {
+      id: true,
+      passageId: true,
+      passage: {
+        select: {
+          transferts: {
+            where: {
+              salleOrigine: { code: "CAISSE" },
+              statut: { in: ["ACCEPTE", "EN_TRAITEMENT", "TERMINE"] },
+            },
+            select: { id: true },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  const aReouvrir = sortis.filter((f) => f.passage.transferts.length === 0).map((f) => f.id);
+  if (aReouvrir.length === 0) return;
+
+  await prisma.fileAttente.updateMany({
+    where: { id: { in: aReouvrir } },
+    data: { serviLe: null },
+  });
+}
+
 export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse[]> {
+  await reintegrerPatientsCaisseNonConfirmes();
+
   const files = await listerPatientsFileAttenteSalle("CAISSE");
 
   const dossierIds = files.map((f) => f.passage.dossier.id);
-  const facturesOuvertes = await prisma.facture.findMany({
+  const factures = await prisma.facture.findMany({
     where: {
       dossierId: { in: dossierIds },
-      /** Facture établie (y compris payée) — requise pour confirmer un transfert caisse */
       statut: { in: ["BROUILLON", "EMISE", "PARTIELLEMENT_PAYEE", "PAYEE"] },
     },
-    select: { dossierId: true },
+    include: {
+      paiements: { orderBy: { payeLe: "desc" }, take: 1 },
+    },
+    orderBy: { createdAt: "desc" },
   });
-  const dossiersAvecFacture = new Set(facturesOuvertes.map((f) => f.dossierId));
+
+  const factureParDossier = new Map<
+    string,
+    {
+      statut: StatutFacture;
+      montantTotal: number;
+      montantPaye: number;
+      modeFacture: string | null;
+    }
+  >();
+  for (const f of factures) {
+    if (factureParDossier.has(f.dossierId)) continue;
+    factureParDossier.set(f.dossierId, {
+      statut: f.statut,
+      montantTotal: decimalVersNombre(f.montantTotal),
+      montantPaye: decimalVersNombre(f.montantPaye),
+      modeFacture: extraireModeFacture(f.paiements[0]?.reference),
+    });
+  }
 
   return files.map((file) => {
     const dossier = file.passage.dossier;
@@ -39,6 +109,9 @@ export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse
       transfert?.salleOrigine?.nom?.trim() ||
       transfert?.salleOrigine?.code ||
       "—";
+    const fac = factureParDossier.get(dossier.id) ?? null;
+    const montantFacture = fac?.montantTotal ?? 0;
+    const montantPaye = fac?.montantPaye ?? 0;
 
     return {
       fileAttenteId: file.id,
@@ -56,8 +129,13 @@ export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse
       arriveeLe: file.arriveLe.toISOString(),
       numeroOrdre: file.numeroOrdre,
       nombreExamens: examens.length,
-      montantEstime,
-      factureOuverte: dossiersAvecFacture.has(dossier.id),
+      montantEstime: fac ? Math.max(0, montantFacture - montantPaye) || montantFacture : montantEstime,
+      factureOuverte: Boolean(fac),
+      statutFacture: fac?.statut ?? null,
+      montantFacture,
+      montantPaye,
+      resteAPayer: fac ? Math.max(0, montantFacture - montantPaye) : montantEstime,
+      modeFacture: fac?.modeFacture ?? null,
       provenance,
       medecinResponsable: medecin,
     };

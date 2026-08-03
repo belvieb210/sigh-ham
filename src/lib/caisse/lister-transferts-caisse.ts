@@ -27,6 +27,7 @@ function raccourcirOrientation(nom: string): string {
 
 function libelleStatutLigne(opts: {
   factureOuverte: boolean;
+  statutFacture?: string | null;
   statutTransfert: string | null;
   enRecuperation: boolean;
 }): { statut: string; statutCouleur: string } {
@@ -35,6 +36,12 @@ function libelleStatutLigne(opts: {
   }
   if (opts.statutTransfert === "EN_ATTENTE") {
     return { statut: "À confirmer", statutCouleur: "bg-orange-100 text-orange-800" };
+  }
+  if (opts.statutFacture === "PARTIELLEMENT_PAYEE") {
+    return { statut: "Avance", statutCouleur: "bg-amber-100 text-amber-800" };
+  }
+  if (opts.statutFacture === "PAYEE") {
+    return { statut: "Payée", statutCouleur: "bg-emerald-100 text-emerald-700" };
   }
   if (opts.factureOuverte) {
     return { statut: "En cours", statutCouleur: "bg-blue-100 text-blue-700" };
@@ -99,6 +106,7 @@ export async function listerPatientsTransfertsCaisse(): Promise<{
       : "Caisse";
     const { statut, statutCouleur } = libelleStatutLigne({
       factureOuverte: p.factureOuverte,
+      statutFacture: p.statutFacture,
       statutTransfert: sortant?.statut ?? null,
       enRecuperation,
     });

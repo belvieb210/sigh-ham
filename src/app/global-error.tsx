@@ -4,7 +4,6 @@ import { useEffect } from "react";
 
 export default function ErreurGlobale({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;

@@ -7,12 +7,13 @@ import { Bouton } from "@/components/ui/bouton";
 
 export default function PageErreur({
   error,
+  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    console.error("[PageErreur]", error.message, error.digest ?? "", error);
   }, [error]);
 
   return (
@@ -25,10 +26,20 @@ export default function PageErreur({
         Le chargement de la page a échoué. Vous pouvez réessayer ou revenir à l&apos;accueil.
       </p>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-        <Bouton type="button" variante="primaire" onClick={() => window.location.reload()}>
+        <Bouton
+          type="button"
+          variante="primaire"
+          onClick={() => {
+            try {
+              reset();
+            } catch {
+              window.location.reload();
+            }
+          }}
+        >
           Réessayer
         </Bouton>
-        <Link href="/">
+        <Link href="/sigh/reception">
           <Bouton type="button" variante="contour">
             Accueil
           </Bouton>

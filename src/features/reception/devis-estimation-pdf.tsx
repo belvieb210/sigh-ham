@@ -61,9 +61,12 @@ function formaterPrix(prix: number): string {
 
 const NOIR = "#111111";
 const GRIS = "#555555";
-const GRIS_CLAIR = "#f5f5f5";
-const BORDURE = "#cccccc";
-/** Rouge proforma (N° document + montant total) */
+const GRIS_CLAIR = "#f3f8fc";
+/** Contour bleu clair (cadres patient / tableau) — comme maquette */
+const BLEU_CONTOUR = "#7eb6e0";
+/** Bleu marine pour titres de cadres + en-tête de tableau */
+const BLEU_ENTETE = "#1a4d7c";
+/** Rouge proforma (N° document + montant total) — conservé */
 const ROUGE = "#c0162d";
 
 const styles = StyleSheet.create({
@@ -121,14 +124,14 @@ const styles = StyleSheet.create({
   },
   badgeTitre: {
     borderWidth: 1.5,
-    borderColor: NOIR,
+    borderColor: BLEU_ENTETE,
     borderRadius: 3,
     paddingVertical: 2,
     paddingHorizontal: 8,
     marginBottom: 2,
   },
   badgeTitreTexte: {
-    color: NOIR,
+    color: BLEU_ENTETE,
     fontSize: 10,
     fontWeight: "bold",
     textAlign: "center",
@@ -159,7 +162,7 @@ const styles = StyleSheet.create({
   },
   separateurEnTete: {
     borderBottomWidth: 1.5,
-    borderBottomColor: NOIR,
+    borderBottomColor: BLEU_CONTOUR,
     marginTop: 2,
     marginBottom: 8,
   },
@@ -171,14 +174,14 @@ const styles = StyleSheet.create({
   carte: {
     width: "48.5%",
     borderWidth: 1,
-    borderColor: BORDURE,
+    borderColor: BLEU_CONTOUR,
     borderRadius: 4,
     padding: 8,
   },
   carteTitre: {
     fontSize: 10,
     fontWeight: "bold",
-    color: NOIR,
+    color: BLEU_ENTETE,
     marginBottom: 4,
     textTransform: "uppercase",
     letterSpacing: 0.4,
@@ -194,12 +197,12 @@ const styles = StyleSheet.create({
   },
   table: {
     borderWidth: 1,
-    borderColor: BORDURE,
+    borderColor: BLEU_CONTOUR,
     marginBottom: 8,
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: NOIR,
+    backgroundColor: BLEU_ENTETE,
     paddingVertical: 4,
     paddingHorizontal: 6,
   },
@@ -213,7 +216,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     paddingHorizontal: 6,
     borderBottomWidth: 1,
-    borderBottomColor: BORDURE,
+    borderBottomColor: BLEU_CONTOUR,
   },
   tableRowAlt: {
     backgroundColor: GRIS_CLAIR,
@@ -230,14 +233,14 @@ const styles = StyleSheet.create({
   conditions: {
     width: "52%",
     borderWidth: 1,
-    borderColor: BORDURE,
+    borderColor: BLEU_CONTOUR,
     borderRadius: 4,
     padding: 6,
   },
   conditionsTitre: {
     fontSize: 10,
     fontWeight: "bold",
-    color: NOIR,
+    color: BLEU_ENTETE,
     marginBottom: 3,
   },
   conditionsLigne: {
@@ -255,7 +258,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     paddingHorizontal: 6,
     borderBottomWidth: 1,
-    borderBottomColor: BORDURE,
+    borderBottomColor: BLEU_CONTOUR,
     fontSize: 10,
   },
   totalFinal: {
@@ -299,7 +302,7 @@ const styles = StyleSheet.create({
   },
   signatureLigne: {
     borderBottomWidth: 1,
-    borderBottomColor: "#999999",
+    borderBottomColor: BLEU_CONTOUR,
     marginTop: 4,
     marginBottom: 2,
   },
@@ -312,7 +315,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: NOIR,
+    backgroundColor: BLEU_ENTETE,
     paddingVertical: 8,
     paddingHorizontal: 20,
   },

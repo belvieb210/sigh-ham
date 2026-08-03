@@ -363,6 +363,11 @@ export const caisseFr = {
     VIREMENT: "Virement bancaire",
     CHEQUE: "Chèque",
   },
+  impressionFacture: {
+    titre: "Impression facture",
+    sousTitre: "Factures payées ou avec avance — réimpression",
+    vide: "Aucune facture payée ou avec avance à afficher.",
+  },
   factures: {
     titre: "Factures",
     sousTitre: "Toutes les factures émises",

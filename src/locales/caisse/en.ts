@@ -363,6 +363,11 @@ export const caisseEn = {
     VIREMENT: "Bank transfer",
     CHEQUE: "Cheque",
   },
+  impressionFacture: {
+    titre: "Print invoice",
+    sousTitre: "Paid or advance invoices — reprint",
+    vide: "No paid or advance invoice to display.",
+  },
   factures: {
     titre: "Invoices",
     sousTitre: "All issued invoices",

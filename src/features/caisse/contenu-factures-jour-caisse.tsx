@@ -28,8 +28,12 @@ import {
 import type { FactureResumeJour } from "@/lib/caisse/types";
 import { cn } from "@/lib/utils";
 
+export type VarianteFacturesCaisse = "toutes" | "impression";
+
 interface PropsContenuFacturesJourCaisse {
   utilisateur: UtilisateurCaisse;
+  /** `impression` = factures payées ou avec avance (partiellement payées) */
+  variante?: VarianteFacturesCaisse;
 }
 
 const PAR_PAGE = 5;
@@ -40,8 +44,26 @@ function statutAffiche(statut: FactureResumeJour["statut"]) {
   return "impayee" as const;
 }
 
-export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJourCaisse) {
+function estFactureImprimable(fac: FactureResumeJour) {
+  return fac.statut === "PAYEE" || fac.statut === "PARTIELLEMENT_PAYEE";
+}
+
+export function ContenuFacturesJourCaisse({
+  utilisateur,
+  variante = "toutes",
+}: PropsContenuFacturesJourCaisse) {
   const { t } = useTranslation();
+  const modeImpression = variante === "impression";
+  const titreKey = modeImpression
+    ? "caisse.impressionFacture.titre"
+    : "caisse.factures.titre";
+  const sousTitreKey = modeImpression
+    ? "caisse.impressionFacture.sousTitre"
+    : "caisse.factures.sousTitre";
+  const videKey = modeImpression
+    ? "caisse.impressionFacture.vide"
+    : "caisse.factures.vide";
+
   const [factures, setFactures] = useState<FactureResumeJour[]>([]);
   const [chargement, setChargement] = useState(true);
   const [selectionId, setSelectionId] = useState<string | null>(null);
@@ -62,7 +84,10 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
         const res = await fetch("/api/caisse/factures");
         const data = (await res.json()) as { factures?: FactureResumeJour[] };
         if (!annule && res.ok) {
-          const liste = data.factures ?? [];
+          const brutes = data.factures ?? [];
+          const liste = modeImpression
+            ? brutes.filter(estFactureImprimable)
+            : brutes;
           setFactures(liste);
           if (liste[0]) setSelectionId(liste[0].id);
         }
@@ -73,11 +98,12 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
     return () => {
       annule = true;
     };
-  }, []);
+  }, [modeImpression]);
 
   const facturesFiltrees = useMemo(() => {
     const f = filtresAppliques;
     return factures.filter((fac) => {
+      if (modeImpression && !estFactureImprimable(fac)) return false;
       if (f.nom.trim() && !fac.nom.toLowerCase().includes(f.nom.trim().toLowerCase())) {
         return false;
       }
@@ -127,7 +153,7 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
       }
       return true;
     });
-  }, [factures, filtresAppliques]);
+  }, [factures, filtresAppliques, modeImpression]);
 
   const nbFiltresActifs = compterFiltresActifs(filtresAppliques);
 
@@ -187,17 +213,17 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
   return (
     <MiseEnPageCaisse
       utilisateur={utilisateur}
-      titre={t("caisse.factures.titre")}
-      sousTitre={t("caisse.factures.sousTitre")}
+      titre={t(titreKey)}
+      sousTitre={t(sousTitreKey)}
     >
       <div className="mx-auto w-full max-w-7xl space-y-4 pb-8">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-xl font-bold text-texte-principal">
-              {t("caisse.factures.titre")}
+              {t(titreKey)}
             </h2>
             <p className="mt-1 text-sm text-texte-secondaire">
-              {t("caisse.factures.sousTitre")}
+              {t(sousTitreKey)}
             </p>
           </div>
           <button
@@ -243,7 +269,7 @@ export function ContenuFacturesJourCaisse({ utilisateur }: PropsContenuFacturesJ
           </div>
         ) : factures.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gris-bordure bg-white px-6 py-14 text-center text-sm text-texte-secondaire">
-            {t("caisse.factures.vide")}
+            {t(videKey)}
           </div>
         ) : (
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">

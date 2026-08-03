@@ -63,6 +63,8 @@ const NOIR = "#111111";
 const GRIS = "#555555";
 const GRIS_CLAIR = "#f5f5f5";
 const BORDURE = "#cccccc";
+/** Rouge proforma (N° document + montant total) */
+const ROUGE = "#c0162d";
 
 const styles = StyleSheet.create({
   page: {
@@ -78,57 +80,57 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 10,
-    paddingBottom: 8,
-    borderBottomWidth: 1.5,
-    borderBottomColor: NOIR,
+    marginBottom: 0,
+    paddingBottom: 0,
   },
   enTeteGauche: {
     flexDirection: "row",
-    width: "60%",
-    alignItems: "center",
+    width: "58%",
+    alignItems: "flex-start",
   },
   logo: {
-    width: 56,
-    height: 56,
+    width: 48,
+    height: 48,
     objectFit: "contain",
   },
   enTeteInfos: {
     flex: 1,
-    paddingLeft: 10,
+    paddingLeft: 8,
   },
   nomLabo: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "bold",
     color: NOIR,
     marginBottom: 1,
   },
   sousNom: {
-    fontSize: 9,
+    fontSize: 8,
     color: GRIS,
     marginBottom: 0,
+    lineHeight: 1.2,
   },
   contact: {
-    fontSize: 9,
+    fontSize: 8,
     color: GRIS,
-    marginTop: 1,
+    marginTop: 0,
+    lineHeight: 1.2,
   },
   enTeteDroite: {
-    width: "38%",
+    width: "40%",
     alignItems: "stretch",
   },
   badgeTitre: {
     borderWidth: 1.5,
     borderColor: NOIR,
     borderRadius: 3,
-    paddingVertical: 4,
+    paddingVertical: 3,
     paddingHorizontal: 10,
-    marginBottom: 4,
+    marginBottom: 3,
     alignSelf: "flex-end",
   },
   badgeTitreTexte: {
     color: NOIR,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -137,11 +139,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     width: "100%",
-    marginBottom: 1,
+    marginBottom: 0,
+    paddingVertical: 0,
   },
   metaLabel: {
     fontSize: 9,
     color: NOIR,
+    lineHeight: 1.25,
   },
   metaValeur: {
     fontSize: 9,
@@ -149,14 +153,28 @@ const styles = StyleSheet.create({
     textAlign: "right",
     flexShrink: 1,
     paddingLeft: 6,
+    lineHeight: 1.25,
   },
   metaValeurBold: {
     fontSize: 11,
     fontWeight: "bold",
-    color: NOIR,
+    color: ROUGE,
     textAlign: "right",
     flexShrink: 1,
     paddingLeft: 6,
+    lineHeight: 1.25,
+  },
+  metaNumeroLabel: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: ROUGE,
+    lineHeight: 1.25,
+  },
+  separateurEnTete: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: NOIR,
+    marginTop: 4,
+    marginBottom: 8,
   },
   cartes: {
     flexDirection: "row",
@@ -260,17 +278,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     marginTop: 2,
     borderWidth: 1.5,
-    borderColor: NOIR,
+    borderColor: ROUGE,
   },
   totalFinalLabel: {
     fontSize: 11,
     fontWeight: "bold",
-    color: NOIR,
+    color: ROUGE,
   },
   totalFinalValeur: {
     fontSize: 12,
     fontWeight: "bold",
-    color: NOIR,
+    color: ROUGE,
   },
   signatures: {
     flexDirection: "row",
@@ -361,9 +379,7 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
               <Text style={styles.badgeTitreTexte}>{donnees.labels.titreTicket}</Text>
             </View>
             <View style={styles.metaLigne}>
-              <Text style={[styles.metaLabel, { fontWeight: "bold", fontSize: 11 }]}>
-                N°
-              </Text>
+              <Text style={styles.metaNumeroLabel}>N°</Text>
               <Text style={styles.metaValeurBold}>
                 {donnees.numeroEnregistrement || "—"}
               </Text>
@@ -384,6 +400,8 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
             </View>
           </View>
         </View>
+
+        <View style={styles.separateurEnTete} />
 
         <View style={styles.cartes}>
           <View style={styles.carte}>

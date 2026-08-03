@@ -1,7 +1,8 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Calculator, Printer } from "lucide-react";
+import { Calculator, Loader2, Printer } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import type { TypeExamenReception } from "@/lib/reception/types";
@@ -47,12 +48,15 @@ export function SectionEstimationExamens({
   onErreur,
 }: PropsSectionEstimationExamens) {
   const { t } = useTranslation();
+  const [impressionEnCours, setImpressionEnCours] = useState(false);
+  const verrouImpression = useRef(false);
 
   const sousTotal = examens.reduce((total, examen) => total + examen.prix, 0);
   const remiseEffective = Math.min(Math.max(0, remise || 0), sousTotal);
   const totalNet = Math.max(0, sousTotal - remiseEffective);
 
   const imprimerDevis = () => {
+    if (verrouImpression.current || impressionEnCours) return;
     if (examens.length === 0) {
       onErreur?.(t("reception.estimations.examenRequis"));
       return;
@@ -76,6 +80,10 @@ export function SectionEstimationExamens({
             hour: "2-digit",
             minute: "2-digit",
           });
+
+    verrouImpression.current = true;
+    setImpressionEnCours(true);
+
     void imprimerDevisEstimation({
       examens,
       medecinResponsable: medecinResponsable.trim(),
@@ -99,11 +107,16 @@ export function SectionEstimationExamens({
         genereLe: t("reception.estimations.ticket.genereLe"),
         agent: t("reception.estimations.ticket.agent"),
       },
-    }).then((ok) => {
-      if (!ok) {
-        onErreur?.("Impossible de générer le PDF. Réessayez.");
-      }
-    });
+    })
+      .then((ok) => {
+        if (!ok) {
+          onErreur?.("Impossible de générer le PDF. Réessayez.");
+        }
+      })
+      .finally(() => {
+        verrouImpression.current = false;
+        setImpressionEnCours(false);
+      });
   };
 
   return (
@@ -223,10 +236,16 @@ export function SectionEstimationExamens({
               taille="moyen"
               className={cn("shrink-0 rounded-xl print:hidden")}
               onClick={imprimerDevis}
-              disabled={examens.length === 0}
+              disabled={examens.length === 0 || impressionEnCours}
             >
-              <Printer className="h-4 w-4" />
-              {t("reception.estimations.imprimerDevis")}
+              {impressionEnCours ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Printer className="h-4 w-4" />
+              )}
+              {impressionEnCours
+                ? t("reception.common.chargement")
+                : t("reception.estimations.imprimerDevis")}
             </Bouton>
           </div>
         </section>

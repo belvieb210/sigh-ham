@@ -6,6 +6,8 @@ import {
   EnTeteCaisse,
 } from "@/features/caisse/layout-caisse";
 import { NavigationBasseCaisse } from "@/features/caisse/navigation-basse-caisse";
+import { FournisseurOrientationCaisse } from "@/features/caisse/contexte-orientation-caisse";
+import { FournisseurSelectionTransfertCaisse } from "@/features/caisse/contexte-selection-transfert-caisse";
 import { ToastNotificationGlobale } from "@/features/notifications/composants/toast-notification-globale";
 import { GestionnaireAlertesNotifications } from "@/features/notifications/composants/gestionnaire-alertes-notifications";
 import { FournisseurNotifications } from "@/features/notifications/fournisseur-notifications";
@@ -17,6 +19,8 @@ interface PropsMiseEnPageCaisse {
   utilisateur: UtilisateurCaisse;
   titre: string;
   sousTitre: string;
+  panneauDroit?: ReactNode;
+  activerSelectionTransfert?: boolean;
   children: ReactNode;
 }
 
@@ -24,6 +28,8 @@ export function MiseEnPageCaisse({
   utilisateur,
   titre,
   sousTitre,
+  panneauDroit,
+  activerSelectionTransfert = false,
   children,
 }: PropsMiseEnPageCaisse) {
   const [menuOuvert, setMenuOuvert] = useState(false);
@@ -49,35 +55,51 @@ export function MiseEnPageCaisse({
     };
   }, []);
 
-  return (
-    <FournisseurNotifications>
-      <div className="flex h-full min-h-0 w-full flex-1 overflow-hidden bg-[#f1f5f9]">
-        <BarreLateraleCaisse
+  const contenu = (
+    <div className="flex h-full min-h-0 w-full flex-1 overflow-hidden bg-[#f1f5f9]">
+      <BarreLateraleCaisse
+        utilisateur={utilisateur}
+        ouvert={menuOuvert}
+        onFermer={() => setMenuOuvert(false)}
+        badgeFile={badgeFile}
+      />
+
+      <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col">
+        <EnTeteCaisse
+          titre={titre}
+          sousTitre={sousTitre}
           utilisateur={utilisateur}
-          ouvert={menuOuvert}
-          onFermer={() => setMenuOuvert(false)}
-          badgeFile={badgeFile}
+          onMenu={() => setMenuOuvert(true)}
         />
 
-        <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col">
-          <EnTeteCaisse
-            titre={titre}
-            sousTitre={sousTitre}
-            utilisateur={utilisateur}
-            onMenu={() => setMenuOuvert(true)}
-          />
+        <div className="flex min-h-0 flex-1">
+          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6 lg:py-6 lg:pb-6">
+            {children}
+          </main>
 
-          <div className="flex min-h-0 flex-1">
-            <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6 lg:py-6 lg:pb-6">
-              {children}
-            </main>
-          </div>
+          {panneauDroit && (
+            <aside className="hidden shrink-0 overflow-y-auto border-l border-gris-bordure bg-[#f8fafc] p-4 xl:block xl:w-[300px]">
+              {panneauDroit}
+            </aside>
+          )}
         </div>
-
-        <NavigationBasseCaisse onMenu={() => setMenuOuvert(true)} />
-        <GestionnaireAlertesNotifications />
-        <ToastNotificationGlobale />
       </div>
+
+      <NavigationBasseCaisse onMenu={() => setMenuOuvert(true)} />
+      <GestionnaireAlertesNotifications />
+      <ToastNotificationGlobale />
+    </div>
+  );
+
+  return (
+    <FournisseurNotifications>
+      <FournisseurOrientationCaisse>
+        {activerSelectionTransfert ? (
+          <FournisseurSelectionTransfertCaisse>{contenu}</FournisseurSelectionTransfertCaisse>
+        ) : (
+          contenu
+        )}
+      </FournisseurOrientationCaisse>
     </FournisseurNotifications>
   );
 }

@@ -16,13 +16,14 @@ import {
   MessageSquare,
   Bell,
   UserCircle,
+  ArrowRightLeft,
 } from "lucide-react";
 
 export const NAVIGATION_CAISSE = {
   tableauDeBord: [{ href: "/sigh/caisse", id: "accueil", icone: Home }],
   caisse: [
     { href: "/sigh/caisse/facturation", id: "facturation", icone: Receipt },
-    { href: "/sigh/caisse/patients", id: "patientsEnAttente", icone: Users, badge: true },
+    { href: "/sigh/caisse/transferts", id: "transferts", icone: ArrowRightLeft, badge: true },
     { href: "/sigh/caisse/factures", id: "facturesDuJour", icone: FileText },
     { href: "/sigh/caisse/encaissements", id: "encaissements", icone: Wallet },
     { href: "/sigh/caisse/avoirs", id: "avoirsAvances", icone: CircleDollarSign },
@@ -46,7 +47,7 @@ export const NAVIGATION_CAISSE = {
 
 export const NAVIGATION_BASSE_CAISSE = [
   { href: "/sigh/caisse", id: "accueil", icone: Home },
-  { href: "/sigh/caisse/patients", id: "patients", icone: Users },
+  { href: "/sigh/caisse/transferts", id: "patients", icone: Users },
   { href: "/sigh/caisse/facturation", id: "facturation", icone: Receipt, fab: true },
   { href: "/sigh/caisse/encaissements", id: "encaissements", icone: Wallet },
 ] as const;
@@ -74,3 +75,62 @@ export const DESTINATIONS_APRES_ENCAISSEMENT = [
   "PHARMACIE",
   "AUCUNE",
 ] as const;
+
+/** Orientations rapides — mêmes possibilités que la réception (+ laboratoire) */
+export const ORIENTATIONS_RAPIDES_CAISSE = [
+  {
+    value: "INFIRMIERS",
+    label: "Infirmiers",
+    description: "Prise de signes vitaux",
+    couleur: "border-violet-300 bg-violet-50 text-violet-700",
+  },
+  {
+    value: "MEDECINS",
+    label: "Médecin",
+    description: "Consultation médicale",
+    couleur: "border-blue-200 bg-blue-50 text-blue-700",
+  },
+  {
+    value: "LABORATOIRE",
+    label: "Laboratoire",
+    description: "Analyses et prélèvements",
+    couleur: "border-cyan-200 bg-cyan-50 text-cyan-800",
+  },
+  {
+    value: "CAISSE",
+    label: "Caisse",
+    description: "Facturation et paiement",
+    couleur: "border-rose-200 bg-rose-50 text-rose-700",
+  },
+  {
+    value: "MEDECINS_EXTERNES",
+    label: "Médecin externe",
+    description: "Patient référé par un médecin",
+    couleur: "border-amber-200 bg-amber-50 text-amber-800",
+  },
+  {
+    value: "EGLISE",
+    label: "Église",
+    description: "Examens prénuptiaux",
+    couleur: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  },
+  {
+    value: "PHARMACIE",
+    label: "Pharmacie",
+    description: "Délivrance des médicaments",
+    couleur: "border-indigo-200 bg-indigo-50 text-indigo-700",
+  },
+] as const;
+
+export const COULEURS_ORIENTATION_CAISSE: Record<string, string> = {
+  Infirmiers: "bg-violet-100 text-violet-700",
+  Médecin: "bg-blue-100 text-blue-700",
+  "Médecin externe": "bg-amber-100 text-amber-800",
+  Caisse: "bg-rose-100 text-rose-700",
+  Laboratoire: "bg-cyan-100 text-cyan-800",
+  Église: "bg-emerald-100 text-emerald-700",
+  Pharmacie: "bg-indigo-100 text-indigo-700",
+  "Non orienté": "bg-slate-100 text-slate-600",
+};
+
+export const EVENEMENT_CAISSE_PATIENTS_MODIFIES = "caisse:patients-modifies";

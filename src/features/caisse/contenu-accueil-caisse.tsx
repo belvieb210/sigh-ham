@@ -90,7 +90,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
 
   const raccourcis = [
     {
-      href: "/sigh/caisse/patients",
+      href: "/sigh/caisse/transferts",
       titre: t("caisse.dashboard.raccourciNouvelleFacture"),
       desc: t("caisse.dashboard.raccourciNouvelleFactureDesc"),
       icone: FilePlus2,
@@ -379,7 +379,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                     </h3>
                   </div>
                   <Link
-                    href="/sigh/caisse/patients"
+                    href="/sigh/caisse/transferts"
                     className="text-xs font-semibold text-bleu-medical hover:underline"
                   >
                     {t("caisse.dashboard.voirListe")}

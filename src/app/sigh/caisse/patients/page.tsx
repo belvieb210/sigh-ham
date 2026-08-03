@@ -1,17 +1,6 @@
-import type { Metadata } from "next";
-import { ContenuPatientsAttenteCaisse } from "@/features/caisse/contenu-patients-attente-caisse";
-import { verifierAccesCaisse } from "@/lib/auth/garde-salle";
-import { propsUtilisateurCaisse } from "@/lib/auth/props-utilisateur-caisse";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Patients en attente — Caisse",
-  robots: { index: false, follow: false },
-};
-
-export default async function PagePatientsCaisse() {
-  const utilisateur = await verifierAccesCaisse();
-
-  return (
-    <ContenuPatientsAttenteCaisse utilisateur={propsUtilisateurCaisse(utilisateur)} />
-  );
+/** Ancienne route « patients en attente » → page transferts (layout réception) */
+export default function PagePatientsCaisse() {
+  redirect("/sigh/caisse/transferts");
 }

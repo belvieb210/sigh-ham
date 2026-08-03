@@ -129,6 +129,39 @@ export interface PatientAttenteAccueil {
   tempsAttenteLabel: string;
 }
 
+export interface PatientTransfertCaisse {
+  cleListe: string;
+  dossierId: string;
+  numeroPatient: string;
+  numeroDossier: string;
+  nomComplet: string;
+  prenom: string;
+  nom: string;
+  telephone: string;
+  motif: string;
+  orientation: string;
+  orientationCouleur: string;
+  codeSalleDestination: string;
+  statut: string;
+  statutCouleur: string;
+  heure: string;
+  arriveeLe: string;
+  transfertId: string | null;
+  passageId: string;
+  numeroOrdre: number;
+  nombreExamens: number;
+  montantEstime: number;
+  dateNaissance: string | null;
+  factureOuverte: boolean;
+}
+
+export interface StatsTransfertsCaisse {
+  enAttente: number;
+  enCours: number;
+  transferesAujourdhui: number;
+  versLaboratoire: number;
+}
+
 export interface TableauDeBordAccueilCaisse extends StatsCaisseJour {
   dateReference: string;
   kpis: {

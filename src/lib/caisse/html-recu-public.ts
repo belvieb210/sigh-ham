@@ -5,6 +5,7 @@
 
 import { INFOS_LEGALES_TICKET } from "@/constants/ticket-thermique";
 import type { DetailRecuPublic } from "@/lib/caisse/recu-public";
+import { cheminRecuPublic } from "@/lib/caisse/token-recu-public";
 
 function echapper(texte: string): string {
   return texte
@@ -107,7 +108,6 @@ export function construireHtmlRecuIntrouvable(): string {
 }
 
 interface OptionsHtmlRecuPublic {
-  autoPrint?: boolean;
   token: string;
 }
 
@@ -121,7 +121,8 @@ export function construireDocumentHtmlRecuPublic(
     reste > 0 || detail.modeFacture === "AVANCE" ? "Avance" : "Payé";
   const nom = echapper(`${detail.patient.prenom} ${detail.patient.nom}`.trim());
   const numeroFacture = echapper(detail.numeroFacture);
-  const printUrl = echapper(`/r/${encodeURIComponent(options.token)}/ticket`);
+  const ticketPath = `${cheminRecuPublic(options.token)}/ticket`;
+  const printUrl = echapper(ticketPath);
 
   const lignesHtml = detail.lignes.length
     ? detail.lignes
@@ -144,17 +145,6 @@ export function construireDocumentHtmlRecuPublic(
         })
         .join("")
     : `<li class="empty">Aucune prestation sur cette facture.</li>`;
-
-  const autoPrintScript = options.autoPrint
-    ? `<script>
-        window.addEventListener("load", function () {
-          setTimeout(function () {
-            var f = document.getElementById("frame-ticket");
-            if (f && f.contentWindow) { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) {} }
-          }, 600);
-        });
-      </script>`
-    : "";
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -374,8 +364,7 @@ export function construireDocumentHtmlRecuPublic(
 
   <main class="wrap">
     <div class="actions">
-      <button type="button" class="btn btn-primary" id="btn-print">Imprimer le ticket 80 mm</button>
-      <a class="btn btn-secondary" href="${printUrl}" target="_blank" rel="noopener">Ouvrir le ticket thermique</a>
+      <a class="btn btn-primary" href="${printUrl}" target="_blank" rel="noopener">Imprimer le ticket 80 mm</a>
     </div>
 
     <section class="card">
@@ -423,25 +412,6 @@ export function construireDocumentHtmlRecuPublic(
     </footer>
   </main>
 
-  <iframe id="frame-ticket" title="Ticket thermique" src="${printUrl}"></iframe>
-  <script>
-    (function () {
-      var btn = document.getElementById("btn-print");
-      var frame = document.getElementById("frame-ticket");
-      function imprimer() {
-        try {
-          if (frame && frame.contentWindow) {
-            frame.contentWindow.focus();
-            frame.contentWindow.print();
-            return;
-          }
-        } catch (e) {}
-        window.open(${JSON.stringify(`/r/${options.token}/ticket`)}, "_blank", "noopener");
-      }
-      if (btn) btn.addEventListener("click", imprimer);
-    })();
-  </script>
-  ${autoPrintScript}
 </body>
 </html>`;
 }

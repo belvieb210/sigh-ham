@@ -1,9 +1,6 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "crypto";
 
-/** Validité du lien QR (2 ans) — le reçu reste scannable longtemps. */
-const DUREE_TOKEN_SECONDES = 60 * 60 * 24 * 365 * 2;
-
 function secretRecu(): string {
   return (
     process.env.RECU_PUBLIC_SECRET ||
@@ -28,21 +25,28 @@ function signaturesEgales(a: string, b: string): boolean {
   }
 }
 
+function sigPrefixeValide(sig: string, signatureComplete: string): boolean {
+  if (sig.length < 8 || sig.length > signatureComplete.length) return false;
+  return signaturesEgales(sig, signatureComplete.slice(0, sig.length));
+}
+
 /**
- * Jeton opaque liant le QR à une facture précise.
- * Séparateur `~` (évite les problèmes de « extension » avec `.` dans certains clients).
+ * Jeton court pour QR « aéré » : `{factureId}~{sig8}`.
+ * Lié à une facture précise uniquement.
  */
 export function creerTokenRecuFacture(factureId: string): string {
-  const exp = Math.floor(Date.now() / 1000) + DUREE_TOKEN_SECONDES;
-  const payload = Buffer.from(
-    JSON.stringify({ f: factureId, e: exp, v: 2 }),
-    "utf8"
-  ).toString("base64url");
-  return `${payload}~${signer(payload)}`;
+  return `${factureId}~${signer(factureId).slice(0, 8)}`;
+}
+
+/** Chemin URL sans encodage inutile (QR plus clair). */
+export function cheminRecuPublic(token: string): string {
+  if (/^[A-Za-z0-9_-]+(?:~[A-Za-z0-9_-]+)?$/.test(token)) {
+    return `/r/${token}`;
+  }
+  return `/r/${encodeURIComponent(token)}`;
 }
 
 function decouperToken(token: string): { payload: string; sig: string } | null {
-  // v2: payload~sig — v1 (ancien): payload.sig
   if (token.includes("~")) {
     const i = token.indexOf("~");
     const payload = token.slice(0, i);
@@ -58,9 +62,30 @@ function decouperToken(token: string): { payload: string; sig: string } | null {
 
 /** Retourne l'id facture si le jeton est valide, sinon null. */
 export function verifierTokenRecuFacture(token: string): string | null {
-  const parts = decouperToken(token.trim());
+  let brut = token.trim();
+  try {
+    brut = decodeURIComponent(brut);
+  } catch {
+    /* garde brut */
+  }
+
+  const parts = decouperToken(brut);
   if (!parts) return null;
-  if (!signaturesEgales(parts.sig, signer(parts.payload))) return null;
+
+  const signatureComplete = signer(parts.payload);
+
+  // v3 : factureId~sig8 (payload = id Prisma)
+  if (/^[a-z][a-z0-9]{10,}$/i.test(parts.payload)) {
+    if (
+      sigPrefixeValide(parts.sig, signatureComplete) ||
+      signaturesEgales(parts.sig, signatureComplete)
+    ) {
+      return parts.payload;
+    }
+  }
+
+  // v1 / v2 : payload JSON base64url + signature complète
+  if (!signaturesEgales(parts.sig, signatureComplete)) return null;
 
   try {
     const data = JSON.parse(

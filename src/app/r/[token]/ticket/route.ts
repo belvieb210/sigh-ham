@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { construireHtmlRecuIntrouvable } from "@/lib/caisse/html-recu-public";
 import { construireHtmlTicketThermique } from "@/lib/caisse/html-ticket-thermique";
 import { chargerRecuPublicParToken } from "@/lib/caisse/recu-public";
+import { cheminRecuPublic } from "@/lib/caisse/token-recu-public";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,8 @@ export async function GET(request: Request, context: ContexteRoute) {
   }
 
   const origin = new URL(request.url).origin;
-  const urlRecu = `${origin}/r/${encodeURIComponent(token)}`;
+  // QR → page reçue digitale (pas le ticket), URL courte pour un QR aéré
+  const urlRecu = `${origin}${cheminRecuPublic(token)}`;
   const html = await construireHtmlTicketThermique(detail, urlRecu);
 
   return new NextResponse(html, {

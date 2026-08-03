@@ -26,13 +26,8 @@ export async function GET(request: Request, context: ContexteRoute) {
     });
   }
 
-  const url = new URL(request.url);
-  const autoPrint = url.searchParams.get("print") === "1";
-
-  const html = construireDocumentHtmlRecuPublic(detail, {
-    autoPrint,
-    token,
-  });
+  // Page scan QR / consultation navigateur (téléphone ou PC)
+  const html = construireDocumentHtmlRecuPublic(detail, { token });
 
   return new NextResponse(html, {
     status: 200,

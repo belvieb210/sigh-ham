@@ -103,10 +103,12 @@ export async function construireHtmlTicketThermique(
 
   let qrDataUrl = "";
   try {
+    // URL courte + correction L + marge : QR aéré (modules plus grands)
     qrDataUrl = await QRCode.toDataURL(urlRecu, {
-      width: 280,
-      margin: 1,
-      errorCorrectionLevel: "M",
+      type: "image/png",
+      width: 220,
+      margin: 3,
+      errorCorrectionLevel: "L",
       color: { dark: "#000000", light: "#ffffff" },
     });
   } catch {
@@ -118,7 +120,7 @@ export async function construireHtmlTicketThermique(
   const ref = echapperHtml(`#${detail.numeroFacture}#`);
   const qrBlock = qrDataUrl
     ? `<div class="qr-block">
-        <img class="qr" src="${qrDataUrl}" width="140" height="140" alt="QR code" />
+        <img class="qr" src="${qrDataUrl}" width="168" height="168" alt="QR code reçu" />
         <p class="qr-ref">${ref}</p>
       </div>`
     : "";
@@ -136,9 +138,22 @@ export async function construireHtmlTicketThermique(
       font-family: "Courier New", Courier, monospace; }
     .sheet { width: 80mm; max-width: 100%; margin: 0 auto; padding: 2mm 2.5mm 4mm; }
     .ticket { margin: 0; padding: 0; font-size: 11px; line-height: 1.28; white-space: pre; }
-    .qr-block { text-align: center; padding: 6px 0 4px; }
-    .qr { display: block; margin: 0 auto; width: 140px; height: 140px; image-rendering: pixelated; }
-    .qr-ref { margin: 6px 0 0; font-size: 11px; font-weight: 700; }
+    .qr-block { text-align: center; padding: 8px 0 6px; }
+    .qr {
+      display: block;
+      margin: 0 auto;
+      width: 168px;
+      height: 168px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .qr-ref {
+      margin: 8px 0 0;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-family: "Courier New", Courier, monospace;
+    }
     .toolbar {
       position: sticky; top: 0; display: flex; justify-content: space-between; gap: 8px;
       align-items: center; padding: 10px 12px; background: #0f2744; color: #fff;
@@ -164,6 +179,16 @@ export async function construireHtmlTicketThermique(
     ${qrBlock}
     <pre class="ticket">${basHtml}</pre>
   </div>
+  <script>
+    (function () {
+      var q = new URLSearchParams(window.location.search);
+      if (q.get("print") === "1") {
+        window.addEventListener("load", function () {
+          setTimeout(function () { try { window.focus(); window.print(); } catch (e) {} }, 400);
+        });
+      }
+    })();
+  </script>
 </body>
 </html>`;
 }

@@ -42,27 +42,20 @@ function composerDateIso(jour: string, mois: string, annee: string): string {
   return `${String(a).padStart(4, "0")}-${String(mo).padStart(2, "0")}-${String(jourValide).padStart(2, "0")}`;
 }
 
-function detecterMobile(): boolean {
-  if (typeof window === "undefined") return false;
-  return (
-    window.matchMedia("(pointer: coarse)").matches ||
-    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-    (navigator.maxTouchPoints > 0 && window.innerWidth < 768)
-  );
-}
-
 interface PropsChampDateNaissance {
   id?: string;
   value: string;
   onChange: (valeurIso: string) => void;
   className?: string;
   required?: boolean;
+  /** Année la plus ancienne (défaut 1920 — naissance) */
+  anneeMin?: number;
+  /** Année la plus récente (défaut année courante) */
+  anneeMax?: number;
 }
 
 /**
- * Date de naissance :
- * - Mobile : input type="date" natif (format téléphone fiable)
- * - Desktop : listes Jour / Mois / Année (choix d'année rapide)
+ * Date en 3 listes Jour / Mois / Année (desktop + téléphone).
  */
 export function ChampDateNaissance({
   id = "date-naissance",
@@ -70,17 +63,14 @@ export function ChampDateNaissance({
   onChange,
   className,
   required = false,
+  anneeMin = 1920,
+  anneeMax,
 }: PropsChampDateNaissance) {
   const { t } = useTranslation();
-  const [mobile, setMobile] = useState(false);
   const parse = parserDateIso(value);
   const [jour, setJour] = useState(parse.jour);
   const [mois, setMois] = useState(parse.mois);
   const [annee, setAnnee] = useState(parse.annee);
-
-  useEffect(() => {
-    setMobile(detecterMobile());
-  }, []);
 
   useEffect(() => {
     const suivant = parserDateIso(value);
@@ -90,11 +80,14 @@ export function ChampDateNaissance({
   }, [value]);
 
   const anneeCourante = new Date().getFullYear();
+  const maxAnnee = anneeMax ?? anneeCourante;
+  const minAnnee = Math.min(anneeMin, maxAnnee);
+
   const annees = useMemo(() => {
     const liste: number[] = [];
-    for (let a = anneeCourante; a >= 1920; a -= 1) liste.push(a);
+    for (let a = maxAnnee; a >= minAnnee; a -= 1) liste.push(a);
     return liste;
-  }, [anneeCourante]);
+  }, [maxAnnee, minAnnee]);
 
   const nbJours = joursDansMois(Number(annee) || 0, Number(mois) || 0);
   const jours = useMemo(
@@ -109,28 +102,16 @@ export function ChampDateNaissance({
     onChange(composerDateIso(j, m, a));
   };
 
-  const classeSelect = cn(CLASSE_CHAMP_RECEPTION, "min-h-11 text-base sm:text-sm");
-
-  if (mobile) {
-    return (
-      <div className={className}>
-        <input
-          id={id}
-          type="date"
-          value={value || ""}
-          required={required}
-          max={`${anneeCourante}-12-31`}
-          min="1920-01-01"
-          onChange={(e) => onChange(e.target.value)}
-          className={cn(CLASSE_CHAMP_RECEPTION, "min-h-11 text-base")}
-        />
-      </div>
-    );
-  }
+  /** text-base (≥16px) évite le zoom iOS ; min-h-11 pour le tactile */
+  const classeSelect = cn(
+    CLASSE_CHAMP_RECEPTION,
+    "min-h-11 appearance-none bg-[length:12px] bg-[right_0.65rem_center] bg-no-repeat pr-8 text-base sm:text-sm",
+    "bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 24 24%27 stroke=%27%23475569%27%3E%3Cpath stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%272%27 d=%27M19 9l-7 7-7-7%27/%3E%3C/svg%3E')]"
+  );
 
   return (
     <div className={cn("grid grid-cols-3 gap-2", className)}>
-      <div>
+      <div className="min-w-0">
         <label htmlFor={`${id}-jour`} className="sr-only">
           {t("reception.formulaire.date.jour", { defaultValue: "Jour" })}
         </label>
@@ -152,7 +133,7 @@ export function ChampDateNaissance({
         </select>
       </div>
 
-      <div>
+      <div className="min-w-0">
         <label htmlFor={`${id}-mois`} className="sr-only">
           {t("reception.formulaire.date.mois", { defaultValue: "Mois" })}
         </label>
@@ -177,7 +158,7 @@ export function ChampDateNaissance({
         </select>
       </div>
 
-      <div>
+      <div className="min-w-0">
         <label htmlFor={`${id}-annee`} className="sr-only">
           {t("reception.formulaire.date.annee", { defaultValue: "Année" })}
         </label>

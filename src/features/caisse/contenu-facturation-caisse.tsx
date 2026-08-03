@@ -29,6 +29,7 @@ import {
   formaterMontantCaisse,
   initiales,
 } from "@/features/caisse/utils-format";
+import { ChampDateNaissance } from "@/features/reception/champ-date-naissance";
 import { cn } from "@/lib/utils";
 import type {
   DestinationApresEncaissement,
@@ -597,7 +598,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                   <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
                     {t("caisse.facturation.infosPaiement")}
                   </h3>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <label className="text-sm">
                       <span className="mb-1 block text-xs text-texte-secondaire">
                         {t("caisse.facturation.montantAPayer")}
@@ -634,17 +635,18 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                         <option value="CDF">CDF</option>
                       </select>
                     </label>
-                    <label className="text-sm">
+                    <div className="text-sm sm:col-span-2 lg:col-span-3">
                       <span className="mb-1 block text-xs text-texte-secondaire">
                         {t("caisse.facturation.datePaiement")}
                       </span>
-                      <input
-                        type="date"
+                      <ChampDateNaissance
+                        id="date-paiement-caisse"
                         value={datePaiement}
-                        onChange={(e) => setDatePaiement(e.target.value)}
-                        className="w-full rounded-lg border border-gris-bordure px-3 py-2.5 text-sm"
+                        onChange={setDatePaiement}
+                        required
+                        anneeMin={new Date().getFullYear() - 2}
                       />
-                    </label>
+                    </div>
                   </div>
                   <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_1.4fr]">
                     <label className="text-sm">

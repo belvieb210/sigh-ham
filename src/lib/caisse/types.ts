@@ -83,6 +83,8 @@ export interface DossierFacturationCaisse {
   transferePar: string | null;
   /** Remise proposée à la réception (préremplit la facturation) */
   remiseProposee: number;
+  /** Types d'examen déjà prescrits (non annulés) — pour éviter les doublons à l'ajout */
+  idsTypesExamen: string[];
   facture: FactureCaisseDetail;
 }
 

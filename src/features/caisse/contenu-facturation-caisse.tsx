@@ -32,6 +32,7 @@ import {
   formaterMontantCaisse,
   initiales,
 } from "@/features/caisse/utils-format";
+import { RechercheAjoutExamenCaisse } from "@/features/caisse/recherche-ajout-examen-caisse";
 import { ChampDateNaissance } from "@/features/reception/champ-date-naissance";
 import { cn } from "@/lib/utils";
 import type {
@@ -41,6 +42,7 @@ import type {
   PatientFileCaisse,
   TypeFactureCaisseUi,
 } from "@/lib/caisse/types";
+import type { TypeExamenReception } from "@/lib/reception/types";
 import type { ModePaiement } from "@/generated/prisma/client";
 
 interface PropsContenuFacturationCaisse {
@@ -85,6 +87,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const [transfererApres, setTransfererApres] = useState(true);
   const [typeFactureUi, setTypeFactureUi] = useState<TypeFactureCaisseUi>("NORMALE");
   const [lignesMasquees, setLignesMasquees] = useState<Set<string>>(new Set());
+  const [rechercheExamenOuverte, setRechercheExamenOuverte] = useState(false);
+  const [ajoutExamenEnCours, setAjoutExamenEnCours] = useState(false);
 
   const destinationApres: DestinationApresEncaissement = transfererApres
     ? (TYPES_FACTURE_CAISSE_UI.find((t) => t.id === typeFactureUi)?.destination ??
@@ -107,6 +111,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
       setChargementDossier(true);
       setErreur(null);
       setLignesMasquees(new Set());
+      setRechercheExamenOuverte(false);
       try {
         const res = await fetch(`/api/caisse/patients/${id}`);
         const data = (await res.json()) as {
@@ -163,10 +168,57 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     return dossier.facture.lignes.filter((l) => !lignesMasquees.has(l.id));
   }, [dossier, lignesMasquees]);
 
+  const idsTypesExamenPresents = useMemo(
+    () => new Set(dossier?.idsTypesExamen ?? []),
+    [dossier]
+  );
+
+  const libellesExamensPresents = useMemo(
+    () =>
+      new Set(
+        (dossier?.facture.lignes ?? []).map((l) => l.libelle.trim().toLowerCase())
+      ),
+    [dossier]
+  );
+
   /** Confirmés à la caisse, sans facture encore — les EN_ATTENTE restent sur /transferts */
   const fileSansFacture = useMemo(
     () => file.filter((p) => !p.factureOuverte),
     [file]
+  );
+
+  const ajouterExamenAuDossier = useCallback(
+    async (examen: TypeExamenReception) => {
+      if (!dossierId) return;
+      setAjoutExamenEnCours(true);
+      setErreur(null);
+      setMessage(null);
+      try {
+        const res = await fetch(`/api/caisse/dossiers/${dossierId}/examens`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ typeExamenId: examen.id }),
+        });
+        const data = (await res.json()) as {
+          dossier?: DossierFacturationCaisse;
+          message?: string;
+        };
+        if (!res.ok || !data.dossier) {
+          throw new Error(data.message ?? t("caisse.facturation.examensChargement"));
+        }
+        setDossier(data.dossier);
+        setMessage(data.message ?? t("caisse.facturation.examenAjoute"));
+        setRechercheExamenOuverte(false);
+        void chargerFile();
+      } catch (e) {
+        setErreur(
+          e instanceof Error ? e.message : t("caisse.facturation.examensChargement")
+        );
+      } finally {
+        setAjoutExamenEnCours(false);
+      }
+    },
+    [dossierId, t, chargerFile]
   );
 
   const totalExamens = useMemo(
@@ -641,18 +693,32 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                       </ul>
                     </>
                   )}
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-4 py-3">
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-bleu-medical hover:underline"
-                    >
-                      <Plus className="h-4 w-4" />
-                      {t("caisse.facturation.ajouterExamen")}
-                    </button>
-                    <p className="text-sm font-bold text-bleu-medical">
-                      {t("caisse.facturation.totalExamens")}{" "}
-                      {formaterMontantCaisse(totalExamens, devise)}
-                    </p>
+                  <div className="relative border-t border-gris-bordure">
+                    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => setRechercheExamenOuverte((o) => !o)}
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-bleu-medical hover:underline"
+                        aria-expanded={rechercheExamenOuverte}
+                      >
+                        <Plus className="h-4 w-4" />
+                        {rechercheExamenOuverte
+                          ? t("caisse.facturation.fermerRechercheExamen")
+                          : t("caisse.facturation.ajouterExamen")}
+                      </button>
+                      <p className="text-sm font-bold text-bleu-medical">
+                        {t("caisse.facturation.totalExamens")}{" "}
+                        {formaterMontantCaisse(totalExamens, devise)}
+                      </p>
+                    </div>
+                    <RechercheAjoutExamenCaisse
+                      ouverte={rechercheExamenOuverte}
+                      onFermer={() => setRechercheExamenOuverte(false)}
+                      idsDejaPresents={idsTypesExamenPresents}
+                      libellesDejaPresents={libellesExamensPresents}
+                      onAjouter={ajouterExamenAuDossier}
+                      enCours={ajoutExamenEnCours}
+                    />
                   </div>
                 </section>
 

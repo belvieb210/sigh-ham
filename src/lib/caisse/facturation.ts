@@ -192,6 +192,7 @@ export async function obtenirDossierFacturation(
       ? formaterCaissier(transfert.emetteur.prenom, transfert.emetteur.nom)
       : null,
     remiseProposee,
+    idsTypesExamen: dossier.examensLaboratoire.map((ex) => ex.typeExamenId),
     facture: {
       id: facture?.id ?? null,
       numeroFacture: facture?.numeroFacture ?? null,
@@ -243,6 +244,78 @@ export async function preparerFactureDossier(dossierId: string) {
   });
 
   return obtenirDossierFacturation(facture.dossierId);
+}
+
+/** Ajoute un type d'examen au dossier (prescription) et à la facture ouverte si elle existe. */
+export async function ajouterExamenAuDossierCaisse(
+  dossierId: string,
+  typeExamenId: string,
+  agentId: string
+) {
+  const dossier = await prisma.dossierPatient.findUnique({
+    where: { id: dossierId },
+    select: { id: true },
+  });
+  if (!dossier) throw new Error("Dossier introuvable.");
+
+  const typeExamen = await prisma.typeExamen.findFirst({
+    where: { id: typeExamenId, actif: true },
+  });
+  if (!typeExamen) throw new Error("Examen introuvable ou inactif.");
+
+  const deja = await prisma.examenLaboratoire.findFirst({
+    where: {
+      dossierId,
+      typeExamenId,
+      statut: { not: "ANNULE" },
+    },
+    select: { id: true },
+  });
+  if (deja) throw new Error("Cet examen est déjà prescrit pour ce dossier.");
+
+  const prix = decimalVersNombre(typeExamen.prix);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.examenLaboratoire.create({
+      data: {
+        dossierId,
+        typeExamenId,
+        prescripteurId: agentId,
+        statut: "PRESCRIT",
+        notes: "Ajouté à la caisse",
+      },
+    });
+
+    const facture = await tx.facture.findFirst({
+      where: {
+        dossierId,
+        statut: { in: ["BROUILLON", "EMISE", "PARTIELLEMENT_PAYEE"] },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (facture) {
+      await tx.ligneFacture.create({
+        data: {
+          factureId: facture.id,
+          libelle: typeExamen.libelle,
+          quantite: 1,
+          prixUnitaire: prix,
+          montant: prix,
+        },
+      });
+      await tx.facture.update({
+        where: { id: facture.id },
+        data: {
+          montantTotal: { increment: prix },
+        },
+      });
+    }
+  });
+
+  const detail = await obtenirDossierFacturation(dossierId);
+  if (!detail) throw new Error("Dossier introuvable après ajout.");
+  return detail;
 }
 
 export interface DonneesEncaissement {

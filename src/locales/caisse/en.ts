@@ -260,6 +260,8 @@ export const caisseEn = {
     montantAPayer: "Amount due",
     montantPaye: "Amount paid",
     montantAvance: "Advance amount",
+    dejaEncaisse: "Already collected",
+    totalFacture: "Invoice total",
     avanceInvalide: "Enter a valid advance amount (greater than 0).",
     avanceTropElevee: "The advance amount cannot exceed the amount due.",
     monnaie: "Currency",

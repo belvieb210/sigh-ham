@@ -144,14 +144,27 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
             `REC-${new Date().getFullYear()}-…`
         );
         const total = data.dossier.facture.lignes.reduce((a, l) => a + l.montant, 0);
-        const reste = Math.max(0, total - data.dossier.facture.montantPaye);
+        const dejaPayeCharge = data.dossier.facture.montantPaye;
+        const reste = Math.max(0, total - dejaPayeCharge);
         const remiseInitiale = Math.min(
           Math.max(0, data.dossier.remiseProposee || 0),
           total
         );
         setRemise(arrondirMontantCaisse(remiseInitiale));
         setFraisDivers(0);
-        setMontantPaiement(arrondirMontantCaisse(Math.max(0, reste - remiseInitiale)));
+        setMontantAvance(0);
+        // Avance déjà encaissée → mode Solde + montant = reste
+        if (
+          dejaPayeCharge > 0 ||
+          data.dossier.facture.statut === "PARTIELLEMENT_PAYEE"
+        ) {
+          setModeFacture("SOLDE");
+        } else {
+          setModeFacture("CASH");
+        }
+        setMontantPaiement(
+          arrondirMontantCaisse(Math.max(0, reste - remiseInitiale))
+        );
       } catch (e) {
         setDossier(null);
         setErreur(
@@ -420,6 +433,16 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const totalAPayer = sousTotal + (fraisDivers || 0);
   const dejaPaye = dossier?.facture.montantPaye ?? 0;
   const resteAPayer = Math.max(0, totalAPayer - dejaPaye);
+  const estSoldeOuAvance =
+    modeFacture === "SOLDE" ||
+    dejaPaye > 0 ||
+    dossier?.facture.statut === "PARTIELLEMENT_PAYEE";
+  /** Montant affiché comme « à payer » : reste si avance déjà payée, sinon total */
+  const montantDuJour = estSoldeOuAvance ? resteAPayer : totalAPayer;
+  const resteApresCePaiement = Math.max(
+    0,
+    resteAPayer - (modeFacture === "AVANCE" ? montantAvance : montantPaiement)
+  );
 
   useEffect(() => {
     if (modeFacture === "AVANCE") {
@@ -609,17 +632,40 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           />
         </div>
         <div className="border-t border-gris-bordure pt-3">
+          {dejaPaye > 0 && (
+            <div className="mb-2 flex justify-between gap-3 text-sm">
+              <span className="text-texte-secondaire">
+                {t("caisse.facturation.totalFacture")}
+              </span>
+              <span className="font-medium tabular-nums">
+                {formaterMontantCaisse(totalAPayer, devise)}
+              </span>
+            </div>
+          )}
           <p className="text-[11px] font-bold uppercase tracking-wider text-texte-secondaire">
             {t("caisse.facturation.totalAPayer")}
           </p>
           <p className="mt-1 text-2xl font-bold text-bleu-medical">
-            {formaterMontantCaisse(totalAPayer, devise)}
+            {formaterMontantCaisse(montantDuJour, devise)}
           </p>
         </div>
+        {dejaPaye > 0 && (
+          <div className="flex justify-between gap-3 pt-1">
+            <span className="text-texte-secondaire">
+              {t("caisse.facturation.dejaEncaisse")}
+            </span>
+            <span className="font-medium tabular-nums">
+              {formaterMontantCaisse(dejaPaye, devise)}
+            </span>
+          </div>
+        )}
         <div className="flex justify-between gap-3 pt-1">
           <span className="text-texte-secondaire">{t("caisse.facturation.montantPaye")}</span>
           <span className="font-medium">
-            {formaterMontantCaisse(montantPaiement, devise)}
+            {formaterMontantCaisse(
+              modeFacture === "AVANCE" ? montantAvance : montantPaiement,
+              devise
+            )}
           </span>
         </div>
         <div className="flex justify-between gap-3">
@@ -627,12 +673,10 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           <span
             className={cn(
               "font-bold",
-              Math.max(0, resteAPayer - montantPaiement) <= 0
-                ? "text-emerald-600"
-                : "text-amber-700"
+              resteApresCePaiement <= 0 ? "text-emerald-600" : "text-amber-700"
             )}
           >
-            {formaterMontantCaisse(Math.max(0, resteAPayer - montantPaiement), devise)}
+            {formaterMontantCaisse(resteApresCePaiement, devise)}
           </span>
         </div>
       </div>
@@ -1112,7 +1156,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                       </span>
                       <input
                         readOnly
-                        value={formaterMontantCaisse(totalAPayer, devise)}
+                        value={formaterMontantCaisse(montantDuJour, devise)}
                         className="w-full rounded-lg border border-gris-bordure bg-gris-tres-clair/50 px-3 py-2.5 text-sm font-semibold"
                       />
                     </label>
@@ -1347,7 +1391,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                   {t("caisse.facturation.totalAPayer")}
                 </span>
                 <span className="font-bold text-bleu-medical">
-                  {formaterMontantCaisse(totalAPayer, devise)}
+                  {formaterMontantCaisse(montantDuJour, devise)}
                 </span>
               </div>
               <div className="flex items-center gap-2">

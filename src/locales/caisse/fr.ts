@@ -260,6 +260,8 @@ export const caisseFr = {
     montantAPayer: "Montant à payer",
     montantPaye: "Montant payé",
     montantAvance: "Montant avance",
+    dejaEncaisse: "Déjà encaissé",
+    totalFacture: "Total facture",
     avanceInvalide: "Saisissez un montant d'avance valide (supérieur à 0).",
     avanceTropElevee: "Le montant d'avance ne peut pas dépasser le total à payer.",
     monnaie: "Monnaie",

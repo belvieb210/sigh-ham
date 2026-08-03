@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
-import { ContenuPlaceholderCaisse } from "@/features/caisse/contenu-placeholder-caisse";
+import { ContenuRapportJournalierCaisse } from "@/features/caisse/contenu-rapport-journalier-caisse";
 import { verifierAccesCaisse } from "@/lib/auth/garde-salle";
 import { propsUtilisateurCaisse } from "@/lib/auth/props-utilisateur-caisse";
 
 export const metadata: Metadata = {
-  title: "Rapports — Caisse",
+  title: "Rapport journalier — Caisse",
   robots: { index: false, follow: false },
 };
 
-export default async function PageRapportsCaisse() {
+export default async function PageRapportJournalierCaisse() {
   const utilisateur = await verifierAccesCaisse();
 
   return (
-    <ContenuPlaceholderCaisse
+    <ContenuRapportJournalierCaisse
       utilisateur={propsUtilisateurCaisse(utilisateur)}
-      titreKey="caisse.nav.rapportJournalier"
     />
   );
 }

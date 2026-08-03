@@ -231,3 +231,98 @@ export interface EncaissementResumeJour {
   patient: string;
   caissier: string;
 }
+
+export type PeriodeRapportCaisse = "journalier" | "mensuel";
+
+export interface FiltresRapportCaisse {
+  periode: PeriodeRapportCaisse;
+  /** YYYY-MM-DD — journalier */
+  date?: string;
+  /** YYYY-MM — mensuel */
+  mois?: string;
+  mode?: ModePaiement | "";
+  caissierId?: string;
+  q?: string;
+}
+
+export interface RepartitionModeRapport {
+  mode: ModePaiement;
+  count: number;
+  montant: number;
+  partPct: number;
+}
+
+export interface CaissierRapportResume {
+  caissierId: string;
+  nom: string;
+  count: number;
+  montant: number;
+}
+
+export interface LigneLedgerRapport {
+  id: string;
+  payeLe: string;
+  numeroFacture: string;
+  dossierId: string;
+  patient: string;
+  mode: ModePaiement;
+  caissier: string;
+  caissierId: string;
+  montant: number;
+  devise: string;
+}
+
+export interface FactureOuverteRapport {
+  id: string;
+  dossierId: string;
+  numeroFacture: string;
+  patient: string;
+  statut: StatutFacture;
+  montantTotal: number;
+  montantPaye: number;
+  reste: number;
+  devise: string;
+  emiseLe: string | null;
+}
+
+export interface PointSerieRapport {
+  cle: string;
+  label: string;
+  montant: number;
+}
+
+export interface AgregatsRapportCaisse {
+  facturesCount: number;
+  facturesMontant: number;
+  encaissementsCount: number;
+  encaissementsMontant: number;
+  resteDu: number;
+  facturesOuvertesCount: number;
+}
+
+export interface ComparaisonRapportCaisse {
+  labelPrecedent: string;
+  encaissementsMontantPrecedent: number;
+  variationPct: number | null;
+}
+
+export interface OptionCaissierRapport {
+  id: string;
+  nom: string;
+}
+
+export interface RapportCaissePayload {
+  periode: PeriodeRapportCaisse;
+  debut: string;
+  fin: string;
+  labelPeriode: string;
+  devise: string;
+  agregats: AgregatsRapportCaisse;
+  comparaison: ComparaisonRapportCaisse;
+  repartitionModes: RepartitionModeRapport[];
+  caissiers: CaissierRapportResume[];
+  serie: PointSerieRapport[];
+  ledger: LigneLedgerRapport[];
+  facturesOuvertes: FactureOuverteRapport[];
+  optionsCaissiers: OptionCaissierRapport[];
+}

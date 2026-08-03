@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ContenuPlaceholderCaisse } from "@/features/caisse/contenu-placeholder-caisse";
+import { ContenuRapportMensuelCaisse } from "@/features/caisse/contenu-rapport-mensuel-caisse";
 import { verifierAccesCaisse } from "@/lib/auth/garde-salle";
 import { propsUtilisateurCaisse } from "@/lib/auth/props-utilisateur-caisse";
 
@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 
 export default async function PageRapportMensuelCaisse() {
   const utilisateur = await verifierAccesCaisse();
+
   return (
-    <ContenuPlaceholderCaisse
+    <ContenuRapportMensuelCaisse
       utilisateur={propsUtilisateurCaisse(utilisateur)}
-      titreKey="caisse.nav.rapportMensuel"
     />
   );
 }

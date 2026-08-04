@@ -6,6 +6,7 @@ export interface ExamenFileLaboratoire {
   categorie: string;
   statut: StatutExamen;
   code: string;
+  notes?: string | null;
 }
 
 export interface PatientFileLaboratoire {
@@ -35,6 +36,8 @@ export interface PatientFileLaboratoire {
   transferePar: string | null;
   examens: ExamenFileLaboratoire[];
   nombreExamens: number;
+  /** Statut d'analyse labo (Reçus, En cours, Vérifiés…) */
+  statutAnalyse: string;
   numeroFacture: string | null;
   modePaiement: string | null;
   statutFacture: string | null;

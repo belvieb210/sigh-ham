@@ -193,8 +193,10 @@ export const laboratoireEn: LaboratoireFr = {
     selectionnerPatient: "Select a patient from the list to orient them.",
     aideOrientationPatient:
       "Choose a destination: the transfer is created immediately. Confirm it via the ⋮ menu.",
-    aideStatutAnalyse: "Assign the analysis status for the selected patient.",
-    statutAttribue: "Status “{{statut}}” assigned (persistence coming soon).",
+    aideStatutAnalyse:
+      "Choose a status: the patient immediately appears on the matching page.",
+    statutAttribue: "Patient oriented to “{{statut}}”.",
+    erreurOrientationStatut: "Unable to assign this analysis status.",
     age: "Age",
     telephone: "Phone",
     service: "Ward",

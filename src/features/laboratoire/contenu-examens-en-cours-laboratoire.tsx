@@ -5,6 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Eye, FlaskConical, Loader2 } from "lucide-react";
 import {
+  CHEMINS_STATUT_ANALYSE_LABO,
+  type IdOrientationStatutAnalyse,
+} from "@/constants/laboratoire-orientations";
+import {
   MiseEnPageLaboratoire,
   type UtilisateurLaboratoire,
 } from "@/features/laboratoire/mise-en-page-laboratoire";
@@ -23,34 +27,14 @@ import {
   libellesExamensDemandes,
   numeroEnregistrementLaboratoire,
 } from "@/features/laboratoire/utils-affichage";
-import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import { cn } from "@/lib/utils";
 
 function patientCorrespondStatut(
   p: PatientFileLaboratoire,
-  statut: IdOrientationStatutAnalyse,
-  orientationAttribuee?: string
+  statut: IdOrientationStatutAnalyse
 ) {
-  if (orientationAttribuee) return orientationAttribuee === statut;
-
-  switch (statut) {
-    case "RECUS":
-      return (
-        p.examens.some((e) => e.statut === "PRESCRIT") &&
-        !p.examens.some((e) => e.statut === "EN_ANALYSE")
-      );
-    case "EN_COURS":
-      return p.examens.some((e) => e.statut === "EN_ANALYSE");
-    case "VERIFIES":
-      return p.examens.some((e) => e.statut === "TERMINE");
-    case "REJETES":
-      return p.examens.some((e) => e.statut === "ANNULE");
-    case "DR_APPROUVE":
-      return false;
-    default:
-      return false;
-  }
+  return (p.statutAnalyse || "RECUS") === statut;
 }
 
 interface PropsContenuExamensEnCoursLaboratoire {
@@ -81,10 +65,7 @@ export function ContenuExamensEnCoursLaboratoire({
     FILTRES_LABORATOIRE_VIDES
   );
   const [selectionId, setSelectionId] = useState<string | null>(dossierUrl);
-  /** Orientation statut locale — persistance métier à brancher ensuite */
-  const [orientationsParDossier, setOrientationsParDossier] = useState<
-    Record<string, string>
-  >({});
+  const [orientationEnCours, setOrientationEnCours] = useState(false);
   const [messageAction, setMessageAction] = useState<string | null>(null);
 
   const titrePage = pageStatut
@@ -122,14 +103,10 @@ export function ContenuExamensEnCoursLaboratoire({
 
   const enCours = useMemo(() => {
     if (pageStatut) {
-      return patients.filter((p) =>
-        patientCorrespondStatut(p, pageStatut, orientationsParDossier[p.dossierId])
-      );
+      return patients.filter((p) => patientCorrespondStatut(p, pageStatut));
     }
-    return patients.filter((p) =>
-      p.examens.some((e) => e.statut === "EN_ANALYSE")
-    );
-  }, [patients, pageStatut, orientationsParDossier]);
+    return patients.filter((p) => p.statutAnalyse === "EN_COURS");
+  }, [patients, pageStatut]);
 
   const filtres = useMemo(() => {
     return enCours.filter((p) =>
@@ -143,7 +120,7 @@ export function ContenuExamensEnCoursLaboratoire({
   );
 
   const orientationCourante =
-    (selectionId && orientationsParDossier[selectionId]) ||
+    (patientSelectionne?.statutAnalyse as IdOrientationStatutAnalyse | undefined) ||
     pageStatut ||
     "EN_COURS";
 
@@ -154,28 +131,59 @@ export function ContenuExamensEnCoursLaboratoire({
   const selectionner = (dossierId: string) => {
     setSelectionId(dossierId);
     setMessageAction(null);
-    if (pageStatut && !orientationsParDossier[dossierId]) {
-      setOrientationsParDossier((prev) => ({
-        ...prev,
-        [dossierId]: pageStatut,
-      }));
-    }
     router.replace(`${cheminBase}?dossier=${dossierId}`, {
       scroll: false,
     });
   };
 
-  const changerOrientation = (id: string) => {
-    if (!selectionId) {
-      setMessageAction(t("laboratoire.panneau.selectionnerPatient"));
+  const changerOrientation = async (id: string) => {
+    if (!selectionId || orientationEnCours) {
+      if (!selectionId) {
+        setMessageAction(t("laboratoire.panneau.selectionnerPatient"));
+      }
       return;
     }
-    setOrientationsParDossier((prev) => ({ ...prev, [selectionId]: id }));
-    setMessageAction(
-      t("laboratoire.panneau.statutAttribue", {
-        statut: t(`laboratoire.orientationsStatut.${id}.label`),
-      })
-    );
+
+    setOrientationEnCours(true);
+    setMessageAction(null);
+
+    try {
+      const res = await fetch("/api/laboratoire/examens/orienter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dossierId: selectionId, orientation: id }),
+      });
+      const data = (await res.json()) as {
+        message?: string;
+        chemin?: string;
+      };
+      if (!res.ok) {
+        setMessageAction(
+          data.message ?? t("laboratoire.panneau.erreurOrientationStatut")
+        );
+        return;
+      }
+
+      const chemin =
+        data.chemin ||
+        CHEMINS_STATUT_ANALYSE_LABO[id as IdOrientationStatutAnalyse] ||
+        cheminBase;
+
+      setMessageAction(
+        t("laboratoire.panneau.statutAttribue", {
+          statut: t(`laboratoire.orientationsStatut.${id}.label`),
+        })
+      );
+
+      router.push(`${chemin}?dossier=${selectionId}`);
+      if (chemin === cheminBase || pageStatut === id) {
+        await charger();
+      }
+    } catch {
+      setMessageAction(t("laboratoire.panneau.erreurOrientationStatut"));
+    } finally {
+      setOrientationEnCours(false);
+    }
   };
 
   const onAction = (id: IdActionRapideLabo) => {
@@ -210,8 +218,8 @@ export function ContenuExamensEnCoursLaboratoire({
       minute: "2-digit",
     });
 
-  const libelleStatutOrientation = (dossierId: string) => {
-    const id = orientationsParDossier[dossierId] ?? "EN_COURS";
+  const libelleStatutOrientation = (p: PatientFileLaboratoire) => {
+    const id = p.statutAnalyse || "EN_COURS";
     return t(`laboratoire.orientationsStatut.${id}.label`);
   };
 
@@ -219,7 +227,10 @@ export function ContenuExamensEnCoursLaboratoire({
     variante: "examens" as const,
     patient: patientSelectionne,
     orientation: selectionId ? orientationCourante : null,
-    onOrientationChange: changerOrientation,
+    onOrientationChange: (id: string) => {
+      if (orientationEnCours) return;
+      void changerOrientation(id);
+    },
     onAction,
   };
 
@@ -342,7 +353,7 @@ export function ContenuExamensEnCoursLaboratoire({
                             </td>
                             <td className="px-3 py-3">
                               <span className="inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-                                {libelleStatutOrientation(p.dossierId)}
+                                {libelleStatutOrientation(p)}
                               </span>
                             </td>
                             <td className="px-3 py-3">
@@ -407,11 +418,11 @@ export function ContenuExamensEnCoursLaboratoire({
                           </p>
                         </div>
                         <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                          {libelleStatutOrientation(p.dossierId)}
+                          {libelleStatutOrientation(p)}
                         </span>
                       </div>
                       <p className="mt-2 text-xs text-texte-secondaire">
-                        {libellesExamensDemandes(p, 3)}
+                        {libellesExamensDemandes(p, 3)} · {formatHeure(p.arriveeLe)}
                       </p>
                     </button>
                   </li>

@@ -195,8 +195,9 @@ export const laboratoireFr = {
     aideOrientationPatient:
       "Choisissez une destination : le transfert est créé tout de suite. Confirmez-le via le menu ⋮.",
     aideStatutAnalyse:
-      "Attribuez le statut d'analyse pour le patient sélectionné.",
-    statutAttribue: "Statut « {{statut}} » attribué (enregistrement à venir).",
+      "Choisissez un statut : le patient apparaît aussitôt sur la page correspondante.",
+    statutAttribue: "Patient orienté vers « {{statut}} ».",
+    erreurOrientationStatut: "Impossible d'attribuer ce statut d'analyse.",
     age: "Âge",
     telephone: "Téléphone",
     service: "Service",

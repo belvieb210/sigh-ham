@@ -66,6 +66,43 @@ export type IdOrientationDestinationLabo =
 export type IdOrientationStatutAnalyse =
   (typeof ORIENTATIONS_STATUT_ANALYSE)[number]["id"];
 
+/** Routes des pages de suivi par statut d'analyse */
+export const CHEMINS_STATUT_ANALYSE_LABO: Record<
+  IdOrientationStatutAnalyse,
+  string
+> = {
+  RECUS: "/sigh/laboratoire/recus",
+  EN_COURS: "/sigh/laboratoire/examens-en-cours",
+  VERIFIES: "/sigh/laboratoire/verifies",
+  REJETES: "/sigh/laboratoire/rejetes",
+  DR_APPROUVE: "/sigh/laboratoire/dr-approuve",
+};
+
+/** Marqueur persisté dans ExamenLaboratoire.notes */
+export const MARQUEUR_ORIENTATION_ANALYSE = "laboOrientation=";
+
+export function lireOrientationAnalyseDepuisNotes(
+  notes: string | null | undefined
+): IdOrientationStatutAnalyse | null {
+  if (!notes) return null;
+  const m = notes.match(/laboOrientation=([A-Z_]+)/);
+  if (!m) return null;
+  const id = m[1] as IdOrientationStatutAnalyse;
+  return ORIENTATIONS_STATUT_ANALYSE.some((o) => o.id === id) ? id : null;
+}
+
+export function ecrireOrientationAnalyseDansNotes(
+  notes: string | null | undefined,
+  orientation: IdOrientationStatutAnalyse
+): string {
+  const nettoye = (notes ?? "")
+    .replace(/\s*laboOrientation=[A-Z_]+\s*/g, " ")
+    .trim();
+  return nettoye
+    ? `${nettoye} laboOrientation=${orientation}`
+    : `laboOrientation=${orientation}`;
+}
+
 /** Code salle → id d'orientation UI du panneau labo */
 export function idOrientationDepuisCodeSalle(
   code: string | null | undefined

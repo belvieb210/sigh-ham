@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { listerPatientsFileAttenteSalle } from "@/lib/transferts/visibilite-salle";
 import { calculerAge } from "@/features/caisse/utils-format";
+import { deriverStatutAnalyse } from "@/lib/laboratoire/orienter-statut-analyse";
 import type {
   DetailPatientLaboratoire,
   PatientFileLaboratoire,
@@ -28,16 +29,31 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
   const files = await listerPatientsFileAttenteSalle("LABORATOIRE");
   const dossierIds = files.map((f) => f.passage.dossier.id);
 
-  const factures = await prisma.facture.findMany({
-    where: {
-      dossierId: { in: dossierIds },
-      statut: { in: ["EMISE", "PARTIELLEMENT_PAYEE", "PAYEE"] },
-    },
-    include: {
-      paiements: { orderBy: { payeLe: "desc" }, take: 1 },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const [factures, examensTous] = await Promise.all([
+    prisma.facture.findMany({
+      where: {
+        dossierId: { in: dossierIds },
+        statut: { in: ["EMISE", "PARTIELLEMENT_PAYEE", "PAYEE"] },
+      },
+      include: {
+        paiements: { orderBy: { payeLe: "desc" }, take: 1 },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    dossierIds.length === 0
+      ? Promise.resolve([])
+      : prisma.examenLaboratoire.findMany({
+          where: { dossierId: { in: dossierIds } },
+          include: { typeExamen: true },
+        }),
+  ]);
+
+  const examensParDossier = new Map<string, typeof examensTous>();
+  for (const ex of examensTous) {
+    const liste = examensParDossier.get(ex.dossierId) ?? [];
+    liste.push(ex);
+    examensParDossier.set(ex.dossierId, liste);
+  }
 
   const factureParDossier = new Map<
     string,
@@ -86,12 +102,15 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
     const patient = dossier.patient;
     const transfert = file.passage.transferts[0];
     const sortant = sortantParDossier.get(dossier.id);
-    const examens = dossier.examensLaboratoire.map((ex) => ({
+    const examensBruts =
+      examensParDossier.get(dossier.id) ?? dossier.examensLaboratoire;
+    const examens = examensBruts.map((ex) => ({
       id: ex.id,
       libelle: ex.typeExamen.libelle,
       categorie: ex.typeExamen.categorie,
       statut: ex.statut,
       code: ex.typeExamen.code,
+      notes: "notes" in ex ? (ex.notes ?? null) : null,
     }));
     const fac = factureParDossier.get(dossier.id) ?? null;
     const enreg = dossier.enregistrementsReception[0] ?? null;
@@ -131,6 +150,7 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
       transferePar: formaterNom(transfert?.emetteur?.prenom, transfert?.emetteur?.nom),
       examens,
       nombreExamens: examens.length,
+      statutAnalyse: deriverStatutAnalyse(examens),
       numeroFacture: fac?.numeroFacture ?? null,
       modePaiement: fac?.modePaiement ?? null,
       statutFacture: fac?.statut ?? null,

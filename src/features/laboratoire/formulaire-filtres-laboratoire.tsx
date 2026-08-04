@@ -74,7 +74,9 @@ export function patientCorrespondFiltresLabo(
     const q = f.numeroDossier.trim().toLowerCase();
     const blob = [
       p.numeroDossier,
+      p.numeroEnregistrement,
       p.numeroPatient,
+      p.numeroTransfert,
       p.numeroFacture ?? "",
     ]
       .join(" ")

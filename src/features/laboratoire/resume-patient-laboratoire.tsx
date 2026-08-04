@@ -3,7 +3,11 @@
 import { useTranslation } from "react-i18next";
 import { UserRound } from "lucide-react";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
-import { initialesPatient } from "@/features/laboratoire/utils-affichage";
+import {
+  codeTransfertLaboratoire,
+  initialesPatient,
+  numeroEnregistrementLaboratoire,
+} from "@/features/laboratoire/utils-affichage";
 
 interface PropsResumePatientLaboratoire {
   patient: PatientFileLaboratoire | null;
@@ -52,6 +56,7 @@ export function ResumePatientLaboratoire({ patient }: PropsResumePatientLaborato
         <dl className="mt-4 w-full space-y-2 text-left text-xs">
           <Ligne label={t("laboratoire.panneau.age")} valeur="—" />
           <Ligne label={t("laboratoire.panneau.telephone")} valeur="—" />
+          <Ligne label={t("laboratoire.panneau.numeroEnregistrement")} valeur="—" />
           <Ligne label={t("laboratoire.panneau.numeroTransfert")} valeur="—" />
           <Ligne label={t("laboratoire.panneau.heureTransfert")} valeur="—" />
           <Ligne label={t("laboratoire.panneau.heureEnregistrement")} valeur="—" />
@@ -71,7 +76,7 @@ export function ResumePatientLaboratoire({ patient }: PropsResumePatientLaborato
         {patient.nom} {patient.prenom}
       </p>
       <p className="font-mono text-xs text-texte-secondaire">
-        {patient.numeroPatient}
+        {codeTransfertLaboratoire(patient)}
       </p>
       <dl className="mt-4 w-full space-y-2 text-left text-xs">
         <Ligne
@@ -93,8 +98,12 @@ export function ResumePatientLaboratoire({ patient }: PropsResumePatientLaborato
           valeur={String(patient.nombreExamens)}
         />
         <Ligne
+          label={t("laboratoire.panneau.numeroEnregistrement")}
+          valeur={numeroEnregistrementLaboratoire(patient)}
+        />
+        <Ligne
           label={t("laboratoire.panneau.numeroTransfert")}
-          valeur={patient.numeroTransfert || patient.numeroDossier || "—"}
+          valeur={codeTransfertLaboratoire(patient)}
         />
         <Ligne
           label={t("laboratoire.panneau.heureTransfert")}

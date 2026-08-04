@@ -52,10 +52,40 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
     });
   }
 
+  const transfertsSortants =
+    dossierIds.length === 0
+      ? []
+      : await prisma.transfert.findMany({
+          where: {
+            dossierId: { in: dossierIds },
+            salleOrigine: { code: "LABORATOIRE" },
+            OR: [
+              { statut: "EN_ATTENTE" },
+              {
+                statut: "REFUSE",
+                recuperation: { statut: "EN_RECUPERATION" },
+              },
+            ],
+          },
+          include: {
+            salleDestination: { select: { code: true, nom: true } },
+            recuperation: { select: { statut: true } },
+          },
+          orderBy: { emisLe: "desc" },
+        });
+
+  const sortantParDossier = new Map<string, (typeof transfertsSortants)[number]>();
+  for (const t of transfertsSortants) {
+    if (!sortantParDossier.has(t.dossierId)) {
+      sortantParDossier.set(t.dossierId, t);
+    }
+  }
+
   return files.map((file) => {
     const dossier = file.passage.dossier;
     const patient = dossier.patient;
     const transfert = file.passage.transferts[0];
+    const sortant = sortantParDossier.get(dossier.id);
     const examens = dossier.examensLaboratoire.map((ex) => ({
       id: ex.id,
       libelle: ex.typeExamen.libelle,
@@ -69,6 +99,9 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
       const n = `${prenom ?? ""} ${nom ?? ""}`.trim();
       return n || null;
     };
+    const orientation = sortant
+      ? raccourcirOrientation(sortant.salleDestination.nom)
+      : "Laboratoire";
 
     return {
       fileAttenteId: file.id,
@@ -90,7 +123,8 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
         transfert?.salleOrigine?.code ||
         "—",
       medecinResponsable: enreg?.medecinResponsable?.trim() || null,
-      numeroTransfert: dossier.numeroDossier,
+      numeroTransfert: patient.numeroPatient,
+      numeroEnregistrement: dossier.numeroDossier,
       heureTransfert: transfert?.emisLe?.toISOString() ?? file.arriveLe.toISOString(),
       heureEnregistrement: enreg?.enregistreLe?.toISOString() ?? null,
       enregistrePar: formaterNom(enreg?.agent?.prenom, enreg?.agent?.nom),
@@ -100,8 +134,24 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
       numeroFacture: fac?.numeroFacture ?? null,
       modePaiement: fac?.modePaiement ?? null,
       statutFacture: fac?.statut ?? null,
+      transfertSortantId: sortant?.id ?? null,
+      statutTransfertSortant: sortant?.statut ?? null,
+      codeSalleDestination: sortant?.salleDestination.code ?? null,
+      enRecuperation: sortant?.recuperation?.statut === "EN_RECUPERATION",
+      orientation,
     };
   });
+}
+
+function raccourcirOrientation(nom: string): string {
+  if (nom.startsWith("Médecin")) {
+    return nom.includes("externe") ? "Médecin externe" : "Médecin";
+  }
+  if (nom.startsWith("Infirmier")) return "Infirmiers";
+  if (nom.startsWith("Pharmacie")) return "Pharmacie";
+  if (nom.startsWith("Caisse")) return "Caisse";
+  if (nom.startsWith("Laboratoire")) return "Laboratoire";
+  return nom;
 }
 
 export async function obtenirDetailPatientLaboratoire(

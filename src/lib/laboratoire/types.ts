@@ -25,8 +25,10 @@ export interface PatientFileLaboratoire {
   numeroOrdre: number;
   provenance: string;
   medecinResponsable: string | null;
-  /** N° dossier affiché (ex. 20260803007) — remplace l’ancien code TRF-… */
+  /** N° transfert (ex. PAT-2026-0008) */
   numeroTransfert: string;
+  /** N° enregistrement / dossier (ex. 20260804008) */
+  numeroEnregistrement: string;
   heureTransfert: string | null;
   heureEnregistrement: string | null;
   enregistrePar: string | null;
@@ -36,6 +38,12 @@ export interface PatientFileLaboratoire {
   numeroFacture: string | null;
   modePaiement: string | null;
   statutFacture: string | null;
+  /** Transfert sortant labo (orientation rapide, à confirmer) */
+  transfertSortantId: string | null;
+  statutTransfertSortant: string | null;
+  codeSalleDestination: string | null;
+  enRecuperation: boolean;
+  orientation: string;
 }
 
 export interface StatsLaboratoireJour {

@@ -20,8 +20,8 @@ import {
   type FiltresLaboratoireUi,
 } from "@/features/laboratoire/formulaire-filtres-laboratoire";
 import {
-  codeTransfertLaboratoire,
   libellesExamensDemandes,
+  numeroEnregistrementLaboratoire,
 } from "@/features/laboratoire/utils-affichage";
 import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
@@ -283,6 +283,9 @@ export function ContenuExamensEnCoursLaboratoire({
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
                         <th className="px-3 py-3 font-semibold">
+                          {t("laboratoire.patients.colonnes.enregistrement")}
+                        </th>
+                        <th className="px-3 py-3 font-semibold">
                           {t("laboratoire.patients.colonnes.patient")}
                         </th>
                         <th className="px-3 py-3 font-semibold">
@@ -293,9 +296,6 @@ export function ContenuExamensEnCoursLaboratoire({
                         </th>
                         <th className="px-3 py-3 font-semibold">
                           {t("laboratoire.patients.colonnes.statut")}
-                        </th>
-                        <th className="px-3 py-3 font-semibold">
-                          {t("laboratoire.patients.colonnes.transfert")}
                         </th>
                         <th className="px-3 py-3 font-semibold">
                           {t("laboratoire.patients.colonnes.actions")}
@@ -320,6 +320,9 @@ export function ContenuExamensEnCoursLaboratoire({
                                 : "hover:bg-slate-50/80"
                             )}
                           >
+                            <td className="px-3 py-3 font-mono text-xs font-semibold text-bleu-medical">
+                              {numeroEnregistrementLaboratoire(p)}
+                            </td>
                             <td className="px-3 py-3">
                               <p className="font-semibold">
                                 {p.nom} {p.prenom}
@@ -341,9 +344,6 @@ export function ContenuExamensEnCoursLaboratoire({
                               <span className="inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
                                 {libelleStatutOrientation(p.dossierId)}
                               </span>
-                            </td>
-                            <td className="px-3 py-3 font-mono text-xs font-semibold text-bleu-medical">
-                              {codeTransfertLaboratoire(p)}
                             </td>
                             <td className="px-3 py-3">
                               <div className="flex items-center gap-1.5">
@@ -403,7 +403,7 @@ export function ContenuExamensEnCoursLaboratoire({
                             {p.nom} {p.prenom}
                           </p>
                           <p className="font-mono text-xs text-bleu-medical">
-                            {codeTransfertLaboratoire(p)}
+                            {numeroEnregistrementLaboratoire(p)}
                           </p>
                         </div>
                         <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">

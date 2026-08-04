@@ -54,8 +54,8 @@ function codeEchantillon(p: PatientFileLaboratoire) {
   return `ECH-${ym}-${n.padStart(4, "0")}`;
 }
 
-function codeTransfert(p: PatientFileLaboratoire) {
-  return p.numeroTransfert || p.numeroDossier;
+function numeroEnregistrement(p: PatientFileLaboratoire) {
+  return p.numeroEnregistrement || p.numeroDossier;
 }
 
 export function ContenuAccueilLaboratoire({
@@ -268,7 +268,7 @@ export function ContenuAccueilLaboratoire({
                       <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                         <tr>
                           <th className="px-3 py-2 font-semibold">
-                            {t("laboratoire.dashboard.colTransfert")}
+                            {t("laboratoire.dashboard.colEnregistrement")}
                           </th>
                           <th className="px-3 py-2 font-semibold">
                             {t("laboratoire.dashboard.colPatient")}
@@ -294,7 +294,7 @@ export function ContenuAccueilLaboratoire({
                         {patientsTransferes.map((p) => (
                           <tr key={p.dossierId} className="hover:bg-slate-50/80">
                             <td className="px-3 py-2.5 font-mono text-xs text-texte-principal">
-                              {codeTransfert(p)}
+                              {numeroEnregistrement(p)}
                             </td>
                             <td className="px-3 py-2.5">
                               <p className="font-semibold text-texte-principal">

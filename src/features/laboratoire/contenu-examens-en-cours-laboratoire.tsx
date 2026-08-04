@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Eye, FlaskConical, Loader2 } from "lucide-react";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
+import { telechargerCsv } from "@/components/ui/boutons-outils-liste";
 import {
   PaginationListe,
   paginerListe,
@@ -22,7 +23,10 @@ import {
   SectionsMobileLaboratoire,
 } from "@/features/laboratoire/panneau-droit-laboratoire";
 import type { IdActionRapideLabo } from "@/features/laboratoire/actions-rapides-laboratoire";
-import { BarreFiltresLaboratoire } from "@/features/laboratoire/barre-filtres-laboratoire";
+import {
+  BarreFiltresLaboratoire,
+  BoutonsOutilsListeLaboratoire,
+} from "@/features/laboratoire/barre-filtres-laboratoire";
 import {
   MenuContextuelLaboratoire,
   useMenuContextuelLabo,
@@ -308,6 +312,41 @@ export function ContenuExamensEnCoursLaboratoire({
     setMessageAction(t("laboratoire.actions.aVenir"));
   };
 
+  const toutSelectionne =
+    filtres.length > 0 && filtres.every((p) => idsCoches.has(p.dossierId));
+
+  const basculerSelectionTout = () => {
+    if (toutSelectionne) {
+      setIdsCoches(new Set());
+      return;
+    }
+    setIdsCoches(new Set(filtres.map((p) => p.dossierId)));
+  };
+
+  const exporterSelection = () => {
+    const cibles =
+      idsCoches.size > 0
+        ? filtres.filter((p) => idsCoches.has(p.dossierId))
+        : filtres;
+    if (cibles.length === 0) {
+      setMessageAction(t("laboratoire.outils.rienAExporter"));
+      return;
+    }
+    telechargerCsv(
+      `laboratoire-${pageStatut?.toLowerCase() ?? "examens"}-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["numeroEnregistrement", "nom", "prenom", "service", "statut", "examens"],
+      cibles.map((p) => [
+        numeroEnregistrementLaboratoire(p),
+        p.nom,
+        p.prenom,
+        p.provenance || p.orientation,
+        p.statutAnalyse || "",
+        libellesExamensDemandes(p),
+      ])
+    );
+    setMessageAction(t("laboratoire.outils.exportOk", { count: cibles.length }));
+  };
+
   const formatHeure = (iso: string) =>
     new Date(iso).toLocaleString(i18n.language || "fr-FR", {
       day: "2-digit",
@@ -372,6 +411,13 @@ export function ContenuExamensEnCoursLaboratoire({
               setBrouillonFiltres(FILTRES_LABORATOIRE_VIDES);
               setFiltresAppliques(FILTRES_LABORATOIRE_VIDES);
             }}
+            actionsApresFiltre={
+              <BoutonsOutilsListeLaboratoire
+                toutSelectionne={toutSelectionne}
+                onSelectionnerTout={basculerSelectionTout}
+                onExporter={exporterSelection}
+              />
+            }
           />
 
           {erreur && (

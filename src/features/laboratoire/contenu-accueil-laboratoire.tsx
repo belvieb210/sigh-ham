@@ -286,7 +286,7 @@ export function ContenuAccueilLaboratoire({
 
             <div className="grid gap-4 lg:grid-cols-2">
               <section className="rounded-xl border border-gris-bordure bg-white shadow-sm">
-                <div className="flex items-center justify-between gap-2 border-b border-gris-bordure px-4 py-3">
+                <div className="flex items-center justify-between gap-2 border-b border-gris-bordure px-3 py-2">
                   <h2 className="text-sm font-bold text-texte-principal">
                     {t("laboratoire.dashboard.tablePatients")}
                   </h2>
@@ -298,33 +298,33 @@ export function ContenuAccueilLaboratoire({
                   </Link>
                 </div>
                 {!patientsTransferes.length ? (
-                  <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
+                  <p className="px-4 py-6 text-center text-sm text-texte-secondaire">
                     {t("laboratoire.dashboard.aucunPatient")}
                   </p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[560px] text-left text-sm">
-                      <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
+                      <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-texte-secondaire">
                         <tr>
-                          <th className="px-3 py-2 font-semibold">
+                          <th className="px-2.5 py-1.5 font-semibold">
                             {t("laboratoire.dashboard.colEnregistrement")}
                           </th>
-                          <th className="px-3 py-2 font-semibold">
+                          <th className="px-2.5 py-1.5 font-semibold">
                             {t("laboratoire.dashboard.colPatient")}
                           </th>
-                          <th className="px-3 py-2 font-semibold">
+                          <th className="px-2.5 py-1.5 font-semibold">
                             {t("laboratoire.dashboard.colService")}
                           </th>
-                          <th className="px-3 py-2 font-semibold">
+                          <th className="px-2.5 py-1.5 font-semibold">
                             {t("laboratoire.dashboard.colExamens")}
                           </th>
-                          <th className="px-3 py-2 font-semibold">
+                          <th className="px-2.5 py-1.5 font-semibold">
                             {t("laboratoire.dashboard.colHeure")}
                           </th>
-                          <th className="px-3 py-2 font-semibold">
+                          <th className="px-2.5 py-1.5 font-semibold">
                             {t("laboratoire.dashboard.colStatut")}
                           </th>
-                          <th className="px-3 py-2 font-semibold">
+                          <th className="px-2.5 py-1.5 font-semibold">
                             {t("laboratoire.dashboard.colActions")}
                           </th>
                         </tr>
@@ -332,34 +332,34 @@ export function ContenuAccueilLaboratoire({
                       <tbody className="divide-y divide-gris-bordure">
                         {pageTransferesData.itemsPage.map((p) => (
                           <tr key={p.dossierId} className="hover:bg-slate-50/80">
-                            <td className="px-3 py-2.5 font-mono text-xs text-texte-principal">
+                            <td className="whitespace-nowrap px-2.5 py-1.5 font-mono text-[11px] text-texte-principal">
                               {numeroEnregistrement(p)}
                             </td>
-                            <td className="px-3 py-2.5">
-                              <p className="font-semibold text-texte-principal">
+                            <td className="max-w-[140px] px-2.5 py-1.5">
+                              <p className="truncate text-xs font-semibold leading-tight text-texte-principal">
                                 {p.nom} {p.prenom}
-                              </p>
-                              <p className="text-[11px] text-texte-secondaire">
-                                {p.age != null ? `${p.age} ans` : "—"}
-                                {p.sexe ? ` · ${p.sexe}` : ""}
+                                <span className="ml-1 font-normal text-texte-secondaire">
+                                  · {p.age != null ? `${p.age} ans` : "—"}
+                                  {p.sexe ? ` · ${p.sexe}` : ""}
+                                </span>
                               </p>
                             </td>
-                            <td className="px-3 py-2.5 text-xs text-texte-secondaire">
+                            <td className="whitespace-nowrap px-2.5 py-1.5 text-[11px] text-texte-secondaire">
                               {p.provenance || "—"}
                             </td>
-                            <td className="px-3 py-2.5 text-xs font-medium">
+                            <td className="px-2.5 py-1.5 text-[11px] font-medium">
                               {p.nombreExamens}
                             </td>
-                            <td className="px-3 py-2.5 text-xs text-texte-secondaire">
+                            <td className="whitespace-nowrap px-2.5 py-1.5 text-[11px] text-texte-secondaire">
                               {formatHeure(p.arriveeLe, i18n.language)}
                             </td>
-                            <td className="px-3 py-2.5">
+                            <td className="px-2.5 py-1.5">
                               {(() => {
                                 const statut = libelleStatutLigneLabo(p);
                                 return (
                                   <span
                                     className={cn(
-                                      "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                                      "inline-flex rounded-full px-1.5 py-0 text-[10px] font-semibold leading-5",
                                       statut.couleur
                                     )}
                                   >
@@ -374,13 +374,13 @@ export function ContenuAccueilLaboratoire({
                                 );
                               })()}
                             </td>
-                            <td className="px-3 py-2.5">
+                            <td className="px-2.5 py-1.5">
                               <Link
                                 href={`/sigh/laboratoire/recus?dossier=${p.dossierId}`}
-                                className="inline-flex rounded-lg border border-gris-bordure p-1.5 text-texte-secondaire hover:bg-white hover:text-bleu-medical"
+                                className="inline-flex rounded-md border border-gris-bordure p-1 text-texte-secondaire hover:bg-white hover:text-bleu-medical"
                                 title={t("laboratoire.patients.ouvrirDossier")}
                               >
-                                <Eye className="h-4 w-4" />
+                                <Eye className="h-3.5 w-3.5" />
                               </Link>
                             </td>
                           </tr>
@@ -442,19 +442,19 @@ export function ContenuAccueilLaboratoire({
                       <tbody className="divide-y divide-gris-bordure">
                         {pageAnalysesData.itemsPage.map((p) => (
                           <tr key={p.dossierId} className="hover:bg-slate-50/80">
-                            <td className="px-3 py-2.5 font-mono text-xs">
+                            <td className="whitespace-nowrap px-2.5 py-1.5 font-mono text-[11px]">
                               {codeEchantillon(p)}
                             </td>
-                            <td className="px-3 py-2.5 font-semibold">
+                            <td className="max-w-[120px] truncate px-2.5 py-1.5 text-xs font-semibold">
                               {p.nom} {p.prenom}
                             </td>
-                            <td className="max-w-[160px] truncate px-3 py-2.5 text-xs text-texte-secondaire">
+                            <td className="max-w-[140px] truncate px-2.5 py-1.5 text-[11px] text-texte-secondaire">
                               {libellesExamens(p)}
                             </td>
-                            <td className="px-3 py-2.5">
+                            <td className="px-2.5 py-1.5">
                               <span
                                 className={cn(
-                                  "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                                  "inline-flex rounded-full px-1.5 py-0 text-[10px] font-semibold leading-5",
                                   couleurStatutAnalyse(p.statutAnalyse)
                                 )}
                               >
@@ -463,12 +463,12 @@ export function ContenuAccueilLaboratoire({
                                 )}
                               </span>
                             </td>
-                            <td className="px-3 py-2.5">
+                            <td className="px-2.5 py-1.5">
                               <Link
                                 href={`/sigh/laboratoire/examens-en-cours?dossier=${p.dossierId}`}
-                                className="inline-flex rounded-lg border border-gris-bordure p-1.5 text-amber-700 hover:bg-amber-50"
+                                className="inline-flex rounded-md border border-gris-bordure p-1 text-amber-700 hover:bg-amber-50"
                               >
-                                <FlaskConical className="h-4 w-4" />
+                                <FlaskConical className="h-3.5 w-3.5" />
                               </Link>
                             </td>
                           </tr>

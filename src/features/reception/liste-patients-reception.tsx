@@ -5,6 +5,10 @@ import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import type { PatientEnregistre } from "@/constants/reception";
 import { FILTRES_STATUT_PATIENT } from "@/constants/reception";
+import {
+  BoutonsOutilsListe,
+  telechargerCsv,
+} from "@/components/ui/boutons-outils-liste";
 import { TableauPatients, type VarianteActionsPatient } from "@/features/reception/composants-liste-patients";
 import {
   compterFiltresRecents,
@@ -95,6 +99,40 @@ export function ListePatientsReception({
     ignorerStatut: !afficherFiltreStatut,
   });
 
+  const multiActif = Boolean(onBasculerCoche && onDefinirCoches);
+  const patientsAvecDossier = patientsFiltres.filter((p) => Boolean(p.dossierId));
+  const toutSelectionne =
+    multiActif &&
+    patientsAvecDossier.length > 0 &&
+    patientsAvecDossier.every((p) => dossiersCoches?.includes(p.dossierId));
+
+  const basculerSelectionTout = () => {
+    if (!onDefinirCoches) return;
+    onDefinirCoches(patientsAvecDossier, !toutSelectionne);
+  };
+
+  const exporterSelection = () => {
+    const coches = new Set(dossiersCoches ?? []);
+    const cibles =
+      coches.size > 0
+        ? patientsFiltres.filter((p) => p.dossierId && coches.has(p.dossierId))
+        : patientsFiltres;
+    if (cibles.length === 0) return;
+    telechargerCsv(
+      `reception-patients-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["id", "nom", "telephone", "motif", "orientation", "statut", "heure"],
+      cibles.map((p) => [
+        p.id,
+        p.nom,
+        p.telephone,
+        p.motif,
+        p.orientation,
+        p.statut,
+        p.heure,
+      ])
+    );
+  };
+
   return (
     <div className="space-y-4">
       <div
@@ -126,7 +164,7 @@ export function ListePatientsReception({
         ))}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
         <button
           type="button"
           onClick={() => setFiltresOuverts((o) => !o)}
@@ -153,6 +191,13 @@ export function ListePatientsReception({
             {nbFiltres}
           </span>
         </button>
+        <BoutonsOutilsListe
+          toutSelectionne={Boolean(toutSelectionne)}
+          onSelectionnerTout={basculerSelectionTout}
+          onExporter={exporterSelection}
+          labelSelectionnerTout={t("reception.liste.selectionnerTout")}
+          labelExporter={t("reception.liste.exporterSelection")}
+        />
       </div>
 
       {filtresOuverts && (

@@ -125,6 +125,7 @@ export const caisseFr = {
       "{{count}} patient(s) cochés : cochez les salles de destination pour les orienter tous ensemble.",
     selectionnerPourOrienter: "Sélectionnez un patient dans la liste pour l'orienter.",
     selectionnerTout: "Tout sélectionner",
+    exporterSelection: "Exporter la sélection",
     actionsRapides: "Actions rapides",
     actionRechercher: "Rechercher patient",
     actionFacturer: "Facturer",

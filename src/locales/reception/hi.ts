@@ -181,6 +181,8 @@ export const receptionHi = {
     },
   liste: {
     exporter: "निर्यात",
+    exporterSelection: "Exporter la sélection",
+    selectionnerTout: "Tout sélectionner / désélectionner",
     filtres: "फ़िल्टर",
     statut: "स्थिति",
     serviceDestination: "गंतव्य सेवा",

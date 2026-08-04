@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
+import { telechargerCsv } from "@/components/ui/boutons-outils-liste";
 import { idOrientationDepuisCodeSalle } from "@/constants/laboratoire-orientations";
 import {
   MiseEnPageLaboratoire,
@@ -321,34 +322,18 @@ export function ContenuPatientsLaboratoire({
       setMessageAction(t("laboratoire.outils.rienAExporter"));
       return;
     }
-    const entetes = [
-      "numeroEnregistrement",
-      "nom",
-      "prenom",
-      "destination",
-      "statut",
-      "examens",
-    ];
-    const lignes = cibles.map((p) =>
-      [
+    telechargerCsv(
+      `laboratoire-patients-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["numeroEnregistrement", "nom", "prenom", "destination", "statut", "examens"],
+      cibles.map((p) => [
         numeroEnregistrementLaboratoire(p),
         p.nom,
         p.prenom,
         p.orientation,
         p.statutAnalyse,
         libellesExamensDemandes(p),
-      ]
-        .map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`)
-        .join(",")
+      ])
     );
-    const csv = [entetes.join(","), ...lignes].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `laboratoire-patients-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
     setMessageAction(t("laboratoire.outils.exportOk", { count: cibles.length }));
   };
 

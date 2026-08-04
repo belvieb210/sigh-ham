@@ -10,6 +10,10 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { EVENEMENT_CAISSE_PATIENTS_MODIFIES } from "@/constants/caisse";
+import {
+  BoutonsOutilsListe,
+  telechargerCsv,
+} from "@/components/ui/boutons-outils-liste";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import { useSelectionTransfertCaisse } from "@/features/caisse/contexte-selection-transfert-caisse";
 import {
@@ -170,6 +174,37 @@ export function ListePatientsTransfertsCaisse() {
     setPage(1);
   };
 
+  const toutSelectionne =
+    filtres.length > 0 && filtres.every((p) => dossiersCoches.includes(p.dossierId));
+
+  const basculerSelectionTout = () => {
+    definirCoches(
+      filtres.map((p) => p.dossierId),
+      !toutSelectionne
+    );
+  };
+
+  const exporterSelection = () => {
+    const cibles =
+      dossiersCoches.length > 0
+        ? filtres.filter((p) => dossiersCoches.includes(p.dossierId))
+        : filtres;
+    if (cibles.length === 0) return;
+    telechargerCsv(
+      `caisse-patients-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["numeroPatient", "nom", "telephone", "provenance", "orientation", "statut", "heure"],
+      cibles.map((p) => [
+        p.numeroPatient,
+        p.nomComplet,
+        p.telephone ?? "",
+        p.provenance ?? "",
+        p.orientation,
+        p.statut,
+        p.heure,
+      ])
+    );
+  };
+
   if (chargement) {
     return (
       <div className="flex items-center justify-center gap-2 rounded-xl border border-gris-bordure bg-white py-16 text-sm text-texte-secondaire">
@@ -233,7 +268,7 @@ export function ListePatientsTransfertsCaisse() {
         ))}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
         <button
           type="button"
           onClick={() => setFiltresOuverts((o) => !o)}
@@ -260,6 +295,13 @@ export function ListePatientsTransfertsCaisse() {
             {nbFiltresActifs}
           </span>
         </button>
+        <BoutonsOutilsListe
+          toutSelectionne={toutSelectionne}
+          onSelectionnerTout={basculerSelectionTout}
+          onExporter={exporterSelection}
+          labelSelectionnerTout={t("caisse.transferts.selectionnerTout")}
+          labelExporter={t("caisse.transferts.exporterSelection")}
+        />
       </div>
 
       {filtresOuverts && (

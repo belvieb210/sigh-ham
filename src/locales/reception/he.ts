@@ -181,6 +181,8 @@ export const receptionHe = {
     },
   liste: {
     exporter: "ייצוא",
+    exporterSelection: "Exporter la sélection",
+    selectionnerTout: "Tout sélectionner / désélectionner",
     filtres: "מסננים",
     statut: "סטטוס",
     serviceDestination: "שירות יעד",

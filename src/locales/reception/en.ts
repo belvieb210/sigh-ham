@@ -176,6 +176,8 @@ export const receptionEn = {
   },
   liste: {
     exporter: "Export",
+    exporterSelection: "Export selection",
+    selectionnerTout: "Select / deselect all",
     filtres: "Filters",
     statut: "Status",
     serviceDestination: "Destination service",

@@ -2,7 +2,8 @@
 
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { ListChecks, Share2, SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
+import { BoutonsOutilsListe } from "@/components/ui/boutons-outils-liste";
 import {
   FormulaireFiltresLaboratoire,
   type FiltresLaboratoireUi,
@@ -111,30 +112,12 @@ export function BoutonsOutilsListeLaboratoire({
   const { t } = useTranslation();
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={onSelectionnerTout}
-        aria-label={t("laboratoire.outils.selectionnerTout")}
-        title={t("laboratoire.outils.selectionnerTout")}
-        className={cn(
-          "inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
-          toutSelectionne
-            ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
-            : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
-        )}
-      >
-        <ListChecks className="h-5 w-5" strokeWidth={2} />
-      </button>
-      <button
-        type="button"
-        onClick={onExporter}
-        aria-label={t("laboratoire.outils.exporter")}
-        title={t("laboratoire.outils.exporter")}
-        className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gris-bordure bg-white text-texte-principal transition-colors hover:bg-gris-tres-clair"
-      >
-        <Share2 className="h-5 w-5" strokeWidth={2} />
-      </button>
-    </>
+    <BoutonsOutilsListe
+      onSelectionnerTout={onSelectionnerTout}
+      onExporter={onExporter}
+      toutSelectionne={toutSelectionne}
+      labelSelectionnerTout={t("laboratoire.outils.selectionnerTout")}
+      labelExporter={t("laboratoire.outils.exporter")}
+    />
   );
 }

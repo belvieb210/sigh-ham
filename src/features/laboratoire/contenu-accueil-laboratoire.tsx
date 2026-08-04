@@ -22,6 +22,10 @@ import {
   UserSearch,
 } from "lucide-react";
 import {
+  PaginationListe,
+  paginerListe,
+} from "@/components/ui/pagination-liste";
+import {
   MiseEnPageLaboratoire,
   type UtilisateurLaboratoire,
 } from "@/features/laboratoire/mise-en-page-laboratoire";
@@ -34,6 +38,9 @@ import type {
   StatsLaboratoireJour,
 } from "@/lib/laboratoire/types";
 import { cn } from "@/lib/utils";
+
+const PAR_PAGE_CARTES_PRINCIPALES = 4;
+const PAR_PAGE_CARTES_RESULTATS = 3;
 
 interface PropsContenuAccueilLaboratoire {
   utilisateur: UtilisateurLaboratoire;
@@ -70,6 +77,10 @@ export function ContenuAccueilLaboratoire({
   const [stats, setStats] = useState<StatsLaboratoireJour | null>(null);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [pageTransferes, setPageTransferes] = useState(1);
+  const [pageAnalyses, setPageAnalyses] = useState(1);
+  const [pageAValider, setPageAValider] = useState(1);
+  const [pageValides, setPageValides] = useState(1);
 
   useEffect(() => {
     let annule = false;
@@ -192,6 +203,29 @@ export function ContenuAccueilLaboratoire({
   const patientsTransferes =
     stats?.patientsTransferes ?? stats?.derniersArrives ?? [];
   const analysesListe = stats?.analysesEnCoursListe ?? [];
+  const aValiderListe = stats?.resultatsAValiderListe ?? [];
+  const validesListe = stats?.resultatsValidesListe ?? [];
+
+  const pageTransferesData = paginerListe(
+    patientsTransferes,
+    pageTransferes,
+    PAR_PAGE_CARTES_PRINCIPALES
+  );
+  const pageAnalysesData = paginerListe(
+    analysesListe,
+    pageAnalyses,
+    PAR_PAGE_CARTES_PRINCIPALES
+  );
+  const pageAValiderData = paginerListe(
+    aValiderListe,
+    pageAValider,
+    PAR_PAGE_CARTES_RESULTATS
+  );
+  const pageValidesData = paginerListe(
+    validesListe,
+    pageValides,
+    PAR_PAGE_CARTES_RESULTATS
+  );
 
   return (
     <MiseEnPageLaboratoire
@@ -296,7 +330,7 @@ export function ContenuAccueilLaboratoire({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gris-bordure">
-                        {patientsTransferes.map((p) => (
+                        {pageTransferesData.itemsPage.map((p) => (
                           <tr key={p.dossierId} className="hover:bg-slate-50/80">
                             <td className="px-3 py-2.5 font-mono text-xs text-texte-principal">
                               {numeroEnregistrement(p)}
@@ -355,6 +389,16 @@ export function ContenuAccueilLaboratoire({
                     </table>
                   </div>
                 )}
+                <PaginationListe
+                  compact
+                  page={pageTransferesData.pageCourante}
+                  totalPages={pageTransferesData.totalPages}
+                  totalItems={patientsTransferes.length}
+                  parPage={PAR_PAGE_CARTES_PRINCIPALES}
+                  onChange={setPageTransferes}
+                  labelPrec={t("laboratoire.pagination.prec")}
+                  labelSuiv={t("laboratoire.pagination.suiv")}
+                />
               </section>
 
               <section className="rounded-xl border border-gris-bordure bg-white shadow-sm">
@@ -396,7 +440,7 @@ export function ContenuAccueilLaboratoire({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gris-bordure">
-                        {analysesListe.map((p) => (
+                        {pageAnalysesData.itemsPage.map((p) => (
                           <tr key={p.dossierId} className="hover:bg-slate-50/80">
                             <td className="px-3 py-2.5 font-mono text-xs">
                               {codeEchantillon(p)}
@@ -433,46 +477,128 @@ export function ContenuAccueilLaboratoire({
                     </table>
                   </div>
                 )}
+                <PaginationListe
+                  compact
+                  page={pageAnalysesData.pageCourante}
+                  totalPages={pageAnalysesData.totalPages}
+                  totalItems={analysesListe.length}
+                  parPage={PAR_PAGE_CARTES_PRINCIPALES}
+                  onChange={setPageAnalyses}
+                  labelPrec={t("laboratoire.pagination.prec")}
+                  labelSuiv={t("laboratoire.pagination.suiv")}
+                />
               </section>
             </div>
 
             <div className="grid gap-4 lg:grid-cols-3">
-              <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-                <div className="mb-3 flex items-center justify-between">
+              <section className="rounded-xl border border-gris-bordure bg-white shadow-sm">
+                <div className="flex items-center justify-between gap-2 border-b border-gris-bordure px-4 py-3">
                   <h2 className="text-sm font-bold text-texte-principal">
                     {t("laboratoire.dashboard.resultatsAValider")}
                   </h2>
                   <Link
-                    href="/sigh/laboratoire/resultats-a-valider"
+                    href="/sigh/laboratoire/verifies"
                     className="text-xs font-semibold text-bleu-medical hover:underline"
                   >
                     {t("laboratoire.dashboard.voirTous")}
                   </Link>
                 </div>
-                <p className="py-6 text-center text-sm text-texte-secondaire">
-                  {t("laboratoire.dashboard.videValidation")}
-                </p>
+                {!aValiderListe.length ? (
+                  <p className="px-4 py-6 text-center text-sm text-texte-secondaire">
+                    {t("laboratoire.dashboard.videValidation")}
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-gris-bordure">
+                    {pageAValiderData.itemsPage.map((p) => (
+                      <li
+                        key={p.dossierId}
+                        className="flex items-center justify-between gap-2 px-4 py-2.5"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-texte-principal">
+                            {p.nom} {p.prenom}
+                          </p>
+                          <p className="truncate text-[11px] text-texte-secondaire">
+                            {libellesExamens(p, 2)}
+                          </p>
+                        </div>
+                        <Link
+                          href={`/sigh/laboratoire/verifies?dossier=${p.dossierId}`}
+                          className="inline-flex shrink-0 rounded-lg border border-gris-bordure p-1.5 text-texte-secondaire hover:text-bleu-medical"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <PaginationListe
+                  compact
+                  page={pageAValiderData.pageCourante}
+                  totalPages={pageAValiderData.totalPages}
+                  totalItems={aValiderListe.length}
+                  parPage={PAR_PAGE_CARTES_RESULTATS}
+                  onChange={setPageAValider}
+                  labelPrec={t("laboratoire.pagination.prec")}
+                  labelSuiv={t("laboratoire.pagination.suiv")}
+                />
               </section>
 
-              <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-                <div className="mb-3 flex items-center justify-between">
+              <section className="rounded-xl border border-gris-bordure bg-white shadow-sm">
+                <div className="flex items-center justify-between gap-2 border-b border-gris-bordure px-4 py-3">
                   <h2 className="text-sm font-bold text-texte-principal">
                     {t("laboratoire.dashboard.resultatsValidesAujourdhui")}
                   </h2>
                   <Link
-                    href="/sigh/laboratoire/resultats-valides"
+                    href="/sigh/laboratoire/dr-approuve"
                     className="text-xs font-semibold text-bleu-medical hover:underline"
                   >
                     {t("laboratoire.dashboard.voirTous")}
                   </Link>
                 </div>
-                <p className="py-6 text-center text-sm text-texte-secondaire">
-                  {(stats?.resultatsValidesAujourdhui ?? 0) > 0
-                    ? t("laboratoire.dashboard.resumeValides", {
-                        count: stats?.resultatsValidesAujourdhui ?? 0,
-                      })
-                    : t("laboratoire.dashboard.videValides")}
-                </p>
+                {!validesListe.length ? (
+                  <p className="px-4 py-6 text-center text-sm text-texte-secondaire">
+                    {(stats?.resultatsValidesAujourdhui ?? 0) > 0
+                      ? t("laboratoire.dashboard.resumeValides", {
+                          count: stats?.resultatsValidesAujourdhui ?? 0,
+                        })
+                      : t("laboratoire.dashboard.videValides")}
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-gris-bordure">
+                    {pageValidesData.itemsPage.map((p) => (
+                      <li
+                        key={p.dossierId}
+                        className="flex items-center justify-between gap-2 px-4 py-2.5"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-texte-principal">
+                            {p.nom} {p.prenom}
+                          </p>
+                          <p className="truncate text-[11px] text-texte-secondaire">
+                            {libellesExamens(p, 2)}
+                          </p>
+                        </div>
+                        <Link
+                          href={`/sigh/laboratoire/dr-approuve?dossier=${p.dossierId}`}
+                          className="inline-flex shrink-0 rounded-lg border border-gris-bordure p-1.5 text-emerald-700 hover:bg-emerald-50"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <PaginationListe
+                  compact
+                  page={pageValidesData.pageCourante}
+                  totalPages={pageValidesData.totalPages}
+                  totalItems={validesListe.length}
+                  parPage={PAR_PAGE_CARTES_RESULTATS}
+                  onChange={setPageValides}
+                  labelPrec={t("laboratoire.pagination.prec")}
+                  labelSuiv={t("laboratoire.pagination.suiv")}
+                />
               </section>
 
               <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">

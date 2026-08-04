@@ -182,6 +182,8 @@ export const receptionZh = {
     },
   liste: {
     exporter: "导出",
+    exporterSelection: "Exporter la sélection",
+    selectionnerTout: "Tout sélectionner / désélectionner",
     filtres: "筛选",
     statut: "状态",
     serviceDestination: "目的地服务",

@@ -181,6 +181,8 @@ export const receptionAr = {
     },
   liste: {
     exporter: "تصدير",
+    exporterSelection: "Exporter la sélection",
+    selectionnerTout: "Tout sélectionner / désélectionner",
     filtres: "المرشحات",
     statut: "الحالة",
     serviceDestination: "قسم الوجهة",

@@ -183,6 +183,8 @@ export const receptionKg = {
     },
   liste: {
     exporter: "Exporter",
+    exporterSelection: "Exporter la sélection",
+    selectionnerTout: "Tout sélectionner / désélectionner",
     filtres: "Ba filtre",
     statut: "Statut",
     serviceDestination: "Service ya destination",

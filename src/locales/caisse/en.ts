@@ -1,4 +1,4 @@
-/** Traductions EN — module SIGH Caisse */
+﻿/** Traductions EN — module SIGH Caisse */
 
 export const caisseEn = {
   layout: {
@@ -125,6 +125,7 @@ export const caisseEn = {
       "{{count}} patient(s) checked: check destination rooms to orient them all together.",
     selectionnerPourOrienter: "Select a patient in the list to orient them.",
     selectionnerTout: "Select all",
+    exporterSelection: "Export selection",
     actionsRapides: "Quick actions",
     actionRechercher: "Search patient",
     actionFacturer: "Bill",

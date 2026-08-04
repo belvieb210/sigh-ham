@@ -222,13 +222,20 @@ export async function obtenirStatsLaboratoire(): Promise<StatsLaboratoireJour> {
     (p) => p.statutAnalyse === "EN_COURS"
   );
 
+  const resultatsAValiderListe = patients.filter(
+    (p) => p.statutAnalyse === "VERIFIES"
+  );
+
+  const resultatsValidesListe = patients.filter(
+    (p) => p.statutAnalyse === "DR_APPROUVE"
+  );
+
   const compteursStatutAnalyse = {
     RECUS: patients.filter((p) => p.statutAnalyse === "RECUS").length,
     EN_COURS: patients.filter((p) => p.statutAnalyse === "EN_COURS").length,
-    VERIFIES: patients.filter((p) => p.statutAnalyse === "VERIFIES").length,
+    VERIFIES: resultatsAValiderListe.length,
     REJETES: patients.filter((p) => p.statutAnalyse === "REJETES").length,
-    DR_APPROUVE: patients.filter((p) => p.statutAnalyse === "DR_APPROUVE")
-      .length,
+    DR_APPROUVE: resultatsValidesListe.length,
   };
 
   const examensEnCours = patients.reduce(
@@ -240,16 +247,14 @@ export async function obtenirStatsLaboratoire(): Promise<StatsLaboratoireJour> {
   );
 
   const debutIso = debut.toISOString();
-  const [resultatsAValider, resultatsValidesAujourdhui] = await Promise.all([
-    // Tranche 1 : pas encore de workflow validation — compteur 0
-    Promise.resolve(0),
-    prisma.examenLaboratoire.count({
-      where: {
-        statut: "TERMINE",
-        resultatLe: { gte: new Date(debutIso) },
-      },
-    }),
-  ]);
+  const resultatsValidesAujourdhui = await prisma.examenLaboratoire.count({
+    where: {
+      statut: "TERMINE",
+      resultatLe: { gte: new Date(debutIso) },
+    },
+  });
+
+  const LIMITE_LISTE_DASHBOARD = 40;
 
   return {
     dateReference: new Date().toISOString(),
@@ -258,13 +263,19 @@ export async function obtenirStatsLaboratoire(): Promise<StatsLaboratoireJour> {
     arriveesFileIso: patients.map((p) => p.arriveeLe),
     examensEnCours,
     analysesEnCours: analysesEnCoursListe.length,
-    resultatsAValider,
-    resultatsValidesAujourdhui,
+    resultatsAValider: resultatsAValiderListe.length,
+    resultatsValidesAujourdhui:
+      resultatsValidesAujourdhui || resultatsValidesListe.length,
     imprimesEnvoyes: 0,
     compteursStatutAnalyse,
     derniersArrives: triesParArrivee.slice(0, 8),
-    patientsTransferes: triesParArrivee.slice(0, 6),
-    analysesEnCoursListe: analysesEnCoursListe.slice(0, 6),
+    patientsTransferes: triesParArrivee.slice(0, LIMITE_LISTE_DASHBOARD),
+    analysesEnCoursListe: analysesEnCoursListe.slice(0, LIMITE_LISTE_DASHBOARD),
+    resultatsAValiderListe: resultatsAValiderListe.slice(
+      0,
+      LIMITE_LISTE_DASHBOARD
+    ),
+    resultatsValidesListe: resultatsValidesListe.slice(0, LIMITE_LISTE_DASHBOARD),
   };
 }
 

@@ -179,6 +179,10 @@ export const laboratoireFr = {
     rienAExporter: "Aucun patient à exporter.",
     exportOk: "{{count}} patient(s) exporté(s) en CSV.",
   },
+  pagination: {
+    prec: "Préc.",
+    suiv: "Suiv.",
+  },
   menuContextuel: {
     voirDonneesRapport: "Voir les données du rapport",
     ajouterCommentaire: "Ajouter un commentaire de visite",

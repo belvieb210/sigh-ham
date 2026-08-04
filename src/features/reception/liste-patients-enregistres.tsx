@@ -15,7 +15,7 @@ import { ModaleExamensTransfert } from "@/features/reception/modale-examens-tran
 
 export function ListePatientsEnregistres() {
   const { t } = useTranslation();
-  const { patientSelectionne, selectionnerPourPanneau, synchroniserSelection } =
+  const { patientSelectionne, selectionnerPourPanneau, synchroniserSelection, dossiersCoches, basculerPatientCoche, definirPatientsCoches } =
     useSelectionTransfert();
   const [patients, setPatients] = useState<PatientEnregistre[]>([]);
   const [stats, setStats] = useState({ aujourdhui: 0, enAttente: 0 });
@@ -147,6 +147,9 @@ export function ListePatientsEnregistres() {
         onSelectionnerPatient={(patient) => {
           void selectionnerPourPanneau(patient);
         }}
+        dossiersCoches={dossiersCoches}
+        onBasculerCoche={basculerPatientCoche}
+        onDefinirCoches={definirPatientsCoches}
         onVoirExamens={(patient) => {
           setPatientExamens(patient);
           setModaleExamensOuverte(true);

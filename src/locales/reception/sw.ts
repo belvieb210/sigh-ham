@@ -183,6 +183,8 @@ export const receptionSw = {
     },
   liste: {
     exporter: "Hamisha",
+    exporterSelection: "Exporter la sélection",
+    selectionnerTout: "Tout sélectionner / désélectionner",
     filtres: "Vichujio",
     statut: "Hali",
     serviceDestination: "Huduma ya marudio",

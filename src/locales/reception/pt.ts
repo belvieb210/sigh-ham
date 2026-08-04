@@ -181,6 +181,8 @@ export const receptionPt = {
     },
   liste: {
     exporter: "Exportar",
+    exporterSelection: "Exporter la sélection",
+    selectionnerTout: "Tout sélectionner / désélectionner",
     filtres: "Filtros",
     statut: "Estado",
     serviceDestination: "Serviço de destino",

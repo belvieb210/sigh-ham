@@ -6,6 +6,10 @@ import { useTranslation } from "react-i18next";
 import { Eye, FlaskConical, Loader2 } from "lucide-react";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import {
+  PaginationListe,
+  paginerListe,
+} from "@/components/ui/pagination-liste";
+import {
   CHEMINS_STATUT_ANALYSE_LABO,
   type IdOrientationStatutAnalyse,
 } from "@/constants/laboratoire-orientations";
@@ -37,6 +41,8 @@ import {
 import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import { cn } from "@/lib/utils";
+
+const PAR_PAGE_STATUT = 12;
 
 function patientCorrespondStatut(
   p: PatientFileLaboratoire,
@@ -76,6 +82,7 @@ export function ContenuExamensEnCoursLaboratoire({
   const [orientationEnCours, setOrientationEnCours] = useState(false);
   const [idsCoches, setIdsCoches] = useState<Set<string>>(new Set());
   const [messageAction, setMessageAction] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
   const { menu, ouvrirSurPatient, fermer } = useMenuContextuelLabo();
 
   const titrePage = pageStatut
@@ -123,6 +130,12 @@ export function ContenuExamensEnCoursLaboratoire({
       patientCorrespondFiltresLabo(p, filtresAppliques)
     );
   }, [enCours, filtresAppliques]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filtresAppliques, pageStatut]);
+
+  const pageData = paginerListe(filtres, page, PAR_PAGE_STATUT);
 
   const patientSelectionne = useMemo(
     () => filtres.find((p) => p.dossierId === selectionId) ?? null,
@@ -427,7 +440,7 @@ export function ContenuExamensEnCoursLaboratoire({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gris-bordure">
-                      {filtres.map((p) => {
+                      {pageData.itemsPage.map((p) => {
                         const selectionne = selectionId === p.dossierId;
                         const examensAnalyse = p.examens.filter(
                           (e) => e.statut === "EN_ANALYSE"
@@ -531,7 +544,7 @@ export function ContenuExamensEnCoursLaboratoire({
               </div>
 
               <ul className="space-y-3 lg:hidden">
-                {filtres.map((p) => (
+                {pageData.itemsPage.map((p) => (
                   <li key={p.dossierId}>
                     <div
                       className={cn(
@@ -587,6 +600,17 @@ export function ContenuExamensEnCoursLaboratoire({
                   </li>
                 ))}
               </ul>
+
+              <PaginationListe
+                page={pageData.pageCourante}
+                totalPages={pageData.totalPages}
+                totalItems={filtres.length}
+                parPage={PAR_PAGE_STATUT}
+                onChange={setPage}
+                labelPrec={t("laboratoire.pagination.prec")}
+                labelSuiv={t("laboratoire.pagination.suiv")}
+                className="rounded-xl border border-gris-bordure bg-white"
+              />
             </>
           )}
 

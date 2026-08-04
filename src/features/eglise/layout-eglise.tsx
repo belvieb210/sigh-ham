@@ -35,8 +35,7 @@ function LiensNavigation({
   const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
-  const { principal, eglise, communication, parametres } =
-    useNavigationEglise();
+  const { principal, eglise, communication, parametres } = useNavigationEglise();
 
   const estActif = (href: string) =>
     href === "/sigh/eglise"
@@ -98,7 +97,7 @@ function LiensNavigation({
         <div className="min-w-0 flex-1">
           <LogoHam taille="petit" href="/sigh/eglise" className="max-w-full" />
           <p className="mt-2 truncate text-[10px] font-medium uppercase tracking-wider text-texte-secondaire">
-            SIGH — {INFORMATIONS_HOPITAL.nomCourt}
+            SIGH â€” {INFORMATIONS_HOPITAL.nomCourt}
           </p>
         </div>
         {onFermer && (

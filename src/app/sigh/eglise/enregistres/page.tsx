@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { ContenuPatientsEnregistresEglise } from "@/features/eglise/contenu-listes-eglise";
 import { verifierAccesEglise } from "@/lib/auth/garde-salle";
 import { propsUtilisateurEglise } from "@/lib/auth/props-utilisateur-eglise";

@@ -48,3 +48,14 @@ export async function verifierAccesMedecins() {
 
   return session.utilisateur;
 }
+
+export async function verifierAccesInfirmiers() {
+  const session = await lireSessionDepuisCookie();
+  if (!session) redirect("/connexion");
+
+  if (!utilisateurPeutAccederSalle("INFIRMIERS", session.utilisateur.role)) {
+    redirect(obtenirRouteApresConnexion(session.utilisateur.role));
+  }
+
+  return session.utilisateur;
+}

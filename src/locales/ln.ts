@@ -5,6 +5,7 @@ import { receptionLn } from "./reception/ln";
 import { caisseLn } from "./caisse/ln";
 import { laboratoireLn } from "./laboratoire/ln";
 import { medecinsLn } from "./medecins/ln";
+import { infirmiersLn } from "./infirmiers/ln";
 
 /** Lingala — traductions principales du site public */
 const ln: { translation: TraductionsSite } = {
@@ -159,6 +160,7 @@ const ln: { translation: TraductionsSite } = {
     caisse: caisseLn,
     laboratoire: laboratoireLn,
     medecins: medecinsLn,
+    infirmiers: infirmiersLn,
     ...communLn,
   },
 };

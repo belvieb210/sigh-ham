@@ -5,6 +5,7 @@ import { receptionFr } from "./reception/fr";
 import { caisseFr } from "./caisse/fr";
 import { laboratoireFr } from "./laboratoire/fr";
 import { medecinsFr } from "./medecins/fr";
+import { infirmiersFr } from "./infirmiers/fr";
 
 const fr: { translation: TraductionsSite } = {
   translation: {
@@ -158,6 +159,7 @@ const fr: { translation: TraductionsSite } = {
     caisse: caisseFr,
     laboratoire: laboratoireFr,
     medecins: medecinsFr,
+    infirmiers: infirmiersFr,
     ...communFr,
   },
 };

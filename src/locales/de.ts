@@ -5,6 +5,7 @@ import { receptionDe } from "./reception/de";
 import { caisseDe } from "./caisse/de";
 import { laboratoireDe } from "./laboratoire/de";
 import { medecinsDe } from "./medecins/de";
+import { infirmiersDe } from "./infirmiers/de";
 
 const de: { translation: TraductionsSite } = {
   translation: {
@@ -155,6 +156,7 @@ const de: { translation: TraductionsSite } = {
     caisse: caisseDe,
     laboratoire: laboratoireDe,
     medecins: medecinsDe,
+    infirmiers: infirmiersDe,
     ...communDe,
   },
 };

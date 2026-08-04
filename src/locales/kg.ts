@@ -5,6 +5,7 @@ import { receptionKg } from "./reception/kg";
 import { caisseKg } from "./caisse/kg";
 import { laboratoireKg } from "./laboratoire/kg";
 import { medecinsKg } from "./medecins/kg";
+import { infirmiersKg } from "./infirmiers/kg";
 
 /** Kikongo — traductions principales du site public */
 const kg: { translation: TraductionsSite } = {
@@ -159,6 +160,7 @@ const kg: { translation: TraductionsSite } = {
     caisse: caisseKg,
     laboratoire: laboratoireKg,
     medecins: medecinsKg,
+    infirmiers: infirmiersKg,
     ...communKg,
   },
 };

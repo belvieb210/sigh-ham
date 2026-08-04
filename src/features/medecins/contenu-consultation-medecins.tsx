@@ -406,8 +406,17 @@ export function ContenuConsultationMedecins({
                         {constantes.temperature ?? "—"} · TA{" "}
                         {constantes.tensionSystolique ?? "—"}/
                         {constantes.tensionDiastolique ?? "—"} · FC{" "}
-                        {constantes.frequenceCardiaque ?? "—"} · SpO₂{" "}
-                        {constantes.saturationO2 ?? "—"}
+                        {constantes.frequenceCardiaque ?? "—"} · FR{" "}
+                        {constantes.frequenceRespiratoire ?? "—"} · SpO₂{" "}
+                        {constantes.saturationO2 ?? "—"} ·{" "}
+                        {constantes.poidsKg ?? "—"} kg · {constantes.tailleCm ?? "—"}{" "}
+                        cm
+                        {constantes.glycemie != null
+                          ? ` · Gly ${constantes.glycemie}`
+                          : ""}
+                        {constantes.observations
+                          ? ` — ${constantes.observations}`
+                          : ""}
                       </p>
                     ) : (
                       <p className="mt-3 text-xs text-texte-secondaire">

@@ -5,6 +5,7 @@ import { receptionSw } from "./reception/sw";
 import { caisseSw } from "./caisse/sw";
 import { laboratoireSw } from "./laboratoire/sw";
 import { medecinsSw } from "./medecins/sw";
+import { infirmiersSw } from "./infirmiers/sw";
 
 const sw: { translation: TraductionsSite } = {
   translation: {
@@ -155,6 +156,7 @@ const sw: { translation: TraductionsSite } = {
     caisse: caisseSw,
     laboratoire: laboratoireSw,
     medecins: medecinsSw,
+    infirmiers: infirmiersSw,
     ...communSw,
   },
 };

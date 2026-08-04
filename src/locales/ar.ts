@@ -4,6 +4,7 @@ import { pagesAr } from "./pages/ar";
 import { receptionAr } from "./reception/ar";
 import { caisseAr } from "./caisse/ar";
 import { laboratoireAr } from "./laboratoire/ar";
+import { medecinsAr } from "./medecins/ar";
 
 const ar: { translation: TraductionsSite } = {
   translation: {
@@ -153,6 +154,7 @@ const ar: { translation: TraductionsSite } = {
     reception: receptionAr,
     caisse: caisseAr,
     laboratoire: laboratoireAr,
+    medecins: medecinsAr,
     ...communAr,
   },
 };

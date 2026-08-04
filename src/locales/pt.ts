@@ -4,6 +4,7 @@ import { pagesPt } from "./pages/pt";
 import { receptionPt } from "./reception/pt";
 import { caissePt } from "./caisse/pt";
 import { laboratoirePt } from "./laboratoire/pt";
+import { medecinsPt } from "./medecins/pt";
 
 const pt: { translation: TraductionsSite } = {
   translation: {
@@ -153,6 +154,7 @@ const pt: { translation: TraductionsSite } = {
     reception: receptionPt,
     caisse: caissePt,
     laboratoire: laboratoirePt,
+    medecins: medecinsPt,
     ...communPt,
   },
 };

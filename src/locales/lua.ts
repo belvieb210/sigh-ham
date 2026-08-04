@@ -4,6 +4,7 @@ import { pagesLua } from "./pages/lua";
 import { receptionLua } from "./reception/lua";
 import { caisseLua } from "./caisse/lua";
 import { laboratoireLua } from "./laboratoire/lua";
+import { medecinsLua } from "./medecins/lua";
 
 /** Tshiluba — traductions principales du site public */
 const lua: { translation: TraductionsSite } = {
@@ -157,6 +158,7 @@ const lua: { translation: TraductionsSite } = {
     reception: receptionLua,
     caisse: caisseLua,
     laboratoire: laboratoireLua,
+    medecins: medecinsLua,
     ...communLua,
   },
 };

@@ -4,6 +4,7 @@ import { pagesHi } from "./pages/hi";
 import { receptionHi } from "./reception/hi";
 import { caisseHi } from "./caisse/hi";
 import { laboratoireHi } from "./laboratoire/hi";
+import { medecinsHi } from "./medecins/hi";
 
 const hi: { translation: TraductionsSite } = {
   translation: {
@@ -153,6 +154,7 @@ const hi: { translation: TraductionsSite } = {
     reception: receptionHi,
     caisse: caisseHi,
     laboratoire: laboratoireHi,
+    medecins: medecinsHi,
     ...communHi,
   },
 };

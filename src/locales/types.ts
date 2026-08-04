@@ -129,6 +129,7 @@ export interface TraductionsSite {
   reception: DeepString<import("./reception/fr").ReceptionFr>;
   caisse: DeepString<import("./caisse/fr").CaisseFr>;
   laboratoire: DeepString<import("./laboratoire/fr").LaboratoireFr>;
+  medecins: DeepString<import("./medecins/fr").MedecinsFr>;
 }
 
 export type CodeLangue =

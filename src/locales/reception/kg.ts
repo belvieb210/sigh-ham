@@ -1,4 +1,4 @@
-/** Traductions KG — module SIGH Réception */
+﻿/** Traductions KG — module SIGH Réception */
 
 import type { ReceptionFr } from "./fr";
 import { messagerieKg } from "./blocs/messagerie-kg";
@@ -64,6 +64,8 @@ export const receptionKg = {
       "Pona destination sambu na kuka transfert rapide. Yo ta zala na zelo ya kondima na liste.",
     aideOrientationLot:
       "{{count}} patient(s) selected: check destination rooms to orient them all.",
+    aideOrientationMultiAccueil:
+      "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     destinationVerrouillee: "Transfert oyo ke zala na kobongola destination ve.",
     aucunPatient: "Muntu ya maladi mosi ve oyo safuti",
     age: "Mibu",
@@ -88,6 +90,8 @@ export const receptionKg = {
     aideTransfertManuel:
       "Transfert manuel ke salaka orientation oyo safuti likolo, sans motif to examen. Ke zala na zelo ya kondima na réception.",
     selectionRequise: "Safula muntu ya maladi na liste to na formulaire liboso ya transfert manuel.",
+    destinationRequise: "Cochez au moins une salle de destination avant le transfert manuel.",
+    transfertManuelOk: "Transfert manuel vers {{salles}}. Confirmez via le menu ⋮.",
     modifierPatient: "Modifier le patient",
     supprimerPatient: "Supprimer définitivement",
   },

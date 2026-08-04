@@ -1,4 +1,4 @@
-/** Tafsiri SW — moduli SIGH Mapokezi */
+﻿/** Tafsiri SW — moduli SIGH Mapokezi */
 
 import type { ReceptionFr } from "./fr";
 import { messagerieSw } from "./blocs/messagerie-sw";
@@ -64,6 +64,8 @@ export const receptionSw = {
       "Chagua marudio ili kuunda uhamisho wa haraka. Utasalia ukisubiri uthibitisho kwenye orodha.",
     aideOrientationLot:
       "{{count}} patient(s) selected: check destination rooms to orient them all.",
+    aideOrientationMultiAccueil:
+      "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     destinationVerrouillee: "Uhamisho huu hauwezi tena kubadilisha marudio.",
     aucunPatient: "Hakuna mgonjwa aliyechaguliwa",
     age: "Umri",
@@ -88,6 +90,8 @@ export const receptionSw = {
     aideTransfertManuel:
       "Uhamisho wa mkono hutumia uelekezaji uliochaguliwa hapo juu, bila sababu au vipimo. Unabaki unasubiri uthibitisho kwenye mapokezi.",
     selectionRequise: "Chagua mgonjwa kutoka kwenye orodha au fomu kabla ya uhamisho wa mkono.",
+    destinationRequise: "Cochez au moins une salle de destination avant le transfert manuel.",
+    transfertManuelOk: "Transfert manuel vers {{salles}}. Confirmez via le menu ⋮.",
     modifierPatient: "Modifier le patient",
     supprimerPatient: "Supprimer définitivement",
   },

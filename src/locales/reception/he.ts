@@ -1,4 +1,4 @@
-/** תרגומים HE — מודול SIGH קבלה */
+﻿/** תרגומים HE — מודול SIGH קבלה */
 
 import type { ReceptionFr } from "./fr";
 
@@ -62,6 +62,8 @@ export const receptionHe = {
       "בחרו יעד ליצירת העברה מהירה. היא תישאר ממתינה לאישור ברשימה.",
     aideOrientationLot:
       "{{count}} patient(s) selected: check destination rooms to orient them all.",
+    aideOrientationMultiAccueil:
+      "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     destinationVerrouillee: "לא ניתן עוד לשנות את יעד ההעברה.",
     aucunPatient: "לא נבחר מטופל",
     age: "גיל",
@@ -86,6 +88,8 @@ export const receptionHe = {
     aideTransfertManuel:
       "העברה ידנית משתמשת בהפניה שנבחרה למעלה, ללא סיבה או בדיקות. נשארת ממתינה לאישור בקבלה.",
     selectionRequise: "בחרו מטופל מהרשימה או מהטופס לפני העברה ידנית.",
+    destinationRequise: "Cochez au moins une salle de destination avant le transfert manuel.",
+    transfertManuelOk: "Transfert manuel vers {{salles}}. Confirmez via le menu ⋮.",
     modifierPatient: "Modifier le patient",
     supprimerPatient: "Supprimer définitivement",
   },

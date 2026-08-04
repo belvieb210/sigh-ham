@@ -1,4 +1,4 @@
-/** Traductions LUA — module SIGH Réception */
+﻿/** Traductions LUA — module SIGH Réception */
 
 import type { ReceptionFr } from "./fr";
 
@@ -62,6 +62,8 @@ export const receptionLua = {
       "Pona destination kuenza transfert rapide. Kudi kuikala na zelo ya kondima na liste.",
     aideOrientationLot:
       "{{count}} patient(s) selected: check destination rooms to orient them all.",
+    aideOrientationMultiAccueil:
+      "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     destinationVerrouillee: "Transfert uyu kudi kuenza kubongola destination ve.",
     aucunPatient: "Muntu wa maladi umwe ve wa kusala",
     age: "Myaka",
@@ -86,6 +88,8 @@ export const receptionLua = {
     aideTransfertManuel:
       "Transfert manuel kudi kuenza orientation wa kusala likolo, sans motif to examen. Kudi kuikala na zelo ya kondima na réception.",
     selectionRequise: "Sala muntu wa maladi na liste to na formulaire kabidi ya transfert manuel.",
+    destinationRequise: "Cochez au moins une salle de destination avant le transfert manuel.",
+    transfertManuelOk: "Transfert manuel vers {{salles}}. Confirmez via le menu ⋮.",
     modifierPatient: "Modifier le patient",
     supprimerPatient: "Supprimer définitivement",
   },

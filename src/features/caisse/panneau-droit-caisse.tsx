@@ -13,8 +13,11 @@ function useGestionOrientation() {
   const selection = useSelectionTransfertCaisseOptionnel();
 
   const onOrientationsChange = (codes: string[]) => {
-    if (selection?.patientSelectionne) {
-      void selection.demanderOrientations(codes);
+    if (
+      selection?.patientSelectionne ||
+      (selection?.dossiersCoches?.length ?? 0) > 0
+    ) {
+      void selection!.demanderOrientations(codes);
     }
   };
 

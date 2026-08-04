@@ -1,4 +1,4 @@
-/** 中文翻译 — SIGH 接待模块 */
+﻿/** 中文翻译 — SIGH 接待模块 */
 
 import type { ReceptionFr } from "./fr";
 import { messagerieZh } from "./blocs/messagerie-zh";
@@ -63,6 +63,8 @@ export const receptionZh = {
     creerTransfertRapide: "选择目的地以创建快速转介。它将在列表中等待确认。",
     aideOrientationLot:
       "{{count}} patient(s) selected: check destination rooms to orient them all.",
+    aideOrientationMultiAccueil:
+      "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     destinationVerrouillee: "此转介已无法更改目的地。",
     aucunPatient: "未选择患者",
     age: "年龄",
@@ -87,6 +89,8 @@ export const receptionZh = {
     aideTransfertManuel:
       "手动转介使用上方所选分诊方向，无需事由或检验。转介在接待处待确认。",
     selectionRequise: "手动转介前请从列表或表单中选择患者。",
+    destinationRequise: "Cochez au moins une salle de destination avant le transfert manuel.",
+    transfertManuelOk: "Transfert manuel vers {{salles}}. Confirmez via le menu ⋮.",
     modifierPatient: "Modifier le patient",
     supprimerPatient: "Supprimer définitivement",
   },

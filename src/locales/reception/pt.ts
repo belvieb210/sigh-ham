@@ -1,4 +1,4 @@
-/** Traduções PT — módulo SIGH Recepção */
+﻿/** Traduções PT — módulo SIGH Recepção */
 
 import type { ReceptionFr } from "./fr";
 
@@ -62,6 +62,8 @@ export const receptionPt = {
       "Escolha um destino para criar a transferência rápida. Ficará pendente de confirmação na lista.",
     aideOrientationLot:
       "{{count}} patient(s) selected: check destination rooms to orient them all.",
+    aideOrientationMultiAccueil:
+      "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     destinationVerrouillee: "Esta transferência já não pode alterar o destino.",
     aucunPatient: "Nenhum paciente selecionado",
     age: "Idade",
@@ -86,6 +88,8 @@ export const receptionPt = {
     aideTransfertManuel:
       "A transferência manual utiliza o encaminhamento selecionado acima, sem motivo nem exames. Permanece pendente de confirmação na recepção.",
     selectionRequise: "Selecione um paciente da lista ou do formulário antes de uma transferência manual.",
+    destinationRequise: "Cochez au moins une salle de destination avant le transfert manuel.",
+    transfertManuelOk: "Transfert manuel vers {{salles}}. Confirmez via le menu ⋮.",
     modifierPatient: "Modifier le patient",
     supprimerPatient: "Supprimer définitivement",
   },

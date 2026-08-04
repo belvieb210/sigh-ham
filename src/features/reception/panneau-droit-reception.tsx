@@ -24,15 +24,16 @@ function useGestionOrientation(variante: "defaut" | "transferts") {
   };
 
   const onOrientationsChange = (codes: string[]) => {
+    const netoyes = codes.filter(Boolean);
+    if (netoyes.length === 0) return;
+
     if (variante === "transferts") {
       if (!selection?.peutAppliquerOrientationRapide) return;
-      const netoyes = codes.filter(Boolean);
-      if (netoyes.length === 0) return;
       definirOrientations(netoyes);
       void selection.changerOrientationsTransfert(netoyes);
       return;
     }
-    definirOrientations(codes);
+    definirOrientations(netoyes);
   };
 
   const desactiveOrientation =
@@ -47,7 +48,6 @@ function useGestionOrientation(variante: "defaut" | "transferts") {
     onOrientationsChange,
     selection,
     desactiveOrientation,
-    multiTransferts: variante === "transferts",
   };
 }
 
@@ -123,7 +123,6 @@ function BlocOrientation({
     onOrientationsChange,
     selection,
     desactiveOrientation,
-    multiTransferts,
   } = useGestionOrientation(variante);
 
   return (
@@ -131,16 +130,20 @@ function BlocOrientation({
       <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
         {t("reception.panneau.orientationRapide")}
       </h2>
-      {variante === "transferts" && selection && (
+      {variante === "transferts" && selection ? (
         <MessageAideOrientation selection={selection} />
+      ) : (
+        <p className="mb-2 text-xs text-texte-secondaire">
+          {t("reception.panneau.aideOrientationMultiAccueil")}
+        </p>
       )}
       <OrientationRapide
         variante="liste"
         orientation={orientation}
         orientations={orientations}
         onOrientationChange={onOrientationChange}
-        onOrientationsChange={multiTransferts ? onOrientationsChange : undefined}
-        multiple={multiTransferts}
+        onOrientationsChange={onOrientationsChange}
+        multiple
         desactive={desactiveOrientation}
       />
       {selection?.messagePanneau && (

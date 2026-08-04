@@ -1,4 +1,4 @@
-/** ترجمات عربية — وحدة SIGH الاستقبال */
+﻿/** ترجمات عربية — وحدة SIGH الاستقبال */
 
 import type { ReceptionFr } from "./fr";
 
@@ -62,6 +62,8 @@ export const receptionAr = {
       "اختر وجهة لإنشاء التحويل السريع. سيبقى في انتظار التأكيد في القائمة.",
     aideOrientationLot:
       "{{count}} patient(s) selected: check destination rooms to orient them all.",
+    aideOrientationMultiAccueil:
+      "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     destinationVerrouillee: "لا يمكن تغيير وجهة هذا التحويل بعد الآن.",
     aucunPatient: "لم يُحدَّد أي مريض",
     age: "العمر",
@@ -86,6 +88,8 @@ export const receptionAr = {
     aideTransfertManuel:
       "يستخدم التحويل اليدي التوجيه المحدد أعلاه، دون سبب زيارة أو فحوصات. يبقى في انتظار التأكيد في الاستقبال.",
     selectionRequise: "حدّد مريضاً من القائمة أو النموذج قبل التحويل اليدوي.",
+    destinationRequise: "Cochez au moins une salle de destination avant le transfert manuel.",
+    transfertManuelOk: "Transfert manuel vers {{salles}}. Confirmez via le menu ⋮.",
     modifierPatient: "Modifier le patient",
     supprimerPatient: "Supprimer définitivement",
   },

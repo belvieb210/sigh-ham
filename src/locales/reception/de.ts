@@ -1,4 +1,4 @@
-/** Übersetzungen DE — SIGH Empfangsmodul */
+﻿/** Übersetzungen DE — SIGH Empfangsmodul */
 
 import type { ReceptionFr } from "./fr";
 
@@ -62,6 +62,8 @@ export const receptionDe = {
       "Wählen Sie ein Ziel, um eine Schnellüberweisung zu erstellen. Sie bleibt in der Liste zur Bestätigung.",
     aideOrientationLot:
       "{{count}} patient(s) selected: check destination rooms to orient them all.",
+    aideOrientationMultiAccueil:
+      "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     destinationVerrouillee: "Diese Überweisung kann das Ziel nicht mehr ändern.",
     aucunPatient: "Kein Patient ausgewählt",
     age: "Alter",
@@ -86,6 +88,8 @@ export const receptionDe = {
     aideTransfertManuel:
       "Die manuelle Überweisung verwendet die oben ausgewählte Weiterleitung, ohne Grund oder Untersuchungen. Sie bleibt zur Bestätigung am Empfang ausstehend.",
     selectionRequise: "Wählen Sie einen Patienten aus der Liste oder dem Formular, bevor Sie eine manuelle Überweisung durchführen.",
+    destinationRequise: "Cochez au moins une salle de destination avant le transfert manuel.",
+    transfertManuelOk: "Transfert manuel vers {{salles}}. Confirmez via le menu ⋮.",
     modifierPatient: "Modifier le patient",
     supprimerPatient: "Supprimer définitivement",
   },

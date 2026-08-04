@@ -1,4 +1,4 @@
-/** अनुवाद HI — SIGH रिसेप्शन मॉड्यूल */
+﻿/** अनुवाद HI — SIGH रिसेप्शन मॉड्यूल */
 
 import type { ReceptionFr } from "./fr";
 
@@ -62,6 +62,8 @@ export const receptionHi = {
       "त्वरित स्थानांतरण बनाने के लिए गंतव्य चुनें। यह सूची में पुष्टि की प्रतीक्षा में रहेगा।",
     aideOrientationLot:
       "{{count}} patient(s) selected: check destination rooms to orient them all.",
+    aideOrientationMultiAccueil:
+      "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     destinationVerrouillee: "यह स्थानांतरण अब गंतव्य नहीं बदल सकता।",
     aucunPatient: "कोई रोगी चयनित नहीं",
     age: "आयु",
@@ -86,6 +88,8 @@ export const receptionHi = {
     aideTransfertManuel:
       "मैनुअल स्थानांतरण ऊपर चयनित दिशा-निर्देश का उपयोग करता है, बिना कारण या परीक्षण के। यह रिसेप्शन पर पुष्टि की प्रतीक्षा में रहता है।",
     selectionRequise: "मैनुअल स्थानांतरण से पहले सूची या फ़ॉर्म से एक रोगी चुनें।",
+    destinationRequise: "Cochez au moins une salle de destination avant le transfert manuel.",
+    transfertManuelOk: "Transfert manuel vers {{salles}}. Confirmez via le menu ⋮.",
     modifierPatient: "Modifier le patient",
     supprimerPatient: "Supprimer définitivement",
   },

@@ -60,6 +60,8 @@ export const receptionFr = {
       "Cochez une ou plusieurs destinations : le transfert est créé tout de suite. Confirmez-le via le menu ⋮.",
     aideOrientationLot:
       "{{count}} patient(s) cochés : cochez les salles de destination pour les orienter tous ensemble.",
+    aideOrientationMultiAccueil:
+      "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     destinationVerrouillee:
       "Transfert déjà confirmé : l'orientation rapide ne peut plus être modifiée.",
     aucunPatient: "Aucun patient sélectionné",
@@ -82,8 +84,10 @@ export const receptionFr = {
     prendreRdv: "Prendre RDV",
     transfertManuel: "Transfert manuel",
     aideTransfertManuel:
-      "Le transfert manuel utilise l'orientation sélectionnée ci-dessus, sans motif ni examens. Il reste en attente de confirmation à la réception.",
+      "Cochez une ou plusieurs salles ci-dessus, puis Transfert manuel (sans motif ni examens). Après confirmation (⋮), le patient apparaît dans chaque salle.",
     selectionRequise: "Sélectionnez un patient dans la liste ou le formulaire avant le transfert manuel.",
+    destinationRequise: "Cochez au moins une salle de destination avant le transfert manuel.",
+    transfertManuelOk: "Transfert manuel vers {{salles}}. Confirmez via le menu ⋮.",
     modifierPatient: "Modifier le patient",
     supprimerPatient: "Supprimer définitivement",
   },

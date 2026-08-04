@@ -52,29 +52,49 @@ export async function POST(request: NextRequest) {
         orientation?: string;
         orientations?: string[];
       };
-      const orientations =
-        corps.orientations?.filter(Boolean) ??
-        (corps.orientation?.trim() ? [corps.orientation.trim()] : []);
+      const orientations = [
+        ...new Set(
+          (corps.orientations?.filter(Boolean) ??
+            (corps.orientation?.trim() ? [corps.orientation.trim()] : [])) as string[]
+        ),
+      ];
 
-      if (!corps.dossierId?.trim() || orientations.length === 0) {
+      if (orientations.length === 0) {
         const donnees = parserDonneesTransfertManuel(body);
         const erreur = validerDonneesTransfertManuel(donnees);
         if (erreur) {
           return NextResponse.json({ message: erreur }, { status: 400 });
         }
+        orientations.push(donnees.orientation!);
+      }
 
-        const resultat = await transfererPatientManuel(session.utilisateur.id, {
+      let dossierId = corps.dossierId?.trim() || "";
+
+      if (!dossierId) {
+        const donnees = parserDonneesTransfertManuel({
+          ...body,
+          orientation: orientations[0],
+        });
+        const erreur = validerDonneesTransfertManuel(donnees);
+        if (erreur) {
+          return NextResponse.json({ message: erreur }, { status: 400 });
+        }
+
+        const cree = await transfererPatientManuel(session.utilisateur.id, {
           numeroPatient: donnees.numeroPatient!,
           dossierId: donnees.dossierId,
-          orientation: donnees.orientation!,
+          orientation: orientations[0]!,
         });
+        dossierId = cree.dossierId;
 
-        return NextResponse.json({
-          message: resultat.transfertMisAJour
-            ? `Destination du transfert mise à jour vers ${resultat.salleDestination}. Confirmez-le dans la liste des transferts.`
-            : `Transfert manuel effectué vers ${resultat.salleDestination}. Confirmez-le dans la liste des transferts.`,
-          ...resultat,
-        });
+        if (orientations.length === 1) {
+          return NextResponse.json({
+            message: cree.transfertMisAJour
+              ? `Destination du transfert mise à jour vers ${cree.salleDestination}. Confirmez-le dans la liste des transferts.`
+              : `Transfert manuel effectué vers ${cree.salleDestination}. Confirmez-le dans la liste des transferts.`,
+            ...cree,
+          });
+        }
       }
 
       const { reorienterPatientDepuisReception } = await import(
@@ -82,7 +102,7 @@ export async function POST(request: NextRequest) {
       );
       const resultat = await reorienterPatientDepuisReception(
         session.utilisateur.id,
-        corps.dossierId.trim(),
+        dossierId,
         orientations
       );
 

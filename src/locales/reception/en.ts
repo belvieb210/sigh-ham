@@ -61,6 +61,8 @@ export const receptionEn = {
       "Choose a destination to create a quick transfer. It will remain pending confirmation in the list.",
     aideOrientationLot:
       "{{count}} patient(s) selected: check destination rooms to orient them all.",
+    aideOrientationMultiAccueil:
+      "Check one or more rooms, then use Manual transfer. After confirmation (⋮), the patient appears in each chosen room.",
     destinationVerrouillee:
       "Transfer already confirmed: quick routing can no longer be changed.",
     aucunPatient: "No patient selected",
@@ -83,8 +85,10 @@ export const receptionEn = {
     prendreRdv: "Book appointment",
     transfertManuel: "Manual transfer",
     aideTransfertManuel:
-      "Manual transfer uses the routing selected above, without reason or tests. It remains pending confirmation at reception.",
+      "Check one or more rooms above, then Manual transfer (no reason or tests). After confirmation (⋮), the patient appears in each room.",
     selectionRequise: "Select a patient from the list or form before a manual transfer.",
+    destinationRequise: "Check at least one destination room before a manual transfer.",
+    transfertManuelOk: "Manual transfer to {{salles}}. Confirm via the ⋮ menu.",
     modifierPatient: "Edit patient",
     supprimerPatient: "Delete permanently",
   },

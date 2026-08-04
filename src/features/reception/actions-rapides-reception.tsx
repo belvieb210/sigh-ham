@@ -34,7 +34,7 @@ export function ActionsRapidesReception({
   const { t } = useTranslation();
   const router = useRouter();
   const { resume } = useResumePatient();
-  const { orientation } = useOrientationRapide();
+  const { orientation, orientations } = useOrientationRapide();
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -63,6 +63,17 @@ export function ActionsRapidesReception({
       return;
     }
 
+    const codes = [
+      ...new Set(
+        (orientations.length > 0 ? orientations : [orientation]).filter(Boolean)
+      ),
+    ];
+    if (codes.length === 0) {
+      setErreur(t("reception.actions.destinationRequise"));
+      setMessage(null);
+      return;
+    }
+
     setEnCours(true);
     setErreur(null);
     setMessage(null);
@@ -75,18 +86,25 @@ export function ActionsRapidesReception({
           transfertManuel: true,
           numeroPatient: resume.numeroPatient,
           dossierId: resume.dossierId ?? undefined,
-          orientation,
+          orientations: codes,
+          orientation: codes[0],
         }),
       });
 
       const data = (await res.json()) as {
         message?: string;
         numeroPatient?: string;
+        salleDestination?: string;
       };
 
       if (!res.ok) throw new Error(data.message ?? "Transfert manuel impossible.");
 
-      setMessage(data.message ?? "Transfert manuel effectué.");
+      setMessage(
+        data.message ??
+          t("reception.actions.transfertManuelOk", {
+            salles: data.salleDestination ?? codes.join(", "),
+          })
+      );
       window.dispatchEvent(new CustomEvent(EVENEMENT_RECEPTION_PATIENTS_MODIFIES));
 
       router.push(

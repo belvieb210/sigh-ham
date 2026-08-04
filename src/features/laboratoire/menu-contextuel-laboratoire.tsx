@@ -121,7 +121,7 @@ export function MenuContextuelLaboratoire({
   );
 }
 
-export function utiliserMenuContextuelLabo() {
+export function useMenuContextuelLabo() {
   const [menu, setMenu] = useState<{
     x: number;
     y: number;

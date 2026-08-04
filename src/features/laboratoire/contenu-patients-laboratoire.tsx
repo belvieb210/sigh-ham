@@ -25,7 +25,7 @@ import type { IdActionRapideLabo } from "@/features/laboratoire/actions-rapides-
 import { BarreFiltresLaboratoire, BoutonsOutilsListeLaboratoire } from "@/features/laboratoire/barre-filtres-laboratoire";
 import {
   MenuContextuelLaboratoire,
-  utiliserMenuContextuelLabo,
+  useMenuContextuelLabo,
   type IdActionContextuelleLabo,
 } from "@/features/laboratoire/menu-contextuel-laboratoire";
 import {
@@ -76,7 +76,7 @@ export function ContenuPatientsLaboratoire({
   const [demarrage, setDemarrage] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageAction, setMessageAction] = useState<string | null>(null);
-  const { menu, ouvrirSurPatient, fermer } = utiliserMenuContextuelLabo();
+  const { menu, ouvrirSurPatient, fermer } = useMenuContextuelLabo();
 
   const charger = useCallback(async () => {
     setChargement(true);

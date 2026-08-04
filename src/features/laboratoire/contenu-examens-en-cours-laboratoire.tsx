@@ -21,7 +21,7 @@ import type { IdActionRapideLabo } from "@/features/laboratoire/actions-rapides-
 import { BarreFiltresLaboratoire } from "@/features/laboratoire/barre-filtres-laboratoire";
 import {
   MenuContextuelLaboratoire,
-  utiliserMenuContextuelLabo,
+  useMenuContextuelLabo,
   type IdActionContextuelleLabo,
 } from "@/features/laboratoire/menu-contextuel-laboratoire";
 import {
@@ -76,7 +76,7 @@ export function ContenuExamensEnCoursLaboratoire({
   const [orientationEnCours, setOrientationEnCours] = useState(false);
   const [idsCoches, setIdsCoches] = useState<Set<string>>(new Set());
   const [messageAction, setMessageAction] = useState<string | null>(null);
-  const { menu, ouvrirSurPatient, fermer } = utiliserMenuContextuelLabo();
+  const { menu, ouvrirSurPatient, fermer } = useMenuContextuelLabo();
 
   const titrePage = pageStatut
     ? t(`laboratoire.orientationsStatut.${pageStatut}.label`)

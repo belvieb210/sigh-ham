@@ -8,6 +8,7 @@ import { medecinsEs } from "./medecins/es";
 import { infirmiersEs } from "./infirmiers/es";
 import { pharmacieEs } from "./pharmacie/es";
 import { medecinsExternesEs } from "./medecins-externes/es";
+import { egliseEs } from "./eglise/es";
 
 const es: { translation: TraductionsSite } = {
   translation: {
@@ -161,6 +162,7 @@ const es: { translation: TraductionsSite } = {
     infirmiers: infirmiersEs,
     pharmacie: pharmacieEs,
     medecinsExternes: medecinsExternesEs,
+    eglise: egliseEs,
     ...communEs,
   },
 };

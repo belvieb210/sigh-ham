@@ -188,6 +188,73 @@ export async function chargerDossiersAccueilMedecinExterne(
   });
 }
 
+/** Dossiers du service Église (examens prénuptiaux ou transferts originés EGLISE). */
+export async function chargerDossiersAccueilEglise(limite?: number) {
+  return prisma.dossierPatient.findMany({
+    take: limite,
+    where: {
+      OR: [
+        { examensPrenuptiaux: { some: {} } },
+        {
+          transferts: {
+            some: { salleOrigine: { code: "EGLISE" } },
+          },
+        },
+      ],
+    },
+    include: includeVisiteDepuis("EGLISE"),
+    orderBy: { ouvertLe: "desc" },
+  });
+}
+
+export async function chargerDossiersVisiteEglise(options?: {
+  limite?: number;
+  uniquementTransfert?: boolean;
+}) {
+  return prisma.dossierPatient.findMany({
+    take: options?.limite,
+    where: {
+      OR: [
+        { examensPrenuptiaux: { some: {} } },
+        {
+          transferts: {
+            some: { salleOrigine: { code: "EGLISE" } },
+          },
+        },
+      ],
+      ...(options?.uniquementTransfert
+        ? {
+            AND: [
+              {
+                OR: [
+                  {
+                    transferts: {
+                      some: {
+                        salleOrigine: { code: "EGLISE" },
+                        statut: { notIn: ["ANNULE", "REFUSE"] },
+                      },
+                    },
+                  },
+                  {
+                    transferts: {
+                      some: {
+                        salleOrigine: { code: "EGLISE" },
+                        statut: "REFUSE",
+                        recuperation: { statut: "EN_RECUPERATION" },
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+          }
+        : {}),
+    },
+    include: includeVisiteDepuis("EGLISE"),
+    orderBy: { ouvertLe: "desc" },
+  });
+}
+
 export async function chargerDossiersVisiteMedecinExterne(
   medecinExterneId: string,
   options?: { limite?: number; uniquementTransfert?: boolean }

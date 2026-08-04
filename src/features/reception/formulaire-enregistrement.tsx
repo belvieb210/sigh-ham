@@ -173,9 +173,15 @@ export const FormulaireEnregistrement = forwardRef<
   const [medecinResponsable, setMedecinResponsable] = useState("");
   const [remise, setRemise] = useState(0);
   const [modeEstimation, setModeEstimation] = useState(false);
-  const [orientation, setOrientation] = useState<string>("INFIRMIERS");
+  const [orientation, setOrientation] = useState<string>(
+    espace.orientationDefaut ?? "INFIRMIERS"
+  );
+  const [paroisse, setParoisse] = useState("");
+  const [dateMariage, setDateMariage] = useState("");
+  const [conjointNom, setConjointNom] = useState("");
 
   const motifEstAutre = motifPrincipal === "autre";
+  const champsEglise = Boolean(espace.afficherChampsEglise);
 
   const majFormulaire = useCallback(
     (champ: keyof EtatFormulairePatient, valeur: string) => {
@@ -263,6 +269,29 @@ export const FormulaireEnregistrement = forwardRef<
     });
   }, [formulaire, numeroPatientActif, photoUrlExistante, definirDepuisFormulaire]);
 
+  useEffect(() => {
+    if (!champsEglise || estComplet || etape !== 2) return;
+    if (examensSelectionnes.length > 0) return;
+
+    let annule = false;
+    fetch(`${espace.prefixeApi}/examens?pack=prenuptial`)
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return res.json() as Promise<{ examens: TypeExamenReception[] }>;
+      })
+      .then((data) => {
+        if (annule || !data?.examens?.length) return;
+        setExamensSelectionnes(data.examens);
+      })
+      .catch(() => {
+        /* ignore */
+      });
+
+    return () => {
+      annule = true;
+    };
+  }, [champsEglise, estComplet, etape, examensSelectionnes.length, espace.prefixeApi]);
+
   const reinitialiser = () => {
     setEtape(0);
     setSexe("FEMININ");
@@ -280,7 +309,10 @@ export const FormulaireEnregistrement = forwardRef<
     setExamensSelectionnes([]);
     setMedecinResponsable("");
     setModeEstimation(false);
-    setOrientation("INFIRMIERS");
+    setOrientation(espace.orientationDefaut ?? "INFIRMIERS");
+    setParoisse("");
+    setDateMariage("");
+    setConjointNom("");
     if (!estComplet) {
       setNumeroEnregistrement("20260101001");
       majDateHeureActuelles();
@@ -319,6 +351,11 @@ export const FormulaireEnregistrement = forwardRef<
       });
       formData.append("sexe", sexe);
       if (photoPatient) formData.append("photo", photoPatient);
+      if (champsEglise) {
+        formData.append("paroisse", paroisse);
+        formData.append("dateMariage", dateMariage);
+        formData.append("conjointNom", conjointNom);
+      }
 
       const url =
         modeEdition && numeroPatientActif
@@ -403,6 +440,9 @@ export const FormulaireEnregistrement = forwardRef<
           medecinResponsable: medecinResponsable.trim(),
           estEstimation: modeEstimation,
           remise: Math.max(0, Number(remise) || 0),
+          ...(champsEglise
+            ? { paroisse, dateMariage, conjointNom }
+            : {}),
         }),
       });
 
@@ -1032,6 +1072,39 @@ export const FormulaireEnregistrement = forwardRef<
                   className={cn(CLASSE_CHAMP_RECEPTION, "resize-none")}
                 />
               </div>
+              {champsEglise && (
+                <>
+                  <div>
+                    <label className={CLASSE_LABEL_RECEPTION}>Paroisse</label>
+                    <input
+                      type="text"
+                      value={paroisse}
+                      onChange={(e) => setParoisse(e.target.value)}
+                      placeholder="Nom de la paroisse"
+                      className={CLASSE_CHAMP_RECEPTION}
+                    />
+                  </div>
+                  <div>
+                    <label className={CLASSE_LABEL_RECEPTION}>Date du mariage</label>
+                    <input
+                      type="date"
+                      value={dateMariage}
+                      onChange={(e) => setDateMariage(e.target.value)}
+                      className={CLASSE_CHAMP_RECEPTION}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className={CLASSE_LABEL_RECEPTION}>Nom du conjoint</label>
+                    <input
+                      type="text"
+                      value={conjointNom}
+                      onChange={(e) => setConjointNom(e.target.value)}
+                      placeholder="Nom complet du conjoint"
+                      className={CLASSE_CHAMP_RECEPTION}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

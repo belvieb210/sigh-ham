@@ -133,6 +133,7 @@ export interface TraductionsSite {
   infirmiers: DeepString<import("./infirmiers/fr").InfirmiersFr>;
   pharmacie: DeepString<import("./pharmacie/fr").PharmacieFr>;
   medecinsExternes: DeepString<import("./medecins-externes/fr").MedecinsExternesFr>;
+  eglise: DeepString<import("./eglise/fr").EgliseFr>;
 }
 
 export type CodeLangue =

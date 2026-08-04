@@ -96,6 +96,20 @@ export async function orienterStatutAnalyseDossier(
     })
   );
 
+  if (statutCible === "DR_APPROUVE") {
+    try {
+      const { genererEtStockerRapportPrenuptial } = await import(
+        "@/lib/eglise/stocker-rapport-prenuptial"
+      );
+      await genererEtStockerRapportPrenuptial(dossierId);
+    } catch (err) {
+      console.error(
+        "[orienterStatutAnalyseDossier] génération PDF prénuptial:",
+        err
+      );
+    }
+  }
+
   return {
     dossierId,
     orientation: statutCible,

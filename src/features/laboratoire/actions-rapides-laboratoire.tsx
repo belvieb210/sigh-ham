@@ -114,7 +114,7 @@ export function ActionsRapidesLaboratoire({
               type="button"
               disabled={desactive}
               onClick={() => onAction(action.id)}
-              className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-gris-bordure bg-[#f8fafc] p-3 text-center text-xs font-medium leading-tight text-texte-principal transition-colors hover:border-bleu-medical hover:bg-bleu-medical-clair active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex min-h-[72px] flex-col items-center justify-center gap-1.5 rounded-xl border border-gris-bordure bg-[#f8fafc] p-2.5 text-center text-[11px] font-medium leading-tight text-texte-principal transition-colors hover:border-bleu-medical hover:bg-bleu-medical-clair active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-[88px] sm:gap-2 sm:p-3 sm:text-xs"
             >
               <Icone
                 className="h-6 w-6 shrink-0 text-bleu-medical"

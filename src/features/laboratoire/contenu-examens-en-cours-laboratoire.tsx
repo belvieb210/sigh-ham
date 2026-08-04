@@ -378,9 +378,9 @@ export function ContenuExamensEnCoursLaboratoire({
       utilisateur={utilisateur}
       titre={titrePage}
       sousTitre={sousTitrePage}
+      panneauDroit={<PanneauDroitLaboratoire {...propsPanneau} />}
     >
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-4 xl:flex-row xl:items-start">
-        <div className="min-w-0 flex-1 space-y-4">
+      <div className="mx-auto w-full max-w-[1280px] space-y-4">
           <BarreFiltresLaboratoire
             idPrefix={
               pageStatut
@@ -441,7 +441,7 @@ export function ContenuExamensEnCoursLaboratoire({
             </p>
           ) : (
             <>
-              <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm lg:block">
+              <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm md:block">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[820px] text-left text-sm">
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
@@ -589,12 +589,12 @@ export function ContenuExamensEnCoursLaboratoire({
                 </div>
               </div>
 
-              <ul className="space-y-3 lg:hidden">
+              <ul className="space-y-3 md:hidden">
                 {pageData.itemsPage.map((p) => (
                   <li key={p.dossierId}>
                     <div
                       className={cn(
-                        "w-full rounded-xl border bg-white p-4 text-left shadow-sm",
+                        "w-full rounded-xl border bg-white p-3 text-left shadow-sm sm:p-4",
                         selectionId === p.dossierId
                           ? "border-bleu-medical ring-1 ring-bleu-medical/30"
                           : "border-gris-bordure"
@@ -620,8 +620,8 @@ export function ContenuExamensEnCoursLaboratoire({
                           className="min-w-0 flex-1 text-left"
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="font-bold">
+                            <div className="min-w-0">
+                              <p className="truncate font-bold text-texte-principal">
                                 {p.nom} {p.prenom}
                               </p>
                               <p className="font-mono text-xs text-bleu-medical">
@@ -630,7 +630,7 @@ export function ContenuExamensEnCoursLaboratoire({
                             </div>
                             <span
                               className={cn(
-                                "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                                "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
                                 couleurStatutAnalyse(p.statutAnalyse)
                               )}
                             >
@@ -638,8 +638,32 @@ export function ContenuExamensEnCoursLaboratoire({
                             </span>
                           </div>
                           <p className="mt-2 text-xs text-texte-secondaire">
-                            {libellesExamensDemandes(p, 3)} · {formatHeure(p.arriveeLe)}
+                            {p.provenance || "—"} · {formatHeure(p.arriveeLe)}
                           </p>
+                          <p className="mt-1 text-xs font-medium text-texte-principal">
+                            {libellesExamensDemandes(p, 3)}
+                          </p>
+                        </button>
+                      </div>
+                      <div className="mt-3 flex items-center gap-1.5 pl-7">
+                        <button
+                          type="button"
+                          onClick={() => selectionner(p.dossierId)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:text-bleu-medical"
+                          title={t("laboratoire.patients.ouvrirDossier")}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            selectionner(p.dossierId);
+                            router.push("/sigh/laboratoire/saisie-resultats");
+                          }}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-amber-700 hover:bg-amber-50"
+                          title={t("laboratoire.actions.saisirResultat")}
+                        >
+                          <FlaskConical className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
@@ -661,11 +685,6 @@ export function ContenuExamensEnCoursLaboratoire({
           )}
 
           <SectionsMobileLaboratoire {...propsPanneau} />
-        </div>
-
-        <div className="hidden xl:block">
-          <PanneauDroitLaboratoire {...propsPanneau} />
-        </div>
       </div>
 
       <MenuContextuelLaboratoire

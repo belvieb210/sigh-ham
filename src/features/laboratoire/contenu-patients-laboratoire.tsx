@@ -375,9 +375,9 @@ export function ContenuPatientsLaboratoire({
       utilisateur={utilisateur}
       titre={t("laboratoire.patients.titre")}
       sousTitre={t("laboratoire.patients.sousTitre")}
+      panneauDroit={<PanneauDroitLaboratoire {...propsPanneau} />}
     >
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-4 xl:flex-row xl:items-start">
-        <div className="min-w-0 flex-1 space-y-4">
+      <div className="mx-auto w-full max-w-[1280px] space-y-4">
           <BarreFiltresLaboratoire
             idPrefix="filtre-patients-labo"
             titre={t("laboratoire.patients.titreListe")}
@@ -440,7 +440,7 @@ export function ContenuPatientsLaboratoire({
             </div>
           ) : (
             <>
-              <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm lg:block">
+              <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm md:block">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[820px] text-left text-sm">
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
@@ -581,7 +581,7 @@ export function ContenuPatientsLaboratoire({
                 </div>
               </div>
 
-              <ul className="space-y-3 lg:hidden">
+              <ul className="space-y-3 md:hidden">
                 {filtrés.map((p) => {
                   const statut = libelleStatutLigneLabo(p);
                   return (
@@ -670,11 +670,6 @@ export function ContenuPatientsLaboratoire({
           )}
 
           <SectionsMobileLaboratoire {...propsPanneau} />
-        </div>
-
-        <div className="hidden xl:block">
-          <PanneauDroitLaboratoire {...propsPanneau} />
-        </div>
       </div>
 
       {(detail || chargementDetail) && (

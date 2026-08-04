@@ -254,28 +254,28 @@ export function ContenuAccueilLaboratoire({
           </p>
         ) : (
           <>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-5">
               {kpis.map((k) => {
                 const Icone = k.icone;
                 return (
                   <div
                     key={k.id}
-                    className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm"
+                    className="w-[min(70vw,220px)] shrink-0 rounded-xl border border-gris-bordure bg-white p-3 shadow-sm sm:w-auto sm:p-4"
                   >
                     <div
-                      className={`mb-3 inline-flex rounded-lg p-2 ${k.couleur}`}
+                      className={`mb-2 inline-flex rounded-lg p-2 sm:mb-3 ${k.couleur}`}
                     >
-                      <Icone className="h-5 w-5" aria-hidden />
+                      <Icone className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
                     </div>
-                    <p className="text-2xl font-bold text-texte-principal">
+                    <p className="text-xl font-bold text-texte-principal sm:text-2xl">
                       {k.valeur}
                     </p>
-                    <p className="mt-1 text-xs font-medium text-texte-secondaire">
+                    <p className="mt-1 text-[11px] font-medium leading-snug text-texte-secondaire sm:text-xs">
                       {k.label}
                     </p>
                     <Link
                       href={k.href}
-                      className="mt-3 inline-block text-xs font-semibold text-bleu-medical hover:underline"
+                      className="mt-2 inline-block text-[11px] font-semibold text-bleu-medical hover:underline sm:mt-3 sm:text-xs"
                     >
                       {t("laboratoire.dashboard.voirListe")}
                     </Link>
@@ -302,7 +302,55 @@ export function ContenuAccueilLaboratoire({
                     {t("laboratoire.dashboard.aucunPatient")}
                   </p>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <>
+                    <ul className="divide-y divide-gris-bordure md:hidden">
+                      {pageTransferesData.itemsPage.map((p) => {
+                        const statut = libelleStatutLigneLabo(p);
+                        return (
+                          <li key={p.dossierId}>
+                            <div className="flex items-start justify-between gap-2 px-3 py-2.5">
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold text-texte-principal">
+                                  {p.nom} {p.prenom}
+                                </p>
+                                <p className="mt-0.5 font-mono text-[11px] text-bleu-medical">
+                                  {numeroEnregistrement(p)}
+                                </p>
+                                <p className="mt-1 text-[11px] text-texte-secondaire">
+                                  {p.provenance || "—"} ·{" "}
+                                  {formatHeure(p.arriveeLe, i18n.language)} ·{" "}
+                                  {p.nombreExamens} ex.
+                                </p>
+                              </div>
+                              <div className="flex shrink-0 flex-col items-end gap-1.5">
+                                <span
+                                  className={cn(
+                                    "inline-flex rounded-full px-1.5 text-[10px] font-semibold leading-5",
+                                    statut.couleur
+                                  )}
+                                >
+                                  {statut.type === "transfert"
+                                    ? t(
+                                        `laboratoire.transferts.statut.${statut.cle}`
+                                      )
+                                    : t(
+                                        `laboratoire.orientationsStatut.${statut.statutAnalyse}.label`
+                                      )}
+                                </span>
+                                <Link
+                                  href={`/sigh/laboratoire/recus?dossier=${p.dossierId}`}
+                                  className="inline-flex rounded-md border border-gris-bordure p-1 text-texte-secondaire hover:text-bleu-medical"
+                                  title={t("laboratoire.patients.ouvrirDossier")}
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                </Link>
+                              </div>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <div className="hidden overflow-x-auto md:block">
                     <table className="w-full min-w-[560px] text-left text-sm">
                       <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-texte-secondaire">
                         <tr>
@@ -387,7 +435,8 @@ export function ContenuAccueilLaboratoire({
                         ))}
                       </tbody>
                     </table>
-                  </div>
+                    </div>
+                  </>
                 )}
                 <PaginationListe
                   compact
@@ -414,47 +463,30 @@ export function ContenuAccueilLaboratoire({
                   </Link>
                 </div>
                 {!analysesListe.length ? (
-                  <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
+                  <p className="px-4 py-6 text-center text-sm text-texte-secondaire">
                     {t("laboratoire.dashboard.aucuneAnalyse")}
                   </p>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[480px] text-left text-sm">
-                      <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
-                        <tr>
-                          <th className="px-3 py-2 font-semibold">
-                            {t("laboratoire.dashboard.colEchantillon")}
-                          </th>
-                          <th className="px-3 py-2 font-semibold">
-                            {t("laboratoire.dashboard.colPatient")}
-                          </th>
-                          <th className="px-3 py-2 font-semibold">
-                            {t("laboratoire.dashboard.colExamens")}
-                          </th>
-                          <th className="px-3 py-2 font-semibold">
-                            {t("laboratoire.dashboard.colStatut")}
-                          </th>
-                          <th className="px-3 py-2 font-semibold">
-                            {t("laboratoire.dashboard.colActions")}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gris-bordure">
-                        {pageAnalysesData.itemsPage.map((p) => (
-                          <tr key={p.dossierId} className="hover:bg-slate-50/80">
-                            <td className="whitespace-nowrap px-2.5 py-1.5 font-mono text-[11px]">
-                              {codeEchantillon(p)}
-                            </td>
-                            <td className="max-w-[120px] truncate px-2.5 py-1.5 text-xs font-semibold">
-                              {p.nom} {p.prenom}
-                            </td>
-                            <td className="max-w-[140px] truncate px-2.5 py-1.5 text-[11px] text-texte-secondaire">
-                              {libellesExamens(p)}
-                            </td>
-                            <td className="px-2.5 py-1.5">
+                  <>
+                    <ul className="divide-y divide-gris-bordure md:hidden">
+                      {pageAnalysesData.itemsPage.map((p) => (
+                        <li key={p.dossierId}>
+                          <div className="flex items-start justify-between gap-2 px-3 py-2.5">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-semibold text-texte-principal">
+                                {p.nom} {p.prenom}
+                              </p>
+                              <p className="mt-0.5 font-mono text-[11px] text-texte-secondaire">
+                                {codeEchantillon(p)}
+                              </p>
+                              <p className="mt-1 truncate text-[11px] text-texte-secondaire">
+                                {libellesExamens(p)}
+                              </p>
+                            </div>
+                            <div className="flex shrink-0 flex-col items-end gap-1.5">
                               <span
                                 className={cn(
-                                  "inline-flex rounded-full px-1.5 py-0 text-[10px] font-semibold leading-5",
+                                  "inline-flex rounded-full px-1.5 text-[10px] font-semibold leading-5",
                                   couleurStatutAnalyse(p.statutAnalyse)
                                 )}
                               >
@@ -462,20 +494,76 @@ export function ContenuAccueilLaboratoire({
                                   `laboratoire.orientationsStatut.${p.statutAnalyse || "EN_COURS"}.label`
                                 )}
                               </span>
-                            </td>
-                            <td className="px-2.5 py-1.5">
                               <Link
                                 href={`/sigh/laboratoire/examens-en-cours?dossier=${p.dossierId}`}
                                 className="inline-flex rounded-md border border-gris-bordure p-1 text-amber-700 hover:bg-amber-50"
                               >
                                 <FlaskConical className="h-3.5 w-3.5" />
                               </Link>
-                            </td>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="hidden overflow-x-auto md:block">
+                      <table className="w-full min-w-[480px] text-left text-sm">
+                        <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-texte-secondaire">
+                          <tr>
+                            <th className="px-2.5 py-1.5 font-semibold">
+                              {t("laboratoire.dashboard.colEchantillon")}
+                            </th>
+                            <th className="px-2.5 py-1.5 font-semibold">
+                              {t("laboratoire.dashboard.colPatient")}
+                            </th>
+                            <th className="px-2.5 py-1.5 font-semibold">
+                              {t("laboratoire.dashboard.colExamens")}
+                            </th>
+                            <th className="px-2.5 py-1.5 font-semibold">
+                              {t("laboratoire.dashboard.colStatut")}
+                            </th>
+                            <th className="px-2.5 py-1.5 font-semibold">
+                              {t("laboratoire.dashboard.colActions")}
+                            </th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody className="divide-y divide-gris-bordure">
+                          {pageAnalysesData.itemsPage.map((p) => (
+                            <tr key={p.dossierId} className="hover:bg-slate-50/80">
+                              <td className="whitespace-nowrap px-2.5 py-1.5 font-mono text-[11px]">
+                                {codeEchantillon(p)}
+                              </td>
+                              <td className="max-w-[120px] truncate px-2.5 py-1.5 text-xs font-semibold">
+                                {p.nom} {p.prenom}
+                              </td>
+                              <td className="max-w-[140px] truncate px-2.5 py-1.5 text-[11px] text-texte-secondaire">
+                                {libellesExamens(p)}
+                              </td>
+                              <td className="px-2.5 py-1.5">
+                                <span
+                                  className={cn(
+                                    "inline-flex rounded-full px-1.5 py-0 text-[10px] font-semibold leading-5",
+                                    couleurStatutAnalyse(p.statutAnalyse)
+                                  )}
+                                >
+                                  {t(
+                                    `laboratoire.orientationsStatut.${p.statutAnalyse || "EN_COURS"}.label`
+                                  )}
+                                </span>
+                              </td>
+                              <td className="px-2.5 py-1.5">
+                                <Link
+                                  href={`/sigh/laboratoire/examens-en-cours?dossier=${p.dossierId}`}
+                                  className="inline-flex rounded-md border border-gris-bordure p-1 text-amber-700 hover:bg-amber-50"
+                                >
+                                  <FlaskConical className="h-3.5 w-3.5" />
+                                </Link>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
                 <PaginationListe
                   compact
@@ -638,17 +726,17 @@ export function ContenuAccueilLaboratoire({
             </div>
 
             <section className="rounded-xl border border-gris-bordure bg-white p-3 shadow-sm sm:p-4">
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                 {actionsRapides.map((a) => {
                   const Icone = a.icone;
                   return (
                     <Link
                       key={a.label}
                       href={a.href}
-                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-gris-bordure bg-slate-50 px-3 py-2.5 text-xs font-semibold text-texte-principal transition hover:border-bleu-medical/40 hover:bg-bleu-medical-clair/40 sm:flex-none sm:text-sm"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-gris-bordure bg-slate-50 px-3 py-2.5 text-xs font-semibold text-texte-principal transition hover:border-bleu-medical/40 hover:bg-bleu-medical-clair/40 sm:flex-none sm:text-sm"
                     >
-                      <Icone className="h-4 w-4 text-bleu-medical" />
-                      {a.label}
+                      <Icone className="h-4 w-4 shrink-0 text-bleu-medical" />
+                      <span className="truncate">{a.label}</span>
                     </Link>
                   );
                 })}

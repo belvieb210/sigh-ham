@@ -24,10 +24,14 @@ export interface OptionOrientationLabo {
 
 interface PropsListeOrientationLaboratoire {
   options: OptionOrientationLabo[];
-  /** Préfixe i18n : laboratoire.orientationsDestination.XXX ou orientationsStatut.XXX */
   cleTraduction: "orientationsDestination" | "orientationsStatut";
-  valeur: string | null;
-  onChange: (id: string) => void;
+  /** Mode simple (radio) — statut analyse */
+  valeur?: string | null;
+  onChange?: (id: string) => void;
+  /** Mode multi (cases à cocher) — destinations */
+  valeurs?: string[];
+  onChangeMulti?: (ids: string[]) => void;
+  multiple?: boolean;
   desactive?: boolean;
   aide?: string;
 }
@@ -52,12 +56,27 @@ export function iconeDepuisNom(nom: string): LucideIcon {
 export function ListeOrientationLaboratoire({
   options,
   cleTraduction,
-  valeur,
+  valeur = null,
   onChange,
+  valeurs = [],
+  onChangeMulti,
+  multiple = false,
   desactive = false,
   aide,
 }: PropsListeOrientationLaboratoire) {
   const { t } = useTranslation();
+
+  const basculer = (id: string) => {
+    if (desactive) return;
+    if (multiple && onChangeMulti) {
+      const deja = valeurs.includes(id);
+      onChangeMulti(
+        deja ? valeurs.filter((v) => v !== id) : [...valeurs, id]
+      );
+      return;
+    }
+    onChange?.(id);
+  };
 
   return (
     <div className="space-y-2">
@@ -66,13 +85,15 @@ export function ListeOrientationLaboratoire({
       )}
       {options.map((opt) => {
         const Icone = opt.icone;
-        const selectionne = valeur === opt.id;
+        const selectionne = multiple
+          ? valeurs.includes(opt.id)
+          : valeur === opt.id;
         return (
           <button
             key={opt.id}
             type="button"
             disabled={desactive}
-            onClick={() => onChange(opt.id)}
+            onClick={() => basculer(opt.id)}
             className={cn(
               "flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition-all",
               desactive && "cursor-not-allowed opacity-60",
@@ -83,13 +104,21 @@ export function ListeOrientationLaboratoire({
           >
             <span
               className={cn(
-                "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2",
-                selectionne ? "border-current bg-current" : "border-gris-bordure"
+                "flex h-4 w-4 shrink-0 items-center justify-center border-2",
+                multiple ? "rounded" : "rounded-full",
+                selectionne
+                  ? "border-current bg-current"
+                  : "border-gris-bordure"
               )}
             >
-              {selectionne && (
-                <span className="h-1.5 w-1.5 rounded-full bg-white" />
-              )}
+              {selectionne &&
+                (multiple ? (
+                  <span className="text-[10px] font-bold leading-none text-white">
+                    ✓
+                  </span>
+                ) : (
+                  <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                ))}
             </span>
             <Icone className="h-4 w-4 shrink-0" />
             <span className="min-w-0 flex-1">

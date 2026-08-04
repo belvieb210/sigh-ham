@@ -120,7 +120,7 @@ export const caisseFr = {
     telephone: "Téléphone",
     orientationRapide: "Orientation rapide",
     aideOrientation:
-      "Choisissez une destination : le transfert est créé tout de suite. Confirmez-le via le menu ⋮ après la facture.",
+      "Cochez une ou plusieurs destinations : le transfert est créé tout de suite. Confirmez-le via le menu ⋮ après la facture.",
     selectionnerPourOrienter: "Sélectionnez un patient dans la liste pour l'orienter.",
     actionsRapides: "Actions rapides",
     actionRechercher: "Rechercher patient",

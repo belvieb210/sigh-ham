@@ -28,6 +28,7 @@ import {
   libellesExamensDemandes,
   numeroEnregistrementLaboratoire,
 } from "@/features/laboratoire/utils-affichage";
+import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import { cn } from "@/lib/utils";
 
@@ -177,6 +178,7 @@ export function ContenuExamensEnCoursLaboratoire({
       );
 
       router.push(`${chemin}?dossier=${selectionId}`);
+      window.dispatchEvent(new CustomEvent(EVENT_RAFRAICHIR_NOTIFICATIONS));
       if (chemin === cheminBase || pageStatut === id) {
         await charger();
       }

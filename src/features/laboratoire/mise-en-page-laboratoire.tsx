@@ -32,6 +32,9 @@ export function MiseEnPageLaboratoire({
 }: PropsMiseEnPageLaboratoire) {
   const [menuOuvert, setMenuOuvert] = useState(false);
   const [badgeFile, setBadgeFile] = useState(0);
+  const [badgesStatut, setBadgesStatut] = useState<Partial<Record<string, number>>>(
+    {}
+  );
 
   useEffect(() => {
     let annule = false;
@@ -40,10 +43,14 @@ export function MiseEnPageLaboratoire({
       try {
         const res = await fetch("/api/laboratoire/stats");
         const data = (await res.json()) as {
-          stats?: { patientsEnFile?: number };
+          stats?: {
+            patientsEnFile?: number;
+            compteursStatutAnalyse?: Record<string, number>;
+          };
         };
         if (!annule && res.ok) {
           setBadgeFile(data.stats?.patientsEnFile ?? 0);
+          setBadgesStatut(data.stats?.compteursStatutAnalyse ?? {});
         }
       } catch {
         /* ignore */
@@ -53,7 +60,7 @@ export function MiseEnPageLaboratoire({
     void chargerBadge();
     const onNotif = () => void chargerBadge();
     window.addEventListener(EVENT_RAFRAICHIR_NOTIFICATIONS, onNotif);
-    const interval = window.setInterval(() => void chargerBadge(), 30000);
+    const interval = window.setInterval(() => void chargerBadge(), 15000);
 
     return () => {
       annule = true;
@@ -70,6 +77,7 @@ export function MiseEnPageLaboratoire({
           ouvert={menuOuvert}
           onFermer={() => setMenuOuvert(false)}
           badgeFile={badgeFile}
+          badgesStatut={badgesStatut}
         />
 
         <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col">

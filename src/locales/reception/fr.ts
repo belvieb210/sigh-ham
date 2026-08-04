@@ -54,9 +54,10 @@ export const receptionFr = {
     resumePatient: "Résumé du patient",
     orientationRapide: "Orientation rapide",
     actionsRapides: "Actions rapides",
-    modifierAvantConfirmer: "Modifiez la salle avant de confirmer le transfert.",
+    modifierAvantConfirmer:
+      "Cochez une ou plusieurs salles : le transfert est synchronisé tout de suite. Confirmez via le menu ⋮.",
     creerTransfertRapide:
-      "Choisissez une destination pour créer le transfert rapide. Il restera à confirmer dans la liste.",
+      "Cochez une ou plusieurs destinations : le transfert est créé tout de suite. Confirmez-le via le menu ⋮.",
     destinationVerrouillee:
       "Transfert déjà confirmé : l'orientation rapide ne peut plus être modifiée.",
     aucunPatient: "Aucun patient sélectionné",

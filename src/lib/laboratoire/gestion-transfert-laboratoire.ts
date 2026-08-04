@@ -73,6 +73,21 @@ export async function confirmerTransfertLaboratoire(
     throw new Error("Passage associé au transfert introuvable.");
   }
 
+  const freres = await prisma.transfert.findMany({
+    where: {
+      dossierId: transfert.dossierId,
+      passageId: transfert.passageId,
+      salleOrigineId: transfert.salleOrigineId,
+      statut: "EN_ATTENTE",
+    },
+    include: { salleDestination: true },
+    orderBy: { emisLe: "asc" },
+  });
+  const aConfirmer = freres.length > 0 ? freres : [transfert];
+  const { inscrirePassagesDansSalles } = await import(
+    "@/lib/transferts/multi-destinations"
+  );
+
   const resultat = await prisma.$transaction(async (tx) => {
     const fileLabo = await tx.fileAttente.findFirst({
       where: {
@@ -94,7 +109,7 @@ export async function confirmerTransfertLaboratoire(
         passageId: transfert.passageId!,
         salleDestination: { code: "LABORATOIRE" },
         statut: { in: ["ACCEPTE", "EN_TRAITEMENT"] },
-        id: { not: transfertId },
+        id: { notIn: aConfirmer.map((t) => t.id) },
       },
       orderBy: { emisLe: "desc" },
     });
@@ -110,28 +125,26 @@ export async function confirmerTransfertLaboratoire(
       });
     }
 
-    const misAJour = await tx.transfert.update({
-      where: { id: transfertId },
-      data: {
-        statut: "ACCEPTE",
-        recepteurId: agentId,
-        accepteLe: new Date(),
-      },
+    const inscriptions = await inscrirePassagesDansSalles(tx, {
+      passageOrigineId: transfert.passageId!,
+      dossierId: transfert.dossierId,
+      sallesDestinationIds: aConfirmer.map((t) => t.salleDestinationId),
+      motifBase: `Transfert vers ${aConfirmer.map((t) => t.salleDestination.nom).join(", ")}`,
     });
 
-    await tx.passage.update({
-      where: { id: transfert.passageId! },
-      data: {
-        statut: "EN_ATTENTE",
-        motif: `Transfert vers ${transfert.salleDestination.nom}`,
-      },
-    });
-
-    await inscrireFileAttenteDestination(
-      tx,
-      transfert.passageId!,
-      transfert.salleDestinationId
-    );
+    for (let i = 0; i < aConfirmer.length; i++) {
+      const t = aConfirmer[i]!;
+      const inscription = inscriptions[i]!;
+      await tx.transfert.update({
+        where: { id: t.id },
+        data: {
+          statut: "ACCEPTE",
+          recepteurId: agentId,
+          accepteLe: new Date(),
+          passageId: inscription.passageId,
+        },
+      });
+    }
 
     await tx.dossierPatient.update({
       where: { id: transfert.dossierId },
@@ -139,23 +152,26 @@ export async function confirmerTransfertLaboratoire(
     });
 
     return {
-      transfertId: misAJour.id,
+      transfertId: aConfirmer[0]!.id,
+      transfertIds: aConfirmer.map((t) => t.id),
       numeroPatient: transfert.dossier.patient.numeroPatient,
-      salleDestination: transfert.salleDestination.nom,
+      salleDestination: aConfirmer.map((t) => t.salleDestination.nom).join(", "),
     };
   });
 
   const { evenementPatientTransfere } = await import(
     "@/lib/notifications/evenements-metier"
   );
-  void evenementPatientTransfere({
-    patientId: transfert.dossier.patientId,
-    prenom: transfert.dossier.patient.prenom,
-    nom: transfert.dossier.patient.nom,
-    numeroPatient: transfert.dossier.patient.numeroPatient,
-    salleDestination: transfert.salleDestination.code,
-    transfertId: resultat.transfertId,
-  });
+  for (const t of aConfirmer) {
+    void evenementPatientTransfere({
+      patientId: transfert.dossier.patientId,
+      prenom: transfert.dossier.patient.prenom,
+      nom: transfert.dossier.patient.nom,
+      numeroPatient: transfert.dossier.patient.numeroPatient,
+      salleDestination: t.salleDestination.code,
+      transfertId: t.id,
+    });
+  }
 
   return resultat;
 }

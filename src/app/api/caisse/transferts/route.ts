@@ -31,11 +31,16 @@ export async function POST(request: Request) {
     const corps = (await request.json()) as {
       dossierId?: string;
       orientation?: string;
+      orientations?: string[];
     };
 
-    if (!corps.dossierId?.trim() || !corps.orientation?.trim()) {
+    const orientations =
+      corps.orientations?.filter(Boolean) ??
+      (corps.orientation?.trim() ? [corps.orientation.trim()] : []);
+
+    if (!corps.dossierId?.trim() || orientations.length === 0) {
       return NextResponse.json(
-        { message: "dossierId et orientation requis." },
+        { message: "dossierId et orientation(s) requis." },
         { status: 400 }
       );
     }
@@ -43,13 +48,14 @@ export async function POST(request: Request) {
     const resultat = await reorienterPatientDepuisCaisse(
       session.utilisateur.id,
       corps.dossierId.trim(),
-      corps.orientation.trim()
+      orientations
     );
 
+    const noms = resultat.salleDestination;
     return NextResponse.json({
       message: resultat.transfertMisAJour
-        ? `Destination mise à jour : ${resultat.salleDestination}. Confirmez via le menu ⋮ après la facture.`
-        : `Transfert créé vers ${resultat.salleDestination}. Confirmez via le menu ⋮ après la facture.`,
+        ? `Destination(s) à jour : ${noms}. Confirmez via le menu ⋮ après la facture.`
+        : `Transfert(s) créé(s) vers ${noms}. Confirmez via le menu ⋮ après la facture.`,
       ...resultat,
     });
   } catch (e) {

@@ -21,6 +21,9 @@ interface PropsPanneauDroitLaboratoire {
   patient: PatientFileLaboratoire | null;
   orientation: string | null;
   onOrientationChange: (id: string) => void;
+  /** Destinations multiples (page patients) */
+  orientations?: string[];
+  onOrientationsChange?: (ids: string[]) => void;
   onAction: (id: IdActionRapideLabo) => void;
 }
 
@@ -29,6 +32,8 @@ export function PanneauDroitLaboratoire({
   patient,
   orientation,
   onOrientationChange,
+  orientations = [],
+  onOrientationsChange,
   onAction,
 }: PropsPanneauDroitLaboratoire) {
   const { t } = useTranslation();
@@ -64,12 +69,13 @@ export function PanneauDroitLaboratoire({
           <ListeOrientationLaboratoire
             options={optionsDestination}
             cleTraduction="orientationsDestination"
-            valeur={orientation}
-            onChange={onOrientationChange}
+            multiple
+            valeurs={orientations}
+            onChangeMulti={onOrientationsChange}
             desactive={!patient}
             aide={
               patient
-                ? t("laboratoire.panneau.aideOrientationPatient")
+                ? t("laboratoire.panneau.aideOrientationPatientMulti")
                 : t("laboratoire.panneau.selectionnerPatient")
             }
           />

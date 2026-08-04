@@ -9,21 +9,22 @@ import { useSelectionTransfertCaisseOptionnel } from "@/features/caisse/contexte
 import { cn } from "@/lib/utils";
 
 function useGestionOrientation() {
-  const { orientation } = useOrientationCaisse();
+  const { orientation, orientations } = useOrientationCaisse();
   const selection = useSelectionTransfertCaisseOptionnel();
 
-  const onOrientationChange = (code: string) => {
+  const onOrientationsChange = (codes: string[]) => {
     if (selection?.patientSelectionne) {
-      void selection.demanderOrientation(code);
+      void selection.demanderOrientations(codes);
     }
   };
 
-  return { orientation, onOrientationChange, selection };
+  return { orientation, orientations, onOrientationsChange, selection };
 }
 
 function ResumeEtOrientation() {
   const { t } = useTranslation();
-  const { orientation, onOrientationChange, selection } = useGestionOrientation();
+  const { orientation, orientations, onOrientationsChange, selection } =
+    useGestionOrientation();
   const resume = selection?.resume;
 
   return (
@@ -74,7 +75,9 @@ function ResumeEtOrientation() {
         )}
         <OrientationRapideCaisse
           orientation={orientation}
-          onOrientationChange={onOrientationChange}
+          orientations={orientations}
+          onOrientationsChange={onOrientationsChange}
+          multiple
           desactive={selection?.modificationEnCours || !selection?.patientSelectionne}
         />
         {selection?.messagePanneau && (

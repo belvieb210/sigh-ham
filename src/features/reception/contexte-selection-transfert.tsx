@@ -13,7 +13,6 @@ import {
   COULEURS_ORIENTATION_LISTE,
   EVENEMENT_RECEPTION_PATIENTS_MODIFIES,
   ORIENTATIONS_RAPIDES,
-  type DetailPatientOrientationModifiee,
 } from "@/constants/reception";
 import { useOrientationRapide } from "@/features/reception/contexte-orientation-rapide";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
@@ -25,6 +24,7 @@ interface ContexteSelectionTransfert {
   patientSelectionne: PatientEnregistre | null;
   selectionnerPourPanneau: (patient: PatientEnregistre) => Promise<void>;
   changerOrientationTransfert: (codeSalle: string) => Promise<void>;
+  changerOrientationsTransfert: (codesSalle: string[]) => Promise<void>;
   synchroniserSelection: (patients: PatientEnregistre[]) => void;
   /** Transfert EN_ATTENTE : on peut changer la destination */
   peutModifierOrientation: boolean;
@@ -53,7 +53,7 @@ function couleurOrientation(label: string) {
 
 export function FournisseurSelectionTransfert({ children }: { children: ReactNode }) {
   const { definirDepuisDonneesCompletes } = useResumePatient();
-  const { definirOrientation } = useOrientationRapide();
+  const { definirOrientations } = useOrientationRapide();
   const [patientSelectionne, setPatientSelectionne] = useState<PatientEnregistre | null>(null);
   const [modificationEnCours, setModificationEnCours] = useState(false);
   const [messagePanneau, setMessagePanneau] = useState<string | null>(null);
@@ -87,7 +87,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       setPatientSelectionne(patient);
 
       if (patient.codeSalleDestination) {
-        definirOrientation(patient.codeSalleDestination);
+        definirOrientations([patient.codeSalleDestination]);
       }
 
       try {
@@ -103,61 +103,17 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
         /* le résumé minimal depuis la ligne suffit */
       }
     },
-    [definirDepuisDonneesCompletes, definirOrientation]
+    [definirDepuisDonneesCompletes, definirOrientations]
   );
 
-  const appliquerMiseAJourOrientationLocale = useCallback(
-    (codeFinalSalle: string, salleDestination?: string) => {
-      const orientationAffichee = libelleOrientation(codeFinalSalle, salleDestination);
-      const orientationCouleur = couleurOrientation(orientationAffichee);
-
-      setPatientSelectionne((courant) =>
-        courant
-          ? {
-              ...courant,
-              codeSalleDestination: codeFinalSalle,
-              orientation: orientationAffichee,
-              orientationCouleur,
-              statutTransfert: courant.statutTransfert ?? "EN_ATTENTE",
-              statut: courant.statutTransfert ? courant.statut : "À confirmer",
-              statutCouleur: courant.statutTransfert
-                ? courant.statutCouleur
-                : "bg-orange-100 text-orange-800",
-              transfertId: courant.transfertId,
-            }
-          : courant
-      );
-
-      const patientId = patientSelectionne?.id;
-      if (patientId) {
-        const detail: DetailPatientOrientationModifiee = {
-          type: "orientation",
-          patientId,
-          orientation: orientationAffichee,
-          orientationCouleur,
-          codeSalleDestination: codeFinalSalle,
-        };
-        window.dispatchEvent(
-          new CustomEvent(EVENEMENT_RECEPTION_PATIENTS_MODIFIES, { detail })
-        );
-      }
-
-      return orientationAffichee;
-    },
-    [patientSelectionne?.id]
-  );
-
-  const changerOrientationTransfert = useCallback(
-    async (codeSalle: string) => {
+  const changerOrientationsTransfert = useCallback(
+    async (codesSalle: string[]) => {
       if (!patientSelectionne) return;
 
       if (orientationVerrouillee) {
         setMessagePanneau(
           "Ce transfert est déjà confirmé : l'orientation rapide ne peut plus être modifiée."
         );
-        if (patientSelectionne.codeSalleDestination) {
-          definirOrientation(patientSelectionne.codeSalleDestination);
-        }
         return;
       }
 
@@ -166,7 +122,14 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
         return;
       }
 
-      if (patientSelectionne.codeSalleDestination === codeSalle && peutModifierOrientation) {
+      const codes = [...new Set(codesSalle.filter(Boolean))];
+      if (codes.length === 0) {
+        setMessagePanneau("Sélectionnez au moins une destination.");
+        return;
+      }
+
+      if (!patientSelectionne.dossierId) {
+        setMessagePanneau("Dossier patient introuvable pour l'orientation.");
         return;
       }
 
@@ -174,40 +137,15 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       setMessagePanneau(null);
 
       try {
-        /** Modifier un transfert encore en attente */
-        if (peutModifierOrientation && patientSelectionne.transfertId) {
-          const res = await fetch(
-            `/api/reception/transferts/${encodeURIComponent(patientSelectionne.transfertId)}`,
-            {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orientation: codeSalle }),
-            }
-          );
-
-          const data = (await res.json()) as {
-            message?: string;
-            salleDestination?: string;
-            codeSalle?: string;
-          };
-
-          if (!res.ok) throw new Error(data.message ?? "Modification impossible.");
-
-          const codeFinalSalle = data.codeSalle ?? codeSalle;
-          appliquerMiseAJourOrientationLocale(codeFinalSalle, data.salleDestination);
-          setMessagePanneau(data.message ?? "Destination mise à jour.");
-          return;
-        }
-
-        /** Créer (ou mettre à jour via API manuelle) un transfert rapide */
         const res = await fetch("/api/reception/transferts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             transfertManuel: true,
             numeroPatient: patientSelectionne.id,
-            dossierId: patientSelectionne.dossierId || undefined,
-            orientation: codeSalle,
+            dossierId: patientSelectionne.dossierId,
+            orientations: codes,
+            orientation: codes[0],
           }),
         });
 
@@ -216,13 +154,18 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
           salleDestination?: string;
           transfertId?: string;
           codeSalle?: string;
+          codesSalle?: string[];
         };
 
         if (!res.ok) throw new Error(data.message ?? "Transfert rapide impossible.");
 
-        const codeFinalSalle = data.codeSalle ?? codeSalle;
-        const orientationAffichee = libelleOrientation(codeFinalSalle, data.salleDestination);
-        const orientationCouleur = couleurOrientation(orientationAffichee);
+        const codesFinal = data.codesSalle ?? codes;
+        const orientationAffichee =
+          data.salleDestination ??
+          codesFinal.map((c) => libelleOrientation(c)).join(", ");
+        const orientationCouleur = couleurOrientation(
+          libelleOrientation(codesFinal[0] ?? codes[0]!)
+        );
 
         setPatientSelectionne((courant) =>
           courant
@@ -230,7 +173,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
                 ...courant,
                 transfertId: data.transfertId ?? courant.transfertId,
                 statutTransfert: "EN_ATTENTE",
-                codeSalleDestination: codeFinalSalle,
+                codeSalleDestination: codesFinal[0] ?? courant.codeSalleDestination,
                 orientation: orientationAffichee,
                 orientationCouleur,
                 statut: "À confirmer",
@@ -240,17 +183,13 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
             : courant
         );
 
-        setMessagePanneau(data.message ?? "Transfert rapide créé — à confirmer dans la liste.");
-
-        /** Rafraîchir listes (statut + badge orientation) */
+        definirOrientations(codesFinal);
+        setMessagePanneau(data.message ?? "Transfert(s) créé(s) — confirmez dans la liste.");
         window.dispatchEvent(new CustomEvent(EVENEMENT_RECEPTION_PATIENTS_MODIFIES));
       } catch (error) {
         setMessagePanneau(
           error instanceof Error ? error.message : "Impossible d'appliquer l'orientation rapide."
         );
-        if (patientSelectionne.codeSalleDestination) {
-          definirOrientation(patientSelectionne.codeSalleDestination);
-        }
       } finally {
         setModificationEnCours(false);
       }
@@ -260,9 +199,13 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       orientationVerrouillee,
       peutModifierOrientation,
       peutCreerTransfertRapide,
-      definirOrientation,
-      appliquerMiseAJourOrientationLocale,
+      definirOrientations,
     ]
+  );
+
+  const changerOrientationTransfert = useCallback(
+    (codeSalle: string) => changerOrientationsTransfert([codeSalle]),
+    [changerOrientationsTransfert]
   );
 
   const synchroniserSelection = useCallback((patients: PatientEnregistre[]) => {
@@ -281,6 +224,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       patientSelectionne,
       selectionnerPourPanneau,
       changerOrientationTransfert,
+      changerOrientationsTransfert,
       synchroniserSelection,
       peutModifierOrientation,
       peutCreerTransfertRapide,
@@ -293,6 +237,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       patientSelectionne,
       selectionnerPourPanneau,
       changerOrientationTransfert,
+      changerOrientationsTransfert,
       synchroniserSelection,
       peutModifierOrientation,
       peutCreerTransfertRapide,

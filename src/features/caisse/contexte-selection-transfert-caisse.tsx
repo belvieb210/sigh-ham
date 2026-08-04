@@ -43,6 +43,7 @@ interface ContexteSelectionTransfertCaisse {
   selectionnerPatient: (patient: PatientTransfertCaisse) => void;
   /** Applique l'orientation immédiatement (sans modal), comme à la réception */
   demanderOrientation: (codeSalle: string) => void;
+  demanderOrientations: (codesSalle: string[]) => void;
   synchroniserSelection: (patients: PatientTransfertCaisse[]) => void;
   modificationEnCours: boolean;
   messagePanneau: string | null;
@@ -51,7 +52,7 @@ interface ContexteSelectionTransfertCaisse {
 const Contexte = createContext<ContexteSelectionTransfertCaisse | null>(null);
 
 export function FournisseurSelectionTransfertCaisse({ children }: { children: ReactNode }) {
-  const { definirOrientation } = useOrientationCaisse();
+  const { definirOrientation, definirOrientations } = useOrientationCaisse();
   const [patientSelectionne, setPatientSelectionne] = useState<PatientTransfertCaisse | null>(
     null
   );
@@ -63,7 +64,10 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
     (patient: PatientTransfertCaisse) => {
       setMessagePanneau(null);
       setPatientSelectionne(patient);
-      definirOrientation(patient.codeSalleDestination || "LABORATOIRE");
+      const codes =
+        (patient as { codesSalleDestination?: string[] }).codesSalleDestination ??
+        (patient.codeSalleDestination ? [patient.codeSalleDestination] : ["LABORATOIRE"]);
+      definirOrientations(codes);
       const age = calculerAge(patient.dateNaissance);
       setResume({
         initiales: initiales(patient.prenom, patient.nom),
@@ -75,24 +79,19 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
         vide: false,
       });
     },
-    [definirOrientation]
+    [definirOrientations]
   );
 
-  const demanderOrientation = useCallback(
-    async (codeSalle: string) => {
+  const demanderOrientations = useCallback(
+    async (codesSalle: string[]) => {
       if (!patientSelectionne || modificationEnCours) return;
-      if (codeSalle === "CAISSE") {
-        setMessagePanneau("Le patient est déjà à la caisse.");
-        return;
-      }
-      if (
-        patientSelectionne.codeSalleDestination === codeSalle &&
-        patientSelectionne.statutTransfertSortant === "EN_ATTENTE"
-      ) {
+      const codes = codesSalle.filter((c) => c !== "CAISSE");
+      if (codes.length === 0) {
+        setMessagePanneau("Sélectionnez au moins une destination.");
         return;
       }
 
-      definirOrientation(codeSalle);
+      definirOrientations(codes);
       setModificationEnCours(true);
       setMessagePanneau(null);
 
@@ -102,25 +101,31 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             dossierId: patientSelectionne.dossierId,
-            orientation: codeSalle,
+            orientations: codes,
           }),
         });
         const data = (await res.json()) as {
           message?: string;
           salleDestination?: string;
           codeSalle?: string;
+          codesSalle?: string[];
           transfertId?: string;
         };
         if (!res.ok) throw new Error(data.message ?? "Orientation impossible.");
 
-        const codeFinal = data.codeSalle ?? codeSalle;
+        const codesFinal = data.codesSalle ?? codes;
         const label =
-          ORIENTATIONS_RAPIDES_CAISSE.find((o) => o.value === codeFinal)?.label ??
           data.salleDestination ??
-          codeFinal;
+          codesFinal
+            .map(
+              (c) =>
+                ORIENTATIONS_RAPIDES_CAISSE.find((o) => o.value === c)?.label ?? c
+            )
+            .join(", ");
 
         setMessagePanneau(
-          data.message ?? `Transfert vers ${label} créé — confirmez via le menu ⋮ après la facture.`
+          data.message ??
+            `Transfert vers ${label} créé — confirmez via le menu ⋮ après la facture.`
         );
         setPatientSelectionne((courant) =>
           courant
@@ -128,8 +133,10 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
                 ...courant,
                 orientation: label,
                 orientationCouleur:
-                  COULEURS_ORIENTATION_CAISSE[label] ?? "bg-slate-100 text-slate-600",
-                codeSalleDestination: codeFinal,
+                  COULEURS_ORIENTATION_CAISSE[label.split(",")[0]?.trim() ?? ""] ??
+                  "bg-slate-100 text-slate-600",
+                codeSalleDestination: codesFinal[0] ?? courant.codeSalleDestination,
+                codesSalleDestination: codesFinal,
                 transfertSortantId: data.transfertId ?? courant.transfertSortantId,
                 statutTransfertSortant: "EN_ATTENTE",
                 statut: "À confirmer",
@@ -137,7 +144,7 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
               }
             : courant
         );
-        definirOrientation(codeFinal);
+        definirOrientations(codesFinal);
         window.dispatchEvent(new CustomEvent(EVENEMENT_CAISSE_PATIENTS_MODIFIES));
       } catch (error) {
         setMessagePanneau(
@@ -150,7 +157,12 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
         setModificationEnCours(false);
       }
     },
-    [patientSelectionne, modificationEnCours, definirOrientation]
+    [patientSelectionne, modificationEnCours, definirOrientation, definirOrientations]
+  );
+
+  const demanderOrientation = useCallback(
+    (codeSalle: string) => demanderOrientations([codeSalle]),
+    [demanderOrientations]
   );
 
   const synchroniserSelection = useCallback((patients: PatientTransfertCaisse[]) => {
@@ -166,6 +178,7 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
       resume,
       selectionnerPatient,
       demanderOrientation,
+      demanderOrientations,
       synchroniserSelection,
       modificationEnCours,
       messagePanneau,
@@ -175,6 +188,7 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
       resume,
       selectionnerPatient,
       demanderOrientation,
+      demanderOrientations,
       synchroniserSelection,
       modificationEnCours,
       messagePanneau,

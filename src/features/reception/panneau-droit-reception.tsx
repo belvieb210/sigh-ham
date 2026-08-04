@@ -15,27 +15,39 @@ interface PropsPanneauDroit {
 }
 
 function useGestionOrientation(variante: "defaut" | "transferts") {
-  const { orientation, definirOrientation } = useOrientationRapide();
+  const { orientation, orientations, definirOrientation, definirOrientations } =
+    useOrientationRapide();
   const selection = useSelectionTransfertOptionnel();
 
   const onOrientationChange = (code: string) => {
-    if (variante === "transferts") {
-      if (!selection?.peutAppliquerOrientationRapide) return;
-      definirOrientation(code);
-      void selection.changerOrientationTransfert(code);
-      return;
-    }
     definirOrientation(code);
   };
 
+  const onOrientationsChange = (codes: string[]) => {
+    if (variante === "transferts") {
+      if (!selection?.peutAppliquerOrientationRapide) return;
+      const netoyes = codes.filter(Boolean);
+      if (netoyes.length === 0) return;
+      definirOrientations(netoyes);
+      void selection.changerOrientationsTransfert(netoyes);
+      return;
+    }
+    definirOrientations(codes);
+  };
+
   const desactiveOrientation =
-    variante === "transferts" ? !(selection?.peutAppliquerOrientationRapide ?? false) : false;
+    variante === "transferts"
+      ? !(selection?.peutAppliquerOrientationRapide ?? false)
+      : false;
 
   return {
     orientation,
+    orientations,
     onOrientationChange,
+    onOrientationsChange,
     selection,
     desactiveOrientation,
+    multiTransferts: variante === "transferts",
   };
 }
 
@@ -88,35 +100,54 @@ function MessageResultatOrientation({
   );
 }
 
+function BlocOrientation({
+  variante,
+}: {
+  variante: "defaut" | "transferts";
+}) {
+  const { t } = useTranslation();
+  const {
+    orientation,
+    orientations,
+    onOrientationChange,
+    onOrientationsChange,
+    selection,
+    desactiveOrientation,
+    multiTransferts,
+  } = useGestionOrientation(variante);
+
+  return (
+    <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
+      <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
+        {t("reception.panneau.orientationRapide")}
+      </h2>
+      {variante === "transferts" && selection && (
+        <MessageAideOrientation selection={selection} />
+      )}
+      <OrientationRapide
+        variante="liste"
+        orientation={orientation}
+        orientations={orientations}
+        onOrientationChange={onOrientationChange}
+        onOrientationsChange={multiTransferts ? onOrientationsChange : undefined}
+        multiple={multiTransferts}
+        desactive={desactiveOrientation}
+      />
+      {selection?.messagePanneau && (
+        <MessageResultatOrientation message={selection.messagePanneau} />
+      )}
+    </section>
+  );
+}
+
 /** Sections du panneau droit — visibles sur mobile et tablette (< xl) */
 export function SectionsMobileReception({
   variante = "defaut",
   afficherTransfertManuel = false,
 }: PropsPanneauDroit) {
-  const { t } = useTranslation();
-  const { orientation, onOrientationChange, selection, desactiveOrientation } =
-    useGestionOrientation(variante);
-
   return (
     <div className="space-y-4 xl:hidden">
-      <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-        <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-          {t("reception.panneau.orientationRapide")}
-        </h2>
-        {variante === "transferts" && selection && (
-          <MessageAideOrientation selection={selection} />
-        )}
-        <OrientationRapide
-          variante="liste"
-          orientation={orientation}
-          onOrientationChange={onOrientationChange}
-          desactive={desactiveOrientation}
-        />
-        {selection?.messagePanneau && (
-          <MessageResultatOrientation message={selection.messagePanneau} />
-        )}
-      </section>
-
+      <BlocOrientation variante={variante} />
       <ActionsRapidesReception afficherTransfertManuel={afficherTransfertManuel} />
     </div>
   );
@@ -129,8 +160,6 @@ export function PanneauDroitReception({
 }: PropsPanneauDroit) {
   const { t } = useTranslation();
   const { resume } = useResumePatient();
-  const { orientation, onOrientationChange, selection, desactiveOrientation } =
-    useGestionOrientation(variante);
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-4">
@@ -141,23 +170,7 @@ export function PanneauDroitReception({
         <AffichageResumePatient resume={resume} variante="complet" />
       </section>
 
-      <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-        <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-          {t("reception.panneau.orientationRapide")}
-        </h2>
-        {variante === "transferts" && selection && (
-          <MessageAideOrientation selection={selection} />
-        )}
-        <OrientationRapide
-          variante="liste"
-          orientation={orientation}
-          onOrientationChange={onOrientationChange}
-          desactive={desactiveOrientation}
-        />
-        {selection?.messagePanneau && (
-          <MessageResultatOrientation message={selection.messagePanneau} />
-        )}
-      </section>
+      <BlocOrientation variante={variante} />
 
       <ActionsRapidesReception afficherTransfertManuel={afficherTransfertManuel} />
     </aside>

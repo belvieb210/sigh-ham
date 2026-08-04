@@ -23,15 +23,18 @@ interface PropsBarreLateraleLaboratoire {
   ouvert?: boolean;
   onFermer?: () => void;
   badgeFile?: number;
+  badgesStatut?: Partial<Record<string, number>>;
 }
 
 function LiensNavigation({
   onFermer,
   badgeFile = 0,
+  badgesStatut = {},
   utilisateur,
 }: {
   onFermer?: () => void;
   badgeFile?: number;
+  badgesStatut?: Partial<Record<string, number>>;
   utilisateur: UtilisateurLaboratoire;
 }) {
   const { t } = useTranslation();
@@ -66,6 +69,7 @@ function LiensNavigation({
     icone: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
     etiquette: string;
     badge?: boolean;
+    badgeStatut?: string;
   };
 
   const rendreSection = (titre: string, items: ItemNav[]) => (
@@ -76,13 +80,17 @@ function LiensNavigation({
       <ul className="space-y-0.5">
         {items.map((item) => {
           const Icone = item.icone;
-          const afficherBadge = Boolean(item.badge) && badgeFile > 0;
+          const compteStatut = item.badgeStatut
+            ? badgesStatut[item.badgeStatut] ?? 0
+            : 0;
+          const afficherBadgeFile = Boolean(item.badge) && badgeFile > 0;
+          const afficherBadgeStatut = Boolean(item.badgeStatut) && compteStatut > 0;
           return (
             <li key={item.href}>
               <Link href={item.href} onClick={onFermer} className={lienClasse(item.href)}>
                 <Icone className="h-4 w-4 shrink-0" aria-hidden />
                 <span className="min-w-0 flex-1 truncate">{item.etiquette}</span>
-                {afficherBadge ? (
+                {afficherBadgeFile ? (
                   <span
                     className={cn(
                       "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
@@ -92,6 +100,11 @@ function LiensNavigation({
                     )}
                   >
                     {badgeFile}
+                  </span>
+                ) : null}
+                {afficherBadgeStatut ? (
+                  <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    {compteStatut > 99 ? "99+" : compteStatut}
                   </span>
                 ) : null}
                 {item.id === "messagerie" ? (
@@ -194,6 +207,7 @@ export function BarreLateraleLaboratoire({
   ouvert = false,
   onFermer,
   badgeFile = 0,
+  badgesStatut = {},
 }: PropsBarreLateraleLaboratoire) {
   const { t } = useTranslation();
 
@@ -209,7 +223,11 @@ export function BarreLateraleLaboratoire({
   return (
     <>
       <aside className="hidden h-full w-[260px] shrink-0 flex-col border-r border-gris-bordure bg-white lg:flex">
-        <LiensNavigation utilisateur={utilisateur} badgeFile={badgeFile} />
+        <LiensNavigation
+          utilisateur={utilisateur}
+          badgeFile={badgeFile}
+          badgesStatut={badgesStatut}
+        />
       </aside>
 
       {ouvert && (
@@ -229,6 +247,7 @@ export function BarreLateraleLaboratoire({
               utilisateur={utilisateur}
               onFermer={onFermer}
               badgeFile={badgeFile}
+              badgesStatut={badgesStatut}
             />
           </aside>
         </>

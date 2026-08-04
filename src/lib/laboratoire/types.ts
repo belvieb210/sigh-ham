@@ -45,6 +45,8 @@ export interface PatientFileLaboratoire {
   transfertSortantId: string | null;
   statutTransfertSortant: string | null;
   codeSalleDestination: string | null;
+  /** Destinations multiples cochées (orientation rapide) */
+  codesSalleDestination: string[];
   enRecuperation: boolean;
   orientation: string;
 }
@@ -58,6 +60,14 @@ export interface StatsLaboratoireJour {
   resultatsAValider: number;
   resultatsValidesAujourdhui: number;
   imprimesEnvoyes: number;
+  /** Compteurs par page statut analyse (badges nav) */
+  compteursStatutAnalyse: {
+    RECUS: number;
+    EN_COURS: number;
+    VERIFIES: number;
+    REJETES: number;
+    DR_APPROUVE: number;
+  };
   derniersArrives: PatientFileLaboratoire[];
   patientsTransferes: PatientFileLaboratoire[];
   analysesEnCoursListe: PatientFileLaboratoire[];

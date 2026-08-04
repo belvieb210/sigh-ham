@@ -157,6 +157,7 @@ export interface PatientTransfertCaisse {
   orientation: string;
   orientationCouleur: string;
   codeSalleDestination: string;
+  codesSalleDestination?: string[];
   statut: string;
   statutCouleur: string;
   heure: string;

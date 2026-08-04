@@ -46,22 +46,48 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     if (body && typeof body === "object" && (body as { transfertManuel?: boolean }).transfertManuel) {
-      const donnees = parserDonneesTransfertManuel(body);
-      const erreur = validerDonneesTransfertManuel(donnees);
-      if (erreur) {
-        return NextResponse.json({ message: erreur }, { status: 400 });
+      const corps = body as {
+        numeroPatient?: string;
+        dossierId?: string;
+        orientation?: string;
+        orientations?: string[];
+      };
+      const orientations =
+        corps.orientations?.filter(Boolean) ??
+        (corps.orientation?.trim() ? [corps.orientation.trim()] : []);
+
+      if (!corps.dossierId?.trim() || orientations.length === 0) {
+        const donnees = parserDonneesTransfertManuel(body);
+        const erreur = validerDonneesTransfertManuel(donnees);
+        if (erreur) {
+          return NextResponse.json({ message: erreur }, { status: 400 });
+        }
+
+        const resultat = await transfererPatientManuel(session.utilisateur.id, {
+          numeroPatient: donnees.numeroPatient!,
+          dossierId: donnees.dossierId,
+          orientation: donnees.orientation!,
+        });
+
+        return NextResponse.json({
+          message: resultat.transfertMisAJour
+            ? `Destination du transfert mise à jour vers ${resultat.salleDestination}. Confirmez-le dans la liste des transferts.`
+            : `Transfert manuel effectué vers ${resultat.salleDestination}. Confirmez-le dans la liste des transferts.`,
+          ...resultat,
+        });
       }
 
-      const resultat = await transfererPatientManuel(session.utilisateur.id, {
-        numeroPatient: donnees.numeroPatient!,
-        dossierId: donnees.dossierId,
-        orientation: donnees.orientation!,
-      });
+      const { reorienterPatientDepuisReception } = await import(
+        "@/lib/reception/reorienter-patient-reception"
+      );
+      const resultat = await reorienterPatientDepuisReception(
+        session.utilisateur.id,
+        corps.dossierId.trim(),
+        orientations
+      );
 
       return NextResponse.json({
-        message: resultat.transfertMisAJour
-          ? `Destination du transfert mise à jour vers ${resultat.salleDestination}. Confirmez-le dans la liste des transferts.`
-          : `Transfert manuel effectué vers ${resultat.salleDestination}. Confirmez-le dans la liste des transferts.`,
+        message: `Transfert(s) vers ${resultat.salleDestination}. Confirmez via le menu ⋮.`,
         ...resultat,
       });
     }

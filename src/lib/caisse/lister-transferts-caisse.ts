@@ -91,18 +91,21 @@ export async function listerPatientsTransfertsCaisse(): Promise<{
           orderBy: { emisLe: "desc" },
         });
 
-  const sortantParDossier = new Map<string, (typeof transfertsSortants)[number]>();
+  const sortantsParDossier = new Map<string, (typeof transfertsSortants)[number][]>();
   for (const t of transfertsSortants) {
-    if (!sortantParDossier.has(t.dossierId)) {
-      sortantParDossier.set(t.dossierId, t);
-    }
+    const liste = sortantsParDossier.get(t.dossierId) ?? [];
+    liste.push(t);
+    sortantsParDossier.set(t.dossierId, liste);
   }
 
   const patients: PatientTransfertCaisse[] = file.map((p) => {
-    const sortant = sortantParDossier.get(p.dossierId);
-    const enRecuperation = sortant?.recuperation?.statut === "EN_RECUPERATION";
-    const orientation = sortant
-      ? raccourcirOrientation(sortant.salleDestination.nom)
+    const sortants = sortantsParDossier.get(p.dossierId) ?? [];
+    const sortant = sortants[0];
+    const enRecuperation = sortants.some(
+      (s) => s.recuperation?.statut === "EN_RECUPERATION"
+    );
+    const orientation = sortants.length
+      ? sortants.map((s) => raccourcirOrientation(s.salleDestination.nom)).join(", ")
       : "Caisse";
     const { statut, statutCouleur } = libelleStatutLigne({
       factureOuverte: p.factureOuverte,
@@ -123,8 +126,11 @@ export async function listerPatientsTransfertsCaisse(): Promise<{
       motif: p.motif ?? "—",
       orientation,
       orientationCouleur:
-        COULEURS_ORIENTATION_CAISSE[orientation] ?? "bg-slate-100 text-slate-600",
+        COULEURS_ORIENTATION_CAISSE[
+          sortant ? raccourcirOrientation(sortant.salleDestination.nom) : "Caisse"
+        ] ?? "bg-slate-100 text-slate-600",
       codeSalleDestination: sortant?.salleDestination.code ?? "CAISSE",
+      codesSalleDestination: sortants.map((s) => s.salleDestination.code),
       statut,
       statutCouleur,
       heure: formaterHeure(p.arriveeLe),

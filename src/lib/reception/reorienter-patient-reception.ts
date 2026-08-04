@@ -1,58 +1,39 @@
 import "server-only";
 import type { CodeSalle } from "@/generated/prisma/client";
-import {
-  ORIENTATIONS_DESTINATION_LABO,
-  type IdOrientationDestinationLabo,
-} from "@/constants/laboratoire-orientations";
 import { prisma } from "@/lib/prisma";
+import { ORIENTATIONS_TRANSFERT_RAPIDE } from "@/lib/reception/transferer-patient-accueil";
 import { synchroniserTransfertsEnAttente } from "@/lib/transferts/multi-destinations";
 
-const CODE_PAR_ORIENTATION = Object.fromEntries(
-  ORIENTATIONS_DESTINATION_LABO.map((o) => [o.id, o.codeSalle])
-) as Record<IdOrientationDestinationLabo, CodeSalle>;
-
-const ORIENTATIONS_AUTORISEES = new Set<string>(
-  ORIENTATIONS_DESTINATION_LABO.map((o) => o.codeSalle)
-);
-
-export function codeSalleDepuisOrientationLabo(orientation: string): CodeSalle {
-  const viaId = CODE_PAR_ORIENTATION[orientation as IdOrientationDestinationLabo];
-  if (viaId) return viaId;
-  if (ORIENTATIONS_AUTORISEES.has(orientation)) {
-    return orientation as CodeSalle;
+function normaliserDestinations(codes: string[]): CodeSalle[] {
+  const uniques = [...new Set(codes.map((c) => c.trim()).filter(Boolean))];
+  for (const code of uniques) {
+    if (!ORIENTATIONS_TRANSFERT_RAPIDE.includes(code as CodeSalle)) {
+      throw new Error(`Salle de destination invalide : ${code}.`);
+    }
+    if (code === "RECEPTION") {
+      throw new Error("Choisissez une autre destination que la réception.");
+    }
   }
-  throw new Error("Salle de destination invalide.");
-}
-
-function normaliserDestinations(orientations: string[]): CodeSalle[] {
-  const codes = [
-    ...new Set(orientations.map((o) => codeSalleDepuisOrientationLabo(o.trim()))),
-  ];
-  if (codes.length === 0) {
+  if (uniques.length === 0) {
     throw new Error("Sélectionnez au moins une destination.");
   }
-  if (codes.includes("LABORATOIRE")) {
-    throw new Error(
-      "Le patient est déjà au laboratoire. Choisissez une autre destination."
-    );
-  }
-  return codes;
+  return uniques as CodeSalle[];
 }
 
 /**
- * Synchronise orientations rapides labo (1 ou plusieurs salles).
+ * Synchronise orientations rapides réception (1 ou plusieurs salles).
  */
-export async function reorienterPatientDepuisLaboratoire(
+export async function reorienterPatientDepuisReception(
   agentId: string,
   dossierId: string,
-  orientation: string | string[]
+  codeDestination: string | string[]
 ) {
   const codes = normaliserDestinations(
-    Array.isArray(orientation) ? orientation : [orientation]
+    Array.isArray(codeDestination) ? codeDestination : [codeDestination]
   );
 
   const salleOrigine = await prisma.salle.findUnique({
-    where: { code: "LABORATOIRE" },
+    where: { code: "RECEPTION" },
   });
   if (!salleOrigine) throw new Error("Salle introuvable.");
 
@@ -60,19 +41,28 @@ export async function reorienterPatientDepuisLaboratoire(
     where: {
       dossierId,
       statut: { not: "ANNULE" },
-      fileAttente: {
-        is: {
-          serviLe: null,
-          salle: { code: "LABORATOIRE" },
+      OR: [
+        {
+          fileAttente: {
+            is: { serviLe: null, salle: { code: "RECEPTION" } },
+          },
         },
-      },
+        {
+          transferts: {
+            some: {
+              salleOrigineId: salleOrigine.id,
+              statut: "EN_ATTENTE",
+            },
+          },
+        },
+      ],
     },
     orderBy: { createdAt: "desc" },
     include: { fileAttente: true },
   });
 
-  if (!passage?.fileAttente) {
-    throw new Error("Patient introuvable dans la file d'attente laboratoire.");
+  if (!passage) {
+    throw new Error("Patient introuvable pour orientation depuis la réception.");
   }
 
   const transfertRefuse = await prisma.transfert.findFirst({
@@ -106,7 +96,7 @@ export async function reorienterPatientDepuisLaboratoire(
     passageId: passage.id,
     salleOrigineId: salleOrigine.id,
     destinations,
-    motifPrefixe: "Orientation rapide laboratoire",
+    motifPrefixe: "Orientation rapide réception",
   });
 
   return {

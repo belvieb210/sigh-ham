@@ -67,26 +67,31 @@ export const NAVIGATION_LABORATOIRE = {
       href: "/sigh/laboratoire/recus",
       id: "recus",
       icone: Inbox,
+      badgeStatut: "RECUS" as const,
     },
     {
       href: "/sigh/laboratoire/examens-en-cours",
       id: "examensEnCours",
       icone: FlaskConical,
+      badgeStatut: "EN_COURS" as const,
     },
     {
       href: "/sigh/laboratoire/verifies",
       id: "verifies",
       icone: ClipboardCheck,
+      badgeStatut: "VERIFIES" as const,
     },
     {
       href: "/sigh/laboratoire/rejetes",
       id: "rejetes",
       icone: XCircle,
+      badgeStatut: "REJETES" as const,
     },
     {
       href: "/sigh/laboratoire/dr-approuve",
       id: "drApprouve",
       icone: BadgeCheck,
+      badgeStatut: "DR_APPROUVE" as const,
     },
     {
       href: "/sigh/laboratoire/saisie-resultats",

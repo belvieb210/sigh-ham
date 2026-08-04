@@ -194,6 +194,8 @@ export const laboratoireFr = {
     selectionnerPatient: "Sélectionnez un patient dans la liste pour l'orienter.",
     aideOrientationPatient:
       "Choisissez une destination : le transfert est créé tout de suite. Confirmez-le via le menu ⋮.",
+    aideOrientationPatientMulti:
+      "Cochez une ou plusieurs salles. À la confirmation, le patient sera envoyé vers toutes.",
     aideStatutAnalyse:
       "Choisissez un statut : le patient apparaît aussitôt sur la page correspondante.",
     statutAttribue: "Patient orienté vers « {{statut}} ».",
@@ -219,6 +221,7 @@ export const laboratoireFr = {
     erreurInattendue: "Une erreur inattendue est survenue.",
     erreurOrientation: "Impossible d'orienter le patient.",
     orienteOk: "Orientation enregistrée. Confirmez via le menu ⋮.",
+    selectionnerDestination: "Sélectionnez au moins une destination.",
     statut: {
       aConfirmer: "À confirmer",
       rejete: "Rejeté",

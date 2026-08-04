@@ -2,138 +2,106 @@ import "server-only";
 import type { CodeSalle } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ORIENTATIONS_RAPIDES_CAISSE } from "@/constants/caisse";
+import { synchroniserTransfertsEnAttente } from "@/lib/transferts/multi-destinations";
 
 export const ORIENTATIONS_CAISSE_AUTORISEES: CodeSalle[] = ORIENTATIONS_RAPIDES_CAISSE.map(
   (o) => o.value as CodeSalle
 );
 
+function normaliserDestinations(codes: string[]): CodeSalle[] {
+  const uniques = [...new Set(codes.map((c) => c.trim()).filter(Boolean))];
+  for (const code of uniques) {
+    if (!ORIENTATIONS_CAISSE_AUTORISEES.includes(code as CodeSalle)) {
+      throw new Error(`Salle de destination invalide : ${code}.`);
+    }
+    if (code === "CAISSE") {
+      throw new Error("Le patient est déjà à la caisse. Choisissez une autre destination.");
+    }
+  }
+  if (uniques.length === 0) {
+    throw new Error("Sélectionnez au moins une destination.");
+  }
+  return uniques as CodeSalle[];
+}
+
 /**
- * Crée ou met à jour un transfert rapide depuis la caisse (EN_ATTENTE).
- * Le patient reste en file caisse jusqu'à confirmation (après facture).
+ * Synchronise les orientations rapides caisse (1 ou plusieurs salles).
+ * Le patient reste en file caisse jusqu'à confirmation.
  */
 export async function reorienterPatientDepuisCaisse(
   caissierId: string,
   dossierId: string,
-  codeDestination: string
+  codeDestination: string | string[]
 ) {
-  if (!ORIENTATIONS_CAISSE_AUTORISEES.includes(codeDestination as CodeSalle)) {
-    throw new Error("Salle de destination invalide.");
-  }
+  const codes = normaliserDestinations(
+    Array.isArray(codeDestination) ? codeDestination : [codeDestination]
+  );
 
-  if (codeDestination === "CAISSE") {
-    throw new Error("Le patient est déjà à la caisse. Choisissez une autre destination.");
-  }
+  const salleOrigine = await prisma.salle.findUnique({ where: { code: "CAISSE" } });
+  if (!salleOrigine) throw new Error("Salle introuvable.");
 
-  return prisma.$transaction(async (tx) => {
-    const salleDestination = await tx.salle.findUnique({
-      where: { code: codeDestination as CodeSalle },
-    });
-    const salleOrigine = await tx.salle.findUnique({ where: { code: "CAISSE" } });
-
-    if (!salleDestination || !salleOrigine) {
-      throw new Error("Salle introuvable.");
-    }
-
-    const passage = await tx.passage.findFirst({
-      where: {
-        dossierId,
-        statut: { not: "ANNULE" },
-        fileAttente: {
-          is: {
-            serviLe: null,
-            salle: { code: "CAISSE" },
-          },
+  const passage = await prisma.passage.findFirst({
+    where: {
+      dossierId,
+      statut: { not: "ANNULE" },
+      fileAttente: {
+        is: {
+          serviLe: null,
+          salle: { code: "CAISSE" },
         },
       },
-      orderBy: { createdAt: "desc" },
-      include: {
-        fileAttente: true,
-      },
-    });
-
-    if (!passage?.fileAttente) {
-      throw new Error("Patient introuvable dans la file d'attente caisse.");
-    }
-
-    if (passage.fileAttente.serviLe) {
-      throw new Error("Ce patient a déjà quitté la file caisse.");
-    }
-
-    const transfertEnAttente = await tx.transfert.findFirst({
-      where: {
-        dossierId,
-        passageId: passage.id,
-        salleOrigineId: salleOrigine.id,
-        statut: "EN_ATTENTE",
-      },
-      orderBy: { emisLe: "desc" },
-    });
-
-    if (transfertEnAttente) {
-      const misAJour = await tx.transfert.update({
-        where: { id: transfertEnAttente.id },
-        data: {
-          salleDestinationId: salleDestination.id,
-          motif: `Orientation rapide caisse → ${salleDestination.nom}`,
-          emetteurId: caissierId,
-        },
-      });
-
-      await tx.passage.update({
-        where: { id: passage.id },
-        data: { motif: `Transfert vers ${salleDestination.nom}` },
-      });
-
-      return {
-        transfertId: misAJour.id,
-        salleDestination: salleDestination.nom,
-        codeSalle: salleDestination.code,
-        transfertMisAJour: true,
-      };
-    }
-
-    const transfertRefuse = await tx.transfert.findFirst({
-      where: {
-        dossierId,
-        passageId: passage.id,
-        salleOrigineId: salleOrigine.id,
-        statut: "REFUSE",
-        recuperation: { statut: "EN_RECUPERATION" },
-      },
-      orderBy: { emisLe: "desc" },
-    });
-
-    if (transfertRefuse) {
-      throw new Error(
-        "Ce transfert a été rejeté. Restaurez-le via le menu d'actions avant de changer la destination."
-      );
-    }
-
-    const transfert = await tx.transfert.create({
-      data: {
-        dossierId,
-        passageId: passage.id,
-        salleOrigineId: salleOrigine.id,
-        salleDestinationId: salleDestination.id,
-        emetteurId: caissierId,
-        statut: "EN_ATTENTE",
-        motif: `Orientation rapide caisse → ${salleDestination.nom}`,
-      },
-    });
-
-    await tx.passage.update({
-      where: { id: passage.id },
-      data: {
-        statut: "EN_ATTENTE",
-        motif: `Transfert vers ${salleDestination.nom}`,
-      },
-    });
-
-    return {
-      transfertId: transfert.id,
-      salleDestination: salleDestination.nom,
-      codeSalle: salleDestination.code,
-      transfertMisAJour: false,
-    };
+    },
+    orderBy: { createdAt: "desc" },
+    include: { fileAttente: true },
   });
+
+  if (!passage?.fileAttente) {
+    throw new Error("Patient introuvable dans la file d'attente caisse.");
+  }
+
+  const transfertRefuse = await prisma.transfert.findFirst({
+    where: {
+      dossierId,
+      passageId: passage.id,
+      salleOrigineId: salleOrigine.id,
+      statut: "REFUSE",
+      recuperation: { statut: "EN_RECUPERATION" },
+    },
+  });
+  if (transfertRefuse) {
+    throw new Error(
+      "Ce transfert a été rejeté. Restaurez-le via le menu d'actions avant de changer la destination."
+    );
+  }
+
+  const salles = await prisma.salle.findMany({
+    where: { code: { in: codes } },
+  });
+  if (salles.length !== codes.length) {
+    throw new Error("Salle de destination introuvable.");
+  }
+
+  const destinations = codes.map((code) => {
+    const s = salles.find((x) => x.code === code)!;
+    return { salleId: s.id, code: s.code, nom: s.nom };
+  });
+
+  const resultat = await synchroniserTransfertsEnAttente({
+    agentId: caissierId,
+    dossierId,
+    passageId: passage.id,
+    salleOrigineId: salleOrigine.id,
+    destinations,
+    motifPrefixe: "Orientation rapide caisse",
+  });
+
+  return {
+    transfertId: resultat.transfertIds[0] ?? null,
+    transfertIds: resultat.transfertIds,
+    salles: resultat.salles,
+    salleDestination: resultat.salles.map((s) => s.nom).join(", "),
+    codeSalle: resultat.salles[0]?.code ?? codes[0],
+    codesSalle: resultat.salles.map((s) => s.code),
+    transfertMisAJour: resultat.crees === 0 && resultat.supprimes === 0,
+  };
 }

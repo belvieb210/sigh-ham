@@ -90,18 +90,19 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
           orderBy: { emisLe: "desc" },
         });
 
-  const sortantParDossier = new Map<string, (typeof transfertsSortants)[number]>();
+  const sortantParDossier = new Map<string, (typeof transfertsSortants)[number][]>();
   for (const t of transfertsSortants) {
-    if (!sortantParDossier.has(t.dossierId)) {
-      sortantParDossier.set(t.dossierId, t);
-    }
+    const liste = sortantParDossier.get(t.dossierId) ?? [];
+    liste.push(t);
+    sortantParDossier.set(t.dossierId, liste);
   }
 
   return files.map((file) => {
     const dossier = file.passage.dossier;
     const patient = dossier.patient;
     const transfert = file.passage.transferts[0];
-    const sortant = sortantParDossier.get(dossier.id);
+    const sortants = sortantParDossier.get(dossier.id) ?? [];
+    const sortant = sortants[0];
     const examensBruts =
       examensParDossier.get(dossier.id) ?? dossier.examensLaboratoire;
     const examens = examensBruts.map((ex) => ({
@@ -118,8 +119,10 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
       const n = `${prenom ?? ""} ${nom ?? ""}`.trim();
       return n || null;
     };
-    const orientation = sortant
-      ? raccourcirOrientation(sortant.salleDestination.nom)
+    const orientation = sortants.length
+      ? sortants
+          .map((s) => raccourcirOrientation(s.salleDestination.nom))
+          .join(", ")
       : "Laboratoire";
 
     return {
@@ -157,7 +160,10 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
       transfertSortantId: sortant?.id ?? null,
       statutTransfertSortant: sortant?.statut ?? null,
       codeSalleDestination: sortant?.salleDestination.code ?? null,
-      enRecuperation: sortant?.recuperation?.statut === "EN_RECUPERATION",
+      codesSalleDestination: sortants.map((s) => s.salleDestination.code),
+      enRecuperation: sortants.some(
+        (s) => s.recuperation?.statut === "EN_RECUPERATION"
+      ),
       orientation,
     };
   });
@@ -205,9 +211,18 @@ export async function obtenirStatsLaboratoire(): Promise<StatsLaboratoireJour> {
     (p) => new Date(p.arriveeLe) >= debut
   ).length;
 
-  const analysesEnCoursListe = patients.filter((p) =>
-    p.examens.some((e) => e.statut === "EN_ANALYSE")
+  const analysesEnCoursListe = patients.filter(
+    (p) => p.statutAnalyse === "EN_COURS"
   );
+
+  const compteursStatutAnalyse = {
+    RECUS: patients.filter((p) => p.statutAnalyse === "RECUS").length,
+    EN_COURS: patients.filter((p) => p.statutAnalyse === "EN_COURS").length,
+    VERIFIES: patients.filter((p) => p.statutAnalyse === "VERIFIES").length,
+    REJETES: patients.filter((p) => p.statutAnalyse === "REJETES").length,
+    DR_APPROUVE: patients.filter((p) => p.statutAnalyse === "DR_APPROUVE")
+      .length,
+  };
 
   const examensEnCours = patients.reduce(
     (acc, p) =>
@@ -238,6 +253,7 @@ export async function obtenirStatsLaboratoire(): Promise<StatsLaboratoireJour> {
     resultatsAValider,
     resultatsValidesAujourdhui,
     imprimesEnvoyes: 0,
+    compteursStatutAnalyse,
     derniersArrives: triesParArrivee.slice(0, 8),
     patientsTransferes: triesParArrivee.slice(0, 6),
     analysesEnCoursListe: analysesEnCoursListe.slice(0, 6),

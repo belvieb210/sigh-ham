@@ -9,8 +9,36 @@ interface PropsResumePatientLaboratoire {
   patient: PatientFileLaboratoire | null;
 }
 
+function Ligne({
+  label,
+  valeur,
+}: {
+  label: string;
+  valeur: string;
+}) {
+  return (
+    <div className="flex justify-between gap-2">
+      <dt className="shrink-0 text-texte-secondaire">{label}</dt>
+      <dd className="max-w-[65%] truncate text-right font-medium text-texte-principal">
+        {valeur}
+      </dd>
+    </div>
+  );
+}
+
 export function ResumePatientLaboratoire({ patient }: PropsResumePatientLaboratoire) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const formaterDateHeure = (iso: string | null | undefined) => {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleString(i18n.language || "fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   if (!patient) {
     return (
@@ -22,16 +50,13 @@ export function ResumePatientLaboratoire({ patient }: PropsResumePatientLaborato
           {t("laboratoire.panneau.aucunPatient")}
         </p>
         <dl className="mt-4 w-full space-y-2 text-left text-xs">
-          <div className="flex justify-between gap-2">
-            <dt className="text-texte-secondaire">{t("laboratoire.panneau.age")}</dt>
-            <dd className="font-medium text-texte-principal">—</dd>
-          </div>
-          <div className="flex justify-between gap-2">
-            <dt className="text-texte-secondaire">
-              {t("laboratoire.panneau.telephone")}
-            </dt>
-            <dd className="font-medium text-texte-principal">—</dd>
-          </div>
+          <Ligne label={t("laboratoire.panneau.age")} valeur="—" />
+          <Ligne label={t("laboratoire.panneau.telephone")} valeur="—" />
+          <Ligne label={t("laboratoire.panneau.numeroTransfert")} valeur="—" />
+          <Ligne label={t("laboratoire.panneau.heureTransfert")} valeur="—" />
+          <Ligne label={t("laboratoire.panneau.heureEnregistrement")} valeur="—" />
+          <Ligne label={t("laboratoire.panneau.enregistrePar")} valeur="—" />
+          <Ligne label={t("laboratoire.panneau.transferePar")} valeur="—" />
         </dl>
       </div>
     );
@@ -46,40 +71,47 @@ export function ResumePatientLaboratoire({ patient }: PropsResumePatientLaborato
         {patient.nom} {patient.prenom}
       </p>
       <p className="font-mono text-xs text-texte-secondaire">
-        {patient.numeroDossier}
+        {patient.numeroPatient}
       </p>
       <dl className="mt-4 w-full space-y-2 text-left text-xs">
-        <div className="flex justify-between gap-2">
-          <dt className="text-texte-secondaire">{t("laboratoire.panneau.age")}</dt>
-          <dd className="font-medium text-texte-principal">
-            {patient.age != null ? `${patient.age} ans` : "—"}
-            {patient.sexe ? ` / ${patient.sexe}` : ""}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt className="text-texte-secondaire">
-            {t("laboratoire.panneau.telephone")}
-          </dt>
-          <dd className="font-medium text-texte-principal">
-            {patient.telephone || "—"}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt className="text-texte-secondaire">
-            {t("laboratoire.panneau.service")}
-          </dt>
-          <dd className="max-w-[60%] truncate font-medium text-texte-principal">
-            {patient.provenance || "—"}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt className="text-texte-secondaire">
-            {t("laboratoire.panneau.examens")}
-          </dt>
-          <dd className="font-medium text-texte-principal">
-            {patient.nombreExamens}
-          </dd>
-        </div>
+        <Ligne
+          label={t("laboratoire.panneau.age")}
+          valeur={`${patient.age != null ? `${patient.age} ans` : "—"}${
+            patient.sexe ? ` / ${patient.sexe}` : ""
+          }`}
+        />
+        <Ligne
+          label={t("laboratoire.panneau.telephone")}
+          valeur={patient.telephone || "—"}
+        />
+        <Ligne
+          label={t("laboratoire.panneau.service")}
+          valeur={patient.provenance || "—"}
+        />
+        <Ligne
+          label={t("laboratoire.panneau.examens")}
+          valeur={String(patient.nombreExamens)}
+        />
+        <Ligne
+          label={t("laboratoire.panneau.numeroTransfert")}
+          valeur={patient.numeroTransfert || patient.numeroDossier || "—"}
+        />
+        <Ligne
+          label={t("laboratoire.panneau.heureTransfert")}
+          valeur={formaterDateHeure(patient.heureTransfert)}
+        />
+        <Ligne
+          label={t("laboratoire.panneau.heureEnregistrement")}
+          valeur={formaterDateHeure(patient.heureEnregistrement)}
+        />
+        <Ligne
+          label={t("laboratoire.panneau.enregistrePar")}
+          valeur={patient.enregistrePar || "—"}
+        />
+        <Ligne
+          label={t("laboratoire.panneau.transferePar")}
+          valeur={patient.transferePar || "—"}
+        />
       </dl>
     </div>
   );

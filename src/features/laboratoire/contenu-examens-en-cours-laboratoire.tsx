@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { Eye, FlaskConical, Loader2, Search } from "lucide-react";
+import { Eye, FlaskConical, Loader2 } from "lucide-react";
 import {
   MiseEnPageLaboratoire,
   type UtilisateurLaboratoire,
@@ -13,6 +13,12 @@ import {
   SectionsMobileLaboratoire,
 } from "@/features/laboratoire/panneau-droit-laboratoire";
 import type { IdActionRapideLabo } from "@/features/laboratoire/actions-rapides-laboratoire";
+import { BarreFiltresLaboratoire } from "@/features/laboratoire/barre-filtres-laboratoire";
+import {
+  FILTRES_LABORATOIRE_VIDES,
+  patientCorrespondFiltresLabo,
+  type FiltresLaboratoireUi,
+} from "@/features/laboratoire/formulaire-filtres-laboratoire";
 import {
   codeTransfertLaboratoire,
   libellesExamensDemandes,
@@ -63,12 +69,17 @@ export function ContenuExamensEnCoursLaboratoire({
   const router = useRouter();
   const searchParams = useSearchParams();
   const dossierUrl = searchParams.get("dossier");
-  const refRecherche = useRef<HTMLInputElement>(null);
 
   const [patients, setPatients] = useState<PatientFileLaboratoire[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [recherche, setRecherche] = useState("");
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillonFiltres, setBrouillonFiltres] = useState<FiltresLaboratoireUi>(
+    FILTRES_LABORATOIRE_VIDES
+  );
+  const [filtresAppliques, setFiltresAppliques] = useState<FiltresLaboratoireUi>(
+    FILTRES_LABORATOIRE_VIDES
+  );
   const [selectionId, setSelectionId] = useState<string | null>(dossierUrl);
   /** Orientation statut locale — persistance métier à brancher ensuite */
   const [orientationsParDossier, setOrientationsParDossier] = useState<
@@ -121,23 +132,10 @@ export function ContenuExamensEnCoursLaboratoire({
   }, [patients, pageStatut, orientationsParDossier]);
 
   const filtres = useMemo(() => {
-    const q = recherche.trim().toLowerCase();
-    if (!q) return enCours;
-    return enCours.filter((p) => {
-      const blob = [
-        p.nom,
-        p.prenom,
-        p.numeroDossier,
-        p.numeroPatient,
-        p.telephone ?? "",
-        p.provenance,
-        ...p.examens.map((e) => e.libelle),
-      ]
-        .join(" ")
-        .toLowerCase();
-      return blob.includes(q);
-    });
-  }, [enCours, recherche]);
+    return enCours.filter((p) =>
+      patientCorrespondFiltresLabo(p, filtresAppliques)
+    );
+  }, [enCours, filtresAppliques]);
 
   const patientSelectionne = useMemo(
     () => filtres.find((p) => p.dossierId === selectionId) ?? null,
@@ -183,8 +181,7 @@ export function ContenuExamensEnCoursLaboratoire({
   const onAction = (id: IdActionRapideLabo) => {
     setMessageAction(null);
     if (id === "rechercher") {
-      refRecherche.current?.focus();
-      refRecherche.current?.select();
+      setFiltresOuverts(true);
       return;
     }
     if (!selectionId) {
@@ -234,17 +231,30 @@ export function ContenuExamensEnCoursLaboratoire({
     >
       <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-4 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1 space-y-4">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
-            <input
-              ref={refRecherche}
-              type="search"
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-              placeholder={t("laboratoire.examensEnCours.recherche")}
-              className="w-full rounded-xl border border-gris-bordure bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-bleu-medical focus:ring-2 focus:ring-bleu-medical/20"
-            />
-          </div>
+          <BarreFiltresLaboratoire
+            idPrefix={
+              pageStatut
+                ? `filtre-labo-${pageStatut.toLowerCase()}`
+                : "filtre-examens-labo"
+            }
+            titre={titrePage}
+            sousTitre={t("laboratoire.examensEnCours.sousTitreListe", {
+              count: filtres.length,
+            })}
+            filtresOuverts={filtresOuverts}
+            onToggle={() => setFiltresOuverts((o) => !o)}
+            brouillon={brouillonFiltres}
+            onChangeBrouillon={setBrouillonFiltres}
+            appliques={filtresAppliques}
+            onRechercher={() => {
+              setFiltresAppliques(brouillonFiltres);
+              setFiltresOuverts(false);
+            }}
+            onReinitialiser={() => {
+              setBrouillonFiltres(FILTRES_LABORATOIRE_VIDES);
+              setFiltresAppliques(FILTRES_LABORATOIRE_VIDES);
+            }}
+          />
 
           {erreur && (
             <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
@@ -273,9 +283,6 @@ export function ContenuExamensEnCoursLaboratoire({
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
                         <th className="px-3 py-3 font-semibold">
-                          {t("laboratoire.patients.colonnes.transfert")}
-                        </th>
-                        <th className="px-3 py-3 font-semibold">
                           {t("laboratoire.patients.colonnes.patient")}
                         </th>
                         <th className="px-3 py-3 font-semibold">
@@ -285,13 +292,10 @@ export function ContenuExamensEnCoursLaboratoire({
                           {t("laboratoire.patients.colonnes.examensDemandes")}
                         </th>
                         <th className="px-3 py-3 font-semibold">
-                          {t("laboratoire.patients.colonnes.heureTransfert")}
-                        </th>
-                        <th className="px-3 py-3 font-semibold">
                           {t("laboratoire.patients.colonnes.statut")}
                         </th>
                         <th className="px-3 py-3 font-semibold">
-                          {t("laboratoire.patients.colonnes.analyste")}
+                          {t("laboratoire.patients.colonnes.transfert")}
                         </th>
                         <th className="px-3 py-3 font-semibold">
                           {t("laboratoire.patients.colonnes.actions")}
@@ -316,9 +320,6 @@ export function ContenuExamensEnCoursLaboratoire({
                                 : "hover:bg-slate-50/80"
                             )}
                           >
-                            <td className="px-3 py-3 font-mono text-xs font-semibold text-bleu-medical">
-                              {codeTransfertLaboratoire(p)}
-                            </td>
                             <td className="px-3 py-3">
                               <p className="font-semibold">
                                 {p.nom} {p.prenom}
@@ -336,16 +337,13 @@ export function ContenuExamensEnCoursLaboratoire({
                                 ? examensAnalyse.map((e) => e.libelle).join(", ")
                                 : libellesExamensDemandes(p)}
                             </td>
-                            <td className="whitespace-nowrap px-3 py-3 text-xs text-texte-secondaire">
-                              {formatHeure(p.arriveeLe)}
-                            </td>
                             <td className="px-3 py-3">
                               <span className="inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
                                 {libelleStatutOrientation(p.dossierId)}
                               </span>
                             </td>
-                            <td className="px-3 py-3 text-xs text-texte-secondaire">
-                              {utilisateur.prenom} {utilisateur.nom}
+                            <td className="px-3 py-3 font-mono text-xs font-semibold text-bleu-medical">
+                              {codeTransfertLaboratoire(p)}
                             </td>
                             <td className="px-3 py-3">
                               <div className="flex items-center gap-1.5">

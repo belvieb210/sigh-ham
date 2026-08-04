@@ -55,10 +55,7 @@ function codeEchantillon(p: PatientFileLaboratoire) {
 }
 
 function codeTransfert(p: PatientFileLaboratoire) {
-  const n = String(p.numeroOrdre).padStart(4, "0");
-  const d = new Date(p.arriveeLe);
-  const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  return `TRF-${ym}-${n}`;
+  return p.numeroTransfert || p.numeroDossier;
 }
 
 export function ContenuAccueilLaboratoire({
@@ -196,6 +193,7 @@ export function ContenuAccueilLaboratoire({
       utilisateur={utilisateur}
       titre={t("laboratoire.dashboard.titre")}
       sousTitre={t("laboratoire.dashboard.sousTitre")}
+      afficherRechercheEnTete
     >
       <div className="mx-auto w-full max-w-7xl space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">

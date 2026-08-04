@@ -11,8 +11,8 @@ const META: Record<
 > = {
   RECUS: { title: "Reçus — Laboratoire", chemin: "/sigh/laboratoire/recus" },
   EN_COURS: {
-    title: "En cours — Laboratoire",
-    chemin: "/sigh/laboratoire/en-cours",
+    title: "Examens en cours — Laboratoire",
+    chemin: "/sigh/laboratoire/examens-en-cours",
   },
   VERIFIES: {
     title: "Vérifiés — Laboratoire",

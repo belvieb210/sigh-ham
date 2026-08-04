@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
@@ -8,7 +8,6 @@ import {
   FlaskConical,
   Loader2,
   Play,
-  Search,
   X,
 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
@@ -21,6 +20,12 @@ import {
   SectionsMobileLaboratoire,
 } from "@/features/laboratoire/panneau-droit-laboratoire";
 import type { IdActionRapideLabo } from "@/features/laboratoire/actions-rapides-laboratoire";
+import { BarreFiltresLaboratoire } from "@/features/laboratoire/barre-filtres-laboratoire";
+import {
+  FILTRES_LABORATOIRE_VIDES,
+  patientCorrespondFiltresLabo,
+  type FiltresLaboratoireUi,
+} from "@/features/laboratoire/formulaire-filtres-laboratoire";
 import {
   codeTransfertLaboratoire,
   libellesExamensDemandes,
@@ -43,12 +48,17 @@ export function ContenuPatientsLaboratoire({
   const router = useRouter();
   const searchParams = useSearchParams();
   const dossierUrl = searchParams.get("dossier");
-  const refRecherche = useRef<HTMLInputElement>(null);
 
   const [patients, setPatients] = useState<PatientFileLaboratoire[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [recherche, setRecherche] = useState("");
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillonFiltres, setBrouillonFiltres] = useState<FiltresLaboratoireUi>(
+    FILTRES_LABORATOIRE_VIDES
+  );
+  const [filtresAppliques, setFiltresAppliques] = useState<FiltresLaboratoireUi>(
+    FILTRES_LABORATOIRE_VIDES
+  );
   const [selectionId, setSelectionId] = useState<string | null>(dossierUrl);
   const [orientation, setOrientation] = useState<string | null>(null);
   const [detail, setDetail] = useState<DetailPatientLaboratoire | null>(null);
@@ -83,24 +93,11 @@ export function ContenuPatientsLaboratoire({
     void charger();
   }, [charger]);
 
-  const filtrés = useMemo(() => {
-    const q = recherche.trim().toLowerCase();
-    if (!q) return patients;
-    return patients.filter((p) =>
-      [
-        p.nom,
-        p.prenom,
-        p.telephone,
-        p.numeroDossier,
-        p.numeroPatient,
-        p.numeroFacture,
-        p.provenance,
-        ...p.examens.map((e) => e.libelle),
-      ]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q))
-    );
-  }, [patients, recherche]);
+  const filtrés = useMemo(
+    () =>
+      patients.filter((p) => patientCorrespondFiltresLabo(p, filtresAppliques)),
+    [patients, filtresAppliques]
+  );
 
   const patientSelectionne = useMemo(
     () => filtrés.find((p) => p.dossierId === selectionId) ?? null,
@@ -176,8 +173,7 @@ export function ContenuPatientsLaboratoire({
   const onAction = (id: IdActionRapideLabo) => {
     setMessageAction(null);
     if (id === "rechercher") {
-      refRecherche.current?.focus();
-      refRecherche.current?.select();
+      setFiltresOuverts(true);
       return;
     }
     if (!selectionId) {
@@ -224,17 +220,26 @@ export function ContenuPatientsLaboratoire({
     >
       <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-4 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1 space-y-4">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
-            <input
-              ref={refRecherche}
-              type="search"
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-              placeholder={t("laboratoire.patients.recherche")}
-              className="w-full rounded-xl border border-gris-bordure bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-bleu-medical focus:ring-2 focus:ring-bleu-medical/20"
-            />
-          </div>
+          <BarreFiltresLaboratoire
+            idPrefix="filtre-patients-labo"
+            titre={t("laboratoire.patients.titreListe")}
+            sousTitre={t("laboratoire.patients.sousTitreListe", {
+              count: filtrés.length,
+            })}
+            filtresOuverts={filtresOuverts}
+            onToggle={() => setFiltresOuverts((o) => !o)}
+            brouillon={brouillonFiltres}
+            onChangeBrouillon={setBrouillonFiltres}
+            appliques={filtresAppliques}
+            onRechercher={() => {
+              setFiltresAppliques(brouillonFiltres);
+              setFiltresOuverts(false);
+            }}
+            onReinitialiser={() => {
+              setBrouillonFiltres(FILTRES_LABORATOIRE_VIDES);
+              setFiltresAppliques(FILTRES_LABORATOIRE_VIDES);
+            }}
+          />
 
           {erreur && (
             <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
@@ -269,9 +274,6 @@ export function ContenuPatientsLaboratoire({
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
                         <th className="px-3 py-3 font-semibold">
-                          {t("laboratoire.patients.colonnes.transfert")}
-                        </th>
-                        <th className="px-3 py-3 font-semibold">
                           {t("laboratoire.patients.colonnes.patient")}
                         </th>
                         <th className="px-3 py-3 font-semibold">
@@ -281,13 +283,10 @@ export function ContenuPatientsLaboratoire({
                           {t("laboratoire.patients.colonnes.examensDemandes")}
                         </th>
                         <th className="px-3 py-3 font-semibold">
-                          {t("laboratoire.patients.colonnes.heureTransfert")}
-                        </th>
-                        <th className="px-3 py-3 font-semibold">
                           {t("laboratoire.patients.colonnes.statut")}
                         </th>
                         <th className="px-3 py-3 font-semibold">
-                          {t("laboratoire.patients.colonnes.analyste")}
+                          {t("laboratoire.patients.colonnes.transfert")}
                         </th>
                         <th className="px-3 py-3 font-semibold">
                           {t("laboratoire.patients.colonnes.actions")}
@@ -310,18 +309,6 @@ export function ContenuPatientsLaboratoire({
                             )}
                           >
                             <td className="px-3 py-3">
-                              <button
-                                type="button"
-                                className="font-mono text-xs font-semibold text-bleu-medical hover:underline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void ouvrirDetail(p.dossierId);
-                                }}
-                              >
-                                {codeTransfertLaboratoire(p)}
-                              </button>
-                            </td>
-                            <td className="px-3 py-3">
                               <p className="font-semibold text-texte-principal">
                                 {p.nom} {p.prenom}
                               </p>
@@ -335,9 +322,6 @@ export function ContenuPatientsLaboratoire({
                             </td>
                             <td className="max-w-[200px] px-3 py-3 text-xs font-medium text-texte-principal">
                               {libellesExamensDemandes(p)}
-                            </td>
-                            <td className="whitespace-nowrap px-3 py-3 text-xs text-texte-secondaire">
-                              {formatHeure(p.arriveeLe)}
                             </td>
                             <td className="px-3 py-3">
                               <span
@@ -353,8 +337,17 @@ export function ContenuPatientsLaboratoire({
                                   : t("laboratoire.dashboard.statutRecu")}
                               </span>
                             </td>
-                            <td className="px-3 py-3 text-xs text-texte-secondaire">
-                              {p.medecinResponsable || "—"}
+                            <td className="px-3 py-3">
+                              <button
+                                type="button"
+                                className="font-mono text-xs font-semibold text-bleu-medical hover:underline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void ouvrirDetail(p.dossierId);
+                                }}
+                              >
+                                {codeTransfertLaboratoire(p)}
+                              </button>
                             </td>
                             <td className="px-3 py-3">
                               <div className="flex items-center gap-1.5">

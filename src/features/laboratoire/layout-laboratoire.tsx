@@ -242,6 +242,7 @@ interface PropsEnTeteLaboratoire {
   sousTitre: string;
   utilisateur: UtilisateurLaboratoire;
   onMenu?: () => void;
+  afficherRecherche?: boolean;
 }
 
 export function EnTeteLaboratoire({
@@ -249,6 +250,7 @@ export function EnTeteLaboratoire({
   sousTitre,
   utilisateur,
   onMenu,
+  afficherRecherche = false,
 }: PropsEnTeteLaboratoire) {
   const { t } = useTranslation();
   const [recherche, setRecherche] = useState("");
@@ -289,19 +291,23 @@ export function EnTeteLaboratoire({
           <p className="text-sm text-texte-secondaire">{sousTitre}</p>
         </div>
 
-        <div className="relative hidden min-w-0 flex-1 max-w-md xl:block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
-          <input
-            type="search"
-            value={recherche}
-            onChange={(e) => setRecherche(e.target.value)}
-            placeholder={t("laboratoire.layout.rechercher")}
-            className="w-full rounded-xl border border-gris-bordure bg-gris-tres-clair/50 py-2.5 pl-10 pr-20 text-sm outline-none focus:border-bleu-medical focus:ring-2 focus:ring-bleu-medical/20"
-          />
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-gris-bordure bg-white px-1.5 py-0.5 text-[10px] text-texte-secondaire">
-            {t("laboratoire.layout.raccourciRecherche")}
-          </span>
-        </div>
+        {afficherRecherche ? (
+          <div className="relative hidden min-w-0 flex-1 max-w-md xl:block">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
+            <input
+              type="search"
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+              placeholder={t("laboratoire.layout.rechercher")}
+              className="w-full rounded-xl border border-gris-bordure bg-gris-tres-clair/50 py-2.5 pl-10 pr-20 text-sm outline-none focus:border-bleu-medical focus:ring-2 focus:ring-bleu-medical/20"
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-gris-bordure bg-white px-1.5 py-0.5 text-[10px] text-texte-secondaire">
+              {t("laboratoire.layout.raccourciRecherche")}
+            </span>
+          </div>
+        ) : (
+          <div className="min-w-0 flex-1" />
+        )}
 
         <div className="flex items-center justify-end gap-3">
           <SelecteurLangue />

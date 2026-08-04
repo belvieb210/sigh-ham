@@ -51,7 +51,11 @@ export async function listerPatientsFileAttenteSalle(codeSalle: CodeSalle) {
               enregistrementsReception: {
                 orderBy: { enregistreLe: "desc" },
                 take: 1,
-                select: { medecinResponsable: true },
+                select: {
+                  medecinResponsable: true,
+                  enregistreLe: true,
+                  agent: { select: { prenom: true, nom: true } },
+                },
               },
             },
           },
@@ -61,6 +65,7 @@ export async function listerPatientsFileAttenteSalle(codeSalle: CodeSalle) {
             take: 1,
             include: {
               salleOrigine: { select: { code: true, nom: true } },
+              emetteur: { select: { prenom: true, nom: true } },
             },
           },
         },

@@ -64,6 +64,11 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
       code: ex.typeExamen.code,
     }));
     const fac = factureParDossier.get(dossier.id) ?? null;
+    const enreg = dossier.enregistrementsReception[0] ?? null;
+    const formaterNom = (prenom?: string | null, nom?: string | null) => {
+      const n = `${prenom ?? ""} ${nom ?? ""}`.trim();
+      return n || null;
+    };
 
     return {
       fileAttenteId: file.id,
@@ -84,8 +89,12 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
         transfert?.salleOrigine?.nom?.trim() ||
         transfert?.salleOrigine?.code ||
         "—",
-      medecinResponsable:
-        dossier.enregistrementsReception[0]?.medecinResponsable?.trim() || null,
+      medecinResponsable: enreg?.medecinResponsable?.trim() || null,
+      numeroTransfert: dossier.numeroDossier,
+      heureTransfert: transfert?.emisLe?.toISOString() ?? file.arriveLe.toISOString(),
+      heureEnregistrement: enreg?.enregistreLe?.toISOString() ?? null,
+      enregistrePar: formaterNom(enreg?.agent?.prenom, enreg?.agent?.nom),
+      transferePar: formaterNom(transfert?.emetteur?.prenom, transfert?.emetteur?.nom),
       examens,
       nombreExamens: examens.length,
       numeroFacture: fac?.numeroFacture ?? null,

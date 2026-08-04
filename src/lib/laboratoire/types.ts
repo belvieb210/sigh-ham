@@ -25,6 +25,12 @@ export interface PatientFileLaboratoire {
   numeroOrdre: number;
   provenance: string;
   medecinResponsable: string | null;
+  /** N° dossier affiché (ex. 20260803007) — remplace l’ancien code TRF-… */
+  numeroTransfert: string;
+  heureTransfert: string | null;
+  heureEnregistrement: string | null;
+  enregistrePar: string | null;
+  transferePar: string | null;
   examens: ExamenFileLaboratoire[];
   nombreExamens: number;
   numeroFacture: string | null;

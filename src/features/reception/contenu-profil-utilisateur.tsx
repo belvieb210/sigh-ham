@@ -24,6 +24,7 @@ import { MiseEnPageLaboratoire } from "@/features/laboratoire/mise-en-page-labor
 import { MiseEnPageMedecins } from "@/features/medecins/mise-en-page-medecins";
 import { MiseEnPageInfirmiers } from "@/features/infirmiers/mise-en-page-infirmiers";
 import { MiseEnPagePharmacie } from "@/features/pharmacie/mise-en-page-pharmacie";
+import { MiseEnPageMedecinsExternes } from "@/features/medecins-externes/mise-en-page-medecins-externes";
 import { traduireRoleHospitalier } from "@/features/messagerie/traduire-role";
 import type { ProfilUtilisateurPublic } from "@/lib/auth/types-profil";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
@@ -38,7 +39,8 @@ interface PropsContenuProfilUtilisateur {
     | "laboratoire"
     | "medecins"
     | "infirmiers"
-    | "pharmacie";
+    | "pharmacie"
+    | "medecins-externes";
 }
 
 function formaterDate(iso: string | null, locale: string) {
@@ -71,7 +73,9 @@ export function ContenuProfilUtilisateur({
             ? MiseEnPageInfirmiers
             : salle === "pharmacie"
               ? MiseEnPagePharmacie
-              : MiseEnPageReception;
+              : salle === "medecins-externes"
+                ? MiseEnPageMedecinsExternes
+                : MiseEnPageReception;
   const titreLayout =
     salle === "caisse"
       ? t("caisse.pages.profil.titre")
@@ -83,7 +87,9 @@ export function ContenuProfilUtilisateur({
             ? t("infirmiers.nav.profil")
             : salle === "pharmacie"
               ? t("pharmacie.nav.profil")
-              : t("reception.pages.profil.titre");
+              : salle === "medecins-externes"
+                ? t("medecinsExternes.nav.profil")
+                : t("reception.pages.profil.titre");
   const sousTitreLayout =
     salle === "caisse"
       ? t("caisse.layout.sousTitre")
@@ -95,7 +101,9 @@ export function ContenuProfilUtilisateur({
             ? t("infirmiers.layout.sousTitre")
             : salle === "pharmacie"
               ? t("pharmacie.layout.sousTitre")
-              : t("reception.layout.sousTitre");
+              : salle === "medecins-externes"
+                ? t("medecinsExternes.layout.sousTitre")
+                : t("reception.layout.sousTitre");
   const filAccueil =
     salle === "caisse"
       ? { label: t("caisse.layout.caisse"), href: "/sigh/caisse" }
@@ -107,7 +115,12 @@ export function ContenuProfilUtilisateur({
             ? { label: t("infirmiers.layout.titre"), href: "/sigh/infirmiers" }
             : salle === "pharmacie"
               ? { label: t("pharmacie.layout.titre"), href: "/sigh/pharmacie" }
-              : { label: t("reception.common.reception"), href: "/sigh/reception" };
+              : salle === "medecins-externes"
+                ? {
+                    label: t("medecinsExternes.layout.titre"),
+                    href: "/sigh/medecins-externes",
+                  }
+                : { label: t("reception.common.reception"), href: "/sigh/reception" };
 
   const [profil, setProfil] = useState<ProfilUtilisateurPublic | null>(null);
   const [chargement, setChargement] = useState(true);

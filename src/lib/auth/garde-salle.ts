@@ -4,6 +4,7 @@ import {
   obtenirRouteApresConnexion,
   utilisateurPeutAccederSalle,
 } from "@/lib/auth/redirections";
+import { assurerFicheMedecinExterne } from "@/lib/medecins-externes/assurer-fiche";
 
 export async function verifierAccesReception() {
   const session = await lireSessionDepuisCookie();
@@ -69,4 +70,20 @@ export async function verifierAccesPharmacie() {
   }
 
   return session.utilisateur;
+}
+
+export async function verifierAccesMedecinsExternes() {
+  const session = await lireSessionDepuisCookie();
+  if (!session) redirect("/connexion");
+
+  if (
+    !utilisateurPeutAccederSalle(
+      "MEDECINS_EXTERNES",
+      session.utilisateur.role
+    )
+  ) {
+    redirect(obtenirRouteApresConnexion(session.utilisateur.role));
+  }
+
+  return assurerFicheMedecinExterne(session.utilisateur);
 }

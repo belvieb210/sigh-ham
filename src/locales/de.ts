@@ -7,6 +7,7 @@ import { laboratoireDe } from "./laboratoire/de";
 import { medecinsDe } from "./medecins/de";
 import { infirmiersDe } from "./infirmiers/de";
 import { pharmacieDe } from "./pharmacie/de";
+import { medecinsExternesDe } from "./medecins-externes/de";
 
 const de: { translation: TraductionsSite } = {
   translation: {
@@ -159,6 +160,7 @@ const de: { translation: TraductionsSite } = {
     medecins: medecinsDe,
     infirmiers: infirmiersDe,
     pharmacie: pharmacieDe,
+    medecinsExternes: medecinsExternesDe,
     ...communDe,
   },
 };

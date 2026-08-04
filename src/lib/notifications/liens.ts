@@ -19,8 +19,9 @@ export function lienFileSalle(code: CodeSalle): string {
     case "INFIRMIERS":
       return "/sigh/infirmiers";
     case "MEDECINS":
-    case "MEDECINS_EXTERNES":
       return "/sigh/medecins";
+    case "MEDECINS_EXTERNES":
+      return "/sigh/medecins-externes/patients";
     default:
       return "/sigh/reception/transferts";
   }
@@ -36,6 +37,12 @@ export function lienCentreNotificationsDepuisChemin(pathname: string): string {
   }
   if (pathname.startsWith("/sigh/reception")) {
     return "/sigh/reception/notifications";
+  }
+  if (pathname.startsWith("/sigh/medecins-externes")) {
+    return "/sigh/medecins-externes/notifications";
+  }
+  if (pathname.startsWith("/sigh/pharmacie")) {
+    return "/sigh/pharmacie/notifications";
   }
   return "/sigh/notifications";
 }

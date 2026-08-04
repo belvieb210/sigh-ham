@@ -7,6 +7,7 @@ import { laboratoireLn } from "./laboratoire/ln";
 import { medecinsLn } from "./medecins/ln";
 import { infirmiersLn } from "./infirmiers/ln";
 import { pharmacieLn } from "./pharmacie/ln";
+import { medecinsExternesLn } from "./medecins-externes/ln";
 
 /** Lingala — traductions principales du site public */
 const ln: { translation: TraductionsSite } = {
@@ -163,6 +164,7 @@ const ln: { translation: TraductionsSite } = {
     medecins: medecinsLn,
     infirmiers: infirmiersLn,
     pharmacie: pharmacieLn,
+    medecinsExternes: medecinsExternesLn,
     ...communLn,
   },
 };

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
 import {
@@ -12,10 +13,26 @@ import { useNotificationsLive } from "@/features/notifications/hooks/use-notific
 import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
 import { cn } from "@/lib/utils";
 
-const LIEN_CENTRE = "/sigh/reception/notifications";
+function lienCentreDepuisChemin(pathname: string): string {
+  if (pathname.startsWith("/sigh/laboratoire")) {
+    return "/sigh/laboratoire/notifications";
+  }
+  if (pathname.startsWith("/sigh/caisse")) {
+    return "/sigh/caisse/notifications";
+  }
+  if (pathname.startsWith("/sigh/reception")) {
+    return "/sigh/reception/notifications";
+  }
+  return "/sigh/notifications";
+}
 
 export function BoutonNotificationsEnTete() {
   const { t } = useTranslation();
+  const pathname = usePathname() || "";
+  const lienCentre = useMemo(
+    () => lienCentreDepuisChemin(pathname),
+    [pathname]
+  );
   const { totalNonLues, rafraichir } = useNotificationsLive();
   const [ouvert, setOuvert] = useState(false);
   const [recentes, setRecentes] = useState<NotificationItem[]>([]);
@@ -153,7 +170,7 @@ export function BoutonNotificationsEnTete() {
 
           <div className="border-t border-gris-bordure bg-slate-50 px-4 py-2.5">
             <Link
-              href={LIEN_CENTRE}
+              href={lienCentre}
               onClick={() => setOuvert(false)}
               className="block rounded-lg py-2 text-center text-xs font-bold text-bleu-medical hover:bg-bleu-medical-clair"
             >

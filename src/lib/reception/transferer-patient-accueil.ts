@@ -581,22 +581,5 @@ export async function transfererPatientAccueil(
     };
   });
 
-  const patient = await prisma.patient.findUnique({
-    where: { id: resultat.patientId },
-    select: { prenom: true, nom: true },
-  });
-
-  if (patient) {
-    const { evenementPatientTransfere } = await import("@/lib/notifications/evenements-metier");
-    void evenementPatientTransfere({
-      patientId: resultat.patientId,
-      prenom: patient.prenom,
-      nom: patient.nom,
-      numeroPatient: resultat.numeroPatient,
-      salleDestination: donnees.orientation as CodeSalle,
-      transfertId: resultat.transfertId,
-    });
-  }
-
   return resultat;
 }

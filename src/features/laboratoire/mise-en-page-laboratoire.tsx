@@ -9,6 +9,7 @@ import { NavigationBasseLaboratoire } from "@/features/laboratoire/navigation-ba
 import { ToastNotificationGlobale } from "@/features/notifications/composants/toast-notification-globale";
 import { GestionnaireAlertesNotifications } from "@/features/notifications/composants/gestionnaire-alertes-notifications";
 import { FournisseurNotifications } from "@/features/notifications/fournisseur-notifications";
+import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
 import type { UtilisateurLaboratoire } from "@/lib/auth/props-utilisateur-laboratoire";
 
 export type { UtilisateurLaboratoire };
@@ -34,7 +35,8 @@ export function MiseEnPageLaboratoire({
 
   useEffect(() => {
     let annule = false;
-    (async () => {
+
+    const chargerBadge = async () => {
       try {
         const res = await fetch("/api/laboratoire/stats");
         const data = (await res.json()) as {
@@ -46,9 +48,17 @@ export function MiseEnPageLaboratoire({
       } catch {
         /* ignore */
       }
-    })();
+    };
+
+    void chargerBadge();
+    const onNotif = () => void chargerBadge();
+    window.addEventListener(EVENT_RAFRAICHIR_NOTIFICATIONS, onNotif);
+    const interval = window.setInterval(() => void chargerBadge(), 30000);
+
     return () => {
       annule = true;
+      window.removeEventListener(EVENT_RAFRAICHIR_NOTIFICATIONS, onNotif);
+      window.clearInterval(interval);
     };
   }, []);
 

@@ -2,7 +2,10 @@ import "server-only";
 import type { CodeSalle } from "@/generated/prisma/enums";
 import { notifierSalle } from "@/lib/notifications/service-notifications";
 import { metadonneesNotificationI18n } from "@/lib/notifications/cles-i18n";
-import { lienMessagerieReception } from "@/lib/notifications/liens";
+import {
+  lienFileSalle,
+  lienMessagerieReception,
+} from "@/lib/notifications/liens";
 
 export async function evenementNouveauPatient(params: {
   patientId: string;
@@ -27,6 +30,9 @@ export async function evenementNouveauPatient(params: {
   }).catch(console.error);
 }
 
+/**
+ * Notifie la salle de destination qu'un patient y a été transféré (après confirmation).
+ */
 export async function evenementPatientTransfere(params: {
   patientId: string;
   nom: string;
@@ -35,6 +41,8 @@ export async function evenementPatientTransfere(params: {
   salleDestination: CodeSalle;
   transfertId: string;
 }) {
+  const lien = lienFileSalle(params.salleDestination);
+
   await notifierSalle(params.salleDestination, {
     type: "PATIENT_TRANSFERE",
     titre: "Patient transféré",
@@ -42,7 +50,7 @@ export async function evenementPatientTransfere(params: {
     module: params.salleDestination,
     entite: "transfert",
     entiteId: params.transfertId,
-    lien: `/sigh/reception/transferts`,
+    lien,
     metadonnees: metadonneesNotificationI18n("PATIENT_TRANSFERE", {
       prenom: params.prenom,
       nom: params.nom,
@@ -59,7 +67,7 @@ export async function evenementPatientTransfere(params: {
       module: "INFIRMIERS",
       entite: "transfert",
       entiteId: params.transfertId,
-      lien: `/sigh/reception/transferts`,
+      lien,
       metadonnees: metadonneesNotificationI18n("PATIENT_EN_ATTENTE", {
         prenom: params.prenom,
         nom: params.nom,

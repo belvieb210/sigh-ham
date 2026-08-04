@@ -73,7 +73,7 @@ export async function confirmerTransfertLaboratoire(
     throw new Error("Passage associé au transfert introuvable.");
   }
 
-  return prisma.$transaction(async (tx) => {
+  const resultat = await prisma.$transaction(async (tx) => {
     const fileLabo = await tx.fileAttente.findFirst({
       where: {
         passageId: transfert.passageId!,
@@ -144,6 +144,20 @@ export async function confirmerTransfertLaboratoire(
       salleDestination: transfert.salleDestination.nom,
     };
   });
+
+  const { evenementPatientTransfere } = await import(
+    "@/lib/notifications/evenements-metier"
+  );
+  void evenementPatientTransfere({
+    patientId: transfert.dossier.patientId,
+    prenom: transfert.dossier.patient.prenom,
+    nom: transfert.dossier.patient.nom,
+    numeroPatient: transfert.dossier.patient.numeroPatient,
+    salleDestination: transfert.salleDestination.code,
+    transfertId: resultat.transfertId,
+  });
+
+  return resultat;
 }
 
 export async function rejeterTransfertLaboratoire(

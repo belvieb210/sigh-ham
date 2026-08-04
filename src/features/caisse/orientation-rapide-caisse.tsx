@@ -68,8 +68,7 @@ export function OrientationRapideCaisse({
 
   return (
     <div className="space-y-2">
-      {ORIENTATIONS_RAPIDES_CAISSE.filter((o) => o.value !== "CAISSE").map(
-        (opt) => {
+      {ORIENTATIONS_RAPIDES_CAISSE.map((opt) => {
           const Icone = ICONES[opt.value] ?? Stethoscope;
           const selectionne = multiple
             ? orientations.includes(opt.value)
@@ -121,8 +120,7 @@ export function OrientationRapideCaisse({
               </span>
             </button>
           );
-        }
-      )}
+        })}
     </div>
   );
 }

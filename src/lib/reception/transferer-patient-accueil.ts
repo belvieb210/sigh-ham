@@ -15,19 +15,25 @@ import type {
   ResultatTransfertAccueil,
 } from "@/lib/reception/types";
 
-const ORIENTATIONS_VALIDES: CodeSalle[] = [
-  "INFIRMIERS",
-  "MEDECINS",
-  "CAISSE",
-  "LABORATOIRE",
-];
-
 /** Salles disponibles via orientation rapide / transfert manuel */
 export const ORIENTATIONS_TRANSFERT_RAPIDE: CodeSalle[] = [
   "INFIRMIERS",
   "MEDECINS",
   "CAISSE",
   "LABORATOIRE",
+  "PHARMACIE",
+  "HOSPITALISATION",
+  "EGLISE",
+  "MEDECINS_EXTERNES",
+];
+
+const ORIENTATIONS_VALIDES: CodeSalle[] = [
+  "INFIRMIERS",
+  "MEDECINS",
+  "CAISSE",
+  "LABORATOIRE",
+  "PHARMACIE",
+  "HOSPITALISATION",
   "EGLISE",
   "MEDECINS_EXTERNES",
 ];

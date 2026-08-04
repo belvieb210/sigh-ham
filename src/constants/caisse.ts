@@ -86,8 +86,14 @@ export const TYPES_FACTURE_CAISSE_UI = [
   { id: "PHARMACIE" as const, destination: "PHARMACIE" as const },
 ] as const;
 
-/** Orientations rapides — mêmes possibilités que la réception (+ laboratoire) */
+/** Orientations rapides — toutes salles sauf CAISSE */
 export const ORIENTATIONS_RAPIDES_CAISSE = [
+  {
+    value: "RECEPTION",
+    label: "Réception",
+    description: "Retour à l'accueil",
+    couleur: "border-slate-300 bg-slate-50 text-slate-700",
+  },
   {
     value: "INFIRMIERS",
     label: "Infirmiers",
@@ -107,10 +113,16 @@ export const ORIENTATIONS_RAPIDES_CAISSE = [
     couleur: "border-cyan-200 bg-cyan-50 text-cyan-800",
   },
   {
-    value: "CAISSE",
-    label: "Caisse",
-    description: "Facturation et paiement",
-    couleur: "border-rose-200 bg-rose-50 text-rose-700",
+    value: "PHARMACIE",
+    label: "Pharmacie",
+    description: "Délivrance des médicaments",
+    couleur: "border-indigo-200 bg-indigo-50 text-indigo-700",
+  },
+  {
+    value: "HOSPITALISATION",
+    label: "Hospitalisation",
+    description: "Admission / lits",
+    couleur: "border-indigo-200 bg-indigo-50 text-indigo-800",
   },
   {
     value: "MEDECINS_EXTERNES",
@@ -124,15 +136,10 @@ export const ORIENTATIONS_RAPIDES_CAISSE = [
     description: "Examens prénuptiaux",
     couleur: "border-emerald-200 bg-emerald-50 text-emerald-700",
   },
-  {
-    value: "PHARMACIE",
-    label: "Pharmacie",
-    description: "Délivrance des médicaments",
-    couleur: "border-indigo-200 bg-indigo-50 text-indigo-700",
-  },
 ] as const;
 
 export const COULEURS_ORIENTATION_CAISSE: Record<string, string> = {
+  Réception: "bg-slate-100 text-slate-700",
   Infirmiers: "bg-violet-100 text-violet-700",
   Médecin: "bg-blue-100 text-blue-700",
   "Médecin externe": "bg-amber-100 text-amber-800",
@@ -140,6 +147,7 @@ export const COULEURS_ORIENTATION_CAISSE: Record<string, string> = {
   Laboratoire: "bg-cyan-100 text-cyan-800",
   Église: "bg-emerald-100 text-emerald-700",
   Pharmacie: "bg-indigo-100 text-indigo-700",
+  Hospitalisation: "bg-indigo-100 text-indigo-800",
   "Non orienté": "bg-slate-100 text-slate-600",
 };
 

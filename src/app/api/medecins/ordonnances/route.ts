@@ -35,6 +35,7 @@ export async function POST(req: Request) {
     const body = (await req.json()) as {
       dossierId?: string;
       notes?: string | null;
+      orienterVersPharmacie?: boolean;
       lignes?: {
         medicamentId: string;
         quantite: number;
@@ -50,13 +51,20 @@ export async function POST(req: Request) {
       );
     }
 
-    const ordonnance = await creerOrdonnance(session.utilisateur.id, {
-      dossierId: body.dossierId,
-      notes: body.notes,
-      lignes: body.lignes,
-    });
+    const { ordonnance, transfertPharmacie } = await creerOrdonnance(
+      session.utilisateur.id,
+      {
+        dossierId: body.dossierId,
+        notes: body.notes,
+        lignes: body.lignes,
+        orienterVersPharmacie: body.orienterVersPharmacie,
+      }
+    );
 
-    return NextResponse.json({ ordonnance }, { status: 201 });
+    return NextResponse.json(
+      { ordonnance, transfertPharmacie },
+      { status: 201 }
+    );
   } catch (e) {
     const code = e instanceof Error ? e.message : "";
     if (code === "DOSSIER_INTROUVABLE") {

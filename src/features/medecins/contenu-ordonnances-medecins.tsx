@@ -39,6 +39,7 @@ export function ContenuOrdonnancesMedecins({ utilisateur }: Props) {
     { key: "1", medicamentId: "", quantite: 1, posologie: "", dureeJours: "" },
   ]);
   const [notes, setNotes] = useState("");
+  const [orienterVersPharmacie, setOrienterVersPharmacie] = useState(true);
   const [chargement, setChargement] = useState(true);
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -113,10 +114,16 @@ export function ContenuOrdonnancesMedecins({ utilisateur }: Props) {
       const res = await fetch("/api/medecins/ordonnances", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dossierId, notes, lignes: payload }),
+        body: JSON.stringify({
+          dossierId,
+          notes,
+          lignes: payload,
+          orienterVersPharmacie,
+        }),
       });
       const data = (await res.json()) as {
         ordonnance?: OrdonnanceMedecins;
+        transfertPharmacie?: { ok: boolean; message?: string };
         erreur?: string;
       };
       if (!res.ok || !data.ordonnance) {
@@ -128,7 +135,17 @@ export function ContenuOrdonnancesMedecins({ utilisateur }: Props) {
         { key: String(Date.now()), medicamentId: "", quantite: 1, posologie: "", dureeJours: "" },
       ]);
       setNotes("");
-      setMessage(t("medecins.ordonnances.creee"));
+      if (orienterVersPharmacie && data.transfertPharmacie?.ok) {
+        setMessage(t("medecins.ordonnances.creeeAvecTransfert"));
+      } else if (orienterVersPharmacie && data.transfertPharmacie && !data.transfertPharmacie.ok) {
+        setMessage(
+          t("medecins.ordonnances.creeeSansTransfert", {
+            raison: data.transfertPharmacie.message ?? "",
+          })
+        );
+      } else {
+        setMessage(t("medecins.ordonnances.creee"));
+      }
     } catch {
       setErreur(t("medecins.actions.erreurInattendue"));
     } finally {
@@ -278,6 +295,15 @@ export function ContenuOrdonnancesMedecins({ utilisateur }: Props) {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
+                <label className="flex items-center gap-2 text-sm text-texte-principal">
+                  <input
+                    type="checkbox"
+                    checked={orienterVersPharmacie}
+                    onChange={(e) => setOrienterVersPharmacie(e.target.checked)}
+                    className="rounded border-gris-bordure"
+                  />
+                  {t("medecins.ordonnances.orienterPharmacie")}
+                </label>
                 <button
                   type="button"
                   disabled={enCours}

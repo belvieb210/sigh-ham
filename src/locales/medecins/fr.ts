@@ -202,6 +202,10 @@ export const medecinsFr = {
     ajouterLigne: "Ajouter une ligne",
     creer: "Créer l'ordonnance",
     creee: "Ordonnance créée.",
+    creeeAvecTransfert: "Ordonnance créée et orientation pharmacie proposée.",
+    creeeSansTransfert:
+      "Ordonnance créée. Orientation pharmacie non effectuée : {{raison}}",
+    orienterPharmacie: "Orienter vers la pharmacie après création",
     liste: "Ordonnances",
     vide: "Aucune ordonnance.",
     lignesRequises: "Ajoutez au moins un médicament.",

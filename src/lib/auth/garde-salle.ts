@@ -59,3 +59,14 @@ export async function verifierAccesInfirmiers() {
 
   return session.utilisateur;
 }
+
+export async function verifierAccesPharmacie() {
+  const session = await lireSessionDepuisCookie();
+  if (!session) redirect("/connexion");
+
+  if (!utilisateurPeutAccederSalle("PHARMACIE", session.utilisateur.role)) {
+    redirect(obtenirRouteApresConnexion(session.utilisateur.role));
+  }
+
+  return session.utilisateur;
+}

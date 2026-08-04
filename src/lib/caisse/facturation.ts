@@ -658,6 +658,28 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
     }
   }
 
+  if (resultat.statut === "PAYEE") {
+    try {
+      const { marquerVentePayeeParFacture } = await import(
+        "@/lib/pharmacie/gestion-ventes"
+      );
+      const vente = await marquerVentePayeeParFacture(resultat.factureId);
+      if (vente) {
+        try {
+          await reorienterPatientDepuisCaisse(
+            caissierId,
+            donnees.dossierId,
+            "PHARMACIE"
+          );
+        } catch {
+          /* patient hors file caisse éventuel */
+        }
+      }
+    } catch (e) {
+      console.error("[encaisserFacture] vente pharmacie", e);
+    }
+  }
+
   const dossierMisAJour = await obtenirDossierFacturation(donnees.dossierId);
 
   return {

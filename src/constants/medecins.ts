@@ -1,5 +1,6 @@
-/** Navigation et orientations — Salle Médecins (§8) */
-
+/** Toutes les salles sauf MEDECINS (origine) — orientations universelles */
+import { metaOrientationsSauf } from "@/lib/transferts/orientations-universelles";
+import type { CodeSalle } from "@/generated/prisma/client";
 import {
   Home,
   Users,
@@ -16,7 +17,6 @@ import {
   ClipboardList,
   FileText,
 } from "lucide-react";
-import type { CodeSalle } from "@/generated/prisma/client";
 
 export const NAVIGATION_MEDECINS = {
   tableauDeBord: [{ href: "/sigh/medecins", id: "accueil", icone: Home }],
@@ -75,62 +75,7 @@ export const NAVIGATION_BASSE_MEDECINS = [
   { href: "/sigh/medecins/ordonnances", id: "ordonnances", icone: Pill },
 ] as const;
 
-/** Toutes les salles sauf MEDECINS (origine) */
-export const ORIENTATIONS_RAPIDES_MEDECINS: {
-  value: CodeSalle;
-  labelKey: string;
-  descriptionKey: string;
-  couleur: string;
-}[] = [
-  {
-    value: "INFIRMIERS",
-    labelKey: "INFIRMIERS",
-    descriptionKey: "INFIRMIERS",
-    couleur: "border-violet-300 bg-violet-50 text-violet-700",
-  },
-  {
-    value: "RECEPTION",
-    labelKey: "RECEPTION",
-    descriptionKey: "RECEPTION",
-    couleur: "border-slate-300 bg-slate-50 text-slate-700",
-  },
-  {
-    value: "CAISSE",
-    labelKey: "CAISSE",
-    descriptionKey: "CAISSE",
-    couleur: "border-rose-200 bg-rose-50 text-rose-700",
-  },
-  {
-    value: "LABORATOIRE",
-    labelKey: "LABORATOIRE",
-    descriptionKey: "LABORATOIRE",
-    couleur: "border-cyan-200 bg-cyan-50 text-cyan-800",
-  },
-  {
-    value: "PHARMACIE",
-    labelKey: "PHARMACIE",
-    descriptionKey: "PHARMACIE",
-    couleur: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  },
-  {
-    value: "HOSPITALISATION",
-    labelKey: "HOSPITALISATION",
-    descriptionKey: "HOSPITALISATION",
-    couleur: "border-indigo-200 bg-indigo-50 text-indigo-800",
-  },
-  {
-    value: "EGLISE",
-    labelKey: "EGLISE",
-    descriptionKey: "EGLISE",
-    couleur: "border-amber-200 bg-amber-50 text-amber-800",
-  },
-  {
-    value: "MEDECINS_EXTERNES",
-    labelKey: "MEDECINS_EXTERNES",
-    descriptionKey: "MEDECINS_EXTERNES",
-    couleur: "border-orange-200 bg-orange-50 text-orange-800",
-  },
-];
+export const ORIENTATIONS_RAPIDES_MEDECINS = metaOrientationsSauf("MEDECINS");
 
 export const CODES_ORIENTATION_MEDECINS: CodeSalle[] =
   ORIENTATIONS_RAPIDES_MEDECINS.map((o) => o.value);

@@ -6,6 +6,7 @@ import { caisseHe } from "./caisse/he";
 import { laboratoireHe } from "./laboratoire/he";
 import { medecinsHe } from "./medecins/he";
 import { infirmiersHe } from "./infirmiers/he";
+import { pharmacieHe } from "./pharmacie/he";
 
 const he: { translation: TraductionsSite } = {
   translation: {
@@ -157,6 +158,7 @@ const he: { translation: TraductionsSite } = {
     laboratoire: laboratoireHe,
     medecins: medecinsHe,
     infirmiers: infirmiersHe,
+    pharmacie: pharmacieHe,
     ...communHe,
   },
 };

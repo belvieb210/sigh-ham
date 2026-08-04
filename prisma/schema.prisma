@@ -203,6 +203,33 @@ enum StatutOrdonnance {
   ANNULEE
 }
 
+enum TypeVentePharmacie {
+  ORDONNANCE
+  DIRECTE
+}
+
+enum StatutVentePharmacie {
+  BROUILLON
+  TRANSMISE
+  PAYEE
+  REFUSEE
+  DELIVREE
+  ANNULEE
+}
+
+enum TypeMouvementStock {
+  ENTREE
+  SORTIE
+  AJUSTEMENT
+  RETOUR
+}
+
+enum StatutAchatPharmacie {
+  BROUILLON
+  RECU
+  ANNULE
+}
+
 enum StatutAdmission {
   ADMIS
   EN_SOINS
@@ -341,6 +368,11 @@ model Utilisateur {
   facturesApprouvees       Facture[]               @relation("FactureApprouveePar")
   abonnementsPush          AbonnementPush[]
   sessionsCaisse           SessionCaisse[]
+  ventesPharmacie          VentePharmacie[]        @relation("VentePharmacien")
+  delivrancesPharmacie     DelivrancePharmacie[]   @relation("DelivrancePharmacien")
+  mouvementsStock          MouvementStock[]
+  achatsPharmacie          AchatPharmacie[]        @relation("AchatPharmacien")
+  retoursPharmacie         RetourPharmacie[]       @relation("RetourPharmacien")
 
   @@map("utilisateurs")
 }
@@ -414,6 +446,7 @@ model DossierPatient {
   examensPrenuptiaux       ExamenPrenuptial[]
   recuperationsTransfert   TransfertRecuperation[]
   conversations            Conversation[]
+  ventesPharmacie          VentePharmacie[]
 
   @@map("dossiers_patients")
 }
@@ -633,6 +666,7 @@ model Facture {
 
   lignes    LigneFacture[]
   paiements Paiement[]
+  ventePharmacie VentePharmacie?
 
   @@map("factures")
 }
@@ -719,16 +753,25 @@ model ResultatExamen {
 // ─── Pharmacie ────────────────────────────────────────────────────────────────
 
 model Medicament {
-  id           String  @id @default(cuid())
-  code         String  @unique
-  nom          String
-  forme        String?
-  dosage       String?
-  prixUnitaire Decimal @map("prix_unitaire") @db.Decimal(12, 2)
-  actif        Boolean @default(true)
+  id            String   @id @default(cuid())
+  code          String   @unique
+  nom           String
+  categorie     String?
+  forme         String?
+  dosage        String?
+  prixAchat     Decimal? @map("prix_achat") @db.Decimal(12, 2)
+  prixUnitaire  Decimal  @map("prix_unitaire") @db.Decimal(12, 2)
+  stockMinimum  Int      @default(10) @map("stock_minimum")
+  emplacement   String?
+  actif         Boolean  @default(true)
 
-  stocks           StockMedicament[]
-  lignesOrdonnance LigneOrdonnance[]
+  stocks             StockMedicament[]
+  lots               LotMedicament[]
+  lignesOrdonnance   LigneOrdonnance[]
+  lignesVente        LigneVentePharmacie[]
+  lignesAchat        LigneAchatPharmacie[]
+  lignesRetour       LigneRetourPharmacie[]
+  lignesDelivrance   LigneDelivrancePharmacie[]
 
   @@map("medicaments")
 }
@@ -746,6 +789,62 @@ model StockMedicament {
   @@map("stocks_medicaments")
 }
 
+model FournisseurPharmacie {
+  id        String   @id @default(cuid())
+  nom       String
+  telephone String?
+  email     String?
+  adresse   String?
+  actif     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  lots   LotMedicament[]
+  achats AchatPharmacie[]
+
+  @@map("fournisseurs_pharmacie")
+}
+
+model LotMedicament {
+  id             String                @id @default(cuid())
+  numeroLot      String                @map("numero_lot")
+  medicamentId   String                @map("medicament_id")
+  medicament     Medicament            @relation(fields: [medicamentId], references: [id])
+  quantite       Int                   @default(0)
+  fabriqueLe     DateTime?             @map("fabrique_le")
+  expirationLe   DateTime              @map("expiration_le")
+  fournisseurId  String?               @map("fournisseur_id")
+  fournisseur    FournisseurPharmacie? @relation(fields: [fournisseurId], references: [id])
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+
+  mouvements       MouvementStock[]
+  lignesVente      LigneVentePharmacie[]
+  lignesDelivrance LigneDelivrancePharmacie[]
+  lignesAchat      LigneAchatPharmacie[]
+  lignesRetour     LigneRetourPharmacie[]
+
+  @@unique([medicamentId, numeroLot])
+  @@index([medicamentId, expirationLe])
+  @@map("lots_medicaments")
+}
+
+model MouvementStock {
+  id            String             @id @default(cuid())
+  lotId         String             @map("lot_id")
+  lot           LotMedicament      @relation(fields: [lotId], references: [id])
+  type          TypeMouvementStock
+  quantite      Int
+  utilisateurId String             @map("utilisateur_id")
+  utilisateur   Utilisateur        @relation(fields: [utilisateurId], references: [id])
+  refType       String?            @map("ref_type")
+  refId         String?            @map("ref_id")
+  notes         String?
+  creeLe        DateTime           @default(now()) @map("cree_le")
+
+  @@index([lotId, creeLe])
+  @@map("mouvements_stock")
+}
+
 model Ordonnance {
   id         String           @id @default(cuid())
   dossierId  String           @map("dossier_id")
@@ -758,6 +857,7 @@ model Ordonnance {
 
   lignes      LigneOrdonnance[]
   delivrances DelivrancePharmacie[]
+  ventes      VentePharmacie[]
 
   @@map("ordonnances")
 }
@@ -775,14 +875,137 @@ model LigneOrdonnance {
   @@map("lignes_ordonnance")
 }
 
+model VentePharmacie {
+  id            String               @id @default(cuid())
+  numero        String               @unique
+  dossierId     String               @map("dossier_id")
+  dossier       DossierPatient       @relation(fields: [dossierId], references: [id])
+  type          TypeVentePharmacie
+  ordonnanceId  String?              @map("ordonnance_id")
+  ordonnance    Ordonnance?          @relation(fields: [ordonnanceId], references: [id])
+  statut        StatutVentePharmacie @default(BROUILLON)
+  factureId     String?              @unique @map("facture_id")
+  facture       Facture?             @relation(fields: [factureId], references: [id])
+  pharmacienId  String               @map("pharmacien_id")
+  pharmacien    Utilisateur          @relation("VentePharmacien", fields: [pharmacienId], references: [id])
+  notes         String?
+  montantTotal  Decimal              @default(0) @map("montant_total") @db.Decimal(12, 2)
+  creeLe        DateTime             @default(now()) @map("cree_le")
+  transmiseLe   DateTime?            @map("transmise_le")
+  payeeLe       DateTime?            @map("payee_le")
+  delivreeLe    DateTime?            @map("delivree_le")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+
+  lignes      LigneVentePharmacie[]
+  delivrances DelivrancePharmacie[]
+  retours     RetourPharmacie[]
+
+  @@index([statut, creeLe])
+  @@map("ventes_pharmacie")
+}
+
+model LigneVentePharmacie {
+  id           String          @id @default(cuid())
+  venteId      String          @map("vente_id")
+  vente        VentePharmacie  @relation(fields: [venteId], references: [id], onDelete: Cascade)
+  medicamentId String          @map("medicament_id")
+  medicament   Medicament      @relation(fields: [medicamentId], references: [id])
+  quantite     Int
+  prixUnitaire Decimal         @map("prix_unitaire") @db.Decimal(12, 2)
+  remise       Decimal         @default(0) @db.Decimal(12, 2)
+  lotId        String?         @map("lot_id")
+  lot          LotMedicament?  @relation(fields: [lotId], references: [id])
+
+  @@map("lignes_vente_pharmacie")
+}
+
 model DelivrancePharmacie {
-  id           String     @id @default(cuid())
-  ordonnanceId String     @map("ordonnance_id")
-  ordonnance   Ordonnance @relation(fields: [ordonnanceId], references: [id])
-  delivreLe    DateTime   @default(now()) @map("delivre_le")
-  notes        String?
+  id            String          @id @default(cuid())
+  ordonnanceId  String?         @map("ordonnance_id")
+  ordonnance    Ordonnance?     @relation(fields: [ordonnanceId], references: [id])
+  venteId       String?         @map("vente_id")
+  vente         VentePharmacie? @relation(fields: [venteId], references: [id])
+  pharmacienId  String          @map("pharmacien_id")
+  pharmacien    Utilisateur     @relation("DelivrancePharmacien", fields: [pharmacienId], references: [id])
+  delivreLe     DateTime        @default(now()) @map("delivre_le")
+  notes         String?
+
+  lignes LigneDelivrancePharmacie[]
 
   @@map("delivrances_pharmacie")
+}
+
+model LigneDelivrancePharmacie {
+  id           String              @id @default(cuid())
+  delivranceId String              @map("delivrance_id")
+  delivrance   DelivrancePharmacie @relation(fields: [delivranceId], references: [id], onDelete: Cascade)
+  medicamentId String              @map("medicament_id")
+  medicament   Medicament          @relation(fields: [medicamentId], references: [id])
+  lotId        String              @map("lot_id")
+  lot          LotMedicament       @relation(fields: [lotId], references: [id])
+  quantite     Int
+
+  @@map("lignes_delivrance_pharmacie")
+}
+
+model AchatPharmacie {
+  id            String               @id @default(cuid())
+  numero        String               @unique
+  fournisseurId String               @map("fournisseur_id")
+  fournisseur   FournisseurPharmacie @relation(fields: [fournisseurId], references: [id])
+  pharmacienId  String               @map("pharmacien_id")
+  pharmacien    Utilisateur          @relation("AchatPharmacien", fields: [pharmacienId], references: [id])
+  statut        StatutAchatPharmacie @default(BROUILLON)
+  notes         String?
+  creeLe        DateTime             @default(now()) @map("cree_le")
+  recuLe        DateTime?            @map("recu_le")
+
+  lignes LigneAchatPharmacie[]
+
+  @@map("achats_pharmacie")
+}
+
+model LigneAchatPharmacie {
+  id           String         @id @default(cuid())
+  achatId      String         @map("achat_id")
+  achat        AchatPharmacie @relation(fields: [achatId], references: [id], onDelete: Cascade)
+  medicamentId String         @map("medicament_id")
+  medicament   Medicament     @relation(fields: [medicamentId], references: [id])
+  lotId        String?        @map("lot_id")
+  lot          LotMedicament? @relation(fields: [lotId], references: [id])
+  numeroLot    String         @map("numero_lot")
+  quantite     Int
+  prixAchat    Decimal        @map("prix_achat") @db.Decimal(12, 2)
+  expirationLe DateTime       @map("expiration_le")
+
+  @@map("lignes_achat_pharmacie")
+}
+
+model RetourPharmacie {
+  id           String         @id @default(cuid())
+  venteId      String         @map("vente_id")
+  vente        VentePharmacie @relation(fields: [venteId], references: [id])
+  pharmacienId String         @map("pharmacien_id")
+  pharmacien   Utilisateur    @relation("RetourPharmacien", fields: [pharmacienId], references: [id])
+  motif        String?
+  creeLe       DateTime       @default(now()) @map("cree_le")
+
+  lignes LigneRetourPharmacie[]
+
+  @@map("retours_pharmacie")
+}
+
+model LigneRetourPharmacie {
+  id           String          @id @default(cuid())
+  retourId     String          @map("retour_id")
+  retour       RetourPharmacie @relation(fields: [retourId], references: [id], onDelete: Cascade)
+  medicamentId String          @map("medicament_id")
+  medicament   Medicament      @relation(fields: [medicamentId], references: [id])
+  lotId        String          @map("lot_id")
+  lot          LotMedicament   @relation(fields: [lotId], references: [id])
+  quantite     Int
+
+  @@map("lignes_retour_pharmacie")
 }
 
 // ─── Église (examens prénuptiaux) ─────────────────────────────────────────────

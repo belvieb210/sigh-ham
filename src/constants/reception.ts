@@ -142,6 +142,27 @@ export const ORIENTATIONS_RAPIDES = [
     couleurMobile: "border-gris-bordure bg-white",
   },
   {
+    value: "LABORATOIRE",
+    label: "Laboratoire",
+    description: "Analyses et prélèvements",
+    couleur: "border-cyan-200 bg-cyan-50 text-cyan-800",
+    couleurMobile: "border-gris-bordure bg-white",
+  },
+  {
+    value: "PHARMACIE",
+    label: "Pharmacie",
+    description: "Délivrance des médicaments",
+    couleur: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    couleurMobile: "border-gris-bordure bg-white",
+  },
+  {
+    value: "HOSPITALISATION",
+    label: "Hospitalisation",
+    description: "Admission / lits",
+    couleur: "border-indigo-200 bg-indigo-50 text-indigo-800",
+    couleurMobile: "border-gris-bordure bg-white",
+  },
+  {
     value: "MEDECINS_EXTERNES",
     label: "Médecin externe",
     description: "Patient référé par un médecin",
@@ -171,6 +192,8 @@ export const ORIENTATIONS_RECEPTION = [
   { value: "MEDECINS", label: "Médecin", desc: "Consultation médicale" },
   { value: "CAISSE", label: "Caisse", desc: "Facturation et paiement" },
   { value: "LABORATOIRE", label: "Laboratoire", desc: "Analyses directes" },
+  { value: "PHARMACIE", label: "Pharmacie", desc: "Médicaments" },
+  { value: "HOSPITALISATION", label: "Hospitalisation", desc: "Admission" },
 ] as const;
 
 export const STATISTIQUES_RECEPTION = {

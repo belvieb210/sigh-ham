@@ -148,8 +148,13 @@ export async function creerOrdonnance(
       posologie?: string | null;
       dureeJours?: number | null;
     }[];
+    /** Défaut true : propose un transfert vers la pharmacie si le patient est en file médecins */
+    orienterVersPharmacie?: boolean;
   }
-): Promise<OrdonnanceMedecins> {
+): Promise<{
+  ordonnance: OrdonnanceMedecins;
+  transfertPharmacie?: { ok: boolean; message?: string };
+}> {
   await assurerCatalogueMedicaments();
 
   const dossierId = input.dossierId.trim();
@@ -196,5 +201,21 @@ export async function creerOrdonnance(
     include: includeOrdonnance,
   });
 
-  return mapperOrdonnance(o);
+  let transfertPharmacie: { ok: boolean; message?: string } | undefined;
+  if (input.orienterVersPharmacie !== false) {
+    try {
+      const { reorienterPatientDepuisMedecins } = await import(
+        "@/lib/medecins/reorienter-patient-medecins"
+      );
+      await reorienterPatientDepuisMedecins(medecinId, dossierId, ["PHARMACIE"]);
+      transfertPharmacie = { ok: true };
+    } catch (e) {
+      transfertPharmacie = {
+        ok: false,
+        message: e instanceof Error ? e.message : "Orientation pharmacie impossible.",
+      };
+    }
+  }
+
+  return { ordonnance: mapperOrdonnance(o), transfertPharmacie };
 }

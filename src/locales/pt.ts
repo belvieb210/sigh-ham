@@ -6,6 +6,7 @@ import { caissePt } from "./caisse/pt";
 import { laboratoirePt } from "./laboratoire/pt";
 import { medecinsPt } from "./medecins/pt";
 import { infirmiersPt } from "./infirmiers/pt";
+import { pharmaciePt } from "./pharmacie/pt";
 
 const pt: { translation: TraductionsSite } = {
   translation: {
@@ -157,6 +158,7 @@ const pt: { translation: TraductionsSite } = {
     laboratoire: laboratoirePt,
     medecins: medecinsPt,
     infirmiers: infirmiersPt,
+    pharmacie: pharmaciePt,
     ...communPt,
   },
 };

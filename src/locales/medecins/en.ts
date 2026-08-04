@@ -202,6 +202,10 @@ export const medecinsEn: MedecinsFr = {
     ajouterLigne: "Add a line",
     creer: "Create prescription",
     creee: "Prescription created.",
+    creeeAvecTransfert: "Prescription created and pharmacy routing proposed.",
+    creeeSansTransfert:
+      "Prescription created. Pharmacy routing skipped: {{raison}}",
+    orienterPharmacie: "Route to pharmacy after creation",
     liste: "Prescriptions",
     vide: "No prescriptions.",
     lignesRequises: "Add at least one medication.",

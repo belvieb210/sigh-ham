@@ -23,6 +23,7 @@ import { MiseEnPageCaisse } from "@/features/caisse/mise-en-page-caisse";
 import { MiseEnPageLaboratoire } from "@/features/laboratoire/mise-en-page-laboratoire";
 import { MiseEnPageMedecins } from "@/features/medecins/mise-en-page-medecins";
 import { MiseEnPageInfirmiers } from "@/features/infirmiers/mise-en-page-infirmiers";
+import { MiseEnPagePharmacie } from "@/features/pharmacie/mise-en-page-pharmacie";
 import { traduireRoleHospitalier } from "@/features/messagerie/traduire-role";
 import type { ProfilUtilisateurPublic } from "@/lib/auth/types-profil";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
@@ -31,7 +32,13 @@ import { cn } from "@/lib/utils";
 interface PropsContenuProfilUtilisateur {
   utilisateur: UtilisateurReception;
   /** Shell de salle (défaut: réception) */
-  salle?: "reception" | "caisse" | "laboratoire" | "medecins" | "infirmiers";
+  salle?:
+    | "reception"
+    | "caisse"
+    | "laboratoire"
+    | "medecins"
+    | "infirmiers"
+    | "pharmacie";
 }
 
 function formaterDate(iso: string | null, locale: string) {
@@ -62,7 +69,9 @@ export function ContenuProfilUtilisateur({
           ? MiseEnPageMedecins
           : salle === "infirmiers"
             ? MiseEnPageInfirmiers
-            : MiseEnPageReception;
+            : salle === "pharmacie"
+              ? MiseEnPagePharmacie
+              : MiseEnPageReception;
   const titreLayout =
     salle === "caisse"
       ? t("caisse.pages.profil.titre")
@@ -72,7 +81,9 @@ export function ContenuProfilUtilisateur({
           ? t("medecins.nav.profil")
           : salle === "infirmiers"
             ? t("infirmiers.nav.profil")
-            : t("reception.pages.profil.titre");
+            : salle === "pharmacie"
+              ? t("pharmacie.nav.profil")
+              : t("reception.pages.profil.titre");
   const sousTitreLayout =
     salle === "caisse"
       ? t("caisse.layout.sousTitre")
@@ -82,7 +93,9 @@ export function ContenuProfilUtilisateur({
           ? t("medecins.layout.sousTitre")
           : salle === "infirmiers"
             ? t("infirmiers.layout.sousTitre")
-            : t("reception.layout.sousTitre");
+            : salle === "pharmacie"
+              ? t("pharmacie.layout.sousTitre")
+              : t("reception.layout.sousTitre");
   const filAccueil =
     salle === "caisse"
       ? { label: t("caisse.layout.caisse"), href: "/sigh/caisse" }
@@ -92,7 +105,9 @@ export function ContenuProfilUtilisateur({
           ? { label: t("medecins.layout.titre"), href: "/sigh/medecins" }
           : salle === "infirmiers"
             ? { label: t("infirmiers.layout.titre"), href: "/sigh/infirmiers" }
-            : { label: t("reception.common.reception"), href: "/sigh/reception" };
+            : salle === "pharmacie"
+              ? { label: t("pharmacie.layout.titre"), href: "/sigh/pharmacie" }
+              : { label: t("reception.common.reception"), href: "/sigh/reception" };
 
   const [profil, setProfil] = useState<ProfilUtilisateurPublic | null>(null);
   const [chargement, setChargement] = useState(true);

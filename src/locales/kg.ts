@@ -6,6 +6,7 @@ import { caisseKg } from "./caisse/kg";
 import { laboratoireKg } from "./laboratoire/kg";
 import { medecinsKg } from "./medecins/kg";
 import { infirmiersKg } from "./infirmiers/kg";
+import { pharmacieKg } from "./pharmacie/kg";
 
 /** Kikongo — traductions principales du site public */
 const kg: { translation: TraductionsSite } = {
@@ -161,6 +162,7 @@ const kg: { translation: TraductionsSite } = {
     laboratoire: laboratoireKg,
     medecins: medecinsKg,
     infirmiers: infirmiersKg,
+    pharmacie: pharmacieKg,
     ...communKg,
   },
 };

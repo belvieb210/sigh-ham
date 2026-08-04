@@ -20,6 +20,7 @@
     "db:seed:laboratoire": "npx tsx prisma/seed-utilisateur-laboratoire.ts",
     "db:seed:medecin": "npx tsx prisma/seed-utilisateur-medecin.ts",
     "db:seed:infirmier": "npx tsx prisma/seed-utilisateur-infirmier.ts",
+    "db:seed:pharmacien": "npx tsx prisma/seed-utilisateur-pharmacien.ts",
     "db:seed:medicaments-medecins": "npx tsx prisma/seed-medicaments-medecins.ts",
     "db:seed:messagerie": "npx tsx prisma/seed-messagerie.ts",
     "db:export": "bash deploy/export-postgres.sh",

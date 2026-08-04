@@ -1,6 +1,12 @@
-/** Orientations UI — module laboratoire */
+/** Orientations UI — module laboratoire (toutes salles sauf LABORATOIRE) */
 
 export const ORIENTATIONS_DESTINATION_LABO = [
+  {
+    id: "RECEPTION",
+    codeSalle: "RECEPTION",
+    icone: "Building2",
+    couleur: "border-slate-300 bg-slate-50 text-slate-900",
+  },
   {
     id: "INFIRMIERS",
     codeSalle: "INFIRMIERS",
@@ -20,16 +26,28 @@ export const ORIENTATIONS_DESTINATION_LABO = [
     couleur: "border-amber-300 bg-amber-50 text-amber-900",
   },
   {
+    id: "PHARMACIE",
+    codeSalle: "PHARMACIE",
+    icone: "Pill",
+    couleur: "border-emerald-300 bg-emerald-50 text-emerald-900",
+  },
+  {
+    id: "HOSPITALISATION",
+    codeSalle: "HOSPITALISATION",
+    icone: "BedDouble",
+    couleur: "border-indigo-300 bg-indigo-50 text-indigo-900",
+  },
+  {
     id: "MEDECIN_EXTERNE",
     codeSalle: "MEDECINS_EXTERNES",
     icone: "BriefcaseMedical",
     couleur: "border-indigo-300 bg-indigo-50 text-indigo-900",
   },
   {
-    id: "PHARMACIE",
-    codeSalle: "PHARMACIE",
-    icone: "Pill",
-    couleur: "border-emerald-300 bg-emerald-50 text-emerald-900",
+    id: "EGLISE",
+    codeSalle: "EGLISE",
+    icone: "Church",
+    couleur: "border-amber-300 bg-amber-50 text-amber-900",
   },
 ] as const;
 

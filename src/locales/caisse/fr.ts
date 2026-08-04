@@ -121,7 +121,10 @@ export const caisseFr = {
     orientationRapide: "Orientation rapide",
     aideOrientation:
       "Cochez une ou plusieurs destinations : le transfert est créé tout de suite. Confirmez-le via le menu ⋮ après la facture.",
+    aideOrientationLot:
+      "{{count}} patient(s) cochés : cochez les salles de destination pour les orienter tous ensemble.",
     selectionnerPourOrienter: "Sélectionnez un patient dans la liste pour l'orienter.",
+    selectionnerTout: "Tout sélectionner",
     actionsRapides: "Actions rapides",
     actionRechercher: "Rechercher patient",
     actionFacturer: "Facturer",

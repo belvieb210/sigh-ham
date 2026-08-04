@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { PatientEnregistre } from "@/constants/reception";
 import { EVENEMENT_RECEPTION_PATIENTS_MODIFIES } from "@/constants/reception";
+import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import { ModaleConfirmation } from "@/components/ui/modale-confirmation";
 import { useTraductionsReception } from "@/hooks/use-traductions-reception";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,8 @@ interface PropsCartePatient {
   patient: PatientEnregistre;
   selectionne?: boolean;
   onSelectionner?: (patient: PatientEnregistre) => void;
+  coche?: boolean;
+  onBasculerCoche?: (patient: PatientEnregistre) => void;
   varianteActions?: VarianteActionsPatient;
   onRafraichirTransferts?: () => void;
   onVoirExamens?: (patient: PatientEnregistre) => void;
@@ -35,6 +38,8 @@ export function CartePatientEnregistre({
   patient,
   selectionne = false,
   onSelectionner,
+  coche,
+  onBasculerCoche,
   varianteActions = "defaut",
   onRafraichirTransferts,
   onVoirExamens,
@@ -66,6 +71,14 @@ export function CartePatientEnregistre({
       )}
     >
       <div className="flex items-start justify-between gap-3">
+        {onBasculerCoche ? (
+          <div className="pt-1" onClick={(e) => e.stopPropagation()}>
+            <CaseCocheLigne
+              coche={Boolean(coche)}
+              onChange={() => onBasculerCoche(patient)}
+            />
+          </div>
+        ) : null}
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-texte-principal">{patient.nom}</p>
           <p className="mt-0.5 truncate font-mono text-[11px] text-texte-secondaire">{patient.id}</p>
@@ -567,6 +580,9 @@ interface PropsTableauPatients {
   compact?: boolean;
   patientSelectionneId?: string | null;
   onSelectionnerPatient?: (patient: PatientEnregistre) => void;
+  dossiersCoches?: string[];
+  onBasculerCoche?: (patient: PatientEnregistre) => void;
+  onDefinirCoches?: (patients: PatientEnregistre[], coche: boolean) => void;
   varianteActions?: VarianteActionsPatient;
   onRafraichirTransferts?: () => void;
   onVoirExamens?: (patient: PatientEnregistre) => void;
@@ -579,11 +595,15 @@ export function TableauPatients({
   compact = false,
   patientSelectionneId = null,
   onSelectionnerPatient,
+  dossiersCoches,
+  onBasculerCoche,
+  onDefinirCoches,
   varianteActions = "defaut",
   onRafraichirTransferts,
   onVoirExamens,
 }: PropsTableauPatients) {
   const { t } = useTranslation();
+  const multi = Boolean(onBasculerCoche);
 
   return (
     <section className="rounded-xl border border-gris-bordure bg-white shadow-sm">
@@ -591,6 +611,9 @@ export function TableauPatients({
         <div className="border-b border-gris-bordure px-4 py-3 lg:px-5 lg:py-4">
           <h2 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
             {titre}
+            {multi && dossiersCoches && dossiersCoches.length > 0
+              ? ` · ${dossiersCoches.length} sélectionné(s)`
+              : ""}
           </h2>
         </div>
       )}
@@ -608,6 +631,10 @@ export function TableauPatients({
               patient={patient}
               selectionne={patient.id === patientSelectionneId}
               onSelectionner={onSelectionnerPatient}
+              coche={
+                Boolean(patient.dossierId && dossiersCoches?.includes(patient.dossierId))
+              }
+              onBasculerCoche={onBasculerCoche}
               varianteActions={varianteActions}
               onRafraichirTransferts={onRafraichirTransferts}
               onVoirExamens={onVoirExamens}
@@ -621,6 +648,19 @@ export function TableauPatients({
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead>
             <tr className="border-b border-gris-bordure bg-gris-tres-clair/80 text-xs font-semibold uppercase tracking-wide text-texte-secondaire">
+              {multi ? (
+                <th className="w-10 px-3 py-3.5">
+                  <CaseCocheLigne
+                    coche={
+                      patients.length > 0 &&
+                      patients.every(
+                        (p) => p.dossierId && dossiersCoches?.includes(p.dossierId)
+                      )
+                    }
+                    onChange={(coche) => onDefinirCoches?.(patients, coche)}
+                  />
+                </th>
+              ) : null}
               <th className="px-5 py-3.5">{t("reception.liste.colonnes.id")}</th>
               <th className="px-5 py-3.5">{t("reception.liste.colonnes.nom")}</th>
               <th className="px-5 py-3.5">{t("reception.liste.colonnes.telephone")}</th>
@@ -634,7 +674,10 @@ export function TableauPatients({
           <tbody>
             {patients.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-5 py-12 text-center text-sm text-texte-secondaire">
+                <td
+                  colSpan={multi ? 9 : 8}
+                  className="px-5 py-12 text-center text-sm text-texte-secondaire"
+                >
                   {t("reception.liste.aucunPatient")}
                 </td>
               </tr>
@@ -649,6 +692,16 @@ export function TableauPatients({
                     patient.id === patientSelectionneId && "bg-bleu-medical-clair/30"
                   )}
                 >
+                  {multi ? (
+                    <td className="px-3 py-3.5" onClick={(e) => e.stopPropagation()}>
+                      <CaseCocheLigne
+                        coche={Boolean(
+                          patient.dossierId && dossiersCoches?.includes(patient.dossierId)
+                        )}
+                        onChange={() => onBasculerCoche?.(patient)}
+                      />
+                    </td>
+                  ) : null}
                   <td className="px-5 py-3.5 font-mono text-xs text-texte-secondaire">
                     {patient.id}
                   </td>

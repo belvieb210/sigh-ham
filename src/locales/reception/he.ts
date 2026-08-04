@@ -60,6 +60,8 @@ export const receptionHe = {
     modifierAvantConfirmer: "שנו את היעד לפני אישור ההעברה.",
     creerTransfertRapide:
       "בחרו יעד ליצירת העברה מהירה. היא תישאר ממתינה לאישור ברשימה.",
+    aideOrientationLot:
+      "{{count}} patient(s) selected: check destination rooms to orient them all.",
     destinationVerrouillee: "לא ניתן עוד לשנות את יעד ההעברה.",
     aucunPatient: "לא נבחר מטופל",
     age: "גיל",

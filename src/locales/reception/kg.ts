@@ -62,6 +62,8 @@ export const receptionKg = {
     modifierAvantConfirmer: "Bongola chambre liboso ya kondima transfert.",
     creerTransfertRapide:
       "Pona destination sambu na kuka transfert rapide. Yo ta zala na zelo ya kondima na liste.",
+    aideOrientationLot:
+      "{{count}} patient(s) selected: check destination rooms to orient them all.",
     destinationVerrouillee: "Transfert oyo ke zala na kobongola destination ve.",
     aucunPatient: "Muntu ya maladi mosi ve oyo safuti",
     age: "Mibu",

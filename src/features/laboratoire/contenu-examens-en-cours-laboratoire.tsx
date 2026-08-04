@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Eye, FlaskConical, Loader2 } from "lucide-react";
+import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import {
   CHEMINS_STATUT_ANALYSE_LABO,
   idOrientationDepuisCodeSalle,
@@ -70,6 +71,7 @@ export function ContenuExamensEnCoursLaboratoire({
   const [selectionId, setSelectionId] = useState<string | null>(dossierUrl);
   const [orientationEnCours, setOrientationEnCours] = useState(false);
   const [orientationsDest, setOrientationsDest] = useState<string[]>([]);
+  const [idsCoches, setIdsCoches] = useState<Set<string>>(new Set());
   const [messageAction, setMessageAction] = useState<string | null>(null);
 
   const titrePage = pageStatut
@@ -164,48 +166,104 @@ export function ContenuExamensEnCoursLaboratoire({
   };
 
   const changerOrientation = async (id: string) => {
-    if (!selectionId || orientationEnCours) {
-      if (!selectionId) {
+    const idsAOrienter =
+      idsCoches.size > 0
+        ? [...idsCoches]
+        : selectionId
+          ? [selectionId]
+          : [];
+
+    if (idsAOrienter.length === 0 || orientationEnCours) {
+      if (idsAOrienter.length === 0) {
         setMessageAction(t("laboratoire.panneau.selectionnerPatient"));
       }
       return;
     }
 
+    const etaitDernierOuTous =
+      idsAOrienter.length === filtres.length &&
+      filtres.every((p) => idsAOrienter.includes(p.dossierId));
+
     setOrientationEnCours(true);
     setMessageAction(null);
 
     try {
-      const res = await fetch("/api/laboratoire/examens/orienter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dossierId: selectionId, orientation: id }),
-      });
-      const data = (await res.json()) as {
-        message?: string;
-        chemin?: string;
-      };
-      if (!res.ok) {
+      const resultats = await Promise.allSettled(
+        idsAOrienter.map(async (dossierId) => {
+          const res = await fetch("/api/laboratoire/examens/orienter", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ dossierId, orientation: id }),
+          });
+          const data = (await res.json()) as {
+            message?: string;
+            chemin?: string;
+          };
+          if (!res.ok) {
+            throw new Error(
+              data.message ?? t("laboratoire.panneau.erreurOrientationStatut")
+            );
+          }
+          return data;
+        })
+      );
+
+      const ok = resultats.filter((r) => r.status === "fulfilled").length;
+      const echecs = resultats.length - ok;
+      if (ok === 0) {
+        const premier =
+          resultats.find((r) => r.status === "rejected") as
+            | PromiseRejectedResult
+            | undefined;
         setMessageAction(
-          data.message ?? t("laboratoire.panneau.erreurOrientationStatut")
+          premier?.reason instanceof Error
+            ? premier.reason.message
+            : t("laboratoire.panneau.erreurOrientationStatut")
         );
         return;
       }
 
       const chemin =
-        data.chemin ||
+        (resultats.find((r) => r.status === "fulfilled") as
+          | PromiseFulfilledResult<{ chemin?: string }>
+          | undefined)?.value.chemin ||
         CHEMINS_STATUT_ANALYSE_LABO[id as IdOrientationStatutAnalyse] ||
         cheminBase;
 
       setMessageAction(
-        t("laboratoire.panneau.statutAttribue", {
-          statut: t(`laboratoire.orientationsStatut.${id}.label`),
-        })
+        echecs > 0
+          ? t("laboratoire.panneau.statutAttribueLotPartiel", {
+              ok,
+              echecs,
+              statut: t(`laboratoire.orientationsStatut.${id}.label`),
+            })
+          : idsAOrienter.length > 1
+            ? t("laboratoire.panneau.statutAttribueLot", {
+                count: ok,
+                statut: t(`laboratoire.orientationsStatut.${id}.label`),
+              })
+            : t("laboratoire.panneau.statutAttribue", {
+                statut: t(`laboratoire.orientationsStatut.${id}.label`),
+              })
       );
 
-      router.push(`${chemin}?dossier=${selectionId}`);
       window.dispatchEvent(new CustomEvent(EVENT_RAFRAICHIR_NOTIFICATIONS));
-      if (chemin === cheminBase || pageStatut === id) {
-        await charger();
+      setIdsCoches(new Set());
+
+      const doitRediriger =
+        etaitDernierOuTous &&
+        chemin !== cheminBase &&
+        pageStatut !== id;
+
+      if (doitRediriger) {
+        router.push(`${chemin}?dossier=${idsAOrienter[0]}`);
+        return;
+      }
+
+      await charger();
+      if (selectionId && idsAOrienter.includes(selectionId)) {
+        setSelectionId(null);
+        router.replace(cheminBase, { scroll: false });
       }
     } catch {
       setMessageAction(t("laboratoire.panneau.erreurOrientationStatut"));
@@ -215,7 +273,13 @@ export function ContenuExamensEnCoursLaboratoire({
   };
 
   const changerOrientationsDest = async (ids: string[]) => {
-    if (!selectionId || orientationEnCours) return;
+    const idsAOrienter =
+      idsCoches.size > 0
+        ? [...idsCoches]
+        : selectionId
+          ? [selectionId]
+          : [];
+    if (idsAOrienter.length === 0 || orientationEnCours) return;
     if (ids.length === 0) {
       setMessageAction(t("laboratoire.transferts.selectionnerDestination"));
       return;
@@ -224,20 +288,37 @@ export function ContenuExamensEnCoursLaboratoire({
     setMessageAction(null);
     setOrientationEnCours(true);
     try {
-      const res = await fetch("/api/laboratoire/transferts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dossierId: selectionId, orientations: ids }),
-      });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) {
-        setMessageAction(
-          data.message ?? t("laboratoire.transferts.erreurOrientation")
-        );
+      const resultats = await Promise.allSettled(
+        idsAOrienter.map(async (dossierId) => {
+          const res = await fetch("/api/laboratoire/transferts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ dossierId, orientations: ids }),
+          });
+          const data = (await res.json()) as { message?: string };
+          if (!res.ok) {
+            throw new Error(
+              data.message ?? t("laboratoire.transferts.erreurOrientation")
+            );
+          }
+          return data;
+        })
+      );
+      const ok = resultats.filter((r) => r.status === "fulfilled").length;
+      const echecs = resultats.length - ok;
+      if (ok === 0) {
+        setMessageAction(t("laboratoire.transferts.erreurOrientation"));
         await charger();
         return;
       }
-      setMessageAction(data.message ?? t("laboratoire.transferts.orienteOk"));
+      setMessageAction(
+        echecs > 0
+          ? t("laboratoire.transferts.orienteLotPartiel", { ok, echecs })
+          : idsAOrienter.length > 1
+            ? t("laboratoire.transferts.orienteLotOk", { count: ok })
+            : t("laboratoire.transferts.orienteOk")
+      );
+      setIdsCoches(new Set());
       window.dispatchEvent(new CustomEvent(EVENT_RAFRAICHIR_NOTIFICATIONS));
       await charger();
     } catch {
@@ -315,9 +396,16 @@ export function ContenuExamensEnCoursLaboratoire({
                 : "filtre-examens-labo"
             }
             titre={titrePage}
-            sousTitre={t("laboratoire.examensEnCours.sousTitreListe", {
-              count: filtres.length,
-            })}
+            sousTitre={
+              idsCoches.size > 0
+                ? t("laboratoire.examensEnCours.sousTitreListeSelection", {
+                    count: filtres.length,
+                    selection: idsCoches.size,
+                  })
+                : t("laboratoire.examensEnCours.sousTitreListe", {
+                    count: filtres.length,
+                  })
+            }
             filtresOuverts={filtresOuverts}
             onToggle={() => setFiltresOuverts((o) => !o)}
             brouillon={brouillonFiltres}
@@ -359,6 +447,25 @@ export function ContenuExamensEnCoursLaboratoire({
                   <table className="w-full min-w-[820px] text-left text-sm">
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
+                        <th className="w-10 px-3 py-3">
+                          <CaseCocheLigne
+                            coche={
+                              filtres.length > 0 &&
+                              filtres.every((p) => idsCoches.has(p.dossierId))
+                            }
+                            onChange={(coche) => {
+                              setIdsCoches((prev) => {
+                                const next = new Set(prev);
+                                for (const p of filtres) {
+                                  if (coche) next.add(p.dossierId);
+                                  else next.delete(p.dossierId);
+                                }
+                                return next;
+                              });
+                            }}
+                            ariaLabel={t("laboratoire.selection.tout")}
+                          />
+                        </th>
                         <th className="px-3 py-3 font-semibold">
                           {t("laboratoire.patients.colonnes.enregistrement")}
                         </th>
@@ -397,6 +504,22 @@ export function ContenuExamensEnCoursLaboratoire({
                                 : "hover:bg-slate-50/80"
                             )}
                           >
+                            <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                              <CaseCocheLigne
+                                coche={idsCoches.has(p.dossierId)}
+                                onChange={(coche) => {
+                                  setIdsCoches((prev) => {
+                                    const next = new Set(prev);
+                                    if (coche) next.add(p.dossierId);
+                                    else next.delete(p.dossierId);
+                                    return next;
+                                  });
+                                }}
+                                ariaLabel={t("laboratoire.selection.patient", {
+                                  nom: `${p.prenom} ${p.nom}`,
+                                })}
+                              />
+                            </td>
                             <td className="px-3 py-3 font-mono text-xs font-semibold text-bleu-medical">
                               {numeroEnregistrementLaboratoire(p)}
                             </td>
@@ -469,9 +592,7 @@ export function ContenuExamensEnCoursLaboratoire({
               <ul className="space-y-3 lg:hidden">
                 {filtres.map((p) => (
                   <li key={p.dossierId}>
-                    <button
-                      type="button"
-                      onClick={() => selectionner(p.dossierId)}
+                    <div
                       className={cn(
                         "w-full rounded-xl border bg-white p-4 text-left shadow-sm",
                         selectionId === p.dossierId
@@ -479,28 +600,48 @@ export function ContenuExamensEnCoursLaboratoire({
                           : "border-gris-bordure"
                       )}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-bold">
-                            {p.nom} {p.prenom}
-                          </p>
-                          <p className="font-mono text-xs text-bleu-medical">
-                            {numeroEnregistrementLaboratoire(p)}
-                          </p>
-                        </div>
-                        <span
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                            couleurStatutAnalyse(p.statutAnalyse)
-                          )}
+                      <div className="flex items-start gap-2">
+                        <CaseCocheLigne
+                          className="mt-1"
+                          coche={idsCoches.has(p.dossierId)}
+                          onChange={(coche) => {
+                            setIdsCoches((prev) => {
+                              const next = new Set(prev);
+                              if (coche) next.add(p.dossierId);
+                              else next.delete(p.dossierId);
+                              return next;
+                            });
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => selectionner(p.dossierId)}
+                          className="min-w-0 flex-1 text-left"
                         >
-                          {libelleStatutOrientation(p)}
-                        </span>
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="font-bold">
+                                {p.nom} {p.prenom}
+                              </p>
+                              <p className="font-mono text-xs text-bleu-medical">
+                                {numeroEnregistrementLaboratoire(p)}
+                              </p>
+                            </div>
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                                couleurStatutAnalyse(p.statutAnalyse)
+                              )}
+                            >
+                              {libelleStatutOrientation(p)}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-xs text-texte-secondaire">
+                            {libellesExamensDemandes(p, 3)} · {formatHeure(p.arriveeLe)}
+                          </p>
+                        </button>
                       </div>
-                      <p className="mt-2 text-xs text-texte-secondaire">
-                        {libellesExamensDemandes(p, 3)} · {formatHeure(p.arriveeLe)}
-                      </p>
-                    </button>
+                    </div>
                   </li>
                 ))}
               </ul>

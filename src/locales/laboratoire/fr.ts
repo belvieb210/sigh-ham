@@ -156,14 +156,22 @@ export const laboratoireFr = {
     modePaiement: "Mode de paiement",
     titreListe: "Transferts sortants",
     sousTitreListe: "{{count}} patient(s) orienté(s)",
+    sousTitreListeSelection: "{{count}} affiché(s) · {{selection}} sélectionné(s)",
   },
   examensEnCours: {
     titre: "Analyses en cours",
     sousTitre: "Patients dont les analyses ont démarré",
     recherche: "Rechercher patient, examen, N° dossier…",
     sousTitreListe: "{{count}} patient(s) affiché(s)",
+    sousTitreListeSelection: "{{count}} affiché(s) · {{selection}} sélectionné(s)",
     vide: "Aucune analyse en cours pour le moment",
     erreur: "Impossible de charger les analyses en cours",
+  },
+  selection: {
+    tout: "Tout sélectionner",
+    patient: "Sélectionner {{nom}}",
+    cocher: "Cocher",
+    coche: "Coché",
   },
   filtres: {
     ouvrir: "Ouvrir les filtres",
@@ -199,6 +207,9 @@ export const laboratoireFr = {
     aideStatutAnalyse:
       "Choisissez un statut : le patient apparaît aussitôt sur la page correspondante.",
     statutAttribue: "Patient orienté vers « {{statut}} ».",
+    statutAttribueLot: "{{count}} patients orientés vers « {{statut}} ».",
+    statutAttribueLotPartiel:
+      "{{ok}} orienté(s) vers « {{statut}} » ({{echecs}} échec(s)).",
     erreurOrientationStatut: "Impossible d'attribuer ce statut d'analyse.",
     age: "Âge",
     telephone: "Téléphone",
@@ -221,6 +232,8 @@ export const laboratoireFr = {
     erreurInattendue: "Une erreur inattendue est survenue.",
     erreurOrientation: "Impossible d'orienter le patient.",
     orienteOk: "Orientation enregistrée. Confirmez via le menu ⋮.",
+    orienteLotOk: "{{count}} patients orientés. Confirmez via le menu ⋮.",
+    orienteLotPartiel: "{{ok}} orienté(s) ({{echecs}} échec(s)).",
     selectionnerDestination: "Sélectionnez au moins une destination.",
     statut: {
       aConfirmer: "À confirmer",

@@ -60,6 +60,8 @@ export const receptionLua = {
     modifierAvantConfirmer: "Bongola chambre kabidi ya kondima transfert.",
     creerTransfertRapide:
       "Pona destination kuenza transfert rapide. Kudi kuikala na zelo ya kondima na liste.",
+    aideOrientationLot:
+      "{{count}} patient(s) selected: check destination rooms to orient them all.",
     destinationVerrouillee: "Transfert uyu kudi kuenza kubongola destination ve.",
     aucunPatient: "Muntu wa maladi umwe ve wa kusala",
     age: "Myaka",

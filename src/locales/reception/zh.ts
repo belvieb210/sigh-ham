@@ -61,6 +61,8 @@ export const receptionZh = {
     actionsRapides: "快捷操作",
     modifierAvantConfirmer: "确认转介前请更改目的地。",
     creerTransfertRapide: "选择目的地以创建快速转介。它将在列表中等待确认。",
+    aideOrientationLot:
+      "{{count}} patient(s) selected: check destination rooms to orient them all.",
     destinationVerrouillee: "此转介已无法更改目的地。",
     aucunPatient: "未选择患者",
     age: "年龄",

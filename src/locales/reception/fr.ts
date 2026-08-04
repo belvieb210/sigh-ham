@@ -58,6 +58,8 @@ export const receptionFr = {
       "Cochez une ou plusieurs salles : le transfert est synchronisé tout de suite. Confirmez via le menu ⋮.",
     creerTransfertRapide:
       "Cochez une ou plusieurs destinations : le transfert est créé tout de suite. Confirmez-le via le menu ⋮.",
+    aideOrientationLot:
+      "{{count}} patient(s) cochés : cochez les salles de destination pour les orienter tous ensemble.",
     destinationVerrouillee:
       "Transfert déjà confirmé : l'orientation rapide ne peut plus être modifiée.",
     aucunPatient: "Aucun patient sélectionné",

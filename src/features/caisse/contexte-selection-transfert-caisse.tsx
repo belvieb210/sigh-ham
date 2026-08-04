@@ -41,6 +41,10 @@ interface ContexteSelectionTransfertCaisse {
   patientSelectionne: PatientTransfertCaisse | null;
   resume: ResumePatientCaisse;
   selectionnerPatient: (patient: PatientTransfertCaisse) => void;
+  dossiersCoches: string[];
+  basculerDossierCoche: (dossierId: string) => void;
+  definirCoches: (dossierIds: string[], coche: boolean) => void;
+  viderCoches: () => void;
   /** Applique l'orientation immédiatement (sans modal), comme à la réception */
   demanderOrientation: (codeSalle: string) => void;
   demanderOrientations: (codesSalle: string[]) => void;
@@ -57,6 +61,7 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
     null
   );
   const [resume, setResume] = useState<ResumePatientCaisse>(RESUME_CAISSE_VIDE);
+  const [dossiersCoches, setDossiersCoches] = useState<string[]>([]);
   const [modificationEnCours, setModificationEnCours] = useState(false);
   const [messagePanneau, setMessagePanneau] = useState<string | null>(null);
 
@@ -82,12 +87,46 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
     [definirOrientations]
   );
 
+  const basculerDossierCoche = useCallback((dossierId: string) => {
+    setDossiersCoches((prev) =>
+      prev.includes(dossierId)
+        ? prev.filter((id) => id !== dossierId)
+        : [...prev, dossierId]
+    );
+  }, []);
+
+  const definirCoches = useCallback((dossierIds: string[], coche: boolean) => {
+    setDossiersCoches((prev) => {
+      const set = new Set(prev);
+      for (const id of dossierIds) {
+        if (coche) set.add(id);
+        else set.delete(id);
+      }
+      return [...set];
+    });
+  }, []);
+
+  const viderCoches = useCallback(() => setDossiersCoches([]), []);
+
   const demanderOrientations = useCallback(
     async (codesSalle: string[]) => {
-      if (!patientSelectionne || modificationEnCours) return;
       const codes = codesSalle.filter((c) => c !== "CAISSE");
       if (codes.length === 0) {
         setMessagePanneau("Sélectionnez au moins une destination.");
+        return;
+      }
+
+      const cibles =
+        dossiersCoches.length > 0
+          ? dossiersCoches
+          : patientSelectionne
+            ? [patientSelectionne.dossierId]
+            : [];
+
+      if (cibles.length === 0 || modificationEnCours) {
+        if (cibles.length === 0) {
+          setMessagePanneau("Sélectionnez au moins un patient.");
+        }
         return;
       }
 
@@ -96,26 +135,50 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
       setMessagePanneau(null);
 
       try {
-        const res = await fetch("/api/caisse/transferts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            dossierId: patientSelectionne.dossierId,
-            orientations: codes,
-          }),
-        });
-        const data = (await res.json()) as {
-          message?: string;
-          salleDestination?: string;
-          codeSalle?: string;
-          codesSalle?: string[];
-          transfertId?: string;
-        };
-        if (!res.ok) throw new Error(data.message ?? "Orientation impossible.");
+        const resultats = await Promise.allSettled(
+          cibles.map(async (dossierId) => {
+            const res = await fetch("/api/caisse/transferts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ dossierId, orientations: codes }),
+            });
+            const data = (await res.json()) as {
+              message?: string;
+              salleDestination?: string;
+              codesSalle?: string[];
+              transfertId?: string;
+            };
+            if (!res.ok) throw new Error(data.message ?? "Orientation impossible.");
+            return data;
+          })
+        );
 
-        const codesFinal = data.codesSalle ?? codes;
+        const ok = resultats.filter((r) => r.status === "fulfilled").length;
+        const echecs = resultats.length - ok;
+        if (ok === 0) {
+          const premier = resultats.find((r) => r.status === "rejected") as
+            | PromiseRejectedResult
+            | undefined;
+          throw new Error(
+            premier?.reason instanceof Error
+              ? premier.reason.message
+              : "Orientation impossible."
+          );
+        }
+
+        const premierOk = (
+          resultats.find((r) => r.status === "fulfilled") as
+            | PromiseFulfilledResult<{
+                salleDestination?: string;
+                codesSalle?: string[];
+                transfertId?: string;
+              }>
+            | undefined
+        )?.value;
+
+        const codesFinal = premierOk?.codesSalle ?? codes;
         const label =
-          data.salleDestination ??
+          premierOk?.salleDestination ??
           codesFinal
             .map(
               (c) =>
@@ -124,40 +187,55 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
             .join(", ");
 
         setMessagePanneau(
-          data.message ??
-            `Transfert vers ${label} créé — confirmez via le menu ⋮ après la facture.`
+          echecs > 0
+            ? `${ok} patient(s) orienté(s) vers ${label} (${echecs} échec(s)). Confirmez via ⋮.`
+            : cibles.length > 1
+              ? `${ok} patients orientés vers ${label} — confirmez via le menu ⋮.`
+              : `Transfert vers ${label} créé — confirmez via le menu ⋮ après la facture.`
         );
-        setPatientSelectionne((courant) =>
-          courant
-            ? {
-                ...courant,
-                orientation: label,
-                orientationCouleur:
-                  COULEURS_ORIENTATION_CAISSE[label.split(",")[0]?.trim() ?? ""] ??
-                  "bg-slate-100 text-slate-600",
-                codeSalleDestination: codesFinal[0] ?? courant.codeSalleDestination,
-                codesSalleDestination: codesFinal,
-                transfertSortantId: data.transfertId ?? courant.transfertSortantId,
-                statutTransfertSortant: "EN_ATTENTE",
-                statut: "À confirmer",
-                statutCouleur: "bg-orange-100 text-orange-800",
-              }
-            : courant
-        );
+
+        if (patientSelectionne && cibles.includes(patientSelectionne.dossierId)) {
+          setPatientSelectionne((courant) =>
+            courant
+              ? {
+                  ...courant,
+                  orientation: label,
+                  orientationCouleur:
+                    COULEURS_ORIENTATION_CAISSE[label.split(",")[0]?.trim() ?? ""] ??
+                    "bg-slate-100 text-slate-600",
+                  codeSalleDestination: codesFinal[0] ?? courant.codeSalleDestination,
+                  codesSalleDestination: codesFinal,
+                  transfertSortantId:
+                    premierOk?.transfertId ?? courant.transfertSortantId,
+                  statutTransfertSortant: "EN_ATTENTE",
+                  statut: "À confirmer",
+                  statutCouleur: "bg-orange-100 text-orange-800",
+                }
+              : courant
+          );
+        }
+
         definirOrientations(codesFinal);
+        setDossiersCoches([]);
         window.dispatchEvent(new CustomEvent(EVENEMENT_CAISSE_PATIENTS_MODIFIES));
       } catch (error) {
         setMessagePanneau(
           error instanceof Error ? error.message : "Impossible d'orienter le patient."
         );
-        if (patientSelectionne.codeSalleDestination) {
+        if (patientSelectionne?.codeSalleDestination) {
           definirOrientation(patientSelectionne.codeSalleDestination);
         }
       } finally {
         setModificationEnCours(false);
       }
     },
-    [patientSelectionne, modificationEnCours, definirOrientation, definirOrientations]
+    [
+      dossiersCoches,
+      patientSelectionne,
+      modificationEnCours,
+      definirOrientation,
+      definirOrientations,
+    ]
   );
 
   const demanderOrientation = useCallback(
@@ -170,6 +248,9 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
       if (!courant) return courant;
       return patients.find((p) => p.cleListe === courant.cleListe) ?? null;
     });
+    setDossiersCoches((prev) =>
+      prev.filter((id) => patients.some((p) => p.dossierId === id))
+    );
   }, []);
 
   const valeur = useMemo(
@@ -177,6 +258,10 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
       patientSelectionne,
       resume,
       selectionnerPatient,
+      dossiersCoches,
+      basculerDossierCoche,
+      definirCoches,
+      viderCoches,
       demanderOrientation,
       demanderOrientations,
       synchroniserSelection,
@@ -187,6 +272,10 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
       patientSelectionne,
       resume,
       selectionnerPatient,
+      dossiersCoches,
+      basculerDossierCoche,
+      definirCoches,
+      viderCoches,
       demanderOrientation,
       demanderOrientations,
       synchroniserSelection,

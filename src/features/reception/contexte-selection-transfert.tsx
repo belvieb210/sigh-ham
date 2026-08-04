@@ -26,6 +26,9 @@ interface ContexteSelectionTransfert {
   changerOrientationTransfert: (codeSalle: string) => Promise<void>;
   changerOrientationsTransfert: (codesSalle: string[]) => Promise<void>;
   synchroniserSelection: (patients: PatientEnregistre[]) => void;
+  dossiersCoches: string[];
+  basculerPatientCoche: (patient: PatientEnregistre) => void;
+  definirPatientsCoches: (patients: PatientEnregistre[], coche: boolean) => void;
   /** Transfert EN_ATTENTE : on peut changer la destination */
   peutModifierOrientation: boolean;
   /** Pas encore de transfert actif : un clic crée le transfert rapide */
@@ -55,8 +58,40 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
   const { definirDepuisDonneesCompletes } = useResumePatient();
   const { definirOrientations } = useOrientationRapide();
   const [patientSelectionne, setPatientSelectionne] = useState<PatientEnregistre | null>(null);
+  const [patientsCoches, setPatientsCoches] = useState<PatientEnregistre[]>([]);
   const [modificationEnCours, setModificationEnCours] = useState(false);
   const [messagePanneau, setMessagePanneau] = useState<string | null>(null);
+
+  const dossiersCoches = patientsCoches
+    .map((p) => p.dossierId)
+    .filter((id): id is string => Boolean(id));
+
+  const basculerPatientCoche = useCallback((patient: PatientEnregistre) => {
+    if (!patient.dossierId) return;
+    setPatientsCoches((prev) => {
+      const existe = prev.some((p) => p.dossierId === patient.dossierId);
+      return existe
+        ? prev.filter((p) => p.dossierId !== patient.dossierId)
+        : [...prev, patient];
+    });
+  }, []);
+
+  const definirPatientsCoches = useCallback(
+    (patients: PatientEnregistre[], coche: boolean) => {
+      setPatientsCoches((prev) => {
+        const map = new Map(
+          prev.filter((p) => p.dossierId).map((p) => [p.dossierId!, p])
+        );
+        for (const p of patients) {
+          if (!p.dossierId) continue;
+          if (coche) map.set(p.dossierId, p);
+          else map.delete(p.dossierId);
+        }
+        return [...map.values()];
+      });
+    },
+    []
+  );
 
   const peutModifierOrientation =
     patientSelectionne?.statutTransfert === "EN_ATTENTE" && !patientSelectionne.enRecuperation;
@@ -79,7 +114,9 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
   );
 
   const peutAppliquerOrientationRapide =
-    (peutModifierOrientation || peutCreerTransfertRapide) && !modificationEnCours;
+    ((peutModifierOrientation || peutCreerTransfertRapide) ||
+      patientsCoches.length > 0) &&
+    !modificationEnCours;
 
   const selectionnerPourPanneau = useCallback(
     async (patient: PatientEnregistre) => {
@@ -108,83 +145,127 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
 
   const changerOrientationsTransfert = useCallback(
     async (codesSalle: string[]) => {
-      if (!patientSelectionne) return;
-
-      if (orientationVerrouillee) {
-        setMessagePanneau(
-          "Ce transfert est déjà confirmé : l'orientation rapide ne peut plus être modifiée."
-        );
-        return;
-      }
-
-      if (!peutModifierOrientation && !peutCreerTransfertRapide) {
-        setMessagePanneau("Sélectionnez un patient pour appliquer l'orientation rapide.");
-        return;
-      }
-
       const codes = [...new Set(codesSalle.filter(Boolean))];
       if (codes.length === 0) {
         setMessagePanneau("Sélectionnez au moins une destination.");
         return;
       }
 
-      if (!patientSelectionne.dossierId) {
-        setMessagePanneau("Dossier patient introuvable pour l'orientation.");
+      const cibles =
+        patientsCoches.length > 0
+          ? patientsCoches.filter((p) => p.dossierId)
+          : patientSelectionne?.dossierId
+            ? [patientSelectionne]
+            : [];
+
+      if (cibles.length === 0) {
+        setMessagePanneau("Sélectionnez au moins un patient.");
         return;
+      }
+
+      if (patientsCoches.length === 0) {
+        if (orientationVerrouillee) {
+          setMessagePanneau(
+            "Ce transfert est déjà confirmé : l'orientation rapide ne peut plus être modifiée."
+          );
+          return;
+        }
+        if (!peutModifierOrientation && !peutCreerTransfertRapide) {
+          setMessagePanneau("Sélectionnez un patient pour appliquer l'orientation rapide.");
+          return;
+        }
       }
 
       setModificationEnCours(true);
       setMessagePanneau(null);
 
       try {
-        const res = await fetch("/api/reception/transferts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            transfertManuel: true,
-            numeroPatient: patientSelectionne.id,
-            dossierId: patientSelectionne.dossierId,
-            orientations: codes,
-            orientation: codes[0],
-          }),
-        });
+        const resultats = await Promise.allSettled(
+          cibles.map(async (patient) => {
+            const res = await fetch("/api/reception/transferts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                transfertManuel: true,
+                numeroPatient: patient.id,
+                dossierId: patient.dossierId,
+                orientations: codes,
+                orientation: codes[0],
+              }),
+            });
+            const data = (await res.json()) as {
+              message?: string;
+              salleDestination?: string;
+              transfertId?: string;
+              codeSalle?: string;
+              codesSalle?: string[];
+            };
+            if (!res.ok) throw new Error(data.message ?? "Transfert rapide impossible.");
+            return data;
+          })
+        );
 
-        const data = (await res.json()) as {
-          message?: string;
-          salleDestination?: string;
-          transfertId?: string;
-          codeSalle?: string;
-          codesSalle?: string[];
-        };
+        const ok = resultats.filter((r) => r.status === "fulfilled").length;
+        const echecs = resultats.length - ok;
+        if (ok === 0) {
+          const premier = resultats.find((r) => r.status === "rejected") as
+            | PromiseRejectedResult
+            | undefined;
+          throw new Error(
+            premier?.reason instanceof Error
+              ? premier.reason.message
+              : "Transfert rapide impossible."
+          );
+        }
 
-        if (!res.ok) throw new Error(data.message ?? "Transfert rapide impossible.");
+        const premierOk = (
+          resultats.find((r) => r.status === "fulfilled") as
+            | PromiseFulfilledResult<{
+                salleDestination?: string;
+                codesSalle?: string[];
+                transfertId?: string;
+              }>
+            | undefined
+        )?.value;
 
-        const codesFinal = data.codesSalle ?? codes;
+        const codesFinal = premierOk?.codesSalle ?? codes;
         const orientationAffichee =
-          data.salleDestination ??
+          premierOk?.salleDestination ??
           codesFinal.map((c) => libelleOrientation(c)).join(", ");
         const orientationCouleur = couleurOrientation(
           libelleOrientation(codesFinal[0] ?? codes[0]!)
         );
 
-        setPatientSelectionne((courant) =>
-          courant
-            ? {
-                ...courant,
-                transfertId: data.transfertId ?? courant.transfertId,
-                statutTransfert: "EN_ATTENTE",
-                codeSalleDestination: codesFinal[0] ?? courant.codeSalleDestination,
-                orientation: orientationAffichee,
-                orientationCouleur,
-                statut: "À confirmer",
-                statutCouleur: "bg-orange-100 text-orange-800",
-                motif: courant.motif === "—" ? "Transfert manuel" : courant.motif,
-              }
-            : courant
-        );
+        if (
+          patientSelectionne &&
+          cibles.some((c) => c.dossierId === patientSelectionne.dossierId)
+        ) {
+          setPatientSelectionne((courant) =>
+            courant
+              ? {
+                  ...courant,
+                  transfertId: premierOk?.transfertId ?? courant.transfertId,
+                  statutTransfert: "EN_ATTENTE",
+                  codeSalleDestination: codesFinal[0] ?? courant.codeSalleDestination,
+                  orientation: orientationAffichee,
+                  orientationCouleur,
+                  statut: "À confirmer",
+                  statutCouleur: "bg-orange-100 text-orange-800",
+                  motif: courant.motif === "—" ? "Transfert manuel" : courant.motif,
+                }
+              : courant
+          );
+        }
 
         definirOrientations(codesFinal);
-        setMessagePanneau(data.message ?? "Transfert(s) créé(s) — confirmez dans la liste.");
+        setPatientsCoches([]);
+        setMessagePanneau(
+          echecs > 0
+            ? `${ok} patient(s) orienté(s) (${echecs} échec(s)) — confirmez dans la liste.`
+            : cibles.length > 1
+              ? `${ok} patients orientés vers ${orientationAffichee} — confirmez via ⋮.`
+              : `Transfert(s) vers ${orientationAffichee} créé(s) — confirmez dans la liste.`
+        );
         window.dispatchEvent(new CustomEvent(EVENEMENT_RECEPTION_PATIENTS_MODIFIES));
       } catch (error) {
         setMessagePanneau(
@@ -195,6 +276,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       }
     },
     [
+      patientsCoches,
       patientSelectionne,
       orientationVerrouillee,
       peutModifierOrientation,
@@ -217,6 +299,15 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
         null
       );
     });
+    setPatientsCoches((prev) =>
+      prev
+        .map(
+          (c) =>
+            patients.find((p) => p.dossierId === c.dossierId) ??
+            patients.find((p) => p.cleListe === c.cleListe)
+        )
+        .filter((p): p is PatientEnregistre => Boolean(p))
+    );
   }, []);
 
   const valeur = useMemo(
@@ -226,6 +317,9 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       changerOrientationTransfert,
       changerOrientationsTransfert,
       synchroniserSelection,
+      dossiersCoches,
+      basculerPatientCoche,
+      definirPatientsCoches,
       peutModifierOrientation,
       peutCreerTransfertRapide,
       orientationVerrouillee,
@@ -239,6 +333,9 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       changerOrientationTransfert,
       changerOrientationsTransfert,
       synchroniserSelection,
+      dossiersCoches,
+      basculerPatientCoche,
+      definirPatientsCoches,
       peutModifierOrientation,
       peutCreerTransfertRapide,
       orientationVerrouillee,

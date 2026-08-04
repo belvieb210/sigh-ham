@@ -121,7 +121,10 @@ export const caisseEn = {
     orientationRapide: "Quick orientation",
     aideOrientation:
       "Choose a destination: the transfer is created immediately. Confirm it via the ⋮ menu after billing.",
+    aideOrientationLot:
+      "{{count}} patient(s) checked: check destination rooms to orient them all together.",
     selectionnerPourOrienter: "Select a patient in the list to orient them.",
+    selectionnerTout: "Select all",
     actionsRapides: "Quick actions",
     actionRechercher: "Search patient",
     actionFacturer: "Bill",

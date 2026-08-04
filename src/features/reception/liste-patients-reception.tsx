@@ -37,6 +37,9 @@ interface PropsListePatientsReception {
   onSelectionnerPatient?: (patient: PatientEnregistre) => void;
   onVoirExamens?: (patient: PatientEnregistre) => void;
   patientSelectionneId?: string | null;
+  dossiersCoches?: string[];
+  onBasculerCoche?: (patient: PatientEnregistre) => void;
+  onDefinirCoches?: (patients: PatientEnregistre[], coche: boolean) => void;
   idPrefixFiltres?: string;
 }
 
@@ -57,6 +60,9 @@ export function ListePatientsReception({
   onSelectionnerPatient,
   onVoirExamens,
   patientSelectionneId = null,
+  dossiersCoches,
+  onBasculerCoche,
+  onDefinirCoches,
   idPrefixFiltres = "filtre-liste-reception",
 }: PropsListePatientsReception) {
   const { t } = useTranslation();
@@ -177,6 +183,9 @@ export function ListePatientsReception({
         onSelectionnerPatient={onSelectionnerPatient}
         onVoirExamens={onVoirExamens}
         patientSelectionneId={patientSelectionneId}
+        dossiersCoches={dossiersCoches}
+        onBasculerCoche={onBasculerCoche}
+        onDefinirCoches={onDefinirCoches}
       />
 
       {patientsFiltres.length > 0 && (

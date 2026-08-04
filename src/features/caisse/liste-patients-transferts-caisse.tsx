@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { EVENEMENT_CAISSE_PATIENTS_MODIFIES } from "@/constants/caisse";
+import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import { useSelectionTransfertCaisse } from "@/features/caisse/contexte-selection-transfert-caisse";
 import {
   compterFiltresActifs,
@@ -27,7 +28,7 @@ const PAR_PAGE = 5;
 
 export function ListePatientsTransfertsCaisse() {
   const { t } = useTranslation();
-  const { patientSelectionne, selectionnerPatient, synchroniserSelection } =
+  const { patientSelectionne, selectionnerPatient, synchroniserSelection, dossiersCoches, basculerDossierCoche, definirCoches } =
     useSelectionTransfertCaisse();
   const [patients, setPatients] = useState<PatientTransfertCaisse[]>([]);
   const [stats, setStats] = useState<StatsTransfertsCaisse>({
@@ -300,7 +301,14 @@ export function ListePatientsTransfertsCaisse() {
                     )}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 flex-1 items-start gap-2">
+                        <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                          <CaseCocheLigne
+                            coche={dossiersCoches.includes(p.dossierId)}
+                            onChange={() => basculerDossierCoche(p.dossierId)}
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-texte-principal">
                           {p.nomComplet}
                         </p>
@@ -327,6 +335,7 @@ export function ListePatientsTransfertsCaisse() {
                           <span className="text-xs tabular-nums text-texte-secondaire">
                             {p.heure}
                           </span>
+                        </div>
                         </div>
                       </div>
                       <div
@@ -359,6 +368,21 @@ export function ListePatientsTransfertsCaisse() {
             <table className="min-w-full text-left text-sm">
               <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                 <tr>
+                  <th className="w-10 px-3 py-2.5">
+                    <CaseCocheLigne
+                      coche={
+                        pagePatients.length > 0 &&
+                        pagePatients.every((p) => dossiersCoches.includes(p.dossierId))
+                      }
+                      onChange={(coche) =>
+                        definirCoches(
+                          pagePatients.map((p) => p.dossierId),
+                          coche
+                        )
+                      }
+                      ariaLabel={t("caisse.transferts.selectionnerTout")}
+                    />
+                  </th>
                   <th className="px-4 py-2.5 font-semibold">ID</th>
                   <th className="px-4 py-2.5 font-semibold">{t("caisse.transferts.colNom")}</th>
                   <th className="hidden px-4 py-2.5 font-semibold md:table-cell">
@@ -387,6 +411,12 @@ export function ListePatientsTransfertsCaisse() {
                         selectionne ? "bg-bleu-medical-clair/40" : "hover:bg-slate-50"
                       )}
                     >
+                      <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                        <CaseCocheLigne
+                          coche={dossiersCoches.includes(p.dossierId)}
+                          onChange={() => basculerDossierCoche(p.dossierId)}
+                        />
+                      </td>
                       <td className="px-4 py-3 font-mono text-xs text-texte-secondaire">
                         {p.numeroPatient}
                       </td>

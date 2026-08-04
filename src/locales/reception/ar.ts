@@ -60,6 +60,8 @@ export const receptionAr = {
     modifierAvantConfirmer: "غيّر الوجهة قبل تأكيد التحويل.",
     creerTransfertRapide:
       "اختر وجهة لإنشاء التحويل السريع. سيبقى في انتظار التأكيد في القائمة.",
+    aideOrientationLot:
+      "{{count}} patient(s) selected: check destination rooms to orient them all.",
     destinationVerrouillee: "لا يمكن تغيير وجهة هذا التحويل بعد الآن.",
     aucunPatient: "لم يُحدَّد أي مريض",
     age: "العمر",

@@ -155,14 +155,22 @@ export const laboratoireEn: LaboratoireFr = {
     modePaiement: "Payment mode",
     titreListe: "Outgoing transfers",
     sousTitreListe: "{{count}} oriented patient(s)",
+    sousTitreListeSelection: "{{count}} shown · {{selection}} selected",
   },
   examensEnCours: {
     titre: "Analyses in progress",
     sousTitre: "Patients whose analyses have started",
     recherche: "Search patient, exam, file No.…",
     sousTitreListe: "{{count}} patient(s) shown",
+    sousTitreListeSelection: "{{count}} shown · {{selection}} selected",
     vide: "No analyses in progress right now",
     erreur: "Unable to load analyses in progress",
+  },
+  selection: {
+    tout: "Select all",
+    patient: "Select {{nom}}",
+    cocher: "Check",
+    coche: "Checked",
   },
   filtres: {
     ouvrir: "Open filters",
@@ -198,6 +206,9 @@ export const laboratoireEn: LaboratoireFr = {
     aideStatutAnalyse:
       "Choose a status: the patient immediately appears on the matching page.",
     statutAttribue: "Patient oriented to “{{statut}}”.",
+    statutAttribueLot: "{{count}} patients oriented to “{{statut}}”.",
+    statutAttribueLotPartiel:
+      "{{ok}} oriented to “{{statut}}” ({{echecs}} failed).",
     erreurOrientationStatut: "Unable to assign this analysis status.",
     age: "Age",
     telephone: "Phone",
@@ -220,6 +231,8 @@ export const laboratoireEn: LaboratoireFr = {
     erreurInattendue: "An unexpected error occurred.",
     erreurOrientation: "Unable to orient the patient.",
     orienteOk: "Orientation saved. Confirm via the ⋮ menu.",
+    orienteLotOk: "{{count}} patients oriented. Confirm via the ⋮ menu.",
+    orienteLotPartiel: "{{ok}} oriented ({{echecs}} failed).",
     selectionnerDestination: "Select at least one destination.",
     statut: {
       aConfirmer: "To confirm",

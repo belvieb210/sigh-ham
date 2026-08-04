@@ -62,6 +62,8 @@ export const receptionLn = {
     modifierAvantConfirmer: "Bobongola chambre liboso ya kondima transfert.",
     creerTransfertRapide:
       "Pona destination mpo na kosala transfert rapide. Ekozala na zelo ya kondima na liste.",
+    aideOrientationLot:
+      "{{count}} patient(s) selected: check destination rooms to orient them all.",
     destinationVerrouillee: "Transfert oyo ekoki kobongola destination lisusu te.",
     aucunPatient: "Patient moko te oyo eponami",
     age: "Mbula",

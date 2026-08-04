@@ -64,9 +64,13 @@ function ResumeEtOrientation() {
         <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
           {t("caisse.transferts.orientationRapide")}
         </h2>
-        {selection?.patientSelectionne ? (
+        {selection?.patientSelectionne || (selection?.dossiersCoches?.length ?? 0) > 0 ? (
           <p className="mb-2 text-xs text-texte-secondaire">
-            {t("caisse.transferts.aideOrientation")}
+            {(selection?.dossiersCoches?.length ?? 0) > 0
+              ? t("caisse.transferts.aideOrientationLot", {
+                  count: selection!.dossiersCoches.length,
+                })
+              : t("caisse.transferts.aideOrientation")}
           </p>
         ) : (
           <p className="mb-2 text-xs text-texte-secondaire">
@@ -78,7 +82,10 @@ function ResumeEtOrientation() {
           orientations={orientations}
           onOrientationsChange={onOrientationsChange}
           multiple
-          desactive={selection?.modificationEnCours || !selection?.patientSelectionne}
+          desactive={
+            selection?.modificationEnCours ||
+            (!(selection?.dossiersCoches?.length) && !selection?.patientSelectionne)
+          }
         />
         {selection?.messagePanneau && (
           <p

@@ -62,6 +62,8 @@ export const receptionSw = {
     modifierAvantConfirmer: "Badilisha marudio kabla ya kuthibitisha uhamisho.",
     creerTransfertRapide:
       "Chagua marudio ili kuunda uhamisho wa haraka. Utasalia ukisubiri uthibitisho kwenye orodha.",
+    aideOrientationLot:
+      "{{count}} patient(s) selected: check destination rooms to orient them all.",
     destinationVerrouillee: "Uhamisho huu hauwezi tena kubadilisha marudio.",
     aucunPatient: "Hakuna mgonjwa aliyechaguliwa",
     age: "Umri",

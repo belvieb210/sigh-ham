@@ -59,6 +59,8 @@ export const receptionEn = {
     modifierAvantConfirmer: "Change the destination before confirming the transfer.",
     creerTransfertRapide:
       "Choose a destination to create a quick transfer. It will remain pending confirmation in the list.",
+    aideOrientationLot:
+      "{{count}} patient(s) selected: check destination rooms to orient them all.",
     destinationVerrouillee:
       "Transfer already confirmed: quick routing can no longer be changed.",
     aucunPatient: "No patient selected",

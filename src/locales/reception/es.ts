@@ -60,6 +60,8 @@ export const receptionEs = {
     modifierAvantConfirmer: "Cambie el destino antes de confirmar la transferencia.",
     creerTransfertRapide:
       "Elija un destino para crear la transferencia rápida. Quedará pendiente de confirmación en la lista.",
+    aideOrientationLot:
+      "{{count}} patient(s) selected: check destination rooms to orient them all.",
     destinationVerrouillee: "Esta transferencia ya no puede cambiar de destino.",
     aucunPatient: "Ningún paciente seleccionado",
     age: "Edad",

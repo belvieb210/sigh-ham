@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
+import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import { idOrientationDepuisCodeSalle } from "@/constants/laboratoire-orientations";
 import {
   MiseEnPageLaboratoire,
@@ -64,6 +65,7 @@ export function ContenuPatientsLaboratoire({
   const [selectionId, setSelectionId] = useState<string | null>(dossierUrl);
   const [orientations, setOrientations] = useState<string[]>([]);
   const [orientationEnCours, setOrientationEnCours] = useState(false);
+  const [idsCoches, setIdsCoches] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<DetailPatientLaboratoire | null>(null);
   const [chargementDetail, setChargementDetail] = useState(false);
   const [demarrage, setDemarrage] = useState(false);
@@ -139,7 +141,13 @@ export function ContenuPatientsLaboratoire({
   };
 
   const changerOrientations = async (ids: string[]) => {
-    if (!selectionId || orientationEnCours) return;
+    const idsAOrienter =
+      idsCoches.size > 0
+        ? [...idsCoches]
+        : selectionId
+          ? [selectionId]
+          : [];
+    if (idsAOrienter.length === 0 || orientationEnCours) return;
     if (ids.length === 0) {
       setMessageAction(t("laboratoire.transferts.selectionnerDestination"));
       return;
@@ -148,20 +156,37 @@ export function ContenuPatientsLaboratoire({
     setMessageAction(null);
     setOrientationEnCours(true);
     try {
-      const res = await fetch("/api/laboratoire/transferts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dossierId: selectionId, orientations: ids }),
-      });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) {
-        setMessageAction(
-          data.message ?? t("laboratoire.transferts.erreurOrientation")
-        );
+      const resultats = await Promise.allSettled(
+        idsAOrienter.map(async (dossierId) => {
+          const res = await fetch("/api/laboratoire/transferts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ dossierId, orientations: ids }),
+          });
+          const data = (await res.json()) as { message?: string };
+          if (!res.ok) {
+            throw new Error(
+              data.message ?? t("laboratoire.transferts.erreurOrientation")
+            );
+          }
+          return data;
+        })
+      );
+      const ok = resultats.filter((r) => r.status === "fulfilled").length;
+      const echecs = resultats.length - ok;
+      if (ok === 0) {
+        setMessageAction(t("laboratoire.transferts.erreurOrientation"));
         await charger();
         return;
       }
-      setMessageAction(data.message ?? t("laboratoire.transferts.orienteOk"));
+      setMessageAction(
+        echecs > 0
+          ? t("laboratoire.transferts.orienteLotPartiel", { ok, echecs })
+          : idsAOrienter.length > 1
+            ? t("laboratoire.transferts.orienteLotOk", { count: ok })
+            : t("laboratoire.transferts.orienteOk")
+      );
+      setIdsCoches(new Set());
       await charger();
     } catch {
       setMessageAction(t("laboratoire.transferts.erreurOrientation"));
@@ -286,9 +311,16 @@ export function ContenuPatientsLaboratoire({
           <BarreFiltresLaboratoire
             idPrefix="filtre-patients-labo"
             titre={t("laboratoire.patients.titreListe")}
-            sousTitre={t("laboratoire.patients.sousTitreListe", {
-              count: filtrés.length,
-            })}
+            sousTitre={
+              idsCoches.size > 0
+                ? t("laboratoire.patients.sousTitreListeSelection", {
+                    count: filtrés.length,
+                    selection: idsCoches.size,
+                  })
+                : t("laboratoire.patients.sousTitreListe", {
+                    count: filtrés.length,
+                  })
+            }
             filtresOuverts={filtresOuverts}
             onToggle={() => setFiltresOuverts((o) => !o)}
             brouillon={brouillonFiltres}
@@ -336,6 +368,25 @@ export function ContenuPatientsLaboratoire({
                   <table className="w-full min-w-[820px] text-left text-sm">
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
+                        <th className="w-10 px-3 py-3">
+                          <CaseCocheLigne
+                            coche={
+                              filtrés.length > 0 &&
+                              filtrés.every((p) => idsCoches.has(p.dossierId))
+                            }
+                            onChange={(coche) => {
+                              setIdsCoches((prev) => {
+                                const next = new Set(prev);
+                                for (const p of filtrés) {
+                                  if (coche) next.add(p.dossierId);
+                                  else next.delete(p.dossierId);
+                                }
+                                return next;
+                              });
+                            }}
+                            ariaLabel={t("laboratoire.selection.tout")}
+                          />
+                        </th>
                         <th className="px-3 py-3 font-semibold">
                           {t("laboratoire.patients.colonnes.enregistrement")}
                         </th>
@@ -371,6 +422,19 @@ export function ContenuPatientsLaboratoire({
                                 : "hover:bg-slate-50/80"
                             )}
                           >
+                            <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                              <CaseCocheLigne
+                                coche={idsCoches.has(p.dossierId)}
+                                onChange={(coche) => {
+                                  setIdsCoches((prev) => {
+                                    const next = new Set(prev);
+                                    if (coche) next.add(p.dossierId);
+                                    else next.delete(p.dossierId);
+                                    return next;
+                                  });
+                                }}
+                              />
+                            </td>
                             <td className="px-3 py-3">
                               <button
                                 type="button"
@@ -452,6 +516,24 @@ export function ContenuPatientsLaboratoire({
                             : "border-gris-bordure"
                         )}
                       >
+                        <div className="mb-2 flex items-center gap-2">
+                          <CaseCocheLigne
+                            coche={idsCoches.has(p.dossierId)}
+                            onChange={(coche) => {
+                              setIdsCoches((prev) => {
+                                const next = new Set(prev);
+                                if (coche) next.add(p.dossierId);
+                                else next.delete(p.dossierId);
+                                return next;
+                              });
+                            }}
+                          />
+                          <span className="text-xs text-texte-secondaire">
+                            {idsCoches.has(p.dossierId)
+                              ? t("laboratoire.selection.coche")
+                              : t("laboratoire.selection.cocher")}
+                          </span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => selectionner(p.dossierId)}

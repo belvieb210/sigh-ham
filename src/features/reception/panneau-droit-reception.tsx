@@ -64,9 +64,19 @@ function MessageAideOrientation({
     );
   }
 
-  if (selection.orientationVerrouillee) {
+  if (selection.orientationVerrouillee && (selection.dossiersCoches?.length ?? 0) === 0) {
     return (
       <p className="mb-2 text-xs text-amber-700">{t("reception.panneau.destinationVerrouillee")}</p>
+    );
+  }
+
+  if ((selection.dossiersCoches?.length ?? 0) > 0) {
+    return (
+      <p className="mb-2 text-xs text-texte-secondaire">
+        {t("reception.panneau.aideOrientationLot", {
+          count: selection.dossiersCoches.length,
+        })}
+      </p>
     );
   }
 

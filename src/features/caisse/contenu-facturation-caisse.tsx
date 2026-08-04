@@ -450,11 +450,15 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const totalAPayer = sousTotal + (fraisDivers || 0);
   const dejaPaye = dossier?.facture.montantPaye ?? 0;
   const resteAPayer = Math.max(0, totalAPayer - dejaPaye);
-  const soldeObligatoire = Boolean(dossier?.facture.aUneAvance);
+  const factureCloturee = dossier?.facture.statut === "PAYEE";
+  const soldeObligatoire =
+    Boolean(dossier?.facture.aUneAvance) && !factureCloturee;
   /** Avance déjà couverte (reste 0) : permettre de clôturer sans nouveau paiement */
-  const peutCloturerSoldeAZero = soldeObligatoire && modeFacture === "SOLDE" && resteAPayer <= 0.01;
+  const peutCloturerSoldeAZero =
+    soldeObligatoire && modeFacture === "SOLDE" && resteAPayer <= 0.01;
   const encaissementDesactive =
     enCours ||
+    factureCloturee ||
     (modeFacture === "AVANCE"
       ? montantAvance <= 0
       : peutCloturerSoldeAZero
@@ -594,9 +598,17 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
       await chargerFile();
       window.scrollTo({ top: 0, behavior: "smooth" });
 
-      window.setTimeout(() => {
-        router.push("/sigh/caisse/factures");
-      }, 1200);
+      // Facture payée : quitter le formulaire pour éviter l'état Solde figé
+      if (data.dossier.facture.statut === "PAYEE") {
+        setModeFacture("CASH");
+        window.setTimeout(() => {
+          router.push("/sigh/caisse/factures");
+        }, 800);
+      } else {
+        window.setTimeout(() => {
+          router.push("/sigh/caisse/factures");
+        }, 1200);
+      }
     } catch (e) {
       setErreur(e instanceof Error ? e.message : t("caisse.facturation.erreurEncaissement"));
     } finally {
@@ -1454,9 +1466,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                   ) : (
                     <Check className="h-4 w-4" />
                   )}
-                  {peutCloturerSoldeAZero
-                    ? t("caisse.facturation.cloturerFacture")
-                    : t("caisse.facturation.validerEncaisser")}
+                  {factureCloturee
+                    ? t("caisse.facturation.factureDejaCloturee")
+                    : peutCloturerSoldeAZero
+                      ? t("caisse.facturation.cloturerFacture")
+                      : t("caisse.facturation.validerEncaisser")}
                 </Bouton>
               </div>
             </div>
@@ -1508,6 +1522,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                 >
                   {enCours ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : factureCloturee ? (
+                    t("caisse.facturation.factureDejaCloturee")
                   ) : peutCloturerSoldeAZero ? (
                     t("caisse.facturation.cloturerFacture")
                   ) : (

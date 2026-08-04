@@ -288,6 +288,7 @@ export const caisseEn = {
     imprimerFacture: "Print invoice",
     validerEncaisser: "Validate and collect",
     cloturerFacture: "Close invoice",
+    factureDejaCloturee: "Invoice closed",
     encaisserPaiement: "Collect payment",
     ouvrirFiltres: "Open filters",
     fermerFiltres: "Close filters",

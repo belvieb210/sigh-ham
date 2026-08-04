@@ -12,12 +12,14 @@ export function PanneauSessionCaisse() {
   const [chargement, setChargement] = useState(true);
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [soldeSaisi, setSoldeSaisi] = useState("0");
 
   const charger = useCallback(async () => {
     setChargement(true);
     setErreur(null);
     try {
-      const res = await fetch("/api/caisse/session?auto=1");
+      // Sans auto=1 : ne pas ouvrir une session à 0 sans saisie du solde
+      const res = await fetch("/api/caisse/session");
       const data = (await res.json()) as {
         session?: SessionCaisseActive | null;
         erreur?: string;
@@ -51,6 +53,7 @@ export function PanneauSessionCaisse() {
       const data = (await res.json()) as { erreur?: string };
       if (!res.ok) throw new Error(data.erreur ?? "Clôture impossible");
       setSession(null);
+      setSoldeSaisi("0");
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Clôture impossible");
     } finally {
@@ -62,10 +65,15 @@ export function PanneauSessionCaisse() {
     setEnCours(true);
     setErreur(null);
     try {
+      const soldeOuverture = Math.max(
+        0,
+        Math.round((Number.parseFloat(soldeSaisi.replace(",", ".")) || 0) * 100) /
+          100
+      );
       const res = await fetch("/api/caisse/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "ouvrir" }),
+        body: JSON.stringify({ action: "ouvrir", soldeOuverture }),
       });
       const data = (await res.json()) as {
         session?: SessionCaisseActive;
@@ -131,6 +139,18 @@ export function PanneauSessionCaisse() {
           <p className="mt-1 text-[11px] text-texte-secondaire">
             {t("caisse.layout.ouvrirSessionAide")}
           </p>
+          <label className="mt-2 block text-[11px] text-texte-secondaire">
+            {t("caisse.layout.soldeOuverture")}
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={soldeSaisi}
+              onChange={(e) => setSoldeSaisi(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-gris-bordure bg-white px-2 py-1.5 text-sm font-semibold text-texte-principal outline-none focus:border-bleu-medical"
+              placeholder="0.00"
+            />
+          </label>
           {erreur && <p className="mt-1 text-[10px] text-red-600">{erreur}</p>}
           <button
             type="button"

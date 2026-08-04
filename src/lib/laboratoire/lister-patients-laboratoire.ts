@@ -117,9 +117,18 @@ export async function obtenirStatsLaboratoire(): Promise<StatsLaboratoireJour> {
   const patients = await listerPatientsLaboratoire();
   const debut = debutJourLocal();
 
+  const triesParArrivee = [...patients].sort(
+    (a, b) =>
+      new Date(b.arriveeLe).getTime() - new Date(a.arriveeLe).getTime()
+  );
+
   const patientsRecusAujourdhui = patients.filter(
     (p) => new Date(p.arriveeLe) >= debut
   ).length;
+
+  const analysesEnCoursListe = patients.filter((p) =>
+    p.examens.some((e) => e.statut === "EN_ANALYSE")
+  );
 
   const examensEnCours = patients.reduce(
     (acc, p) =>
@@ -146,14 +155,13 @@ export async function obtenirStatsLaboratoire(): Promise<StatsLaboratoireJour> {
     patientsRecusAujourdhui,
     patientsEnFile: patients.length,
     examensEnCours,
+    analysesEnCours: analysesEnCoursListe.length,
     resultatsAValider,
     resultatsValidesAujourdhui,
-    derniersArrives: [...patients]
-      .sort(
-        (a, b) =>
-          new Date(b.arriveeLe).getTime() - new Date(a.arriveeLe).getTime()
-      )
-      .slice(0, 8),
+    imprimesEnvoyes: 0,
+    derniersArrives: triesParArrivee.slice(0, 8),
+    patientsTransferes: triesParArrivee.slice(0, 6),
+    analysesEnCoursListe: analysesEnCoursListe.slice(0, 6),
   };
 }
 

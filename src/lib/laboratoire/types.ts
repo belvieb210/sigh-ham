@@ -37,9 +37,13 @@ export interface StatsLaboratoireJour {
   patientsRecusAujourdhui: number;
   patientsEnFile: number;
   examensEnCours: number;
+  analysesEnCours: number;
   resultatsAValider: number;
   resultatsValidesAujourdhui: number;
+  imprimesEnvoyes: number;
   derniersArrives: PatientFileLaboratoire[];
+  patientsTransferes: PatientFileLaboratoire[];
+  analysesEnCoursListe: PatientFileLaboratoire[];
 }
 
 export interface DetailPatientLaboratoire extends PatientFileLaboratoire {

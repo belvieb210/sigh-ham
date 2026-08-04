@@ -144,8 +144,8 @@ export async function obtenirDossierFacturation(
       : lignes.reduce((acc, l) => acc + l.montant, 0);
 
   let statutAttente: DossierFacturationCaisse["statutAttente"] = "HORS_FILE";
-  if (fileAttente) statutAttente = "EN_ATTENTE_PAIEMENT";
-  else if (facture?.statut === "PAYEE") statutAttente = "PAYE";
+  if (facture?.statut === "PAYEE") statutAttente = "PAYE";
+  else if (fileAttente) statutAttente = "EN_ATTENTE_PAIEMENT";
 
   const historiquePaiements = dossier.factures.flatMap((f) =>
     f.paiements.map((p) => {
@@ -175,9 +175,12 @@ export async function obtenirDossierFacturation(
   const aUneAvanceExplicite = paiementsFactureOuverte.some((p) =>
     p.reference?.split("|").some((part) => part === "modeFacture=AVANCE")
   );
-  /** Avance détectée (référence) ou ancien cas PARTIELLEMENT_PAYEE sans tag */
+  /** Avance ouverte seulement si la facture n'est pas encore PAYEE */
   const aUneAvance =
-    aUneAvanceExplicite || facture?.statut === "PARTIELLEMENT_PAYEE";
+    facture != null &&
+    facture.statut !== "PAYEE" &&
+    facture.statut !== "ANNULEE" &&
+    (aUneAvanceExplicite || facture.statut === "PARTIELLEMENT_PAYEE");
 
   const remiseProposee = decimalVersNombre(
     dossier.enregistrementsReception[0]?.remise ?? 0

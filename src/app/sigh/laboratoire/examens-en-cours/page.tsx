@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { ContenuPlaceholderLaboratoire } from "@/features/laboratoire/contenu-placeholder-laboratoire";
+import { Suspense } from "react";
+import { ContenuExamensEnCoursLaboratoire } from "@/features/laboratoire/contenu-examens-en-cours-laboratoire";
 import { verifierAccesLaboratoire } from "@/lib/auth/garde-salle";
 import { propsUtilisateurLaboratoire } from "@/lib/auth/props-utilisateur-laboratoire";
 
@@ -11,9 +12,10 @@ export const metadata: Metadata = {
 export default async function PageExamensEnCoursLaboratoire() {
   const utilisateur = await verifierAccesLaboratoire();
   return (
-    <ContenuPlaceholderLaboratoire
-      utilisateur={propsUtilisateurLaboratoire(utilisateur)}
-      titreKey="laboratoire.nav.examensEnCours"
-    />
+    <Suspense fallback={null}>
+      <ContenuExamensEnCoursLaboratoire
+        utilisateur={propsUtilisateurLaboratoire(utilisateur)}
+      />
+    </Suspense>
   );
 }

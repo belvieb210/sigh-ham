@@ -17,15 +17,47 @@ import {
   codeTransfertLaboratoire,
   libellesExamensDemandes,
 } from "@/features/laboratoire/utils-affichage";
+import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import { cn } from "@/lib/utils";
 
+function patientCorrespondStatut(
+  p: PatientFileLaboratoire,
+  statut: IdOrientationStatutAnalyse,
+  orientationAttribuee?: string
+) {
+  if (orientationAttribuee) return orientationAttribuee === statut;
+
+  switch (statut) {
+    case "RECUS":
+      return (
+        p.examens.some((e) => e.statut === "PRESCRIT") &&
+        !p.examens.some((e) => e.statut === "EN_ANALYSE")
+      );
+    case "EN_COURS":
+      return p.examens.some((e) => e.statut === "EN_ANALYSE");
+    case "VERIFIES":
+      return p.examens.some((e) => e.statut === "TERMINE");
+    case "REJETES":
+      return p.examens.some((e) => e.statut === "ANNULE");
+    case "DR_APPROUVE":
+      return false;
+    default:
+      return false;
+  }
+}
+
 interface PropsContenuExamensEnCoursLaboratoire {
   utilisateur: UtilisateurLaboratoire;
+  /** Page dédiée (Reçus, En cours, …) — sinon vue générale examens en cours */
+  pageStatut?: IdOrientationStatutAnalyse;
+  cheminBase?: string;
 }
 
 export function ContenuExamensEnCoursLaboratoire({
   utilisateur,
+  pageStatut,
+  cheminBase = "/sigh/laboratoire/examens-en-cours",
 }: PropsContenuExamensEnCoursLaboratoire) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -43,6 +75,13 @@ export function ContenuExamensEnCoursLaboratoire({
     Record<string, string>
   >({});
   const [messageAction, setMessageAction] = useState<string | null>(null);
+
+  const titrePage = pageStatut
+    ? t(`laboratoire.orientationsStatut.${pageStatut}.label`)
+    : t("laboratoire.examensEnCours.titre");
+  const sousTitrePage = pageStatut
+    ? t(`laboratoire.orientationsStatut.${pageStatut}.description`)
+    : t("laboratoire.examensEnCours.sousTitre");
 
   const charger = useCallback(async () => {
     setChargement(true);
@@ -70,13 +109,16 @@ export function ContenuExamensEnCoursLaboratoire({
     void charger();
   }, [charger]);
 
-  const enCours = useMemo(
-    () =>
-      patients.filter((p) =>
-        p.examens.some((e) => e.statut === "EN_ANALYSE")
-      ),
-    [patients]
-  );
+  const enCours = useMemo(() => {
+    if (pageStatut) {
+      return patients.filter((p) =>
+        patientCorrespondStatut(p, pageStatut, orientationsParDossier[p.dossierId])
+      );
+    }
+    return patients.filter((p) =>
+      p.examens.some((e) => e.statut === "EN_ANALYSE")
+    );
+  }, [patients, pageStatut, orientationsParDossier]);
 
   const filtres = useMemo(() => {
     const q = recherche.trim().toLowerCase();
@@ -103,7 +145,9 @@ export function ContenuExamensEnCoursLaboratoire({
   );
 
   const orientationCourante =
-    (selectionId && orientationsParDossier[selectionId]) || "EN_COURS";
+    (selectionId && orientationsParDossier[selectionId]) ||
+    pageStatut ||
+    "EN_COURS";
 
   useEffect(() => {
     if (dossierUrl) setSelectionId(dossierUrl);
@@ -112,7 +156,13 @@ export function ContenuExamensEnCoursLaboratoire({
   const selectionner = (dossierId: string) => {
     setSelectionId(dossierId);
     setMessageAction(null);
-    router.replace(`/sigh/laboratoire/examens-en-cours?dossier=${dossierId}`, {
+    if (pageStatut && !orientationsParDossier[dossierId]) {
+      setOrientationsParDossier((prev) => ({
+        ...prev,
+        [dossierId]: pageStatut,
+      }));
+    }
+    router.replace(`${cheminBase}?dossier=${dossierId}`, {
       scroll: false,
     });
   };
@@ -179,8 +229,8 @@ export function ContenuExamensEnCoursLaboratoire({
   return (
     <MiseEnPageLaboratoire
       utilisateur={utilisateur}
-      titre={t("laboratoire.examensEnCours.titre")}
-      sousTitre={t("laboratoire.examensEnCours.sousTitre")}
+      titre={titrePage}
+      sousTitre={sousTitrePage}
     >
       <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-4 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1 space-y-4">

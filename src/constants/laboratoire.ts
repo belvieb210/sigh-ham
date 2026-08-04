@@ -14,7 +14,51 @@ import {
   MessageSquare,
   Bell,
   UserCircle,
+  Inbox,
+  ClipboardCheck,
+  XCircle,
+  BadgeCheck,
 } from "lucide-react";
+import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
+
+/** Pages de suivi par orientation statut (après Examens en cours) */
+export const PAGES_STATUT_ANALYSE_LABO: {
+  href: string;
+  id: string;
+  statut: IdOrientationStatutAnalyse;
+  icone: typeof Inbox;
+}[] = [
+  {
+    href: "/sigh/laboratoire/recus",
+    id: "recus",
+    statut: "RECUS",
+    icone: Inbox,
+  },
+  {
+    href: "/sigh/laboratoire/en-cours",
+    id: "enCours",
+    statut: "EN_COURS",
+    icone: FlaskConical,
+  },
+  {
+    href: "/sigh/laboratoire/verifies",
+    id: "verifies",
+    statut: "VERIFIES",
+    icone: ClipboardCheck,
+  },
+  {
+    href: "/sigh/laboratoire/rejetes",
+    id: "rejetes",
+    statut: "REJETES",
+    icone: XCircle,
+  },
+  {
+    href: "/sigh/laboratoire/dr-approuve",
+    id: "drApprouve",
+    statut: "DR_APPROUVE",
+    icone: BadgeCheck,
+  },
+];
 
 export const NAVIGATION_LABORATOIRE = {
   tableauDeBord: [{ href: "/sigh/laboratoire", id: "accueil", icone: Home }],
@@ -30,6 +74,11 @@ export const NAVIGATION_LABORATOIRE = {
       id: "examensEnCours",
       icone: FlaskConical,
     },
+    ...PAGES_STATUT_ANALYSE_LABO.map(({ href, id, icone }) => ({
+      href,
+      id,
+      icone,
+    })),
     {
       href: "/sigh/laboratoire/saisie-resultats",
       id: "saisieResultats",

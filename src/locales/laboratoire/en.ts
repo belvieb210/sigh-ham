@@ -253,7 +253,7 @@ export const laboratoireEn: LaboratoireFr = {
   orientationsStatut: {
     RECUS: {
       label: "Received",
-      description: "Sample received at the laboratory",
+      description: "Patients transferred to the lab from other rooms",
     },
     EN_COURS: {
       label: "In progress",

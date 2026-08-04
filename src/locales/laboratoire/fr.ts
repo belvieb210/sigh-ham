@@ -115,13 +115,13 @@ export const laboratoireFr = {
   patients: {
     titre: "Patients transférés",
     sousTitre:
-      "Patients que le laboratoire a orientés vers d'autres salles",
+      "Orientez un ou plusieurs patients vers une ou plusieurs salles",
     recherche: "Rechercher nom, téléphone, N° dossier…",
-    vide: "Aucun transfert sortant pour le moment",
+    vide: "Aucun patient en file laboratoire",
     videAide:
-      "Les patients orientés depuis le laboratoire (caisse, réception, etc.) apparaissent ici.",
-    erreur: "Impossible de charger les transferts",
-    chargement: "Chargement des transferts…",
+      "Les patients apparaissent ici après confirmation du transfert à la caisse. Cochez-les puis choisissez les salles.",
+    erreur: "Impossible de charger la file",
+    chargement: "Chargement de la file…",
     colonnes: {
       ordre: "N°",
       enregistrement: "N° enregistrement",
@@ -154,8 +154,8 @@ export const laboratoireFr = {
     numeroDossier: "N° dossier",
     numeroFacture: "N° facture",
     modePaiement: "Mode de paiement",
-    titreListe: "Transferts sortants",
-    sousTitreListe: "{{count}} patient(s) orienté(s)",
+    titreListe: "Patients à orienter",
+    sousTitreListe: "{{count}} patient(s) en file",
     sousTitreListeSelection: "{{count}} affiché(s) · {{selection}} sélectionné(s)",
   },
   examensEnCours: {
@@ -215,10 +215,14 @@ export const laboratoireFr = {
     actionsRapides: "Actions rapides",
     aucunPatient: "Aucun patient sélectionné",
     selectionnerPatient: "Sélectionnez un patient dans la liste pour l'orienter.",
+    selectionnerPatientOuCocher:
+      "Sélectionnez ou cochez un ou plusieurs patients, puis cochez les salles de destination.",
     aideOrientationPatient:
       "Choisissez une destination : le transfert est créé tout de suite. Confirmez-le via le menu ⋮.",
     aideOrientationPatientMulti:
-      "Cochez une ou plusieurs salles. À la confirmation, le patient sera envoyé vers toutes.",
+      "Cochez une ou plusieurs salles : le patient sera envoyé vers toutes. Confirmez via ⋮.",
+    aideOrientationLotPatients:
+      "{{count}} patients cochés : cochez une ou plusieurs salles pour les orienter tous ensemble.",
     aideStatutAnalyse:
       "Choisissez un statut : le patient apparaît aussitôt sur la page correspondante.",
     statutAttribue: "Patient orienté vers « {{statut}} ».",

@@ -82,7 +82,7 @@ export function ContenuPatientsLaboratoire({
     setChargement(true);
     setErreur(null);
     try {
-      const res = await fetch("/api/laboratoire/patients?vue=sortants");
+      const res = await fetch("/api/laboratoire/patients");
       const data = (await res.json()) as {
         patients?: PatientFileLaboratoire[];
         erreur?: string;
@@ -374,6 +374,14 @@ export function ContenuPatientsLaboratoire({
       void changerOrientations(ids);
     },
     peutOrienter: Boolean(patientSelectionne) || idsCoches.size > 0,
+    aideOrientation:
+      idsCoches.size > 1
+        ? t("laboratoire.panneau.aideOrientationLotPatients", {
+            count: idsCoches.size,
+          })
+        : idsCoches.size === 1 || patientSelectionne
+          ? t("laboratoire.panneau.aideOrientationPatientMulti")
+          : t("laboratoire.panneau.selectionnerPatientOuCocher"),
     onAction,
   };
 

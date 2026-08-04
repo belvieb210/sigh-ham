@@ -26,6 +26,7 @@ interface PropsPanneauDroitLaboratoire {
   onOrientationsChange?: (ids: string[]) => void;
   /** false si aucun patient sélectionné ni coché */
   peutOrienter?: boolean;
+  aideOrientation?: string;
   onAction: (id: IdActionRapideLabo) => void;
 }
 
@@ -37,6 +38,7 @@ export function PanneauDroitLaboratoire({
   orientations = [],
   onOrientationsChange,
   peutOrienter,
+  aideOrientation,
   onAction,
 }: PropsPanneauDroitLaboratoire) {
   const { t } = useTranslation();
@@ -99,9 +101,10 @@ export function PanneauDroitLaboratoire({
             onChangeMulti={onOrientationsChange}
             desactive={!orientable}
             aide={
-              orientable
+              aideOrientation ??
+              (orientable
                 ? t("laboratoire.panneau.aideOrientationPatientMulti")
-                : t("laboratoire.panneau.selectionnerPatient")
+                : t("laboratoire.panneau.selectionnerPatient"))
             }
           />
         </section>

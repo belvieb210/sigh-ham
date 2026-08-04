@@ -114,13 +114,13 @@ export const laboratoireEn: LaboratoireFr = {
   },
   patients: {
     titre: "Transferred patients",
-    sousTitre: "Patients the laboratory oriented to other rooms",
+    sousTitre: "Orient one or more patients to one or more rooms",
     recherche: "Search name, phone, file No.…",
-    vide: "No outgoing transfers yet",
+    vide: "No patients in the laboratory queue",
     videAide:
-      "Patients oriented from the lab (cashier, reception, etc.) appear here.",
-    erreur: "Unable to load transfers",
-    chargement: "Loading transfers…",
+      "Patients appear here after the cashier confirms the transfer. Check them, then choose the rooms.",
+    erreur: "Unable to load the queue",
+    chargement: "Loading queue…",
     colonnes: {
       ordre: "No.",
       enregistrement: "Registration No.",
@@ -153,8 +153,8 @@ export const laboratoireEn: LaboratoireFr = {
     numeroDossier: "File No.",
     numeroFacture: "Invoice No.",
     modePaiement: "Payment mode",
-    titreListe: "Outgoing transfers",
-    sousTitreListe: "{{count}} oriented patient(s)",
+    titreListe: "Patients to orient",
+    sousTitreListe: "{{count}} patient(s) in queue",
     sousTitreListeSelection: "{{count}} shown · {{selection}} selected",
   },
   examensEnCours: {
@@ -214,10 +214,14 @@ export const laboratoireEn: LaboratoireFr = {
     actionsRapides: "Quick actions",
     aucunPatient: "No patient selected",
     selectionnerPatient: "Select a patient from the list to orient them.",
+    selectionnerPatientOuCocher:
+      "Select or check one or more patients, then check the destination rooms.",
     aideOrientationPatient:
       "Choose a destination: the transfer is created immediately. Confirm it via the ⋮ menu.",
     aideOrientationPatientMulti:
-      "Check one or more wards. On confirm, the patient is sent to all of them.",
+      "Check one or more rooms: the patient will be sent to all of them. Confirm via ⋮.",
+    aideOrientationLotPatients:
+      "{{count}} patients checked: check one or more rooms to orient them all together.",
     aideStatutAnalyse:
       "Choose a status: the patient immediately appears on the matching page.",
     statutAttribue: "Patient oriented to “{{statut}}”.",

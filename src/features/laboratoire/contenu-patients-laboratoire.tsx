@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
@@ -16,6 +16,16 @@ import {
   MiseEnPageLaboratoire,
   type UtilisateurLaboratoire,
 } from "@/features/laboratoire/mise-en-page-laboratoire";
+import {
+  PanneauDroitLaboratoire,
+  SectionsMobileLaboratoire,
+} from "@/features/laboratoire/panneau-droit-laboratoire";
+import type { IdActionRapideLabo } from "@/features/laboratoire/actions-rapides-laboratoire";
+import {
+  codeTransfertLaboratoire,
+  libellesExamensDemandes,
+  statutFileLabo,
+} from "@/features/laboratoire/utils-affichage";
 import type {
   DetailPatientLaboratoire,
   PatientFileLaboratoire,
@@ -33,15 +43,19 @@ export function ContenuPatientsLaboratoire({
   const router = useRouter();
   const searchParams = useSearchParams();
   const dossierUrl = searchParams.get("dossier");
+  const refRecherche = useRef<HTMLInputElement>(null);
 
   const [patients, setPatients] = useState<PatientFileLaboratoire[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [recherche, setRecherche] = useState("");
+  const [selectionId, setSelectionId] = useState<string | null>(dossierUrl);
+  const [orientation, setOrientation] = useState<string | null>(null);
   const [detail, setDetail] = useState<DetailPatientLaboratoire | null>(null);
   const [chargementDetail, setChargementDetail] = useState(false);
   const [demarrage, setDemarrage] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageAction, setMessageAction] = useState<string | null>(null);
 
   const charger = useCallback(async () => {
     setChargement(true);
@@ -69,6 +83,38 @@ export function ContenuPatientsLaboratoire({
     void charger();
   }, [charger]);
 
+  const filtrés = useMemo(() => {
+    const q = recherche.trim().toLowerCase();
+    if (!q) return patients;
+    return patients.filter((p) =>
+      [
+        p.nom,
+        p.prenom,
+        p.telephone,
+        p.numeroDossier,
+        p.numeroPatient,
+        p.numeroFacture,
+        p.provenance,
+        ...p.examens.map((e) => e.libelle),
+      ]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [patients, recherche]);
+
+  const patientSelectionne = useMemo(
+    () => filtrés.find((p) => p.dossierId === selectionId) ?? null,
+    [filtrés, selectionId]
+  );
+
+  const selectionner = (dossierId: string) => {
+    setSelectionId(dossierId);
+    setMessageAction(null);
+    router.replace(`/sigh/laboratoire/patients?dossier=${dossierId}`, {
+      scroll: false,
+    });
+  };
+
   const ouvrirDetail = useCallback(
     async (dossierId: string) => {
       setChargementDetail(true);
@@ -84,7 +130,10 @@ export function ContenuPatientsLaboratoire({
           return;
         }
         setDetail(data.patient);
-        router.replace(`/sigh/laboratoire/patients?dossier=${dossierId}`);
+        setSelectionId(dossierId);
+        router.replace(`/sigh/laboratoire/patients?dossier=${dossierId}`, {
+          scroll: false,
+        });
       } finally {
         setChargementDetail(false);
       }
@@ -93,65 +142,79 @@ export function ContenuPatientsLaboratoire({
   );
 
   useEffect(() => {
-    if (dossierUrl && !detail) {
-      void ouvrirDetail(dossierUrl);
-    }
-  }, [dossierUrl, detail, ouvrirDetail]);
+    if (dossierUrl) setSelectionId(dossierUrl);
+  }, [dossierUrl]);
 
-  const filtrés = useMemo(() => {
-    const q = recherche.trim().toLowerCase();
-    if (!q) return patients;
-    return patients.filter((p) =>
-      [
-        p.nom,
-        p.prenom,
-        p.telephone,
-        p.numeroDossier,
-        p.numeroPatient,
-        p.numeroFacture,
-      ]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q))
-    );
-  }, [patients, recherche]);
-
-  const commencerAnalyses = async () => {
-    if (!detail) return;
+  const commencerAnalyses = async (dossierId?: string) => {
+    const id = dossierId ?? selectionId;
+    if (!id) return;
     setDemarrage(true);
     setMessage(null);
+    setMessageAction(null);
     try {
       const res = await fetch("/api/laboratoire/examens/commencer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dossierId: detail.dossierId }),
+        body: JSON.stringify({ dossierId: id }),
       });
       const data = (await res.json()) as { erreur?: string; message?: string };
       if (!res.ok) {
-        setMessage(data.erreur ?? t("laboratoire.patients.erreurDemarrage"));
+        setMessageAction(data.erreur ?? t("laboratoire.patients.erreurDemarrage"));
         return;
       }
       setMessage(data.message ?? t("laboratoire.patients.analysesDemarrees"));
+      setMessageAction(data.message ?? t("laboratoire.patients.analysesDemarrees"));
       await charger();
-      await ouvrirDetail(detail.dossierId);
+      if (detail?.dossierId === id) await ouvrirDetail(id);
     } catch {
-      setMessage(t("laboratoire.patients.erreurDemarrage"));
+      setMessageAction(t("laboratoire.patients.erreurDemarrage"));
     } finally {
       setDemarrage(false);
     }
   };
 
-  const fermerDetail = () => {
-    setDetail(null);
-    router.replace("/sigh/laboratoire/patients");
+  const onAction = (id: IdActionRapideLabo) => {
+    setMessageAction(null);
+    if (id === "rechercher") {
+      refRecherche.current?.focus();
+      refRecherche.current?.select();
+      return;
+    }
+    if (!selectionId) {
+      setMessageAction(t("laboratoire.panneau.selectionnerPatient"));
+      return;
+    }
+    if (id === "commencer") {
+      void commencerAnalyses(selectionId);
+      return;
+    }
+    if (id === "detail") {
+      void ouvrirDetail(selectionId);
+      return;
+    }
+    if (id === "imprimer") {
+      setMessageAction(t("laboratoire.actions.aVenir"));
+    }
   };
+
+  const fermerDetail = () => setDetail(null);
 
   const formatHeure = (iso: string) =>
     new Date(iso).toLocaleString(i18n.language || "fr-FR", {
       day: "2-digit",
       month: "2-digit",
+      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
+
+  const propsPanneau = {
+    variante: "patients" as const,
+    patient: patientSelectionne,
+    orientation,
+    onOrientationChange: setOrientation,
+    onAction,
+  };
 
   return (
     <MiseEnPageLaboratoire
@@ -159,127 +222,233 @@ export function ContenuPatientsLaboratoire({
       titre={t("laboratoire.patients.titre")}
       sousTitre={t("laboratoire.patients.sousTitre")}
     >
-      <div className="mx-auto w-full max-w-6xl space-y-4">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
-          <input
-            type="search"
-            value={recherche}
-            onChange={(e) => setRecherche(e.target.value)}
-            placeholder={t("laboratoire.patients.recherche")}
-            className="w-full rounded-xl border border-gris-bordure bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-bleu-medical focus:ring-2 focus:ring-bleu-medical/20"
-          />
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-4 xl:flex-row xl:items-start">
+        <div className="min-w-0 flex-1 space-y-4">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
+            <input
+              ref={refRecherche}
+              type="search"
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+              placeholder={t("laboratoire.patients.recherche")}
+              className="w-full rounded-xl border border-gris-bordure bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-bleu-medical focus:ring-2 focus:ring-bleu-medical/20"
+            />
+          </div>
+
+          {erreur && (
+            <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              {erreur}
+            </p>
+          )}
+          {messageAction && (
+            <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800">
+              {messageAction}
+            </p>
+          )}
+
+          {chargement ? (
+            <div className="flex justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-bleu-medical" />
+            </div>
+          ) : filtrés.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-gris-bordure bg-white px-6 py-14 text-center">
+              <FlaskConical className="mx-auto h-10 w-10 text-texte-secondaire/50" />
+              <p className="mt-3 font-semibold text-texte-principal">
+                {t("laboratoire.patients.vide")}
+              </p>
+              <p className="mt-1 text-sm text-texte-secondaire">
+                {t("laboratoire.patients.videAide")}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm lg:block">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[820px] text-left text-sm">
+                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
+                      <tr>
+                        <th className="px-3 py-3 font-semibold">
+                          {t("laboratoire.patients.colonnes.transfert")}
+                        </th>
+                        <th className="px-3 py-3 font-semibold">
+                          {t("laboratoire.patients.colonnes.patient")}
+                        </th>
+                        <th className="px-3 py-3 font-semibold">
+                          {t("laboratoire.patients.colonnes.service")}
+                        </th>
+                        <th className="px-3 py-3 font-semibold">
+                          {t("laboratoire.patients.colonnes.examensDemandes")}
+                        </th>
+                        <th className="px-3 py-3 font-semibold">
+                          {t("laboratoire.patients.colonnes.heureTransfert")}
+                        </th>
+                        <th className="px-3 py-3 font-semibold">
+                          {t("laboratoire.patients.colonnes.statut")}
+                        </th>
+                        <th className="px-3 py-3 font-semibold">
+                          {t("laboratoire.patients.colonnes.analyste")}
+                        </th>
+                        <th className="px-3 py-3 font-semibold">
+                          {t("laboratoire.patients.colonnes.actions")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gris-bordure">
+                      {filtrés.map((p) => {
+                        const statut = statutFileLabo(p);
+                        const selectionne = selectionId === p.dossierId;
+                        return (
+                          <tr
+                            key={p.dossierId}
+                            onClick={() => selectionner(p.dossierId)}
+                            className={cn(
+                              "cursor-pointer transition-colors",
+                              selectionne
+                                ? "bg-bleu-medical-clair/40"
+                                : "hover:bg-slate-50/80"
+                            )}
+                          >
+                            <td className="px-3 py-3">
+                              <button
+                                type="button"
+                                className="font-mono text-xs font-semibold text-bleu-medical hover:underline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void ouvrirDetail(p.dossierId);
+                                }}
+                              >
+                                {codeTransfertLaboratoire(p)}
+                              </button>
+                            </td>
+                            <td className="px-3 py-3">
+                              <p className="font-semibold text-texte-principal">
+                                {p.nom} {p.prenom}
+                              </p>
+                              <p className="text-[11px] text-texte-secondaire">
+                                {p.age != null ? `${p.age} ans` : "—"}
+                                {p.sexe ? ` / ${p.sexe}` : ""}
+                              </p>
+                            </td>
+                            <td className="px-3 py-3 text-xs text-texte-secondaire">
+                              {p.provenance || "—"}
+                            </td>
+                            <td className="max-w-[200px] px-3 py-3 text-xs font-medium text-texte-principal">
+                              {libellesExamensDemandes(p)}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-3 text-xs text-texte-secondaire">
+                              {formatHeure(p.arriveeLe)}
+                            </td>
+                            <td className="px-3 py-3">
+                              <span
+                                className={cn(
+                                  "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                                  statut === "EN_COURS"
+                                    ? "bg-amber-50 text-amber-800"
+                                    : "bg-emerald-50 text-emerald-700"
+                                )}
+                              >
+                                {statut === "EN_COURS"
+                                  ? t("laboratoire.dashboard.statutEnCours")
+                                  : t("laboratoire.dashboard.statutRecu")}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 text-xs text-texte-secondaire">
+                              {p.medecinResponsable || "—"}
+                            </td>
+                            <td className="px-3 py-3">
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    void ouvrirDetail(p.dossierId);
+                                  }}
+                                  className="inline-flex rounded-lg border border-gris-bordure p-1.5 text-texte-secondaire hover:text-bleu-medical"
+                                  title={t("laboratoire.patients.ouvrirDossier")}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    selectionner(p.dossierId);
+                                    void commencerAnalyses(p.dossierId);
+                                  }}
+                                  disabled={demarrage}
+                                  className="inline-flex rounded-lg border border-gris-bordure p-1.5 text-amber-700 hover:bg-amber-50"
+                                  title={t("laboratoire.patients.commencerAnalyses")}
+                                >
+                                  <FlaskConical className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <ul className="space-y-3 lg:hidden">
+                {filtrés.map((p) => {
+                  const statut = statutFileLabo(p);
+                  return (
+                    <li key={p.dossierId}>
+                      <button
+                        type="button"
+                        onClick={() => selectionner(p.dossierId)}
+                        className={cn(
+                          "w-full rounded-xl border bg-white p-4 text-left shadow-sm",
+                          selectionId === p.dossierId
+                            ? "border-bleu-medical ring-1 ring-bleu-medical/30"
+                            : "border-gris-bordure"
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-bold text-texte-principal">
+                              {p.nom} {p.prenom}
+                            </p>
+                            <p className="font-mono text-xs text-bleu-medical">
+                              {codeTransfertLaboratoire(p)}
+                            </p>
+                          </div>
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                              statut === "EN_COURS"
+                                ? "bg-amber-50 text-amber-800"
+                                : "bg-emerald-50 text-emerald-700"
+                            )}
+                          >
+                            {statut === "EN_COURS"
+                              ? t("laboratoire.dashboard.statutEnCours")
+                              : t("laboratoire.dashboard.statutRecu")}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs text-texte-secondaire">
+                          {formatHeure(p.arriveeLe)} · {p.provenance}
+                        </p>
+                        <p className="mt-1 text-xs font-medium">
+                          {libellesExamensDemandes(p, 3)}
+                        </p>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+
+          <SectionsMobileLaboratoire {...propsPanneau} />
         </div>
 
-        {erreur && (
-          <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {erreur}
-          </p>
-        )}
-
-        {chargement ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-bleu-medical" />
-          </div>
-        ) : filtrés.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gris-bordure bg-white px-6 py-14 text-center">
-            <FlaskConical className="mx-auto h-10 w-10 text-texte-secondaire/50" />
-            <p className="mt-3 font-semibold text-texte-principal">
-              {t("laboratoire.patients.vide")}
-            </p>
-            <p className="mt-1 text-sm text-texte-secondaire">
-              {t("laboratoire.patients.videAide")}
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm lg:block">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gris-tres-clair text-xs uppercase tracking-wide text-texte-secondaire">
-                  <tr>
-                    <th className="px-3 py-3">{t("laboratoire.patients.colonnes.ordre")}</th>
-                    <th className="px-3 py-3">{t("laboratoire.patients.colonnes.patient")}</th>
-                    <th className="px-3 py-3">{t("laboratoire.patients.colonnes.sexeAge")}</th>
-                    <th className="px-3 py-3">{t("laboratoire.patients.colonnes.telephone")}</th>
-                    <th className="px-3 py-3">{t("laboratoire.patients.colonnes.arrivee")}</th>
-                    <th className="px-3 py-3">{t("laboratoire.patients.colonnes.provenance")}</th>
-                    <th className="px-3 py-3">{t("laboratoire.patients.colonnes.examens")}</th>
-                    <th className="px-3 py-3">{t("laboratoire.patients.colonnes.facture")}</th>
-                    <th className="px-3 py-3">{t("laboratoire.patients.colonnes.actions")}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gris-bordure">
-                  {filtrés.map((p) => (
-                    <tr key={p.dossierId} className="hover:bg-gris-tres-clair/50">
-                      <td className="px-3 py-3 font-semibold">{p.numeroOrdre}</td>
-                      <td className="px-3 py-3">
-                        <p className="font-semibold">
-                          {p.nom} {p.prenom}
-                        </p>
-                        <p className="text-xs text-texte-secondaire">
-                          {p.numeroDossier}
-                        </p>
-                      </td>
-                      <td className="px-3 py-3 text-texte-secondaire">
-                        {p.sexe ?? "—"}
-                        {p.age != null ? ` / ${p.age} ans` : ""}
-                      </td>
-                      <td className="px-3 py-3">{p.telephone || "—"}</td>
-                      <td className="px-3 py-3">{formatHeure(p.arriveeLe)}</td>
-                      <td className="px-3 py-3">{p.provenance}</td>
-                      <td className="px-3 py-3">{p.nombreExamens}</td>
-                      <td className="px-3 py-3 text-xs">{p.numeroFacture || "—"}</td>
-                      <td className="px-3 py-3">
-                        <button
-                          type="button"
-                          onClick={() => void ouvrirDetail(p.dossierId)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-gris-bordure px-2 py-1.5 text-xs font-medium hover:bg-white"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          {t("laboratoire.patients.ouvrirDossier")}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <ul className="space-y-3 lg:hidden">
-              {filtrés.map((p) => (
-                <li
-                  key={p.dossierId}
-                  className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-bold text-texte-principal">
-                        {p.nom} {p.prenom}
-                      </p>
-                      <p className="text-xs text-texte-secondaire">
-                        #{p.numeroOrdre} · {p.numeroDossier}
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                      {t("laboratoire.patients.statutEnAttente")}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-xs text-texte-secondaire">
-                    {formatHeure(p.arriveeLe)} · {p.provenance} ·{" "}
-                    {p.nombreExamens} examen(s)
-                  </p>
-                  <Bouton
-                    type="button"
-                    className="mt-3 w-full justify-center"
-                    onClick={() => void ouvrirDetail(p.dossierId)}
-                  >
-                    {t("laboratoire.patients.ouvrirDossier")}
-                  </Bouton>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+        <div className="hidden xl:block">
+          <PanneauDroitLaboratoire {...propsPanneau} />
+        </div>
       </div>
 
       {(detail || chargementDetail) && (
@@ -400,7 +569,7 @@ export function ContenuPatientsLaboratoire({
                     demarrage ||
                     !detail.examens.some((e) => e.statut === "PRESCRIT")
                   }
-                  onClick={() => void commencerAnalyses()}
+                  onClick={() => void commencerAnalyses(detail.dossierId)}
                 >
                   {demarrage ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

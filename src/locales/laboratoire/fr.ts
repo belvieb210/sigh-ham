@@ -119,14 +119,19 @@ export const laboratoireFr = {
     chargement: "Chargement de la file…",
     colonnes: {
       ordre: "N°",
+      transfert: "N° transfert",
       patient: "Patient",
       sexeAge: "Sexe / Âge",
       telephone: "Téléphone",
       arrivee: "Arrivée",
       provenance: "Provenance",
+      service: "Service",
       examens: "Examens",
+      examensDemandes: "Examens demandés",
+      heureTransfert: "Heure transfert",
       facture: "Facture",
       statut: "Statut",
+      analyste: "Analyste",
       actions: "Actions",
     },
     statutEnAttente: "En attente",
@@ -150,6 +155,77 @@ export const laboratoireFr = {
     recherche: "Rechercher patient, examen, N° dossier…",
     vide: "Aucune analyse en cours pour le moment",
     erreur: "Impossible de charger les analyses en cours",
+  },
+  panneau: {
+    resumePatient: "Résumé du patient",
+    orientationRapide: "Orientation rapide",
+    statutAnalyse: "Orientation rapide",
+    actionsRapides: "Actions rapides",
+    aucunPatient: "Aucun patient sélectionné",
+    selectionnerPatient: "Sélectionnez un patient dans la liste pour l'orienter.",
+    aideOrientationPatient:
+      "Choisissez la destination après traitement au laboratoire.",
+    aideStatutAnalyse:
+      "Attribuez le statut d'analyse pour le patient sélectionné.",
+    statutAttribue: "Statut « {{statut}} » attribué (enregistrement à venir).",
+    age: "Âge",
+    telephone: "Téléphone",
+    service: "Service",
+    examens: "Examens",
+  },
+  orientationsDestination: {
+    INFIRMIERS: {
+      label: "Infirmiers",
+      description: "Prise de signes vitaux",
+    },
+    MEDECIN: {
+      label: "Médecin",
+      description: "Consultation médicale",
+    },
+    CAISSE: {
+      label: "Caisse",
+      description: "Facturation et paiement",
+    },
+    MEDECIN_EXTERNE: {
+      label: "Médecin externe",
+      description: "Patient référé par un médecin",
+    },
+    PHARMACIE: {
+      label: "Pharmacie",
+      description: "Délivrance des médicaments",
+    },
+  },
+  orientationsStatut: {
+    RECUS: {
+      label: "Reçus",
+      description: "Échantillon reçu au laboratoire",
+    },
+    EN_COURS: {
+      label: "En cours",
+      description: "Analyse en cours de réalisation",
+    },
+    VERIFIES: {
+      label: "Vérifiés",
+      description: "Résultats techniques vérifiés",
+    },
+    REJETES: {
+      label: "Rejetés",
+      description: "Échantillon ou résultat rejeté",
+    },
+    DR_APPROUVE: {
+      label: "Dr approuve",
+      description: "Validation médicale du biologiste",
+    },
+  },
+  actions: {
+    rechercherPatient: "Rechercher patient",
+    commencerAnalyses: "Commencer analyses",
+    imprimerFiche: "Imprimer fiche",
+    voirDossier: "Voir dossier",
+    saisirResultat: "Saisir résultat",
+    validerResultat: "Valider résultat",
+    imprimerResultat: "Imprimer résultat",
+    aVenir: "Fonctionnalité à brancher prochainement.",
   },
   statutExamen: {
     PRESCRIT: "Prescrit",

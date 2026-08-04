@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import { MiseEnPageReception, type UtilisateurReception } from "@/features/reception/mise-en-page-reception";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 import { FormulaireEnregistrement } from "@/features/reception/formulaire-enregistrement";
@@ -17,7 +18,10 @@ interface PropsContenuNouveauPatient {
   utilisateur: UtilisateurReception;
 }
 
-export function ContenuNouveauPatient({ utilisateur }: PropsContenuNouveauPatient) {
+export function ContenuNouveauPatient({
+  utilisateur,
+}: PropsContenuNouveauPatient) {
+  const espace = useEspaceApi();
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const numeroModifier = searchParams.get("modifier")?.trim() || null;
@@ -38,7 +42,7 @@ export function ContenuNouveauPatient({ utilisateur }: PropsContenuNouveauPatien
     setChargementEdition(true);
     setErreurEdition(null);
 
-    fetch(`/api/reception/patients/${encodeURIComponent(numeroModifier)}`)
+    fetch(`${espace.prefixeApi}/patients/${encodeURIComponent(numeroModifier)}`)
       .then(async (res) => {
         const data = (await res.json()) as DonneesFormulairePatient & { message?: string };
         if (!res.ok) {
@@ -95,7 +99,7 @@ export function ContenuNouveauPatient({ utilisateur }: PropsContenuNouveauPatien
               : t("reception.pages.nouveau.description")
           }
           fil={[
-            { label: t("reception.common.reception"), href: "/sigh/reception" },
+            { label: t(espace.cleFilRacine), href: espace.cheminBase },
             {
               label: modeEdition
                 ? t("reception.pages.nouveau.filModification")

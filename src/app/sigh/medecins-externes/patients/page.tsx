@@ -1,18 +1,6 @@
-import type { Metadata } from "next";
-import { ContenuPatientsMedecinsExternes } from "@/features/medecins-externes/contenu-patients-medecins-externes";
-import { verifierAccesMedecinsExternes } from "@/lib/auth/garde-salle";
-import { propsUtilisateurMedecinsExternes } from "@/lib/auth/props-utilisateur-medecins-externes";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Patients — Médecins externes",
-  robots: { index: false, follow: false },
-};
-
-export default async function Page() {
-  const utilisateur = await verifierAccesMedecinsExternes();
-  return (
-    <ContenuPatientsMedecinsExternes
-      utilisateur={propsUtilisateurMedecinsExternes(utilisateur)}
-    />
-  );
+/** Ancienne file ME → patients enregistrés (parité réception). */
+export default function Page() {
+  redirect("/sigh/medecins-externes/enregistres");
 }

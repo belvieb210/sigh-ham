@@ -1,13 +1,18 @@
 ﻿"use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   BarreLateraleMedecinsExternes,
   EnTeteMedecinsExternes,
 } from "@/features/medecins-externes/layout-medecins-externes";
 import { NavigationBasseMedecinsExternes } from "@/features/medecins-externes/navigation-basse-medecins-externes";
-import { FournisseurOrientationMedecinsExternes } from "@/features/medecins-externes/contexte-orientation-medecins-externes";
-import { FournisseurSelectionMedecinsExternes } from "@/features/medecins-externes/contexte-selection-medecins-externes";
+import {
+  ESPACE_API_MEDECINS_EXTERNES,
+  FournisseurEspaceApi,
+} from "@/features/reception/contexte-espace-api";
+import { FournisseurResumePatient } from "@/features/reception/contexte-resume-patient";
+import { FournisseurOrientationRapide } from "@/features/reception/contexte-orientation-rapide";
+import { FournisseurSelectionTransfert } from "@/features/reception/contexte-selection-transfert";
 import { ToastNotificationGlobale } from "@/features/notifications/composants/toast-notification-globale";
 import { GestionnaireAlertesNotifications } from "@/features/notifications/composants/gestionnaire-alertes-notifications";
 import { FournisseurNotifications } from "@/features/notifications/fournisseur-notifications";
@@ -20,7 +25,7 @@ interface PropsMiseEnPageMedecinsExternes {
   titre: string;
   sousTitre: string;
   panneauDroit?: ReactNode;
-  activerSelection?: boolean;
+  activerSelectionTransfert?: boolean;
   children: ReactNode;
 }
 
@@ -29,31 +34,10 @@ export function MiseEnPageMedecinsExternes({
   titre,
   sousTitre,
   panneauDroit,
-  activerSelection = false,
+  activerSelectionTransfert = false,
   children,
 }: PropsMiseEnPageMedecinsExternes) {
   const [menuOuvert, setMenuOuvert] = useState(false);
-  const [badgeFile, setBadgeFile] = useState(0);
-
-  useEffect(() => {
-    let annule = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/medecins-externes/stats");
-        const data = (await res.json()) as {
-          stats?: { patientsEnFile?: number };
-        };
-        if (!annule && res.ok) {
-          setBadgeFile(data.stats?.patientsEnFile ?? 0);
-        }
-      } catch {
-        /* ignore */
-      }
-    })();
-    return () => {
-      annule = true;
-    };
-  }, []);
 
   const contenu = (
     <div className="flex h-full min-h-0 w-full flex-1 overflow-hidden bg-[#f1f5f9]">
@@ -61,7 +45,6 @@ export function MiseEnPageMedecinsExternes({
         utilisateur={utilisateur}
         ouvert={menuOuvert}
         onFermer={() => setMenuOuvert(false)}
-        badgeFile={badgeFile}
       />
 
       <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col">
@@ -92,14 +75,18 @@ export function MiseEnPageMedecinsExternes({
   );
 
   return (
-    <FournisseurNotifications>
-      <FournisseurOrientationMedecinsExternes>
-        {activerSelection ? (
-          <FournisseurSelectionMedecinsExternes>{contenu}</FournisseurSelectionMedecinsExternes>
-        ) : (
-          contenu
-        )}
-      </FournisseurOrientationMedecinsExternes>
-    </FournisseurNotifications>
+    <FournisseurEspaceApi espace={ESPACE_API_MEDECINS_EXTERNES}>
+      <FournisseurNotifications>
+        <FournisseurResumePatient>
+          <FournisseurOrientationRapide>
+            {activerSelectionTransfert ? (
+              <FournisseurSelectionTransfert>{contenu}</FournisseurSelectionTransfert>
+            ) : (
+              contenu
+            )}
+          </FournisseurOrientationRapide>
+        </FournisseurResumePatient>
+      </FournisseurNotifications>
+    </FournisseurEspaceApi>
   );
 }

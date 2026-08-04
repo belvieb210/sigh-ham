@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import * as Dialog from "@radix-ui/react-dialog";
 import { FlaskConical, Loader2, X } from "lucide-react";
 import type { PatientEnregistre } from "@/constants/reception";
@@ -28,6 +29,7 @@ export function ModaleExamensTransfert({
   onFermer,
   onModifie,
 }: PropsModaleExamensTransfert) {
+  const espace = useEspaceApi();
   const { t } = useTranslation();
   const [selection, setSelection] = useState<TypeExamenReception[]>([]);
   const [selectionInitiale, setSelectionInitiale] = useState<TypeExamenReception[]>([]);
@@ -49,7 +51,7 @@ export function ModaleExamensTransfert({
 
     try {
       const res = await fetch(
-        `/api/reception/transferts/${encodeURIComponent(patient.transfertId)}/examens`
+        `${espace.prefixeApi}/transferts/${encodeURIComponent(patient.transfertId)}/examens`
       );
       const data = (await res.json()) as {
         examens?: TypeExamenReception[];
@@ -96,7 +98,7 @@ export function ModaleExamensTransfert({
 
     try {
       const res = await fetch(
-        `/api/reception/transferts/${encodeURIComponent(patient.transfertId)}/examens`,
+        `${espace.prefixeApi}/transferts/${encodeURIComponent(patient.transfertId)}/examens`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

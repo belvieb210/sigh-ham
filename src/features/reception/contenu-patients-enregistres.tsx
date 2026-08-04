@@ -2,6 +2,7 @@
 
 import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import { MiseEnPageReception, type UtilisateurReception } from "@/features/reception/mise-en-page-reception";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 import { ListePatientsEnregistres } from "@/features/reception/liste-patients-enregistres";
@@ -14,7 +15,10 @@ interface PropsContenuPatientsEnregistres {
   utilisateur: UtilisateurReception;
 }
 
-export function ContenuPatientsEnregistres({ utilisateur }: PropsContenuPatientsEnregistres) {
+export function ContenuPatientsEnregistres({
+  utilisateur,
+}: PropsContenuPatientsEnregistres) {
+  const espace = useEspaceApi();
   const { t } = useTranslation();
 
   return (
@@ -31,7 +35,7 @@ export function ContenuPatientsEnregistres({ utilisateur }: PropsContenuPatients
           titre={t("reception.pages.enregistres.titre")}
           description={t("reception.pages.enregistres.description")}
           fil={[
-            { label: t("reception.common.reception"), href: "/sigh/reception" },
+            { label: t("reception.common.reception"), href: espace.cheminBase },
             { label: t("reception.pages.enregistres.fil") },
           ]}
         />

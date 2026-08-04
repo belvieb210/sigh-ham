@@ -4,7 +4,7 @@ import { verifierAccesMedecinsExternes } from "@/lib/auth/garde-salle";
 import { propsUtilisateurMedecinsExternes } from "@/lib/auth/props-utilisateur-medecins-externes";
 
 export const metadata: Metadata = {
-  title: "Historique — Médecins externes",
+  title: "Rechercher patient — Médecins externes",
   robots: { index: false, follow: false },
 };
 
@@ -13,7 +13,7 @@ export default async function Page() {
   return (
     <ContenuPageMedecinsExternesAvenir
       utilisateur={propsUtilisateurMedecinsExternes(utilisateur)}
-      page="historique"
+      page="recherche"
     />
   );
 }

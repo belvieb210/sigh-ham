@@ -2,6 +2,7 @@
 
 import { Construction } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import type { IdPageReceptionAvenir } from "@/constants/reception";
 import {
   Bell,
@@ -38,6 +39,7 @@ export function ContenuPageReceptionAvenir({
   utilisateur,
   page,
 }: PropsContenuPageReceptionAvenir) {
+  const espace = useEspaceApi();
   const { t } = useTranslation();
   const Icone = ICONES_PAGES[page];
 
@@ -53,7 +55,7 @@ export function ContenuPageReceptionAvenir({
           titre={t(`reception.pages.${page}.titre`)}
           description={t(`reception.pages.${page}.description`)}
           fil={[
-            { label: t("reception.common.reception"), href: "/sigh/reception" },
+            { label: t(espace.cleFilRacine), href: espace.cheminBase },
             { label: t(`reception.pages.${page}.fil`) },
           ]}
         />

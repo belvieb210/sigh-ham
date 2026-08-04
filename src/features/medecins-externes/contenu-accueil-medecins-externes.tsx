@@ -1,20 +1,105 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ClipboardList,
-  FlaskConical,
-  Loader2,
-  Stethoscope,
-  Users,
-} from "lucide-react";
+import type { DonneesFormulairePatient } from "@/lib/reception/types";
 import {
   MiseEnPageMedecinsExternes,
   type UtilisateurMedecinsExternes,
 } from "@/features/medecins-externes/mise-en-page-medecins-externes";
-import type { StatsMedecinsExternesJour } from "@/lib/medecins-externes/lister-patients";
+import { CartesStatistiquesReception } from "@/features/reception/cartes-statistiques";
+import { FormulaireEnregistrement } from "@/features/reception/formulaire-enregistrement";
+import { TableauPatientsRecents } from "@/features/reception/tableau-patients-recents";
+import {
+  PanneauDroitReception,
+  SectionsMobileReception,
+} from "@/features/reception/panneau-droit-reception";
+import { ResumePatientMobile } from "@/features/reception/resume-patient-mobile";
+import { useResumePatient } from "@/features/reception/contexte-resume-patient";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
+import type { PatientEnregistre } from "@/constants/reception";
+import type { DetailPatientRechercheSelectionne } from "@/constants/reception";
+
+function CorpsAccueil({ agentNom }: { agentNom: string }) {
+  const espace = useEspaceApi();
+  const refFormulaire = useRef<HTMLElement>(null);
+  const [donneesPrefill, setDonneesPrefill] = useState<DonneesFormulairePatient | null>(null);
+  const [patientSelectionneId, setPatientSelectionneId] = useState<string | null>(null);
+  const [chargementSelection, setChargementSelection] = useState(false);
+  const { definirDepuisDonneesCompletes } = useResumePatient();
+
+  const selectionnerPatient = useCallback(
+    async (patient: PatientEnregistre) => {
+      if (chargementSelection) return;
+      setChargementSelection(true);
+      setPatientSelectionneId(patient.id);
+      try {
+        const res = await fetch(
+          `${espace.prefixeApi}/patients/${encodeURIComponent(patient.id)}`
+        );
+        const data = (await res.json()) as DonneesFormulairePatient & {
+          message?: string;
+        };
+        if (!res.ok) throw new Error(data.message ?? "Impossible de charger.");
+        setDonneesPrefill(data);
+        definirDepuisDonneesCompletes(data);
+        refFormulaire.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch {
+        setPatientSelectionneId(null);
+      } finally {
+        setChargementSelection(false);
+      }
+    },
+    [chargementSelection, definirDepuisDonneesCompletes, espace.prefixeApi]
+  );
+
+  useEffect(() => {
+    const onRecherchePatient = (event: Event) => {
+      const detail = (event as CustomEvent<DetailPatientRechercheSelectionne>).detail;
+      if (!detail?.numeroPatient) return;
+      void (async () => {
+        try {
+          const res = await fetch(
+            `${espace.prefixeApi}/patients/${encodeURIComponent(detail.numeroPatient)}`
+          );
+          const data = (await res.json()) as DonneesFormulairePatient & {
+            message?: string;
+          };
+          if (!res.ok) return;
+          setDonneesPrefill(data);
+          setPatientSelectionneId(data.numeroPatient);
+          definirDepuisDonneesCompletes(data);
+        } catch {
+          /* ignore */
+        }
+      })();
+    };
+    window.addEventListener(espace.evenementPatientRecherche, onRecherchePatient);
+    return () =>
+      window.removeEventListener(espace.evenementPatientRecherche, onRecherchePatient);
+  }, [definirDepuisDonneesCompletes, espace]);
+
+  return (
+    <div className="mx-auto w-full max-w-[1200px] space-y-4 lg:space-y-5">
+      <CartesStatistiquesReception />
+      <section ref={refFormulaire}>
+        <FormulaireEnregistrement
+          variante="apercu"
+          donneesPrefill={donneesPrefill}
+          onPrefillApplique={() => setDonneesPrefill(null)}
+          agentNom={agentNom}
+        />
+      </section>
+      <TableauPatientsRecents
+        patientSelectionneId={patientSelectionneId}
+        chargementSelection={chargementSelection}
+        onSelectionnerPatient={selectionnerPatient}
+      />
+      <ResumePatientMobile />
+      <SectionsMobileReception afficherTransfertManuel />
+    </div>
+  );
+}
 
 export function ContenuAccueilMedecinsExternes({
   utilisateur,
@@ -22,87 +107,16 @@ export function ContenuAccueilMedecinsExternes({
   utilisateur: UtilisateurMedecinsExternes;
 }) {
   const { t } = useTranslation();
-  const [stats, setStats] = useState<StatsMedecinsExternesJour | null>(null);
-  const [chargement, setChargement] = useState(true);
-
-  useEffect(() => {
-    let a = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/medecins-externes/stats");
-        const data = (await res.json()) as { stats?: StatsMedecinsExternesJour };
-        if (!a && res.ok) setStats(data.stats ?? null);
-      } finally {
-        if (!a) setChargement(false);
-      }
-    })();
-    return () => {
-      a = true;
-    };
-  }, []);
-
-  const kpis = [
-    {
-      label: t("medecinsExternes.dashboard.patientsEnFile"),
-      valeur: stats?.patientsEnFile ?? 0,
-      href: "/sigh/medecins-externes/patients",
-      icone: Users,
-    },
-    {
-      label: t("medecinsExternes.dashboard.consultations"),
-      valeur: stats?.consultationsAujourdhui ?? 0,
-      href: "/sigh/medecins-externes/consultation",
-      icone: Stethoscope,
-    },
-    {
-      label: t("medecinsExternes.dashboard.examens"),
-      valeur: stats?.examensPrescritsAujourdhui ?? 0,
-      href: "/sigh/medecins-externes/examens",
-      icone: FlaskConical,
-    },
-    {
-      label: t("medecinsExternes.dashboard.ordonnances"),
-      valeur: stats?.ordonnancesAujourdhui ?? 0,
-      href: "/sigh/medecins-externes/ordonnances",
-      icone: ClipboardList,
-    },
-  ];
+  const agentNom = `${utilisateur.prenom} ${utilisateur.nom}`.trim();
 
   return (
     <MiseEnPageMedecinsExternes
       utilisateur={utilisateur}
       titre={t("medecinsExternes.dashboard.titre")}
-      sousTitre={t("medecinsExternes.dashboard.sousTitre")}
+      sousTitre={t("medecinsExternes.layout.sousTitre")}
+      panneauDroit={<PanneauDroitReception afficherTransfertManuel />}
     >
-      {chargement ? (
-        <div className="flex items-center gap-2 text-sm text-texte-secondaire">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          {t("medecinsExternes.common.chargement")}
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {kpis.map((k) => {
-            const Icone = k.icone;
-            return (
-              <Link
-                key={k.href}
-                href={k.href}
-                className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm transition hover:border-bleu-medical"
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium uppercase tracking-wide text-texte-secondaire">
-                    {k.label}
-                  </p>
-                  <Icone className="h-4 w-4 text-bleu-medical" />
-                </div>
-                <p className="mt-2 text-2xl font-bold text-texte-principal">
-                  {k.valeur}
-                </p>
-              </Link>
-            );
-          })}
-        </div>
-      )}
+      <CorpsAccueil agentNom={agentNom} />
     </MiseEnPageMedecinsExternes>
   );
 }

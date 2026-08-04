@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import {
   Search,
   Printer,
@@ -11,10 +12,6 @@ import {
   Loader2,
   type LucideIcon,
 } from "lucide-react";
-import {
-  EVENEMENT_RECEPTION_PATIENTS_MODIFIES,
-  EVENEMENT_RECEPTION_FOCUS_RECHERCHE,
-} from "@/constants/reception";
 import { useOrientationRapide } from "@/features/reception/contexte-orientation-rapide";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import { cn } from "@/lib/utils";
@@ -31,6 +28,7 @@ export function ActionsRapidesReception({
   variante = "grille",
   afficherTransfertManuel = false,
 }: PropsActionsRapidesReception) {
+  const espace = useEspaceApi();
   const { t } = useTranslation();
   const router = useRouter();
   const { resume } = useResumePatient();
@@ -79,7 +77,7 @@ export function ActionsRapidesReception({
     setMessage(null);
 
     try {
-      const res = await fetch("/api/reception/transferts", {
+      const res = await fetch(`${espace.prefixeApi}/transferts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -105,10 +103,10 @@ export function ActionsRapidesReception({
             salles: data.salleDestination ?? codes.join(", "),
           })
       );
-      window.dispatchEvent(new CustomEvent(EVENEMENT_RECEPTION_PATIENTS_MODIFIES));
+      window.dispatchEvent(new CustomEvent(espace.evenementPatientsModifies));
 
       router.push(
-        `/sigh/reception/transferts?transfere=${encodeURIComponent(data.numeroPatient ?? resume.numeroPatient)}`
+        `${espace.cheminBase}/transferts?transfere=${encodeURIComponent(data.numeroPatient ?? resume.numeroPatient)}`
       );
       router.refresh();
     } catch (error) {
@@ -125,7 +123,7 @@ export function ActionsRapidesReception({
     }
 
     if (id === "rechercher") {
-      window.dispatchEvent(new CustomEvent(EVENEMENT_RECEPTION_FOCUS_RECHERCHE));
+      window.dispatchEvent(new CustomEvent(espace.evenementFocusRecherche));
     }
   };
 

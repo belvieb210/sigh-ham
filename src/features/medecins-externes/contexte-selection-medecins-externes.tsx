@@ -187,7 +187,7 @@ export function FournisseurSelectionMedecinsExternes({ children }: { children: R
           codesFinal
             .map(
               (c) =>
-                ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES.find((o) => o.value === c)?.labelKey ?? c
+                ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES.find((o) => o.value === c)?.label ?? c
             )
             .join(", ");
 

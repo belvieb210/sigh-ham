@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import {
   Clock,
   FlaskConical,
@@ -30,6 +31,7 @@ export function SelectionExamensInitiaux({
   onChange,
   lectureSeule = false,
 }: PropsSelectionExamensInitiaux) {
+  const espace = useEspaceApi();
   const { t } = useTranslation();
   const [recherche, setRecherche] = useState("");
   const [resultats, setResultats] = useState<TypeExamenReception[]>([]);
@@ -57,7 +59,7 @@ export function SelectionExamensInitiaux({
       if (terme.trim()) params.set("q", terme.trim());
       params.set("limite", "12");
 
-      const res = await fetch(`/api/reception/examens?${params.toString()}`);
+      const res = await fetch(`${espace.prefixeApi}/examens?${params.toString()}`);
       if (!res.ok) throw new Error(t("reception.examens.indisponible"));
 
       const data = (await res.json()) as { examens?: TypeExamenReception[] };

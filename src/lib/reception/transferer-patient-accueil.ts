@@ -222,7 +222,8 @@ async function chargerDonneesPatientPourTransfertManuel(
 
 export async function transfererPatientManuel(
   agentId: string,
-  donnees: Pick<DonneesTransfertAccueil, "numeroPatient" | "dossierId" | "orientation">
+  donnees: Pick<DonneesTransfertAccueil, "numeroPatient" | "dossierId" | "orientation">,
+  options?: { salleOrigine?: CodeSalle; medecinExterneId?: string }
 ): Promise<ResultatTransfertAccueil> {
   const erreur = validerDonneesTransfertManuel(donnees);
   if (erreur) throw new Error(erreur);
@@ -231,11 +232,15 @@ export async function transfererPatientManuel(
 
   const donneesPatient = await chargerDonneesPatientPourTransfertManuel(donnees.numeroPatient);
 
-  return transfererPatientAccueil(agentId, {
-    ...donneesPatient,
-    dossierId: donnees.dossierId,
-    orientation: donnees.orientation,
-  });
+  return transfererPatientAccueil(
+    agentId,
+    {
+      ...donneesPatient,
+      dossierId: donnees.dossierId,
+      orientation: donnees.orientation,
+    },
+    options
+  );
 }
 
 const STATUTS_TRANSFERT_INACTIFS: StatutTransfert[] = ["ANNULE", "REFUSE"];
@@ -355,7 +360,8 @@ function donneesEnregistrementDepuisTransfert(
 
 export async function transfererPatientAccueil(
   agentId: string,
-  donnees: DonneesTransfertAccueil
+  donnees: DonneesTransfertAccueil,
+  options?: { salleOrigine?: CodeSalle; medecinExterneId?: string }
 ): Promise<ResultatTransfertAccueil> {
   const manuel = donnees.transfertManuel === true;
   const erreur = manuel
@@ -363,18 +369,23 @@ export async function transfererPatientAccueil(
     : validerDonneesTransfert(donnees);
   if (erreur) throw new Error(erreur);
 
+  const codeOrigine: CodeSalle = options?.salleOrigine ?? "RECEPTION";
+  const medecinExterneId = options?.medecinExterneId;
+
   const motifVisite = manuel
     ? "Transfert manuel"
     : libelleMotifVisite(donnees.motifPrincipal!, donnees.motifAutreTexte);
-  const idsExamens = manuel ? [] : [...new Set(donnees.examensIds ?? [])];
+  const idsExamens = manuel ? [...new Set(donnees.examensIds ?? [])] : [...new Set(donnees.examensIds ?? [])];
+  // Keep manuel without examens like before
+  const idsExamensEffectifs = manuel ? [] : idsExamens;
 
   const resultat = await prisma.$transaction(async (tx) => {
-    const [salleReception, salleDestination] = await Promise.all([
-      tx.salle.findUnique({ where: { code: "RECEPTION" } }),
+    const [salleOrigine, salleDestination] = await Promise.all([
+      tx.salle.findUnique({ where: { code: codeOrigine } }),
       tx.salle.findUnique({ where: { code: donnees.orientation as CodeSalle } }),
     ]);
 
-    if (!salleReception || !salleDestination) {
+    if (!salleOrigine || !salleDestination) {
       throw new Error("Configuration des salles incomplète.");
     }
 
@@ -387,9 +398,16 @@ export async function transfererPatientAccueil(
       });
       if (!existant) throw new Error("Patient introuvable.");
 
+      if (medecinExterneId && existant.medecinExterneId && existant.medecinExterneId !== medecinExterneId) {
+        throw new Error("Ce patient appartient à un autre médecin externe.");
+      }
+
       const misAJour = await tx.patient.update({
         where: { id: existant.id },
-        data: donneesPatientDepuisFormulaire(donnees),
+        data: {
+          ...donneesPatientDepuisFormulaire(donnees),
+          ...(medecinExterneId ? { medecinExterneId } : {}),
+        },
       });
       patientId = misAJour.id;
       numeroPatient = misAJour.numeroPatient;
@@ -402,7 +420,7 @@ export async function transfererPatientAccueil(
             transferts: {
               some: {
                 statut: "EN_ATTENTE",
-                salleOrigine: { code: "RECEPTION" },
+                salleOrigine: { code: codeOrigine },
               },
             },
           },
@@ -411,7 +429,7 @@ export async function transfererPatientAccueil(
             transferts: {
               where: {
                 statut: "EN_ATTENTE",
-                salleOrigine: { code: "RECEPTION" },
+                salleOrigine: { code: codeOrigine },
               },
               include: { salleOrigine: true },
               orderBy: { createdAt: "desc" },
@@ -462,6 +480,7 @@ export async function transfererPatientAccueil(
         data: {
           numeroPatient,
           ...donneesPatientDepuisFormulaire(donnees),
+          ...(medecinExterneId ? { medecinExterneId } : {}),
         },
       });
       patientId = cree.id;
@@ -559,7 +578,7 @@ export async function transfererPatientAccueil(
       tx,
       dossierId,
       agentId,
-      idsExamens,
+      idsExamensEffectifs,
       donnees.estEstimation ?? false
     );
 
@@ -567,7 +586,7 @@ export async function transfererPatientAccueil(
       data: {
         dossierId,
         passageId,
-        salleOrigineId: salleReception.id,
+        salleOrigineId: salleOrigine.id,
         salleDestinationId: salleDestination.id,
         statut: "EN_ATTENTE",
         motif: manuel ? "Transfert manuel" : motifVisite,

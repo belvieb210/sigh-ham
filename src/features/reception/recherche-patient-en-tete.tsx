@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import { Loader2, Search, UserRound } from "lucide-react";
 import {
-  EVENEMENT_RECEPTION_PATIENT_RECHERCHE,
-  EVENEMENT_RECEPTION_FOCUS_RECHERCHE,
   type DetailPatientRechercheSelectionne,
 } from "@/constants/reception";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
@@ -13,6 +12,7 @@ import type { DonneesFormulairePatient, ResultatRecherchePatientReception } from
 import { cn } from "@/lib/utils";
 
 export function RecherchePatientEnTete({ className }: { className?: string }) {
+  const espace = useEspaceApi();
   const { t } = useTranslation();
   const listboxId = useId();
   const conteneurRef = useRef<HTMLDivElement>(null);
@@ -41,7 +41,7 @@ export function RecherchePatientEnTete({ className }: { className?: string }) {
 
     try {
       const params = new URLSearchParams({ q, limite: "8" });
-      const res = await fetch(`/api/reception/patients?${params.toString()}`);
+      const res = await fetch(`${espace.prefixeApi}/patients?${params.toString()}`);
       const data = (await res.json()) as {
         patients?: ResultatRecherchePatientReception[];
         message?: string;
@@ -100,9 +100,9 @@ export function RecherchePatientEnTete({ className }: { className?: string }) {
       setOuvert(true);
     };
 
-    window.addEventListener(EVENEMENT_RECEPTION_FOCUS_RECHERCHE, onFocusRecherche);
+    window.addEventListener(espace.evenementFocusRecherche, onFocusRecherche);
     return () =>
-      window.removeEventListener(EVENEMENT_RECEPTION_FOCUS_RECHERCHE, onFocusRecherche);
+      window.removeEventListener(espace.evenementFocusRecherche, onFocusRecherche);
   }, []);
 
   useEffect(() => {
@@ -124,7 +124,7 @@ export function RecherchePatientEnTete({ className }: { className?: string }) {
 
     try {
       const res = await fetch(
-        `/api/reception/patients/${encodeURIComponent(patient.numeroPatient)}`
+        `${espace.prefixeApi}/patients/${encodeURIComponent(patient.numeroPatient)}`
       );
 
       if (!res.ok) throw new Error(t("reception.recherche.selectionImpossible"));
@@ -143,7 +143,7 @@ export function RecherchePatientEnTete({ className }: { className?: string }) {
       };
 
       window.dispatchEvent(
-        new CustomEvent(EVENEMENT_RECEPTION_PATIENT_RECHERCHE, { detail })
+        new CustomEvent(espace.evenementPatientRecherche, { detail })
       );
 
       setTerme("");

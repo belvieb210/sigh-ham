@@ -18,8 +18,8 @@ export function useNavigationMedecinsExternes() {
       etiquette: t(`medecinsExternes.nav.${item.id}`),
     }));
 
-  const tableauDeBord = useMemo(
-    () => mapSection(NAVIGATION_MEDECINS_EXTERNES.tableauDeBord),
+  const principal = useMemo(
+    () => mapSection(NAVIGATION_MEDECINS_EXTERNES.principal),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [t, langue]
   );
@@ -48,5 +48,5 @@ export function useNavigationMedecinsExternes() {
     [t, langue]
   );
 
-  return { tableauDeBord, clinique, communication, parametres, basse };
+  return { principal, clinique, communication, parametres, basse };
 }

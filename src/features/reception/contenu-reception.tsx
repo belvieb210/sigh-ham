@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import type { DonneesFormulairePatient } from "@/lib/reception/types";
 import { MiseEnPageReception, type UtilisateurReception } from "@/features/reception/mise-en-page-reception";
 import { CartesStatistiquesReception } from "@/features/reception/cartes-statistiques";
@@ -15,7 +16,6 @@ import { ResumePatientMobile } from "@/features/reception/resume-patient-mobile"
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import type { PatientEnregistre } from "@/constants/reception";
 import {
-  EVENEMENT_RECEPTION_PATIENT_RECHERCHE,
   type DetailPatientRechercheSelectionne,
 } from "@/constants/reception";
 
@@ -24,6 +24,7 @@ interface PropsContenuReception {
 }
 
 function CorpsAccueilReception({ agentNom }: { agentNom: string }) {
+  const espace = useEspaceApi();
   const refFormulaire = useRef<HTMLElement>(null);
   const [donneesPrefill, setDonneesPrefill] = useState<DonneesFormulairePatient | null>(null);
   const [patientSelectionneId, setPatientSelectionneId] = useState<string | null>(null);
@@ -37,7 +38,7 @@ function CorpsAccueilReception({ agentNom }: { agentNom: string }) {
     setPatientSelectionneId(patient.id);
 
     try {
-      const res = await fetch(`/api/reception/patients/${encodeURIComponent(patient.id)}`);
+      const res = await fetch(`${espace.prefixeApi}/patients/${encodeURIComponent(patient.id)}`);
       if (!res.ok) throw new Error("Patient introuvable");
 
       const donnees = (await res.json()) as DonneesFormulairePatient;
@@ -66,7 +67,7 @@ function CorpsAccueilReception({ agentNom }: { agentNom: string }) {
 
       try {
         const res = await fetch(
-          `/api/reception/patients/${encodeURIComponent(detail.numeroPatient)}`
+          `${espace.prefixeApi}/patients/${encodeURIComponent(detail.numeroPatient)}`
         );
         if (!res.ok) throw new Error("Patient introuvable");
 
@@ -85,9 +86,9 @@ function CorpsAccueilReception({ agentNom }: { agentNom: string }) {
       }
     };
 
-    window.addEventListener(EVENEMENT_RECEPTION_PATIENT_RECHERCHE, onRecherchePatient);
+    window.addEventListener(espace.evenementPatientRecherche, onRecherchePatient);
     return () =>
-      window.removeEventListener(EVENEMENT_RECEPTION_PATIENT_RECHERCHE, onRecherchePatient);
+      window.removeEventListener(espace.evenementPatientRecherche, onRecherchePatient);
   }, [chargementSelection]);
 
   return (
@@ -112,6 +113,7 @@ function CorpsAccueilReception({ agentNom }: { agentNom: string }) {
 }
 
 export function ContenuReception({ utilisateur }: PropsContenuReception) {
+  const espace = useEspaceApi();
   const { t } = useTranslation();
 
   return (

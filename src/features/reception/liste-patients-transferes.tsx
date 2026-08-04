@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import type { PatientEnregistre } from "@/constants/reception";
 import {
-  EVENEMENT_RECEPTION_PATIENTS_MODIFIES,
-  EVENEMENT_RECEPTION_PATIENT_RECHERCHE,
   type DetailPatientOrientationModifiee,
   type DetailPatientRechercheSelectionne,
 } from "@/constants/reception";
@@ -14,6 +13,7 @@ import { ListePatientsReception } from "@/features/reception/liste-patients-rece
 import { ModaleExamensTransfert } from "@/features/reception/modale-examens-transfert";
 
 export function ListePatientsTransferes() {
+  const espace = useEspaceApi();
   const { t } = useTranslation();
   const {
     patientSelectionne,
@@ -42,7 +42,7 @@ export function ListePatientsTransferes() {
         setErreur(null);
       }
       try {
-        const res = await fetch("/api/reception/transferts");
+        const res = await fetch(`${espace.prefixeApi}/transferts`);
         const data = (await res.json()) as {
           patients?: PatientEnregistre[];
           stats?: { aujourdhui: number; versInfirmiers: number; versCaisse: number };
@@ -95,8 +95,8 @@ export function ListePatientsTransferes() {
 
       void charger({ silencieux: true });
     };
-    window.addEventListener(EVENEMENT_RECEPTION_PATIENTS_MODIFIES, onModifie);
-    return () => window.removeEventListener(EVENEMENT_RECEPTION_PATIENTS_MODIFIES, onModifie);
+    window.addEventListener(espace.evenementPatientsModifies, onModifie);
+    return () => window.removeEventListener(espace.evenementPatientsModifies, onModifie);
   }, [charger]);
 
   useEffect(() => {
@@ -110,9 +110,9 @@ export function ListePatientsTransferes() {
       }
     };
 
-    window.addEventListener(EVENEMENT_RECEPTION_PATIENT_RECHERCHE, onRecherchePatient);
+    window.addEventListener(espace.evenementPatientRecherche, onRecherchePatient);
     return () =>
-      window.removeEventListener(EVENEMENT_RECEPTION_PATIENT_RECHERCHE, onRecherchePatient);
+      window.removeEventListener(espace.evenementPatientRecherche, onRecherchePatient);
   }, [patients, selectionnerPourPanneau]);
 
   if (chargement) {

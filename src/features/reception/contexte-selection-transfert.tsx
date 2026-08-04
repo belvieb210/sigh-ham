@@ -8,10 +8,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import type { PatientEnregistre } from "@/constants/reception";
 import {
   COULEURS_ORIENTATION_LISTE,
-  EVENEMENT_RECEPTION_PATIENTS_MODIFIES,
   ORIENTATIONS_RAPIDES,
 } from "@/constants/reception";
 import { useOrientationRapide } from "@/features/reception/contexte-orientation-rapide";
@@ -55,6 +55,7 @@ function couleurOrientation(label: string) {
 }
 
 export function FournisseurSelectionTransfert({ children }: { children: ReactNode }) {
+  const espace = useEspaceApi();
   const { definirDepuisDonneesCompletes } = useResumePatient();
   const { definirOrientations } = useOrientationRapide();
   const [patientSelectionne, setPatientSelectionne] = useState<PatientEnregistre | null>(null);
@@ -128,7 +129,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       }
 
       try {
-        const res = await fetch(`/api/reception/patients/${encodeURIComponent(patient.id)}`);
+        const res = await fetch(`${espace.prefixeApi}/patients/${encodeURIComponent(patient.id)}`);
         if (res.ok) {
           const donnees = (await res.json()) as DonneesFormulairePatient;
           definirDepuisDonneesCompletes({
@@ -182,7 +183,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       try {
         const resultats = await Promise.allSettled(
           cibles.map(async (patient) => {
-            const res = await fetch("/api/reception/transferts", {
+            const res = await fetch(`${espace.prefixeApi}/transferts`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -266,7 +267,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
               ? `${ok} patients orientés vers ${orientationAffichee} — confirmez via ⋮.`
               : `Transfert(s) vers ${orientationAffichee} créé(s) — confirmez dans la liste.`
         );
-        window.dispatchEvent(new CustomEvent(EVENEMENT_RECEPTION_PATIENTS_MODIFIES));
+        window.dispatchEvent(new CustomEvent(espace.evenementPatientsModifies));
       } catch (error) {
         setMessagePanneau(
           error instanceof Error ? error.message : "Impossible d'appliquer l'orientation rapide."

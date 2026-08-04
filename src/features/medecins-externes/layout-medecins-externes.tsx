@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ComponentType } from "react";
+import { useEffect, type ComponentType } from "react";
 import { useTranslation } from "react-i18next";
-import { LogOut, Menu, Search, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { LogoHam } from "@/components/brand/logo-ham";
 import { AvatarUtilisateur } from "@/components/ui/avatar-utilisateur";
 import { SelecteurLangue } from "@/components/ui/selecteur-langue";
 import { INFORMATIONS_HOPITAL } from "@/constants/navigation";
 import { MenuProfilEntete } from "@/features/reception/menu-profil-entete";
+import { RecherchePatientEnTete } from "@/features/reception/recherche-patient-en-tete";
 import { traduireRoleHospitalier } from "@/features/messagerie/traduire-role";
 import { BadgeMessagerieSidebar } from "@/features/messagerie/badge-messagerie-sidebar";
 import { BadgeNotificationsSidebar } from "@/features/notifications/badge-notifications-sidebar";
@@ -18,32 +19,29 @@ import { useNavigationMedecinsExternes } from "@/hooks/use-navigation-medecins-e
 import type { UtilisateurMedecinsExternes } from "@/lib/auth/props-utilisateur-medecins-externes";
 import { cn } from "@/lib/utils";
 
-interface PropsBarreLateraleMedecinsExternes {
+interface PropsBarreLaterale {
   utilisateur: UtilisateurMedecinsExternes;
   ouvert?: boolean;
   onFermer?: () => void;
-  badgeFile?: number;
 }
 
 function LiensNavigation({
   utilisateur,
   onFermer,
-  badgeFile = 0,
 }: {
   utilisateur: UtilisateurMedecinsExternes;
   onFermer?: () => void;
-  badgeFile?: number;
 }) {
   const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
-  const { tableauDeBord, clinique, communication, parametres } =
+  const { principal, clinique, communication, parametres } =
     useNavigationMedecinsExternes();
 
-  const estActif = (href: string) => {
-    if (href === "/sigh/medecins-externes") return pathname === href;
-    return pathname === href || pathname.startsWith(`${href}/`);
-  };
+  const estActif = (href: string) =>
+    href === "/sigh/medecins-externes"
+      ? pathname === href
+      : pathname === href || pathname.startsWith(`${href}/`);
 
   const lienClasse = (href: string) =>
     cn(
@@ -65,7 +63,6 @@ function LiensNavigation({
     id: string;
     icone: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
     etiquette: string;
-    badge?: boolean;
   };
 
   const rendreSection = (titre: string, items: ItemNav[]) => (
@@ -76,24 +73,11 @@ function LiensNavigation({
       <ul className="space-y-0.5">
         {items.map((item) => {
           const Icone = item.icone;
-          const afficherBadge = Boolean(item.badge) && badgeFile > 0;
           return (
             <li key={item.href}>
               <Link href={item.href} onClick={onFermer} className={lienClasse(item.href)}>
                 <Icone className="h-4 w-4 shrink-0" aria-hidden />
                 <span className="min-w-0 flex-1 truncate">{item.etiquette}</span>
-                {afficherBadge ? (
-                  <span
-                    className={cn(
-                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                      estActif(item.href)
-                        ? "bg-white/20 text-white"
-                        : "bg-bleu-medical text-white"
-                    )}
-                  >
-                    {badgeFile}
-                  </span>
-                ) : null}
                 {item.id === "messagerie" ? (
                   <BadgeMessagerieSidebar actif={estActif(item.href)} />
                 ) : null}
@@ -130,16 +114,10 @@ function LiensNavigation({
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        {rendreSection(
-          t("medecinsExternes.layout.sectionTableauDeBord"),
-          tableauDeBord as ItemNav[]
-        )}
-        {rendreSection(t("medecinsExternes.layout.sectionClinique"), clinique as ItemNav[])}
-        {rendreSection(
-          t("medecinsExternes.layout.sectionCommunication"),
-          communication as ItemNav[]
-        )}
-        {rendreSection(t("medecinsExternes.layout.sectionParametres"), parametres as ItemNav[])}
+        {rendreSection(t("medecinsExternes.layout.sectionPrincipal"), principal)}
+        {rendreSection(t("medecinsExternes.layout.sectionClinique"), clinique)}
+        {rendreSection(t("medecinsExternes.layout.sectionCommunication"), communication)}
+        {rendreSection(t("medecinsExternes.layout.sectionParametres"), parametres)}
       </nav>
 
       <div className="space-y-2 border-t border-gris-bordure p-3">
@@ -183,8 +161,7 @@ export function BarreLateraleMedecinsExternes({
   utilisateur,
   ouvert = false,
   onFermer,
-  badgeFile = 0,
-}: PropsBarreLateraleMedecinsExternes) {
+}: PropsBarreLaterale) {
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -199,7 +176,7 @@ export function BarreLateraleMedecinsExternes({
   return (
     <>
       <aside className="hidden h-full w-[260px] shrink-0 flex-col border-r border-gris-bordure bg-white lg:flex">
-        <LiensNavigation utilisateur={utilisateur} badgeFile={badgeFile} />
+        <LiensNavigation utilisateur={utilisateur} />
       </aside>
 
       {ouvert && (
@@ -215,11 +192,7 @@ export function BarreLateraleMedecinsExternes({
             role="dialog"
             aria-modal="true"
           >
-            <LiensNavigation
-              utilisateur={utilisateur}
-              onFermer={onFermer}
-              badgeFile={badgeFile}
-            />
+            <LiensNavigation utilisateur={utilisateur} onFermer={onFermer} />
           </aside>
         </>
       )}
@@ -227,21 +200,18 @@ export function BarreLateraleMedecinsExternes({
   );
 }
 
-interface PropsEnTeteMedecinsExternes {
-  titre: string;
-  sousTitre: string;
-  utilisateur: UtilisateurMedecinsExternes;
-  onMenu?: () => void;
-}
-
 export function EnTeteMedecinsExternes({
   titre,
   sousTitre,
   utilisateur,
   onMenu,
-}: PropsEnTeteMedecinsExternes) {
+}: {
+  titre: string;
+  sousTitre: string;
+  utilisateur: UtilisateurMedecinsExternes;
+  onMenu?: () => void;
+}) {
   const { t } = useTranslation();
-  const [recherche, setRecherche] = useState("");
 
   return (
     <header className="sticky top-0 z-30 shrink-0 border-b border-gris-bordure bg-white">
@@ -254,45 +224,32 @@ export function EnTeteMedecinsExternes({
         >
           <Menu className="h-5 w-5" />
         </button>
-        <LogoHam
-          taille="petit"
-          href="/sigh/medecins-externes"
-          afficherTexte={false}
-          className="hidden shrink-0 sm:block"
-        />
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-sm font-bold text-texte-principal">{titre}</h1>
           <p className="truncate text-[10px] text-texte-secondaire">{sousTitre}</p>
         </div>
         <SelecteurLangue variante="compacte" className="hidden shrink-0 sm:block" />
         <BoutonNotificationsEnTete />
-        <MenuProfilEntete utilisateur={utilisateur} compact hrefProfil="/sigh/medecins-externes/profil" />
+        <MenuProfilEntete
+          utilisateur={utilisateur}
+          hrefProfil="/sigh/medecins-externes/profil"
+          compact
+        />
       </div>
 
       <div className="hidden items-center justify-between gap-4 px-6 py-4 lg:flex">
-        <div className="min-w-0">
+        <div>
           <h1 className="text-lg font-bold text-texte-principal">{titre}</h1>
           <p className="text-sm text-texte-secondaire">{sousTitre}</p>
         </div>
-
-        <div className="relative hidden min-w-0 flex-1 max-w-md xl:block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
-          <input
-            type="search"
-            value={recherche}
-            onChange={(e) => setRecherche(e.target.value)}
-            placeholder={t("medecinsExternes.layout.rechercher")}
-            className="w-full rounded-xl border border-gris-bordure bg-gris-tres-clair/50 py-2.5 pl-10 pr-20 text-sm outline-none focus:border-bleu-medical focus:ring-2 focus:ring-bleu-medical/20"
-          />
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-gris-bordure bg-white px-1.5 py-0.5 text-[10px] text-texte-secondaire">
-            {t("medecinsExternes.layout.raccourciRecherche")}
-          </span>
-        </div>
-
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex flex-1 items-center justify-end gap-3">
+          <RecherchePatientEnTete />
           <SelecteurLangue />
           <BoutonNotificationsEnTete />
-          <MenuProfilEntete utilisateur={utilisateur} hrefProfil="/sigh/medecins-externes/profil" />
+          <MenuProfilEntete
+            utilisateur={utilisateur}
+            hrefProfil="/sigh/medecins-externes/profil"
+          />
         </div>
       </div>
     </header>

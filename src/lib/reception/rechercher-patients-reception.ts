@@ -6,13 +6,17 @@ export type { ResultatRecherchePatientReception };
 
 export async function rechercherPatientsReception(
   recherche: string,
-  limite = 8
+  limite = 8,
+  options?: { medecinExterneId?: string }
 ): Promise<ResultatRecherchePatientReception[]> {
   const terme = recherche.trim();
   if (terme.length < 2) return [];
 
   const patients = await prisma.patient.findMany({
     where: {
+      ...(options?.medecinExterneId
+        ? { medecinExterneId: options.medecinExterneId }
+        : {}),
       OR: [
         { numeroPatient: { contains: terme, mode: "insensitive" } },
         { nom: { contains: terme, mode: "insensitive" } },

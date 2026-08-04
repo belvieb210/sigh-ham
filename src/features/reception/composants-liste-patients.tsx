@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import { useMonteClient } from "@/hooks/use-monte-client";
 import {
   Check,
@@ -17,7 +18,6 @@ import {
   X,
 } from "lucide-react";
 import type { PatientEnregistre } from "@/constants/reception";
-import { EVENEMENT_RECEPTION_PATIENTS_MODIFIES } from "@/constants/reception";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import { ModaleConfirmation } from "@/components/ui/modale-confirmation";
 import { useTraductionsReception } from "@/hooks/use-traductions-reception";
@@ -204,6 +204,7 @@ function ActionsGestionPatient({
   patient: PatientEnregistre;
   onApresSuppression?: () => void;
 }) {
+  const espace = useEspaceApi();
   const { t } = useTranslation();
   const router = useRouter();
   const [modaleOuverte, setModaleOuverte] = useState(false);
@@ -212,7 +213,7 @@ function ActionsGestionPatient({
 
   const modifier = () => {
     router.push(
-      `/sigh/reception/nouveau?modifier=${encodeURIComponent(patient.id)}`
+      `${espace.cheminBase}/nouveau?modifier=${encodeURIComponent(patient.id)}`
     );
   };
 
@@ -230,7 +231,7 @@ function ActionsGestionPatient({
 
     try {
       const res = await fetch(
-        `/api/reception/patients/${encodeURIComponent(patient.id)}`,
+        `${espace.prefixeApi}/patients/${encodeURIComponent(patient.id)}`,
         { method: "DELETE" }
       );
       const data = (await res.json()) as { message?: string };
@@ -239,7 +240,7 @@ function ActionsGestionPatient({
       }
       setModaleOuverte(false);
       onApresSuppression?.();
-      window.dispatchEvent(new CustomEvent(EVENEMENT_RECEPTION_PATIENTS_MODIFIES));
+      window.dispatchEvent(new CustomEvent(espace.evenementPatientsModifies));
     } catch (error) {
       setErreurSuppression(
         error instanceof Error ? error.message : t("reception.erreurs.suppressionImpossible")
@@ -309,6 +310,7 @@ function MenuActionsTransfert({
   patient: PatientEnregistre;
   onRafraichir?: () => void;
 }) {
+  const espace = useEspaceApi();
   const { t } = useTranslation();
   const monte = useMonteClient();
   const [ouvert, setOuvert] = useState(false);
@@ -374,7 +376,7 @@ function MenuActionsTransfert({
 
     try {
       const res = await fetch(
-        `/api/reception/transferts/${encodeURIComponent(patient.transfertId)}/actions`,
+        `${espace.prefixeApi}/transferts/${encodeURIComponent(patient.transfertId)}/actions`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -387,7 +389,7 @@ function MenuActionsTransfert({
 
       setOuvert(false);
       onRafraichir?.();
-      window.dispatchEvent(new CustomEvent(EVENEMENT_RECEPTION_PATIENTS_MODIFIES));
+      window.dispatchEvent(new CustomEvent(espace.evenementPatientsModifies));
     } catch (error) {
       setErreur(error instanceof Error ? error.message : t("reception.erreurs.erreurInattendue"));
     } finally {

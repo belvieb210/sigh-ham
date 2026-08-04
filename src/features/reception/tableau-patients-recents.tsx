@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import { SlidersHorizontal } from "lucide-react";
 import type { PatientEnregistre } from "@/constants/reception";
 import {
-  EVENEMENT_RECEPTION_PATIENTS_MODIFIES,
   type DetailPatientOrientationModifiee,
 } from "@/constants/reception";
 import { TableauPatients } from "@/features/reception/composants-liste-patients";
@@ -31,6 +31,7 @@ export function TableauPatientsRecents({
   chargementSelection = false,
   onSelectionnerPatient,
 }: PropsTableauPatientsRecents) {
+  const espace = useEspaceApi();
   const { t } = useTranslation();
   const [patients, setPatients] = useState<PatientEnregistre[]>([]);
   const [chargement, setChargement] = useState(true);
@@ -43,7 +44,7 @@ export function TableauPatientsRecents({
 
   const charger = useCallback(async () => {
     try {
-      const res = await fetch("/api/reception/patients?limite=50&nonConfirmes=1");
+      const res = await fetch(`${espace.prefixeApi}/patients?limite=50&nonConfirmes=1`);
       if (res.ok) {
         const data = (await res.json()) as { patients?: PatientEnregistre[] };
         setPatients(data.patients ?? []);
@@ -84,8 +85,8 @@ export function TableauPatientsRecents({
         );
       }
     };
-    window.addEventListener(EVENEMENT_RECEPTION_PATIENTS_MODIFIES, rafraichir);
-    return () => window.removeEventListener(EVENEMENT_RECEPTION_PATIENTS_MODIFIES, rafraichir);
+    window.addEventListener(espace.evenementPatientsModifies, rafraichir);
+    return () => window.removeEventListener(espace.evenementPatientsModifies, rafraichir);
   }, [charger]);
 
   const patientsFiltres = useMemo(

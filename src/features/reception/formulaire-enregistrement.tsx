@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, forwardRef } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import {
   Upload,
   ChevronRight,
@@ -134,6 +135,7 @@ export const FormulaireEnregistrement = forwardRef<
   },
   ref
 ) {
+  const espace = useEspaceApi();
   const router = useRouter();
   const { t } = useTranslation();
   const {
@@ -202,7 +204,7 @@ export const FormulaireEnregistrement = forwardRef<
 
     let annule = false;
 
-    fetch("/api/reception/numeros")
+    fetch(`${espace.prefixeApi}/numeros`)
       .then(async (res) => {
         if (!res.ok) throw new Error(t("reception.erreurs.numerosIndisponibles"));
         return res.json() as Promise<{
@@ -288,7 +290,7 @@ export const FormulaireEnregistrement = forwardRef<
 
   const annuler = () => {
     if (estComplet) {
-      router.push(modeEdition ? "/sigh/reception/enregistres" : "/sigh/reception");
+      router.push(modeEdition ? `${espace.cheminBase}/enregistres` : espace.cheminBase);
     } else {
       reinitialiser();
     }
@@ -320,8 +322,8 @@ export const FormulaireEnregistrement = forwardRef<
 
       const url =
         modeEdition && numeroPatientActif
-          ? `/api/reception/patients/${encodeURIComponent(numeroPatientActif)}`
-          : "/api/reception/patients";
+          ? `${espace.prefixeApi}/patients/${encodeURIComponent(numeroPatientActif)}`
+          : `${espace.prefixeApi}/patients`;
 
       const res = await fetch(url, {
         method: modeEdition ? "PUT" : "POST",
@@ -341,7 +343,7 @@ export const FormulaireEnregistrement = forwardRef<
 
       const numero = data.numeroPatient ?? numeroPatientActif ?? "";
       router.push(
-        `/sigh/reception/enregistres?${modeEdition ? "modifie" : "nouveau"}=${encodeURIComponent(numero)}`
+        `${espace.cheminBase}/enregistres?${modeEdition ? "modifie" : "nouveau"}=${encodeURIComponent(numero)}`
       );
       router.refresh();
     } catch (error) {
@@ -385,7 +387,7 @@ export const FormulaireEnregistrement = forwardRef<
     setEnCours(true);
 
     try {
-      const res = await fetch("/api/reception/transferts", {
+      const res = await fetch(`${espace.prefixeApi}/transferts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -415,7 +417,7 @@ export const FormulaireEnregistrement = forwardRef<
       }
 
       router.push(
-        `/sigh/reception/transferts?transfere=${encodeURIComponent(data.numeroPatient ?? "")}`
+        `${espace.cheminBase}/transferts?transfere=${encodeURIComponent(data.numeroPatient ?? "")}`
       );
       router.refresh();
     } catch (error) {

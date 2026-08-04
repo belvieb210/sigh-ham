@@ -83,45 +83,46 @@ function determinerStatutVisite(
   return { statut: "En attente", statutCouleur: COULEURS_STATUT["En attente"] };
 }
 
-const includeDernierTransfertReception = {
-  where: {
-    salleOrigine: { code: "RECEPTION" as const },
-    statut: { not: "ANNULE" as const },
-  },
-  orderBy: { emisLe: "desc" as const },
-  take: 1,
-  include: {
-    salleDestination: true,
-    salleOrigine: true,
-    recuperation: true,
-  },
-} as const;
+import type { CodeSalle } from "@/generated/prisma/client";
 
-const includeVisiteAccueil = {
-  patient: true,
-  enregistrementsReception: { orderBy: { enregistreLe: "desc" as const }, take: 1 },
-  passages: {
-    orderBy: { createdAt: "desc" as const },
+function includeDernierTransfertDepuis(codeOrigine: CodeSalle) {
+  return {
+    where: {
+      salleOrigine: { code: codeOrigine },
+      statut: { not: "ANNULE" as const },
+    },
+    orderBy: { emisLe: "desc" as const },
     take: 1,
     include: {
-      fileAttente: { include: { salle: true } },
+      salleDestination: true,
+      salleOrigine: true,
+      recuperation: true,
     },
-  },
-  transferts: includeDernierTransfertReception,
-} as const;
+  };
+}
 
-const includeVisiteTransfertReception = {
-  patient: true,
-  enregistrementsReception: { orderBy: { enregistreLe: "desc" as const }, take: 1 },
-  passages: {
-    orderBy: { createdAt: "desc" as const },
-    take: 1,
-    include: {
-      fileAttente: { include: { salle: true } },
+const includeDernierTransfertReception = includeDernierTransfertDepuis("RECEPTION");
+
+function includeVisiteDepuis(codeOrigine: CodeSalle) {
+  return {
+    patient: true,
+    enregistrementsReception: {
+      orderBy: { enregistreLe: "desc" as const },
+      take: 1,
     },
-  },
-  transferts: includeDernierTransfertReception,
-} as const;
+    passages: {
+      orderBy: { createdAt: "desc" as const },
+      take: 1,
+      include: {
+        fileAttente: { include: { salle: true } },
+      },
+    },
+    transferts: includeDernierTransfertDepuis(codeOrigine),
+  };
+}
+
+const includeVisiteAccueil = includeVisiteDepuis("RECEPTION");
+const includeVisiteTransfertReception = includeVisiteDepuis("RECEPTION");
 
 export type DossierVisite = Awaited<ReturnType<typeof chargerDossiersAccueil>>[number];
 
@@ -167,6 +168,60 @@ export async function chargerDossiersAccueil(limite?: number) {
     take: limite,
     where: { enregistrementsReception: { some: {} } },
     include: includeVisiteAccueil,
+    orderBy: { ouvertLe: "desc" },
+  });
+}
+
+/** Dossiers enregistrés par un médecin externe (isolation medecinExterneId). */
+export async function chargerDossiersAccueilMedecinExterne(
+  medecinExterneId: string,
+  limite?: number
+) {
+  return prisma.dossierPatient.findMany({
+    take: limite,
+    where: {
+      enregistrementsReception: { some: {} },
+      patient: { medecinExterneId },
+    },
+    include: includeVisiteDepuis("MEDECINS_EXTERNES"),
+    orderBy: { ouvertLe: "desc" },
+  });
+}
+
+export async function chargerDossiersVisiteMedecinExterne(
+  medecinExterneId: string,
+  options?: { limite?: number; uniquementTransfert?: boolean }
+) {
+  return prisma.dossierPatient.findMany({
+    take: options?.limite,
+    where: {
+      enregistrementsReception: { some: {} },
+      patient: { medecinExterneId },
+      ...(options?.uniquementTransfert
+        ? {
+            OR: [
+              {
+                transferts: {
+                  some: {
+                    salleOrigine: { code: "MEDECINS_EXTERNES" },
+                    statut: { notIn: ["ANNULE", "REFUSE"] },
+                  },
+                },
+              },
+              {
+                transferts: {
+                  some: {
+                    salleOrigine: { code: "MEDECINS_EXTERNES" },
+                    statut: "REFUSE",
+                    recuperation: { statut: "EN_RECUPERATION" },
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
+    },
+    include: includeVisiteDepuis("MEDECINS_EXTERNES"),
     orderBy: { ouvertLe: "desc" },
   });
 }

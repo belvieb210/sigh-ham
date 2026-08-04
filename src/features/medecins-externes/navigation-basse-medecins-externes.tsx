@@ -7,11 +7,11 @@ import { MoreHorizontal } from "lucide-react";
 import { useNavigationMedecinsExternes } from "@/hooks/use-navigation-medecins-externes";
 import { cn } from "@/lib/utils";
 
-interface PropsNavigationBasseMedecinsExternes {
+export function NavigationBasseMedecinsExternes({
+  onMenu,
+}: {
   onMenu: () => void;
-}
-
-export function NavigationBasseMedecinsExternes({ onMenu }: PropsNavigationBasseMedecinsExternes) {
+}) {
   const { t } = useTranslation();
   const pathname = usePathname();
   const { basse } = useNavigationMedecinsExternes();
@@ -21,32 +21,18 @@ export function NavigationBasseMedecinsExternes({ onMenu }: PropsNavigationBasse
       className="fixed inset-x-0 bottom-0 z-40 border-t border-gris-bordure bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(15,23,42,0.08)] lg:hidden"
       aria-label={t("medecinsExternes.layout.navigationMobile")}
     >
-      <ul className="flex items-end justify-around px-1 pt-1">
+      <ul className="flex items-stretch justify-around px-1 pt-1">
         {basse.map((item) => {
           const actif =
             pathname === item.href ||
             (item.id === "accueil" && pathname === "/sigh/medecins-externes") ||
-            (item.id === "patients" && pathname.startsWith("/sigh/medecins-externes/patients")) ||
-            (item.id === "nouveau" && pathname.startsWith("/sigh/medecins-externes/nouveau")) ||
-            (item.id === "consultation" &&
-              pathname.startsWith("/sigh/medecins-externes/consultation"));
+            (item.id === "nouveau" &&
+              pathname.startsWith("/sigh/medecins-externes/nouveau")) ||
+            (item.id === "patients" &&
+              pathname.startsWith("/sigh/medecins-externes/enregistres")) ||
+            (item.id === "transferes" &&
+              pathname.startsWith("/sigh/medecins-externes/transferts"));
           const Icone = item.icone;
-          const estFab = "fab" in item && item.fab;
-
-          if (estFab) {
-            return (
-              <li key={item.id} className="relative -mt-5 flex-1">
-                <Link
-                  href={item.href}
-                  className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-bleu-medical text-white shadow-lg shadow-bleu-medical/30"
-                  aria-label={item.etiquette}
-                >
-                  <Icone className="h-6 w-6" aria-hidden />
-                </Link>
-              </li>
-            );
-          }
-
           return (
             <li key={item.id} className="flex-1">
               <Link

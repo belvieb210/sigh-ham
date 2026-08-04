@@ -214,6 +214,12 @@ export function ContenuStockPharmacie({
           >
             {t("pharmacie.stock.exportCsv")}
           </a>
+          <a
+            href="/api/pharmacie/stock?type=rapport-ventes&format=pdf"
+            className="ml-2 inline-block rounded-lg border border-gris-bordure px-3 py-2 text-xs font-semibold"
+          >
+            {t("pharmacie.stock.exportPdf")}
+          </a>
           <pre className="overflow-auto rounded-xl border border-gris-bordure bg-white p-4 text-xs">
             {JSON.stringify(rapport, null, 2)}
           </pre>

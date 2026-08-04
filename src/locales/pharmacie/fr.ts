@@ -201,6 +201,7 @@ export const pharmacieFr = {
     expiration: "Expiration",
     recevoirAchat: "Recevoir l'achat",
     exportCsv: "Exporter CSV ventes",
+    exportPdf: "Exporter PDF ventes",
     retoursAide: "Les retours sont enregistrés via l'API stock (action retour).",
   },
   historique: {

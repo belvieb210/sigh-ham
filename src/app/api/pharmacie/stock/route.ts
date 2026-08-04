@@ -57,6 +57,27 @@ export async function GET(request: Request) {
           },
         });
       }
+      if (url.searchParams.get("format") === "pdf") {
+        const { genererPdfRapportVentes } = await import(
+          "@/lib/pharmacie/rapport-pdf"
+        );
+        const buffer = await genererPdfRapportVentes({
+          hopital: "HAM LABORATOIRE",
+          titre: "Rapport ventes pharmacie",
+          periode: `${rapport.depuis} → ${rapport.jusqua}`,
+          chiffreAffaires: rapport.chiffreAffaires,
+          nombreVentes: rapport.nombreVentes,
+          topProduits: rapport.topProduits,
+          ventes: rapport.ventes,
+        });
+        return new NextResponse(new Uint8Array(buffer), {
+          headers: {
+            "Content-Type": "application/pdf",
+            "Content-Disposition":
+              'attachment; filename="ventes-pharmacie.pdf"',
+          },
+        });
+      }
       return NextResponse.json({ rapport });
     }
     if (type === "rapport-stock") {

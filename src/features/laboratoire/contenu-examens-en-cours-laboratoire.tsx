@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Eye, FlaskConical, Loader2 } from "lucide-react";
 import {
   CHEMINS_STATUT_ANALYSE_LABO,
+  idOrientationDepuisCodeSalle,
   type IdOrientationStatutAnalyse,
 } from "@/constants/laboratoire-orientations";
 import {
@@ -68,6 +69,7 @@ export function ContenuExamensEnCoursLaboratoire({
   );
   const [selectionId, setSelectionId] = useState<string | null>(dossierUrl);
   const [orientationEnCours, setOrientationEnCours] = useState(false);
+  const [orientationsDest, setOrientationsDest] = useState<string[]>([]);
   const [messageAction, setMessageAction] = useState<string | null>(null);
 
   const titrePage = pageStatut
@@ -125,6 +127,29 @@ export function ContenuExamensEnCoursLaboratoire({
     (patientSelectionne?.statutAnalyse as IdOrientationStatutAnalyse | undefined) ||
     pageStatut ||
     "EN_COURS";
+
+  useEffect(() => {
+    if (!patientSelectionne) {
+      setOrientationsDest([]);
+      return;
+    }
+    const codes =
+      patientSelectionne.codesSalleDestination?.length
+        ? patientSelectionne.codesSalleDestination
+        : patientSelectionne.codeSalleDestination
+          ? [patientSelectionne.codeSalleDestination]
+          : [];
+    setOrientationsDest(
+      codes
+        .map((c) => idOrientationDepuisCodeSalle(c))
+        .filter((id): id is NonNullable<typeof id> => Boolean(id))
+    );
+  }, [
+    patientSelectionne?.dossierId,
+    patientSelectionne?.codeSalleDestination,
+    patientSelectionne?.codesSalleDestination,
+    patientSelectionne,
+  ]);
 
   useEffect(() => {
     if (dossierUrl) setSelectionId(dossierUrl);
@@ -189,6 +214,39 @@ export function ContenuExamensEnCoursLaboratoire({
     }
   };
 
+  const changerOrientationsDest = async (ids: string[]) => {
+    if (!selectionId || orientationEnCours) return;
+    if (ids.length === 0) {
+      setMessageAction(t("laboratoire.transferts.selectionnerDestination"));
+      return;
+    }
+    setOrientationsDest(ids);
+    setMessageAction(null);
+    setOrientationEnCours(true);
+    try {
+      const res = await fetch("/api/laboratoire/transferts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dossierId: selectionId, orientations: ids }),
+      });
+      const data = (await res.json()) as { message?: string };
+      if (!res.ok) {
+        setMessageAction(
+          data.message ?? t("laboratoire.transferts.erreurOrientation")
+        );
+        await charger();
+        return;
+      }
+      setMessageAction(data.message ?? t("laboratoire.transferts.orienteOk"));
+      window.dispatchEvent(new CustomEvent(EVENT_RAFRAICHIR_NOTIFICATIONS));
+      await charger();
+    } catch {
+      setMessageAction(t("laboratoire.transferts.erreurOrientation"));
+    } finally {
+      setOrientationEnCours(false);
+    }
+  };
+
   const onAction = (id: IdActionRapideLabo) => {
     setMessageAction(null);
     if (id === "rechercher") {
@@ -233,6 +291,11 @@ export function ContenuExamensEnCoursLaboratoire({
     onOrientationChange: (id: string) => {
       if (orientationEnCours) return;
       void changerOrientation(id);
+    },
+    orientations: orientationsDest,
+    onOrientationsChange: (ids: string[]) => {
+      if (orientationEnCours) return;
+      void changerOrientationsDest(ids);
     },
     onAction,
   };

@@ -55,6 +55,8 @@ export interface StatsLaboratoireJour {
   dateReference: string;
   patientsRecusAujourdhui: number;
   patientsEnFile: number;
+  /** Arrivées file labo (ISO) — badge non lus côté client */
+  arriveesFileIso: string[];
   examensEnCours: number;
   analysesEnCours: number;
   resultatsAValider: number;

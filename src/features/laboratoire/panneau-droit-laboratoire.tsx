@@ -21,7 +21,7 @@ interface PropsPanneauDroitLaboratoire {
   patient: PatientFileLaboratoire | null;
   orientation: string | null;
   onOrientationChange: (id: string) => void;
-  /** Destinations multiples (page patients) */
+  /** Destinations multiples */
   orientations?: string[];
   onOrientationsChange?: (ids: string[]) => void;
   onAction: (id: IdActionRapideLabo) => void;
@@ -50,6 +50,10 @@ export function PanneauDroitLaboratoire({
     couleur: o.couleur,
   }));
 
+  const afficherDestinations =
+    Boolean(onOrientationsChange) &&
+    (variante === "patients" || variante === "examens");
+
   return (
     <aside className="flex w-full shrink-0 flex-col gap-4 xl:w-[300px]">
       <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
@@ -59,13 +63,31 @@ export function PanneauDroitLaboratoire({
         <ResumePatientLaboratoire patient={patient} />
       </section>
 
-      <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-        <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-          {variante === "patients"
-            ? t("laboratoire.panneau.orientationRapide")
-            : t("laboratoire.panneau.statutAnalyse")}
-        </h2>
-        {variante === "patients" ? (
+      {variante === "examens" ? (
+        <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
+            {t("laboratoire.panneau.statutAnalyse")}
+          </h2>
+          <ListeOrientationLaboratoire
+            options={optionsStatut}
+            cleTraduction="orientationsStatut"
+            valeur={orientation}
+            onChange={onOrientationChange}
+            desactive={!patient}
+            aide={
+              patient
+                ? t("laboratoire.panneau.aideStatutAnalyse")
+                : t("laboratoire.panneau.selectionnerPatient")
+            }
+          />
+        </section>
+      ) : null}
+
+      {afficherDestinations ? (
+        <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
+            {t("laboratoire.panneau.orientationRapide")}
+          </h2>
           <ListeOrientationLaboratoire
             options={optionsDestination}
             cleTraduction="orientationsDestination"
@@ -79,21 +101,8 @@ export function PanneauDroitLaboratoire({
                 : t("laboratoire.panneau.selectionnerPatient")
             }
           />
-        ) : (
-          <ListeOrientationLaboratoire
-            options={optionsStatut}
-            cleTraduction="orientationsStatut"
-            valeur={orientation}
-            onChange={onOrientationChange}
-            desactive={!patient}
-            aide={
-              patient
-                ? t("laboratoire.panneau.aideStatutAnalyse")
-                : t("laboratoire.panneau.selectionnerPatient")
-            }
-          />
-        )}
-      </section>
+        </section>
+      ) : null}
 
       <ActionsRapidesLaboratoire
         variante={variante}

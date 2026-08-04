@@ -114,13 +114,13 @@ export const laboratoireEn: LaboratoireFr = {
   },
   patients: {
     titre: "Transferred patients",
-    sousTitre: "Only patients confirmed from cashier after payment",
+    sousTitre: "Patients the laboratory oriented to other rooms",
     recherche: "Search name, phone, file No.…",
-    vide: "No patients in the laboratory queue",
+    vide: "No outgoing transfers yet",
     videAide:
-      "Patients appear here after the cashier confirms the transfer.",
-    erreur: "Unable to load the queue",
-    chargement: "Loading queue…",
+      "Patients oriented from the lab (cashier, reception, etc.) appear here.",
+    erreur: "Unable to load transfers",
+    chargement: "Loading transfers…",
     colonnes: {
       ordre: "No.",
       enregistrement: "Registration No.",
@@ -153,8 +153,8 @@ export const laboratoireEn: LaboratoireFr = {
     numeroDossier: "File No.",
     numeroFacture: "Invoice No.",
     modePaiement: "Payment mode",
-    titreListe: "Transferred patients",
-    sousTitreListe: "{{count}} patient(s) in queue",
+    titreListe: "Outgoing transfers",
+    sousTitreListe: "{{count}} oriented patient(s)",
   },
   examensEnCours: {
     titre: "Analyses in progress",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import {
   BarreLateraleLaboratoire,
   EnTeteLaboratoire,
@@ -13,6 +14,35 @@ import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilita
 import type { UtilisateurLaboratoire } from "@/lib/auth/props-utilisateur-laboratoire";
 
 export type { UtilisateurLaboratoire };
+
+const CLE_DERNIERE_VUE_FILE = "sigh.labo.file.derniereVueIso";
+
+function lireDerniereVueFile(): string | null {
+  try {
+    return localStorage.getItem(CLE_DERNIERE_VUE_FILE);
+  } catch {
+    return null;
+  }
+}
+
+function ecrireDerniereVueFile(iso: string) {
+  try {
+    localStorage.setItem(CLE_DERNIERE_VUE_FILE, iso);
+  } catch {
+    /* ignore */
+  }
+}
+
+function compterNonVus(arrivees: string[], derniereVueIso: string | null): number {
+  if (!arrivees.length) return 0;
+  if (!derniereVueIso) return arrivees.length;
+  const seuil = new Date(derniereVueIso).getTime();
+  if (Number.isNaN(seuil)) return arrivees.length;
+  return arrivees.filter((iso) => {
+    const t = new Date(iso).getTime();
+    return !Number.isNaN(t) && t > seuil;
+  }).length;
+}
 
 interface PropsMiseEnPageLaboratoire {
   utilisateur: UtilisateurLaboratoire;
@@ -30,11 +60,13 @@ export function MiseEnPageLaboratoire({
   children,
   afficherRechercheEnTete = false,
 }: PropsMiseEnPageLaboratoire) {
+  const pathname = usePathname();
   const [menuOuvert, setMenuOuvert] = useState(false);
   const [badgeFile, setBadgeFile] = useState(0);
   const [badgesStatut, setBadgesStatut] = useState<Partial<Record<string, number>>>(
     {}
   );
+  const [arriveesFile, setArriveesFile] = useState<string[]>([]);
 
   useEffect(() => {
     let annule = false;
@@ -45,12 +77,29 @@ export function MiseEnPageLaboratoire({
         const data = (await res.json()) as {
           stats?: {
             patientsEnFile?: number;
+            arriveesFileIso?: string[];
             compteursStatutAnalyse?: Record<string, number>;
           };
         };
         if (!annule && res.ok) {
-          setBadgeFile(data.stats?.patientsEnFile ?? 0);
+          const arrivees = data.stats?.arriveesFileIso ?? [];
+          setArriveesFile(arrivees);
           setBadgesStatut(data.stats?.compteursStatutAnalyse ?? {});
+
+          const surPatients =
+            pathname === "/sigh/laboratoire/patients" ||
+            pathname.startsWith("/sigh/laboratoire/patients/");
+          const surRecus =
+            pathname === "/sigh/laboratoire/recus" ||
+            pathname.startsWith("/sigh/laboratoire/recus/");
+          /** Ouvrir Patients ou Reçus marque les arrivées comme vues */
+          if (surPatients || surRecus) {
+            const maintenant = new Date().toISOString();
+            ecrireDerniereVueFile(maintenant);
+            setBadgeFile(0);
+          } else {
+            setBadgeFile(compterNonVus(arrivees, lireDerniereVueFile()));
+          }
         }
       } catch {
         /* ignore */
@@ -67,7 +116,20 @@ export function MiseEnPageLaboratoire({
       window.removeEventListener(EVENT_RAFRAICHIR_NOTIFICATIONS, onNotif);
       window.clearInterval(interval);
     };
-  }, []);
+  }, [pathname]);
+
+  /** Marquer les arrivées comme vues (Patients ou Reçus) */
+  useEffect(() => {
+    const surPatients =
+      pathname === "/sigh/laboratoire/patients" ||
+      pathname.startsWith("/sigh/laboratoire/patients/");
+    const surRecus =
+      pathname === "/sigh/laboratoire/recus" ||
+      pathname.startsWith("/sigh/laboratoire/recus/");
+    if (!surPatients && !surRecus) return;
+    ecrireDerniereVueFile(new Date().toISOString());
+    setBadgeFile(0);
+  }, [pathname, arriveesFile]);
 
   return (
     <FournisseurNotifications>

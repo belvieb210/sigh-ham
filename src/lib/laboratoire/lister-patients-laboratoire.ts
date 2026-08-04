@@ -184,7 +184,14 @@ export async function obtenirDetailPatientLaboratoire(
   dossierId: string
 ): Promise<DetailPatientLaboratoire | null> {
   const patients = await listerPatientsLaboratoire();
-  const base = patients.find((p) => p.dossierId === dossierId);
+  let base = patients.find((p) => p.dossierId === dossierId);
+  if (!base) {
+    const { listerTransfertsSortantsLaboratoire } = await import(
+      "@/lib/laboratoire/lister-transferts-sortants"
+    );
+    const sortants = await listerTransfertsSortantsLaboratoire();
+    base = sortants.find((p) => p.dossierId === dossierId);
+  }
   if (!base) return null;
 
   const patient = await prisma.patient.findFirst({
@@ -248,6 +255,7 @@ export async function obtenirStatsLaboratoire(): Promise<StatsLaboratoireJour> {
     dateReference: new Date().toISOString(),
     patientsRecusAujourdhui,
     patientsEnFile: patients.length,
+    arriveesFileIso: patients.map((p) => p.arriveeLe),
     examensEnCours,
     analysesEnCours: analysesEnCoursListe.length,
     resultatsAValider,

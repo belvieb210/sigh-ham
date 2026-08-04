@@ -115,13 +115,13 @@ export const laboratoireFr = {
   patients: {
     titre: "Patients transférés",
     sousTitre:
-      "Uniquement les patients confirmés depuis la caisse après paiement",
+      "Patients que le laboratoire a orientés vers d'autres salles",
     recherche: "Rechercher nom, téléphone, N° dossier…",
-    vide: "Aucun patient en file laboratoire",
+    vide: "Aucun transfert sortant pour le moment",
     videAide:
-      "Les patients apparaissent ici après confirmation du transfert à la caisse.",
-    erreur: "Impossible de charger la file",
-    chargement: "Chargement de la file…",
+      "Les patients orientés depuis le laboratoire (caisse, réception, etc.) apparaissent ici.",
+    erreur: "Impossible de charger les transferts",
+    chargement: "Chargement des transferts…",
     colonnes: {
       ordre: "N°",
       enregistrement: "N° enregistrement",
@@ -129,9 +129,9 @@ export const laboratoireFr = {
       patient: "Patient",
       sexeAge: "Sexe / Âge",
       telephone: "Téléphone",
-      arrivee: "Arrivée",
+      arrivee: "Transféré le",
       provenance: "Provenance",
-      service: "Service",
+      service: "Destination",
       examens: "Examens",
       examensDemandes: "Examens demandés",
       heureTransfert: "Heure transfert",
@@ -154,8 +154,8 @@ export const laboratoireFr = {
     numeroDossier: "N° dossier",
     numeroFacture: "N° facture",
     modePaiement: "Mode de paiement",
-    titreListe: "Patients transférés",
-    sousTitreListe: "{{count}} patient(s) en file",
+    titreListe: "Transferts sortants",
+    sousTitreListe: "{{count}} patient(s) orienté(s)",
   },
   examensEnCours: {
     titre: "Analyses en cours",
@@ -254,7 +254,7 @@ export const laboratoireFr = {
   orientationsStatut: {
     RECUS: {
       label: "Reçus",
-      description: "Échantillon reçu au laboratoire",
+      description: "Patients transférés vers le laboratoire par les autres salles",
     },
     EN_COURS: {
       label: "En cours",

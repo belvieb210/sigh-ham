@@ -91,15 +91,8 @@ function LiensNavigation({
                 <Icone className="h-4 w-4 shrink-0" aria-hidden />
                 <span className="min-w-0 flex-1 truncate">{item.etiquette}</span>
                 {afficherBadgeFile ? (
-                  <span
-                    className={cn(
-                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                      estActif(item.href)
-                        ? "bg-white/20 text-white"
-                        : "bg-bleu-medical text-white"
-                    )}
-                  >
-                    {badgeFile}
+                  <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    {badgeFile > 99 ? "99+" : badgeFile}
                   </span>
                 ) : null}
                 {afficherBadgeStatut ? (

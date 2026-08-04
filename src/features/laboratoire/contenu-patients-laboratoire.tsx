@@ -74,7 +74,7 @@ export function ContenuPatientsLaboratoire({
     setChargement(true);
     setErreur(null);
     try {
-      const res = await fetch("/api/laboratoire/patients");
+      const res = await fetch("/api/laboratoire/patients?vue=sortants");
       const data = (await res.json()) as {
         patients?: PatientFileLaboratoire[];
         erreur?: string;

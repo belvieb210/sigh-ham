@@ -115,7 +115,7 @@ export function ContenuAccueilLaboratoire({
       valeur: stats?.patientsRecusAujourdhui ?? 0,
       icone: UserSearch,
       couleur: "bg-blue-50 text-blue-700",
-      href: "/sigh/laboratoire/patients",
+      href: "/sigh/laboratoire/recus",
     },
     {
       id: "analyses",
@@ -168,7 +168,7 @@ export function ContenuAccueilLaboratoire({
       icone: Printer,
     },
     {
-      href: "/sigh/laboratoire/patients",
+      href: "/sigh/laboratoire/recus",
       label: t("laboratoire.dashboard.actionRecherche"),
       icone: Search,
     },
@@ -257,7 +257,7 @@ export function ContenuAccueilLaboratoire({
                     {t("laboratoire.dashboard.tablePatients")}
                   </h2>
                   <Link
-                    href="/sigh/laboratoire/patients"
+                    href="/sigh/laboratoire/recus"
                     className="text-xs font-semibold text-bleu-medical hover:underline"
                   >
                     {t("laboratoire.dashboard.voirTous")}
@@ -342,7 +342,7 @@ export function ContenuAccueilLaboratoire({
                             </td>
                             <td className="px-3 py-2.5">
                               <Link
-                                href={`/sigh/laboratoire/patients?dossier=${p.dossierId}`}
+                                href={`/sigh/laboratoire/recus?dossier=${p.dossierId}`}
                                 className="inline-flex rounded-lg border border-gris-bordure p-1.5 text-texte-secondaire hover:bg-white hover:text-bleu-medical"
                                 title={t("laboratoire.patients.ouvrirDossier")}
                               >

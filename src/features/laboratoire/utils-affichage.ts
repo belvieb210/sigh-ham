@@ -1,3 +1,4 @@
+import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
 
 /** N° enregistrement (ex. 20260804008) */
@@ -26,24 +27,60 @@ export function initialesPatient(prenom: string, nom: string) {
   return `${a}${b}`.toUpperCase() || "—";
 }
 
-export function statutFileLabo(p: PatientFileLaboratoire): "EN_COURS" | "RECU" {
-  if (p.examens.some((e) => e.statut === "EN_ANALYSE")) return "EN_COURS";
-  return "RECU";
+const COULEURS_STATUT_ANALYSE: Record<IdOrientationStatutAnalyse, string> = {
+  RECUS: "bg-emerald-50 text-emerald-700",
+  EN_COURS: "bg-amber-50 text-amber-800",
+  VERIFIES: "bg-teal-50 text-teal-800",
+  REJETES: "bg-rose-50 text-rose-700",
+  DR_APPROUVE: "bg-violet-50 text-violet-800",
+};
+
+export function couleurStatutAnalyse(statut: string | null | undefined) {
+  const id = (statut || "RECUS") as IdOrientationStatutAnalyse;
+  return COULEURS_STATUT_ANALYSE[id] ?? COULEURS_STATUT_ANALYSE.RECUS;
 }
 
-/** Statut affiché dans la file patients (transferts sortants inclus). */
-export function libelleStatutLigneLabo(p: PatientFileLaboratoire): {
-  cle: "aConfirmer" | "rejete" | "enCours" | "recu";
-  couleur: string;
-} {
+export type BadgeStatutLigneLabo =
+  | {
+      type: "transfert";
+      cle: "aConfirmer" | "rejete";
+      couleur: string;
+    }
+  | {
+      type: "analyse";
+      statutAnalyse: IdOrientationStatutAnalyse;
+      couleur: string;
+    };
+
+/**
+ * Badge de statut pour les listes labo :
+ * priorité au transfert sortant (à confirmer / rejeté),
+ * sinon le statut d'analyse orienté (Reçus, Vérifiés…).
+ */
+export function libelleStatutLigneLabo(
+  p: PatientFileLaboratoire
+): BadgeStatutLigneLabo {
   if (p.enRecuperation && p.statutTransfertSortant === "REFUSE") {
-    return { cle: "rejete", couleur: "bg-red-100 text-red-700" };
+    return {
+      type: "transfert",
+      cle: "rejete",
+      couleur: "bg-red-100 text-red-700",
+    };
   }
   if (p.statutTransfertSortant === "EN_ATTENTE") {
-    return { cle: "aConfirmer", couleur: "bg-orange-100 text-orange-800" };
+    return {
+      type: "transfert",
+      cle: "aConfirmer",
+      couleur: "bg-orange-100 text-orange-800",
+    };
   }
-  if (statutFileLabo(p) === "EN_COURS") {
-    return { cle: "enCours", couleur: "bg-amber-50 text-amber-800" };
-  }
-  return { cle: "recu", couleur: "bg-emerald-50 text-emerald-700" };
+
+  const statutAnalyse = (p.statutAnalyse ||
+    "RECUS") as IdOrientationStatutAnalyse;
+
+  return {
+    type: "analyse",
+    statutAnalyse,
+    couleur: couleurStatutAnalyse(statutAnalyse),
+  };
 }

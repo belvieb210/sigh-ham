@@ -390,7 +390,11 @@ export function ContenuPatientsLaboratoire({
                                   statut.couleur
                                 )}
                               >
-                                {t(`laboratoire.transferts.statut.${statut.cle}`)}
+                                {statut.type === "transfert"
+                                  ? t(`laboratoire.transferts.statut.${statut.cle}`)
+                                  : t(
+                                      `laboratoire.orientationsStatut.${statut.statutAnalyse}.label`
+                                    )}
                               </span>
                             </td>
                             <td className="px-3 py-3">
@@ -453,7 +457,11 @@ export function ContenuPatientsLaboratoire({
                                 statut.couleur
                               )}
                             >
-                              {t(`laboratoire.transferts.statut.${statut.cle}`)}
+                              {statut.type === "transfert"
+                                ? t(`laboratoire.transferts.statut.${statut.cle}`)
+                                : t(
+                                    `laboratoire.orientationsStatut.${statut.statutAnalyse}.label`
+                                  )}
                             </span>
                           </div>
                           <p className="mt-2 text-xs text-texte-secondaire">

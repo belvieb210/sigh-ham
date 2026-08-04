@@ -25,10 +25,15 @@ import {
   MiseEnPageLaboratoire,
   type UtilisateurLaboratoire,
 } from "@/features/laboratoire/mise-en-page-laboratoire";
+import {
+  couleurStatutAnalyse,
+  libelleStatutLigneLabo,
+} from "@/features/laboratoire/utils-affichage";
 import type {
   PatientFileLaboratoire,
   StatsLaboratoireJour,
 } from "@/lib/laboratoire/types";
+import { cn } from "@/lib/utils";
 
 interface PropsContenuAccueilLaboratoire {
   utilisateur: UtilisateurLaboratoire;
@@ -315,9 +320,25 @@ export function ContenuAccueilLaboratoire({
                               {formatHeure(p.arriveeLe, i18n.language)}
                             </td>
                             <td className="px-3 py-2.5">
-                              <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                                {t("laboratoire.dashboard.statutRecu")}
-                              </span>
+                              {(() => {
+                                const statut = libelleStatutLigneLabo(p);
+                                return (
+                                  <span
+                                    className={cn(
+                                      "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                                      statut.couleur
+                                    )}
+                                  >
+                                    {statut.type === "transfert"
+                                      ? t(
+                                          `laboratoire.transferts.statut.${statut.cle}`
+                                        )
+                                      : t(
+                                          `laboratoire.orientationsStatut.${statut.statutAnalyse}.label`
+                                        )}
+                                  </span>
+                                );
+                              })()}
                             </td>
                             <td className="px-3 py-2.5">
                               <Link
@@ -387,8 +408,15 @@ export function ContenuAccueilLaboratoire({
                               {libellesExamens(p)}
                             </td>
                             <td className="px-3 py-2.5">
-                              <span className="inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-                                {t("laboratoire.dashboard.statutEnCours")}
+                              <span
+                                className={cn(
+                                  "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                                  couleurStatutAnalyse(p.statutAnalyse)
+                                )}
+                              >
+                                {t(
+                                  `laboratoire.orientationsStatut.${p.statutAnalyse || "EN_COURS"}.label`
+                                )}
                               </span>
                             </td>
                             <td className="px-3 py-2.5">

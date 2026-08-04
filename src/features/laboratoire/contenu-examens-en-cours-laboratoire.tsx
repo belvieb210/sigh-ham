@@ -24,6 +24,7 @@ import {
   type FiltresLaboratoireUi,
 } from "@/features/laboratoire/formulaire-filtres-laboratoire";
 import {
+  couleurStatutAnalyse,
   libellesExamensDemandes,
   numeroEnregistrementLaboratoire,
 } from "@/features/laboratoire/utils-affichage";
@@ -352,7 +353,12 @@ export function ContenuExamensEnCoursLaboratoire({
                                 : libellesExamensDemandes(p)}
                             </td>
                             <td className="px-3 py-3">
-                              <span className="inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                              <span
+                                className={cn(
+                                  "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                                  couleurStatutAnalyse(p.statutAnalyse)
+                                )}
+                              >
                                 {libelleStatutOrientation(p)}
                               </span>
                             </td>
@@ -417,7 +423,12 @@ export function ContenuExamensEnCoursLaboratoire({
                             {numeroEnregistrementLaboratoire(p)}
                           </p>
                         </div>
-                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                            couleurStatutAnalyse(p.statutAnalyse)
+                          )}
+                        >
                           {libelleStatutOrientation(p)}
                         </span>
                       </div>

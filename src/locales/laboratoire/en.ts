@@ -172,6 +172,21 @@ export const laboratoireEn: LaboratoireFr = {
     cocher: "Check",
     coche: "Checked",
   },
+  outils: {
+    selectionnerTout: "Select / deselect all",
+    exporter: "Export selection",
+    rienAExporter: "No patients to export.",
+    exportOk: "{{count}} patient(s) exported as CSV.",
+  },
+  menuContextuel: {
+    voirDonneesRapport: "View report data",
+    ajouterCommentaire: "Add visit comment",
+    voirCommentaires: "View visit comments",
+    ficheTravail: "Job card",
+    ajouterResultat: "Add result",
+    historiqueRapport: "Report history",
+    comparaisonDiagnostique: "Diagnostic compare",
+  },
   filtres: {
     ouvrir: "Open filters",
     fermer: "Close filters",

@@ -22,7 +22,12 @@ import {
   SectionsMobileLaboratoire,
 } from "@/features/laboratoire/panneau-droit-laboratoire";
 import type { IdActionRapideLabo } from "@/features/laboratoire/actions-rapides-laboratoire";
-import { BarreFiltresLaboratoire } from "@/features/laboratoire/barre-filtres-laboratoire";
+import { BarreFiltresLaboratoire, BoutonsOutilsListeLaboratoire } from "@/features/laboratoire/barre-filtres-laboratoire";
+import {
+  MenuContextuelLaboratoire,
+  utiliserMenuContextuelLabo,
+  type IdActionContextuelleLabo,
+} from "@/features/laboratoire/menu-contextuel-laboratoire";
 import {
   FILTRES_LABORATOIRE_VIDES,
   patientCorrespondFiltresLabo,
@@ -71,6 +76,7 @@ export function ContenuPatientsLaboratoire({
   const [demarrage, setDemarrage] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageAction, setMessageAction] = useState<string | null>(null);
+  const { menu, ouvrirSurPatient, fermer } = utiliserMenuContextuelLabo();
 
   const charger = useCallback(async () => {
     setChargement(true);
@@ -276,6 +282,76 @@ export function ContenuPatientsLaboratoire({
     }
   };
 
+  const onActionContextuelle = (id: IdActionContextuelleLabo) => {
+    const dossierId = menu?.dossierId;
+    if (!dossierId) return;
+    setSelectionId(dossierId);
+    if (id === "voirDonneesRapport" || id === "ficheTravail") {
+      void ouvrirDetail(dossierId);
+      return;
+    }
+    if (id === "ajouterResultat") {
+      router.push("/sigh/laboratoire/saisie-resultats");
+      return;
+    }
+    if (id === "historiqueRapport") {
+      router.push("/sigh/laboratoire/historique");
+      return;
+    }
+    setMessageAction(t("laboratoire.actions.aVenir"));
+  };
+
+  const toutSelectionne =
+    filtrés.length > 0 && filtrés.every((p) => idsCoches.has(p.dossierId));
+
+  const basculerSelectionTout = () => {
+    if (toutSelectionne) {
+      setIdsCoches(new Set());
+      return;
+    }
+    setIdsCoches(new Set(filtrés.map((p) => p.dossierId)));
+  };
+
+  const exporterSelection = () => {
+    const cibles =
+      idsCoches.size > 0
+        ? filtrés.filter((p) => idsCoches.has(p.dossierId))
+        : filtrés;
+    if (cibles.length === 0) {
+      setMessageAction(t("laboratoire.outils.rienAExporter"));
+      return;
+    }
+    const entetes = [
+      "numeroEnregistrement",
+      "nom",
+      "prenom",
+      "destination",
+      "statut",
+      "examens",
+    ];
+    const lignes = cibles.map((p) =>
+      [
+        numeroEnregistrementLaboratoire(p),
+        p.nom,
+        p.prenom,
+        p.orientation,
+        p.statutAnalyse,
+        libellesExamensDemandes(p),
+      ]
+        .map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`)
+        .join(",")
+    );
+    const csv = [entetes.join(","), ...lignes].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `laboratoire-patients-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setMessageAction(t("laboratoire.outils.exportOk", { count: cibles.length }));
+  };
+
   const fermerDetail = () => setDetail(null);
 
   const formatHeure = (iso: string) =>
@@ -297,6 +373,7 @@ export function ContenuPatientsLaboratoire({
       if (orientationEnCours) return;
       void changerOrientations(ids);
     },
+    peutOrienter: Boolean(patientSelectionne) || idsCoches.size > 0,
     onAction,
   };
 
@@ -334,6 +411,13 @@ export function ContenuPatientsLaboratoire({
               setBrouillonFiltres(FILTRES_LABORATOIRE_VIDES);
               setFiltresAppliques(FILTRES_LABORATOIRE_VIDES);
             }}
+            actionsApresFiltre={
+              <BoutonsOutilsListeLaboratoire
+                toutSelectionne={toutSelectionne}
+                onSelectionnerTout={basculerSelectionTout}
+                onExporter={exporterSelection}
+              />
+            }
           />
 
           {erreur && (
@@ -415,6 +499,7 @@ export function ContenuPatientsLaboratoire({
                           <tr
                             key={p.dossierId}
                             onClick={() => selectionner(p.dossierId)}
+                            onContextMenu={(e) => ouvrirSurPatient(e, p.dossierId)}
                             className={cn(
                               "cursor-pointer transition-colors",
                               selectionne
@@ -515,6 +600,7 @@ export function ContenuPatientsLaboratoire({
                             ? "border-bleu-medical ring-1 ring-bleu-medical/30"
                             : "border-gris-bordure"
                         )}
+                        onContextMenu={(e) => ouvrirSurPatient(e, p.dossierId)}
                       >
                         <div className="mb-2 flex items-center gap-2">
                           <CaseCocheLigne
@@ -730,6 +816,14 @@ export function ContenuPatientsLaboratoire({
           </div>
         </div>
       )}
+
+      <MenuContextuelLaboratoire
+        ouvert={Boolean(menu)}
+        x={menu?.x ?? 0}
+        y={menu?.y ?? 0}
+        onFermer={fermer}
+        onAction={onActionContextuelle}
+      />
     </MiseEnPageLaboratoire>
   );
 }

@@ -24,6 +24,8 @@ interface PropsPanneauDroitLaboratoire {
   /** Destinations multiples */
   orientations?: string[];
   onOrientationsChange?: (ids: string[]) => void;
+  /** false si aucun patient sélectionné ni coché */
+  peutOrienter?: boolean;
   onAction: (id: IdActionRapideLabo) => void;
 }
 
@@ -34,9 +36,11 @@ export function PanneauDroitLaboratoire({
   onOrientationChange,
   orientations = [],
   onOrientationsChange,
+  peutOrienter,
   onAction,
 }: PropsPanneauDroitLaboratoire) {
   const { t } = useTranslation();
+  const orientable = peutOrienter ?? Boolean(patient);
 
   const optionsDestination = ORIENTATIONS_DESTINATION_LABO.map((o) => ({
     id: o.id,
@@ -51,8 +55,7 @@ export function PanneauDroitLaboratoire({
   }));
 
   const afficherDestinations =
-    Boolean(onOrientationsChange) &&
-    (variante === "patients" || variante === "examens");
+    variante === "patients" && Boolean(onOrientationsChange);
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-4 xl:w-[300px]">
@@ -73,9 +76,9 @@ export function PanneauDroitLaboratoire({
             cleTraduction="orientationsStatut"
             valeur={orientation}
             onChange={onOrientationChange}
-            desactive={!patient}
+            desactive={!orientable}
             aide={
-              patient
+              orientable
                 ? t("laboratoire.panneau.aideStatutAnalyse")
                 : t("laboratoire.panneau.selectionnerPatient")
             }
@@ -94,9 +97,9 @@ export function PanneauDroitLaboratoire({
             multiple
             valeurs={orientations}
             onChangeMulti={onOrientationsChange}
-            desactive={!patient}
+            desactive={!orientable}
             aide={
-              patient
+              orientable
                 ? t("laboratoire.panneau.aideOrientationPatientMulti")
                 : t("laboratoire.panneau.selectionnerPatient")
             }
@@ -107,7 +110,7 @@ export function PanneauDroitLaboratoire({
       <ActionsRapidesLaboratoire
         variante={variante}
         onAction={onAction}
-        patientSelectionne={Boolean(patient)}
+        patientSelectionne={orientable}
       />
     </aside>
   );

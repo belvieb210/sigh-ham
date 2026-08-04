@@ -1,7 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { SlidersHorizontal } from "lucide-react";
+import { ListChecks, Share2, SlidersHorizontal } from "lucide-react";
 import {
   FormulaireFiltresLaboratoire,
   type FiltresLaboratoireUi,
@@ -20,6 +21,8 @@ interface PropsBarreFiltresLaboratoire {
   onRechercher: () => void;
   onReinitialiser: () => void;
   idPrefix?: string;
+  /** Boutons supplémentaires après le filtre (ex. patients) */
+  actionsApresFiltre?: ReactNode;
 }
 
 export function BarreFiltresLaboratoire({
@@ -33,6 +36,7 @@ export function BarreFiltresLaboratoire({
   onRechercher,
   onReinitialiser,
   idPrefix = "filtre-labo",
+  actionsApresFiltre,
 }: PropsBarreFiltresLaboratoire) {
   const { t } = useTranslation();
   const nbFiltres = compterFiltresLaboratoire(appliques);
@@ -50,32 +54,35 @@ export function BarreFiltresLaboratoire({
             <p className="mt-0.5 text-xs text-texte-secondaire">{sousTitre}</p>
           ) : null}
         </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={filtresOuverts}
-          aria-label={
-            filtresOuverts
-              ? t("laboratoire.filtres.fermer")
-              : t("laboratoire.filtres.ouvrir")
-          }
-          className={cn(
-            "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
-            filtresOuverts
-              ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
-              : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
-          )}
-        >
-          <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
-          <span
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={filtresOuverts}
+            aria-label={
+              filtresOuverts
+                ? t("laboratoire.filtres.fermer")
+                : t("laboratoire.filtres.ouvrir")
+            }
             className={cn(
-              "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
-              nbFiltres > 0 ? "bg-red-500" : "bg-slate-400"
+              "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+              filtresOuverts
+                ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
             )}
           >
-            {nbFiltres}
-          </span>
-        </button>
+            <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
+            <span
+              className={cn(
+                "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
+                nbFiltres > 0 ? "bg-red-500" : "bg-slate-400"
+              )}
+            >
+              {nbFiltres}
+            </span>
+          </button>
+          {actionsApresFiltre}
+        </div>
       </div>
 
       {filtresOuverts && (
@@ -88,5 +95,46 @@ export function BarreFiltresLaboratoire({
         />
       )}
     </div>
+  );
+}
+
+/** Boutons sélection / exporter pour la page patients */
+export function BoutonsOutilsListeLaboratoire({
+  onSelectionnerTout,
+  onExporter,
+  toutSelectionne,
+}: {
+  onSelectionnerTout: () => void;
+  onExporter: () => void;
+  toutSelectionne?: boolean;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onSelectionnerTout}
+        aria-label={t("laboratoire.outils.selectionnerTout")}
+        title={t("laboratoire.outils.selectionnerTout")}
+        className={cn(
+          "inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+          toutSelectionne
+            ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+            : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
+        )}
+      >
+        <ListChecks className="h-5 w-5" strokeWidth={2} />
+      </button>
+      <button
+        type="button"
+        onClick={onExporter}
+        aria-label={t("laboratoire.outils.exporter")}
+        title={t("laboratoire.outils.exporter")}
+        className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gris-bordure bg-white text-texte-principal transition-colors hover:bg-gris-tres-clair"
+      >
+        <Share2 className="h-5 w-5" strokeWidth={2} />
+      </button>
+    </>
   );
 }

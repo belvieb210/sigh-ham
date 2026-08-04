@@ -173,6 +173,21 @@ export const laboratoireFr = {
     cocher: "Cocher",
     coche: "Coché",
   },
+  outils: {
+    selectionnerTout: "Tout sélectionner / désélectionner",
+    exporter: "Exporter la sélection",
+    rienAExporter: "Aucun patient à exporter.",
+    exportOk: "{{count}} patient(s) exporté(s) en CSV.",
+  },
+  menuContextuel: {
+    voirDonneesRapport: "Voir les données du rapport",
+    ajouterCommentaire: "Ajouter un commentaire de visite",
+    voirCommentaires: "Voir les commentaires de visite",
+    ficheTravail: "Fiche de travail",
+    ajouterResultat: "Ajouter un résultat",
+    historiqueRapport: "Historique du rapport",
+    comparaisonDiagnostique: "Comparaison diagnostique",
+  },
   filtres: {
     ouvrir: "Ouvrir les filtres",
     fermer: "Fermer les filtres",

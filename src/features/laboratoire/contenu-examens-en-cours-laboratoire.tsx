@@ -7,7 +7,6 @@ import { Eye, FlaskConical, Loader2 } from "lucide-react";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import {
   CHEMINS_STATUT_ANALYSE_LABO,
-  idOrientationDepuisCodeSalle,
   type IdOrientationStatutAnalyse,
 } from "@/constants/laboratoire-orientations";
 import {
@@ -20,6 +19,11 @@ import {
 } from "@/features/laboratoire/panneau-droit-laboratoire";
 import type { IdActionRapideLabo } from "@/features/laboratoire/actions-rapides-laboratoire";
 import { BarreFiltresLaboratoire } from "@/features/laboratoire/barre-filtres-laboratoire";
+import {
+  MenuContextuelLaboratoire,
+  utiliserMenuContextuelLabo,
+  type IdActionContextuelleLabo,
+} from "@/features/laboratoire/menu-contextuel-laboratoire";
 import {
   FILTRES_LABORATOIRE_VIDES,
   patientCorrespondFiltresLabo,
@@ -70,9 +74,9 @@ export function ContenuExamensEnCoursLaboratoire({
   );
   const [selectionId, setSelectionId] = useState<string | null>(dossierUrl);
   const [orientationEnCours, setOrientationEnCours] = useState(false);
-  const [orientationsDest, setOrientationsDest] = useState<string[]>([]);
   const [idsCoches, setIdsCoches] = useState<Set<string>>(new Set());
   const [messageAction, setMessageAction] = useState<string | null>(null);
+  const { menu, ouvrirSurPatient, fermer } = utiliserMenuContextuelLabo();
 
   const titrePage = pageStatut
     ? t(`laboratoire.orientationsStatut.${pageStatut}.label`)
@@ -129,29 +133,6 @@ export function ContenuExamensEnCoursLaboratoire({
     (patientSelectionne?.statutAnalyse as IdOrientationStatutAnalyse | undefined) ||
     pageStatut ||
     "EN_COURS";
-
-  useEffect(() => {
-    if (!patientSelectionne) {
-      setOrientationsDest([]);
-      return;
-    }
-    const codes =
-      patientSelectionne.codesSalleDestination?.length
-        ? patientSelectionne.codesSalleDestination
-        : patientSelectionne.codeSalleDestination
-          ? [patientSelectionne.codeSalleDestination]
-          : [];
-    setOrientationsDest(
-      codes
-        .map((c) => idOrientationDepuisCodeSalle(c))
-        .filter((id): id is NonNullable<typeof id> => Boolean(id))
-    );
-  }, [
-    patientSelectionne?.dossierId,
-    patientSelectionne?.codeSalleDestination,
-    patientSelectionne?.codesSalleDestination,
-    patientSelectionne,
-  ]);
 
   useEffect(() => {
     if (dossierUrl) setSelectionId(dossierUrl);
@@ -272,62 +253,6 @@ export function ContenuExamensEnCoursLaboratoire({
     }
   };
 
-  const changerOrientationsDest = async (ids: string[]) => {
-    const idsAOrienter =
-      idsCoches.size > 0
-        ? [...idsCoches]
-        : selectionId
-          ? [selectionId]
-          : [];
-    if (idsAOrienter.length === 0 || orientationEnCours) return;
-    if (ids.length === 0) {
-      setMessageAction(t("laboratoire.transferts.selectionnerDestination"));
-      return;
-    }
-    setOrientationsDest(ids);
-    setMessageAction(null);
-    setOrientationEnCours(true);
-    try {
-      const resultats = await Promise.allSettled(
-        idsAOrienter.map(async (dossierId) => {
-          const res = await fetch("/api/laboratoire/transferts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ dossierId, orientations: ids }),
-          });
-          const data = (await res.json()) as { message?: string };
-          if (!res.ok) {
-            throw new Error(
-              data.message ?? t("laboratoire.transferts.erreurOrientation")
-            );
-          }
-          return data;
-        })
-      );
-      const ok = resultats.filter((r) => r.status === "fulfilled").length;
-      const echecs = resultats.length - ok;
-      if (ok === 0) {
-        setMessageAction(t("laboratoire.transferts.erreurOrientation"));
-        await charger();
-        return;
-      }
-      setMessageAction(
-        echecs > 0
-          ? t("laboratoire.transferts.orienteLotPartiel", { ok, echecs })
-          : idsAOrienter.length > 1
-            ? t("laboratoire.transferts.orienteLotOk", { count: ok })
-            : t("laboratoire.transferts.orienteOk")
-      );
-      setIdsCoches(new Set());
-      window.dispatchEvent(new CustomEvent(EVENT_RAFRAICHIR_NOTIFICATIONS));
-      await charger();
-    } catch {
-      setMessageAction(t("laboratoire.transferts.erreurOrientation"));
-    } finally {
-      setOrientationEnCours(false);
-    }
-  };
-
   const onAction = (id: IdActionRapideLabo) => {
     setMessageAction(null);
     if (id === "rechercher") {
@@ -349,6 +274,25 @@ export function ContenuExamensEnCoursLaboratoire({
     if (id === "imprimer") {
       setMessageAction(t("laboratoire.actions.aVenir"));
     }
+  };
+
+  const onActionContextuelle = (id: IdActionContextuelleLabo) => {
+    const dossierId = menu?.dossierId;
+    if (!dossierId) return;
+    selectionner(dossierId);
+    if (id === "ajouterResultat") {
+      router.push("/sigh/laboratoire/saisie-resultats");
+      return;
+    }
+    if (id === "voirDonneesRapport" || id === "ficheTravail") {
+      router.push(`/sigh/laboratoire/patients?dossier=${dossierId}`);
+      return;
+    }
+    if (id === "historiqueRapport") {
+      router.push("/sigh/laboratoire/historique");
+      return;
+    }
+    setMessageAction(t("laboratoire.actions.aVenir"));
   };
 
   const formatHeure = (iso: string) =>
@@ -373,11 +317,7 @@ export function ContenuExamensEnCoursLaboratoire({
       if (orientationEnCours) return;
       void changerOrientation(id);
     },
-    orientations: orientationsDest,
-    onOrientationsChange: (ids: string[]) => {
-      if (orientationEnCours) return;
-      void changerOrientationsDest(ids);
-    },
+    peutOrienter: Boolean(selectionId) || idsCoches.size > 0,
     onAction,
   };
 
@@ -497,6 +437,7 @@ export function ContenuExamensEnCoursLaboratoire({
                             key={p.dossierId}
                             id={`analyse-${p.dossierId}`}
                             onClick={() => selectionner(p.dossierId)}
+                            onContextMenu={(e) => ouvrirSurPatient(e, p.dossierId)}
                             className={cn(
                               "cursor-pointer transition-colors",
                               selectionne
@@ -599,6 +540,7 @@ export function ContenuExamensEnCoursLaboratoire({
                           ? "border-bleu-medical ring-1 ring-bleu-medical/30"
                           : "border-gris-bordure"
                       )}
+                      onContextMenu={(e) => ouvrirSurPatient(e, p.dossierId)}
                     >
                       <div className="flex items-start gap-2">
                         <CaseCocheLigne
@@ -655,6 +597,14 @@ export function ContenuExamensEnCoursLaboratoire({
           <PanneauDroitLaboratoire {...propsPanneau} />
         </div>
       </div>
+
+      <MenuContextuelLaboratoire
+        ouvert={Boolean(menu)}
+        x={menu?.x ?? 0}
+        y={menu?.y ?? 0}
+        onFermer={fermer}
+        onAction={onActionContextuelle}
+      />
     </MiseEnPageLaboratoire>
   );
 }

@@ -81,6 +81,8 @@ export type PatientDuJour = {
   medecin: string;
   /** true si le patient est encore en file médecins aujourd'hui */
   enFile?: boolean;
+  aConsultation?: boolean;
+  aOrdonnance?: boolean;
 };
 
 export type NoteMedicaleResume = {

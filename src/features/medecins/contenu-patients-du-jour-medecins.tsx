@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import {
+  FileText,
   Loader2,
   Pill,
   SlidersHorizontal,
@@ -21,8 +21,24 @@ import {
   MiseEnPageMedecins,
   type UtilisateurMedecins,
 } from "@/features/medecins/mise-en-page-medecins";
+import {
+  ModalHistoriquePatientMedecins,
+  type PatientHistoriqueCible,
+} from "@/features/medecins/modal-historique-patient-medecins";
 import { PanneauDroitMedecins } from "@/features/medecins/panneau-droit-medecins";
-import type { PatientDuJour } from "@/lib/medecins/types";
+import {
+  imprimerCrConsultation,
+  imprimerOrdonnancePdf,
+} from "@/lib/medecins/imprimer-pdfs-medecins";
+import {
+  consultationVersDonneesPdf,
+  ordonnanceVersDonneesPdf,
+} from "@/lib/medecins/pdf-donnees-medecins";
+import type {
+  ConsultationDetailMedecins,
+  OrdonnanceMedecins,
+  PatientDuJour,
+} from "@/lib/medecins/types";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -55,6 +71,9 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
   const [filtresAppliques, setFiltresAppliques] = useState(FILTRES_FACTURATION_VIDES);
   const [page, setPage] = useState(1);
   const [selection, setSelection] = useState<string[]>([]);
+  const [pdfEnCours, setPdfEnCours] = useState<string | null>(null);
+  const [historiquePatient, setHistoriquePatient] =
+    useState<PatientHistoriqueCible | null>(null);
 
   const charger = useCallback(async () => {
     setChargement(true);
@@ -107,6 +126,62 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
       minute: "2-digit",
     });
 
+  async function ouvrirPdfConsultation(p: PatientDuJour) {
+    setPdfEnCours(`c-${p.dossierId}`);
+    setErreur(null);
+    try {
+      const res = await fetch(
+        `/api/medecins/consultations?dossierId=${encodeURIComponent(p.dossierId)}`
+      );
+      const data = (await res.json()) as {
+        consultation?: ConsultationDetailMedecins | null;
+        historique?: ConsultationDetailMedecins[];
+        erreur?: string;
+      };
+      if (!res.ok) throw new Error(data.erreur ?? "Consultation introuvable.");
+      const c =
+        (p.consultationId
+          ? data.historique?.find((x) => x.id === p.consultationId)
+          : null) ??
+        data.consultation ??
+        data.historique?.[0];
+      if (!c) throw new Error("Aucune consultation pour ce patient.");
+      const ok = await imprimerCrConsultation(consultationVersDonneesPdf(c));
+      if (!ok) throw new Error("Génération PDF impossible.");
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Erreur PDF consultation.");
+    } finally {
+      setPdfEnCours(null);
+    }
+  }
+
+  async function ouvrirPdfOrdonnance(p: PatientDuJour) {
+    setPdfEnCours(`o-${p.dossierId}`);
+    setErreur(null);
+    try {
+      const res = await fetch(
+        `/api/medecins/ordonnances?dossierId=${encodeURIComponent(p.dossierId)}`
+      );
+      const data = (await res.json()) as {
+        ordonnances?: OrdonnanceMedecins[];
+        erreur?: string;
+      };
+      if (!res.ok) throw new Error(data.erreur ?? "Ordonnance introuvable.");
+      const o = data.ordonnances?.[0];
+      if (!o) throw new Error("Aucune ordonnance pour ce patient.");
+      const ok = await imprimerOrdonnancePdf(
+        ordonnanceVersDonneesPdf(o, {
+          telephone: p.telephone,
+        })
+      );
+      if (!ok) throw new Error("Génération PDF impossible.");
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Erreur PDF ordonnance.");
+    } finally {
+      setPdfEnCours(null);
+    }
+  }
+
   return (
     <MiseEnPageMedecins
       utilisateur={utilisateur}
@@ -122,7 +197,7 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
               Patients du jour
             </h2>
             <p className="mt-1 text-sm text-texte-secondaire">
-              Patients enregistrés / orientés vers les médecins aujourd&apos;hui.
+              Patients avec consultation et/ou ordonnance enregistrée aujourd&apos;hui.
             </p>
           </div>
           <div className="flex justify-end gap-2">
@@ -199,18 +274,18 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
           />
         ) : null}
 
+        {erreur ? <p className="text-sm text-red-600">{erreur}</p> : null}
+
         {chargement ? (
           <div className="flex items-center gap-2 text-sm text-texte-secondaire">
             <Loader2 className="h-4 w-4 animate-spin" />
             {t("medecins.patientsDuJour.chargement")}
           </div>
-        ) : erreur ? (
-          <p className="text-sm text-red-600">{erreur}</p>
         ) : filtrés.length === 0 ? (
           <p className="rounded-xl border border-dashed border-gris-bordure bg-white p-8 text-center text-sm text-texte-secondaire">
             {nbFiltres > 0
               ? t("caisse.facturation.filtres.aucunResultat")
-              : t("medecins.patientsDuJour.vide")}
+              : "Aucun patient avec consultation ou ordonnance aujourd'hui."}
           </p>
         ) : (
           <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
@@ -234,7 +309,7 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
               <tbody className="divide-y divide-gris-bordure">
                 {pagePatients.map((p) => (
                   <tr
-                    key={`${p.dossierId}-${p.consultationId ?? "file"}`}
+                    key={`${p.dossierId}-${p.consultationId ?? "ord"}`}
                     className="hover:bg-gris-tres-clair/50"
                   >
                     <td className="px-4 py-3">
@@ -243,9 +318,14 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
                       </p>
                       <p className="text-xs text-texte-secondaire">
                         {p.numeroDossier}
-                        {p.enFile ? (
+                        {p.aConsultation ? (
                           <span className="ml-2 rounded-full bg-bleu-medical-clair px-1.5 py-0.5 text-[10px] font-medium text-bleu-medical">
-                            En file
+                            Consultation
+                          </span>
+                        ) : null}
+                        {p.aOrdonnance ? (
+                          <span className="ml-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                            Ordonnance
                           </span>
                         ) : null}
                       </p>
@@ -261,28 +341,54 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
                     </td>
                     <td className="px-4 py-3 text-texte-secondaire">
                       {formater(p.debutLe)}
-                      {p.finLe ? (
-                        <span className="ml-1 text-emerald-700">✓</span>
-                      ) : (
-                        <span className="ml-1 text-amber-600">…</span>
-                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap justify-end gap-2">
-                        <Link
-                          href={`/sigh/medecins/consultation?dossier=${encodeURIComponent(p.dossierId)}`}
+                        {p.aConsultation !== false ? (
+                          <button
+                            type="button"
+                            disabled={pdfEnCours === `c-${p.dossierId}`}
+                            onClick={() => void ouvrirPdfConsultation(p)}
+                            className="inline-flex items-center gap-1 rounded-lg bg-bleu-medical px-2.5 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                          >
+                            {pdfEnCours === `c-${p.dossierId}` ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Stethoscope className="h-3.5 w-3.5" />
+                            )}
+                            Consultation
+                          </button>
+                        ) : null}
+                        {p.aOrdonnance ? (
+                          <button
+                            type="button"
+                            disabled={pdfEnCours === `o-${p.dossierId}`}
+                            onClick={() => void ouvrirPdfOrdonnance(p)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-bleu-medical bg-white px-2.5 py-1.5 text-xs font-medium text-bleu-medical disabled:opacity-50"
+                          >
+                            {pdfEnCours === `o-${p.dossierId}` ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Pill className="h-3.5 w-3.5" />
+                            )}
+                            Ordonnances
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setHistoriquePatient({
+                              dossierId: p.dossierId,
+                              nomComplet: p.nomComplet,
+                              numeroDossier: p.numeroDossier,
+                              telephone: p.telephone,
+                            })
+                          }
                           className="inline-flex items-center gap-1 rounded-lg bg-bleu-medical px-2.5 py-1.5 text-xs font-medium text-white"
                         >
-                          <Stethoscope className="h-3.5 w-3.5" />
-                          Consultation
-                        </Link>
-                        <Link
-                          href={`/sigh/medecins/ordonnances?dossier=${encodeURIComponent(p.dossierId)}`}
-                          className="inline-flex items-center gap-1 rounded-lg border border-bleu-medical bg-white px-2.5 py-1.5 text-xs font-medium text-bleu-medical"
-                        >
-                          <Pill className="h-3.5 w-3.5" />
-                          Ordonnances
-                        </Link>
+                          <FileText className="h-3.5 w-3.5" />
+                          Voir
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -299,6 +405,11 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
           </div>
         )}
       </div>
+
+      <ModalHistoriquePatientMedecins
+        patient={historiquePatient}
+        onFermer={() => setHistoriquePatient(null)}
+      />
     </MiseEnPageMedecins>
   );
 }

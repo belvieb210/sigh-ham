@@ -9,7 +9,6 @@ import type {
   PatientFileMedecins,
   PatientTransfereCaisse,
 } from "@/lib/medecins/types";
-import { listerPatientsMedecins } from "@/lib/medecins/lister-patients-medecins";
 
 const COULEURS_ORIENTATION: Record<string, string> = {
   Infirmiers: "bg-violet-100 text-violet-700",
@@ -202,7 +201,8 @@ export async function listerPatientsTransferesSortantsMedecins(): Promise<
 
 export async function listerPatientsDuJourMedecins(): Promise<PatientDuJour[]> {
   const debut = debutJourLocal();
-  const [consultations, file] = await Promise.all([
+
+  const [consultations, ordonnances] = await Promise.all([
     prisma.consultation.findMany({
       where: { debutLe: { gte: debut } },
       include: {
@@ -212,12 +212,31 @@ export async function listerPatientsDuJourMedecins(): Promise<PatientDuJour[]> {
       orderBy: { debutLe: "desc" },
       take: 200,
     }),
-    listerPatientsMedecins(),
+    prisma.ordonnance.findMany({
+      where: { prescritLe: { gte: debut } },
+      include: {
+        dossier: { include: { patient: true } },
+        medecin: { select: { prenom: true, nom: true } },
+      },
+      orderBy: { prescritLe: "desc" },
+      take: 200,
+    }),
   ]);
 
   const parDossier = new Map<string, PatientDuJour>();
 
   for (const c of consultations) {
+    const existant = parDossier.get(c.dossierId);
+    if (existant) {
+      if (!existant.consultationId) {
+        existant.consultationId = c.id;
+        existant.motif = c.motif;
+        existant.debutLe = c.debutLe.toISOString();
+        existant.finLe = c.finLe?.toISOString() ?? null;
+        existant.medecin = `${c.medecin.prenom} ${c.medecin.nom}`.trim();
+      }
+      continue;
+    }
     parDossier.set(c.dossierId, {
       dossierId: c.dossierId,
       consultationId: c.id,
@@ -229,34 +248,57 @@ export async function listerPatientsDuJourMedecins(): Promise<PatientDuJour[]> {
       finLe: c.finLe?.toISOString() ?? null,
       medecin: `${c.medecin.prenom} ${c.medecin.nom}`.trim(),
       enFile: false,
+      aConsultation: true,
+      aOrdonnance: false,
     });
   }
 
-  for (const p of file) {
-    const existant = parDossier.get(p.dossierId);
+  for (const o of ordonnances) {
+    const existant = parDossier.get(o.dossierId);
     if (existant) {
-      existant.enFile = true;
-      if (!existant.telephone && p.telephone !== "—") {
-        existant.telephone = p.telephone;
+      existant.aOrdonnance = true;
+      if (existant.medecin === "—") {
+        existant.medecin = `${o.medecin.prenom} ${o.medecin.nom}`.trim();
       }
       continue;
     }
-    const iso =
-      p.arriveeLe && !Number.isNaN(Date.parse(p.arriveeLe))
-        ? new Date(p.arriveeLe).toISOString()
-        : debut.toISOString();
-    parDossier.set(p.dossierId, {
-      dossierId: p.dossierId,
+    parDossier.set(o.dossierId, {
+      dossierId: o.dossierId,
       consultationId: null,
-      nomComplet: p.nomComplet,
-      numeroDossier: p.numeroDossier,
-      telephone: p.telephone === "—" ? "" : p.telephone,
-      motif: p.motif === "—" ? "" : p.motif,
-      debutLe: iso,
+      nomComplet: `${o.dossier.patient.prenom} ${o.dossier.patient.nom}`.trim(),
+      numeroDossier: o.dossier.numeroDossier,
+      telephone: o.dossier.patient.telephone ?? "",
+      motif: o.notes?.trim() || "Ordonnance",
+      debutLe: o.prescritLe.toISOString(),
       finLe: null,
-      medecin: "—",
-      enFile: true,
+      medecin: `${o.medecin.prenom} ${o.medecin.nom}`.trim(),
+      enFile: false,
+      aConsultation: false,
+      aOrdonnance: true,
     });
+  }
+
+  // Marquer aussi les dossiers qui ont l'autre type hors « aujourd'hui »
+  const ids = [...parDossier.keys()];
+  if (ids.length > 0) {
+    const [autresConsult, autresOrd] = await Promise.all([
+      prisma.consultation.findMany({
+        where: { dossierId: { in: ids } },
+        select: { dossierId: true },
+        distinct: ["dossierId"],
+      }),
+      prisma.ordonnance.findMany({
+        where: { dossierId: { in: ids } },
+        select: { dossierId: true },
+        distinct: ["dossierId"],
+      }),
+    ]);
+    const setC = new Set(autresConsult.map((x) => x.dossierId));
+    const setO = new Set(autresOrd.map((x) => x.dossierId));
+    for (const [id, p] of parDossier) {
+      if (setC.has(id)) p.aConsultation = true;
+      if (setO.has(id)) p.aOrdonnance = true;
+    }
   }
 
   return [...parDossier.values()].sort(
@@ -320,7 +362,9 @@ export async function listerDossiersNotesMedecins(): Promise<
     take: 200,
   });
 
-  return dossiers.map((d) => ({
+  return dossiers
+    .filter((d) => d.consultations.length > 0 || d.ordonnances.length > 0)
+    .map((d) => ({
       dossierId: d.id,
       nomComplet: `${d.patient.prenom} ${d.patient.nom}`.trim(),
       numeroDossier: d.numeroDossier,

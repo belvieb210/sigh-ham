@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import {
   ChevronDown,
   ChevronRight,
+  FileText,
   Loader2,
   NotebookPen,
   Pill,
@@ -24,8 +24,24 @@ import {
   MiseEnPageMedecins,
   type UtilisateurMedecins,
 } from "@/features/medecins/mise-en-page-medecins";
+import {
+  ModalHistoriquePatientMedecins,
+  type PatientHistoriqueCible,
+} from "@/features/medecins/modal-historique-patient-medecins";
 import { PanneauDroitMedecins } from "@/features/medecins/panneau-droit-medecins";
-import type { DossierNotesMedecins } from "@/lib/medecins/types";
+import {
+  imprimerCrConsultation,
+  imprimerOrdonnancePdf,
+} from "@/lib/medecins/imprimer-pdfs-medecins";
+import {
+  consultationVersDonneesPdf,
+  ordonnanceVersDonneesPdf,
+} from "@/lib/medecins/pdf-donnees-medecins";
+import type {
+  ConsultationDetailMedecins,
+  DossierNotesMedecins,
+  OrdonnanceMedecins,
+} from "@/lib/medecins/types";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -59,6 +75,9 @@ export function ContenuNotesMedecins({ utilisateur }: Props) {
   const [page, setPage] = useState(1);
   const [ouverts, setOuverts] = useState<Set<string>>(new Set());
   const [selection, setSelection] = useState<string[]>([]);
+  const [pdfEnCours, setPdfEnCours] = useState<string | null>(null);
+  const [historiquePatient, setHistoriquePatient] =
+    useState<PatientHistoriqueCible | null>(null);
 
   const charger = useCallback(async () => {
     setChargement(true);
@@ -121,6 +140,52 @@ export function ContenuNotesMedecins({ utilisateur }: Props) {
       return next;
     });
   };
+
+  async function pdfConsultationId(dossierId: string, consultationId: string) {
+    setPdfEnCours(consultationId);
+    setErreur(null);
+    try {
+      const res = await fetch(
+        `/api/medecins/consultations?dossierId=${encodeURIComponent(dossierId)}`
+      );
+      const data = (await res.json()) as {
+        historique?: ConsultationDetailMedecins[];
+        consultation?: ConsultationDetailMedecins | null;
+      };
+      const c =
+        data.historique?.find((x) => x.id === consultationId) ??
+        (data.consultation?.id === consultationId ? data.consultation : null);
+      if (!c) throw new Error("Consultation introuvable.");
+      const ok = await imprimerCrConsultation(consultationVersDonneesPdf(c));
+      if (!ok) throw new Error("PDF consultation impossible.");
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Erreur PDF.");
+    } finally {
+      setPdfEnCours(null);
+    }
+  }
+
+  async function pdfOrdonnanceId(dossierId: string, ordonnanceId: string) {
+    setPdfEnCours(ordonnanceId);
+    setErreur(null);
+    try {
+      const res = await fetch(
+        `/api/medecins/ordonnances?dossierId=${encodeURIComponent(dossierId)}`
+      );
+      const data = (await res.json()) as { ordonnances?: OrdonnanceMedecins[] };
+      const o = data.ordonnances?.find((x) => x.id === ordonnanceId);
+      if (!o) throw new Error("Ordonnance introuvable.");
+      const dossier = dossiers.find((d) => d.dossierId === dossierId);
+      const ok = await imprimerOrdonnancePdf(
+        ordonnanceVersDonneesPdf(o, { telephone: dossier?.telephone })
+      );
+      if (!ok) throw new Error("PDF ordonnance impossible.");
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Erreur PDF.");
+    } finally {
+      setPdfEnCours(null);
+    }
+  }
 
   return (
     <MiseEnPageMedecins
@@ -269,13 +334,21 @@ export function ContenuNotesMedecins({ utilisateur }: Props) {
                         className="flex shrink-0 gap-2"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Link
-                          href={`/sigh/medecins/consultation?dossier=${encodeURIComponent(d.dossierId)}`}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setHistoriquePatient({
+                              dossierId: d.dossierId,
+                              nomComplet: d.nomComplet,
+                              numeroDossier: d.numeroDossier,
+                              telephone: d.telephone,
+                            })
+                          }
                           className="inline-flex items-center gap-1 rounded-lg bg-bleu-medical px-2.5 py-1.5 text-xs font-medium text-white"
                         >
-                          <Stethoscope className="h-3.5 w-3.5" />
+                          <FileText className="h-3.5 w-3.5" />
                           Voir
-                        </Link>
+                        </button>
                       </div>
                     </button>
 
@@ -306,13 +379,21 @@ export function ContenuNotesMedecins({ utilisateur }: Props) {
                                         {c.finLe ? " · clôturée" : " · ouverte"}
                                       </p>
                                     </div>
-                                    <Link
-                                      href={`/sigh/medecins/consultation?dossier=${encodeURIComponent(d.dossierId)}`}
-                                      className="inline-flex items-center gap-1 text-xs font-medium text-bleu-medical hover:underline"
+                                    <button
+                                      type="button"
+                                      disabled={pdfEnCours === c.id}
+                                      onClick={() =>
+                                        void pdfConsultationId(d.dossierId, c.id)
+                                      }
+                                      className="inline-flex items-center gap-1 text-xs font-medium text-bleu-medical hover:underline disabled:opacity-50"
                                     >
-                                      <Stethoscope className="h-3.5 w-3.5" />
-                                      Ouvrir
-                                    </Link>
+                                      {pdfEnCours === c.id ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                      ) : (
+                                        <Stethoscope className="h-3.5 w-3.5" />
+                                      )}
+                                      PDF
+                                    </button>
                                   </div>
                                 </li>
                               ))}
@@ -348,13 +429,21 @@ export function ContenuNotesMedecins({ utilisateur }: Props) {
                                         </p>
                                       ) : null}
                                     </div>
-                                    <Link
-                                      href={`/sigh/medecins/ordonnances?dossier=${encodeURIComponent(d.dossierId)}`}
-                                      className="inline-flex items-center gap-1 text-xs font-medium text-bleu-medical hover:underline"
+                                    <button
+                                      type="button"
+                                      disabled={pdfEnCours === o.id}
+                                      onClick={() =>
+                                        void pdfOrdonnanceId(d.dossierId, o.id)
+                                      }
+                                      className="inline-flex items-center gap-1 text-xs font-medium text-bleu-medical hover:underline disabled:opacity-50"
                                     >
-                                      <Pill className="h-3.5 w-3.5" />
-                                      Ouvrir
-                                    </Link>
+                                      {pdfEnCours === o.id ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                      ) : (
+                                        <Pill className="h-3.5 w-3.5" />
+                                      )}
+                                      PDF
+                                    </button>
                                   </div>
                                 </li>
                               ))}
@@ -379,6 +468,11 @@ export function ContenuNotesMedecins({ utilisateur }: Props) {
           </div>
         )}
       </div>
+
+      <ModalHistoriquePatientMedecins
+        patient={historiquePatient}
+        onFermer={() => setHistoriquePatient(null)}
+      />
     </MiseEnPageMedecins>
   );
 }

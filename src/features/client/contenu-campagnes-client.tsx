@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { Loader2, Megaphone, Plus, Trash2 } from "lucide-react";
+import { ImagePlus, Loader2, Megaphone, Plus, Trash2 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import {
@@ -165,7 +165,7 @@ export function ContenuCampagnesClient({
   const uploadImage = async (fichier: File) => {
     setUploadEnCours(true);
     try {
-      const url = await televerserFichierClient(fichier);
+      const url = await televerserFichierClient(fichier, "campagnes");
       majChamp("imageUrl", url);
     } catch (e: unknown) {
       setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
@@ -367,24 +367,75 @@ export function ContenuCampagnesClient({
                 <label className={CLASSE_LABEL_RECEPTION}>
                   {t("client.campagnes.image")}
                 </label>
-                <div className="flex flex-wrap items-center gap-3">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={uploadEnCours}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) void uploadImage(f);
-                    }}
-                  />
-                  {uploadEnCours ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-bleu-medical" />
-                  ) : null}
-                  {form.imageUrl ? (
-                    <span className="truncate text-xs text-texte-secondaire">
-                      {form.imageUrl}
-                    </span>
-                  ) : null}
+                <p className="mb-2 text-xs text-texte-secondaire">
+                  {t("client.campagnes.imageAide")}
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                  <div className="relative flex h-36 w-full max-w-[220px] items-center justify-center overflow-hidden rounded-xl border border-dashed border-gris-bordure bg-gris-tres-clair">
+                    {form.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={form.imageUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="px-3 text-center text-xs text-texte-secondaire">
+                        {t("client.campagnes.imageVide")}
+                      </span>
+                    )}
+                    {uploadEnCours ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                        <Loader2 className="h-6 w-6 animate-spin text-bleu-medical" />
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-bleu-medical px-3 py-2 text-sm font-semibold text-white hover:bg-bleu-medical-fonce">
+                        <ImagePlus className="h-4 w-4" />
+                        {form.imageUrl
+                          ? t("client.campagnes.remplacerImage")
+                          : t("client.campagnes.choisirImage")}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          className="sr-only"
+                          disabled={uploadEnCours}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            e.target.value = "";
+                            if (f) void uploadImage(f);
+                          }}
+                        />
+                      </label>
+                      {form.imageUrl ? (
+                        <Bouton
+                          type="button"
+                          variante="contour"
+                          taille="petit"
+                          disabled={uploadEnCours}
+                          onClick={() => majChamp("imageUrl", null)}
+                        >
+                          {t("client.campagnes.supprimerImage")}
+                        </Bouton>
+                      ) : null}
+                    </div>
+                    <input
+                      className={CLASSE_CHAMP_RECEPTION}
+                      value={form.imageUrl ?? ""}
+                      onChange={(e) =>
+                        majChamp(
+                          "imageUrl",
+                          e.target.value.trim() ? e.target.value.trim() : null
+                        )
+                      }
+                      placeholder={t("client.campagnes.imageUrlPlaceholder")}
+                    />
+                    <p className="text-[11px] text-texte-secondaire">
+                      {t("client.campagnes.imageFormats")}
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="flex flex-wrap gap-4 sm:col-span-2">
@@ -426,12 +477,30 @@ export function ContenuCampagnesClient({
               key={c.id}
               className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm"
             >
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold text-texte-principal">{c.titre}</p>
-                <p className="text-xs text-texte-secondaire">
-                  {c.slug} · {c.typePublication}
-                  {c.publie ? ` · ${t("client.campagnes.publie")}` : ` · ${t("client.campagnes.brouillon")}`}
-                </p>
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg border border-gris-bordure bg-gris-tres-clair">
+                  {c.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={c.imageUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-[10px] text-texte-secondaire">
+                      {t("client.campagnes.sansImage")}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-texte-principal">{c.titre}</p>
+                  <p className="text-xs text-texte-secondaire">
+                    {c.slug} · {c.typePublication}
+                    {c.publie
+                      ? ` · ${t("client.campagnes.publie")}`
+                      : ` · ${t("client.campagnes.brouillon")}`}
+                  </p>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Bouton

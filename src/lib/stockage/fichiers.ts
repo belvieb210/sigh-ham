@@ -44,24 +44,30 @@ export interface ResultatUpload {
 export async function uploaderFichier(
   buffer: Buffer,
   nomOriginal: string,
-  mimeType: string
+  mimeType: string,
+  options?: { sousDossier?: string }
 ): Promise<ResultatUpload> {
+  const sousDossier = (options?.sousDossier ?? "messagerie").replace(
+    /[^a-zA-Z0-9_-]/g,
+    ""
+  );
   const cle = `${Date.now()}-${randomBytes(8).toString("hex")}-${nomOriginal.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+  const cleStockage = sousDossier ? `${sousDossier}/${cle}` : cle;
   const client = obtenirClientMinio();
 
   if (client) {
     try {
       await assurerBucket(client);
-      await client.putObject(BUCKET_DEFAUT, cle, buffer, buffer.length, {
+      await client.putObject(BUCKET_DEFAUT, cleStockage, buffer, buffer.length, {
         "Content-Type": mimeType,
       });
       const base =
         process.env.MINIO_PUBLIC_URL ??
         `http://${process.env.MINIO_ENDPOINT}:${process.env.MINIO_PORT ?? "9000"}`;
       return {
-        url: `${base}/${BUCKET_DEFAUT}/${cle}`,
+        url: `${base}/${BUCKET_DEFAUT}/${cleStockage}`,
         bucket: BUCKET_DEFAUT,
-        cleStockage: cle,
+        cleStockage,
         nom: nomOriginal,
         mimeType,
         taille: buffer.length,
@@ -71,13 +77,13 @@ export async function uploaderFichier(
     }
   }
 
-  const dir = join(process.cwd(), "public", "uploads", "messagerie");
+  const dir = join(process.cwd(), "public", "uploads", sousDossier || "messagerie");
   await mkdir(dir, { recursive: true });
   const chemin = join(dir, cle);
   await writeFile(chemin, buffer);
 
   return {
-    url: `/uploads/messagerie/${cle}`,
+    url: `/uploads/${sousDossier || "messagerie"}/${cle}`,
     bucket: null,
     cleStockage: cle,
     nom: nomOriginal,

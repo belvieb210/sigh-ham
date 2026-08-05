@@ -270,7 +270,7 @@ export function ContenuServicesClient({
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) {
-                      void televerserFichierClient(f)
+                      void televerserFichierClient(f, "services")
                         .then((url) => majChamp("imageUrl", url))
                         .catch((err: unknown) =>
                           setErreur(

@@ -224,7 +224,7 @@ export function ContenuMedecinsClient({
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) {
-                      void televerserFichierClient(f)
+                      void televerserFichierClient(f, "medecins")
                         .then((url) => majChamp("photoUrl", url))
                         .catch((err: unknown) =>
                           setErreur(

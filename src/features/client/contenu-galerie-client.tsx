@@ -108,7 +108,7 @@ export function ContenuGalerieClient({
   const uploadImage = async (fichier: File) => {
     setUploadEnCours(true);
     try {
-      const url = await televerserFichierClient(fichier);
+      const url = await televerserFichierClient(fichier, "galerie");
       majChamp("url", url);
     } catch (e: unknown) {
       setErreur(e instanceof Error ? e.message : t("client.common.erreur"));

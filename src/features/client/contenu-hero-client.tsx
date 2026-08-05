@@ -108,7 +108,7 @@ export function ContenuHeroClient({
   const uploadImage = async (fichier: File) => {
     setUploadEnCours(true);
     try {
-      const url = await televerserFichierClient(fichier);
+      const url = await televerserFichierClient(fichier, "hero");
       majChamp("url", url);
     } catch (e: unknown) {
       setErreur(e instanceof Error ? e.message : t("client.common.erreur"));

@@ -9,6 +9,7 @@ import { infirmiersLua } from "./infirmiers/lua";
 import { pharmacieLua } from "./pharmacie/lua";
 import { medecinsExternesLua } from "./medecins-externes/lua";
 import { egliseLua } from "./eglise/lua";
+import { adminLua } from "./admin/lua";
 
 /** Tshiluba — traductions principales du site public */
 const lua: { translation: TraductionsSite } = {
@@ -167,6 +168,7 @@ const lua: { translation: TraductionsSite } = {
     pharmacie: pharmacieLua,
     medecinsExternes: medecinsExternesLua,
     eglise: egliseLua,
+    admin: adminLua,
     ...communLua,
   },
 };

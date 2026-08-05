@@ -10,6 +10,7 @@ import { CaseACocher } from "@/components/ui/case-a-cocher";
 import { ChampMotDePasse } from "@/components/ui/champ-mot-de-passe";
 import { INFORMATIONS_HOPITAL } from "@/constants/navigation";
 import { MiseEnPageAuth } from "@/features/connexion/mise-en-page-auth";
+import { useBrandingRuntime } from "@/hooks/use-branding-runtime";
 import {
   effacerIdentifiantMemorise,
   enregistrerIdentifiantMemorise,
@@ -22,6 +23,7 @@ const CLASSE_CHAMP =
 
 export function ContenuConnexion() {
   const { t } = useTranslation();
+  const branding = useBrandingRuntime();
   const router = useRouter();
   const [enCours, setEnCours] = useState(false);
   const [identifiant, setIdentifiant] = useState("");
@@ -78,7 +80,7 @@ export function ContenuConnexion() {
     <MiseEnPageAuth
       badge={t("connexion.badge")}
       titre={t("connexion.titre")}
-      description={`${t("connexion.description")} ${INFORMATIONS_HOPITAL.nomComplet}.`}
+      description={`${t("connexion.description")} ${branding.nomComplet || INFORMATIONS_HOPITAL.nomComplet}.`}
       securise={t("connexion.securise")}
       pied={t("connexion.noteDev")}
       lienRetour={{ href: "/", label: t("connexion.retourSite") }}

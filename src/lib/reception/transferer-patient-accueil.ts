@@ -388,6 +388,11 @@ export async function transfererPatientAccueil(
     if (!salleOrigine || !salleDestination) {
       throw new Error("Configuration des salles incomplète.");
     }
+    if (!salleDestination.actif) {
+      throw new Error(
+        `Le service ${salleDestination.nom} est désactivé. Choisissez une autre destination.`
+      );
+    }
 
     let patientId: string;
     let numeroPatient: string;

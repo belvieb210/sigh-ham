@@ -98,3 +98,16 @@ export async function verifierAccesEglise() {
 
   return session.utilisateur;
 }
+
+/** Accès au centre d'administration (ADMIN / SUPER_ADMIN). */
+export async function verifierAccesAdmin() {
+  const session = await lireSessionDepuisCookie();
+  if (!session) redirect("/connexion");
+
+  const code = session.utilisateur.role.code;
+  if (code !== "ADMIN" && code !== "SUPER_ADMIN") {
+    redirect(obtenirRouteApresConnexion(session.utilisateur.role));
+  }
+
+  return session.utilisateur;
+}

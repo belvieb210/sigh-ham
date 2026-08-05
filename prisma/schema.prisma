@@ -1337,3 +1337,18 @@ model JournalAudit {
   @@index([module, createdAt])
   @@map("journal_audit")
 }
+
+// ─── Administration / configuration système ──────────────────────────────────
+
+model ParametreSysteme {
+  cle         String   @id
+  valeur      String   @db.Text
+  categorie   String   @default("general")
+  description String?
+  updatedById String?  @map("updated_by_id")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([categorie])
+  @@map("parametres_systeme")
+}

@@ -26,6 +26,7 @@ import { MiseEnPageInfirmiers } from "@/features/infirmiers/mise-en-page-infirmi
 import { MiseEnPagePharmacie } from "@/features/pharmacie/mise-en-page-pharmacie";
 import { MiseEnPageMedecinsExternes } from "@/features/medecins-externes/mise-en-page-medecins-externes";
 import { MiseEnPageEglise } from "@/features/eglise/mise-en-page-eglise";
+import { MiseEnPageAdmin } from "@/features/admin/mise-en-page-admin";
 import { traduireRoleHospitalier } from "@/features/messagerie/traduire-role";
 import type { ProfilUtilisateurPublic } from "@/lib/auth/types-profil";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
@@ -42,7 +43,8 @@ interface PropsContenuProfilUtilisateur {
     | "infirmiers"
     | "pharmacie"
     | "medecins-externes"
-    | "eglise";
+    | "eglise"
+    | "admin";
 }
 
 function formaterDate(iso: string | null, locale: string) {

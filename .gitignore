@@ -43,6 +43,9 @@ next-env.d.ts
 # uploads patients (fichiers sur disque)
 /public/uploads/
 
+# sauvegardes admin (pg_dump)
+/storage/backups/
+
 # dumps PostgreSQL (données sensibles — repo privé seulement)
 /prisma/backups/*.sql
 /prisma/backups/*.sql.gz

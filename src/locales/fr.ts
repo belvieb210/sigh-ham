@@ -9,6 +9,7 @@ import { infirmiersFr } from "./infirmiers/fr";
 import { pharmacieFr } from "./pharmacie/fr";
 import { medecinsExternesFr } from "./medecins-externes/fr";
 import { egliseFr } from "./eglise/fr";
+import { adminFr } from "./admin/fr";
 
 const fr: { translation: TraductionsSite } = {
   translation: {
@@ -166,6 +167,7 @@ const fr: { translation: TraductionsSite } = {
     pharmacie: pharmacieFr,
     medecinsExternes: medecinsExternesFr,
     eglise: egliseFr,
+    admin: adminFr,
     ...communFr,
   },
 };

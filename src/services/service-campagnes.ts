@@ -6,18 +6,11 @@ import {
 import {
   enrichirAvecStatut,
   type CampagneAvecStatut,
-  obtenirCampagnesPublieesSync,
-  obtenirCampagnesEnVedetteSync,
 } from "@/services/service-campagnes-sync";
 import { obtenirCampagnesEnVedette as filtrerCampagnesEnVedette } from "@/lib/campagnes-utils";
 import type { CampagnePublication } from "@/types/campagnes";
 
-export {
-  enrichirAvecStatut,
-  type CampagneAvecStatut,
-  obtenirCampagnesPublieesSync,
-  obtenirCampagnesEnVedetteSync,
-} from "@/services/service-campagnes-sync";
+export type { CampagneAvecStatut };
 
 export async function obtenirCampagnesPubliees(): Promise<CampagneAvecStatut[]> {
   const campagnes = await chargerCampagnesPubliques({ seulementPubliees: true });

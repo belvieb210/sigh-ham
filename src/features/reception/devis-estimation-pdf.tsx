@@ -32,7 +32,7 @@ export interface DonneesDevisEstimation {
   dateEnregistrement: string;
   /** Utilisateur connecté (réception) qui émet le devis */
   agentNom?: string;
-  /** Remise commerciale en USD (≥ 0) appliquée sur le total examens+médicaments */
+  /** Remise commerciale en USD (≥ 0) appliquée sur le sous-total examens uniquement */
   remise?: number;
   labels: {
     titreTicket: string;
@@ -64,11 +64,23 @@ export function enregistrerPolicesPdf() {
   policesEnregistrees = true;
 }
 
-function formaterPrix(prix: number): string {
+function formaterPrixUsd(prix: number): string {
   return `$ ${prix.toLocaleString("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })}`;
+}
+
+function formaterPrixFc(prix: number): string {
+  return `${prix.toLocaleString("fr-FR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })} Fc`;
+}
+
+/** @deprecated utiliser formaterPrixUsd — conservé pour appels internes examens */
+function formaterPrix(prix: number): string {
+  return formaterPrixUsd(prix);
 }
 
 const NOIR = "#111111";
@@ -361,9 +373,11 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
     (t, m) => t + m.prixUnitaire * Math.max(1, m.quantite || 1),
     0
   );
-  const sousTotal = sousTotalExamens + sousTotalMeds;
-  const remise = Math.min(Math.max(0, Number(donnees.remise) || 0), sousTotal);
-  const montantTotal = Math.max(0, sousTotal - remise);
+  const remise = Math.min(
+    Math.max(0, Number(donnees.remise) || 0),
+    sousTotalExamens
+  );
+  const totalExamensNet = Math.max(0, sousTotalExamens - remise);
   const patient = `${donnees.prenomPatient} ${donnees.nomPatient}`.trim();
   const tel = donnees.telephonePatient?.trim() || "—";
   const agent = donnees.agentNom?.trim() || "—";
@@ -408,7 +422,9 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
                 {`Date : ${donnees.dateEnregistrement || "—"}\n`}
               </Text>
               <Text style={styles.metaLigneTexte}>{`Valable pour : 15 jours\n`}</Text>
-              <Text style={styles.metaLigneTexte}>Devise : USD ($)</Text>
+              <Text style={styles.metaLigneTexte}>
+                Devise : examens USD ($) · médicaments Fc
+              </Text>
             </Text>
           </View>
         </View>
@@ -505,8 +521,8 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
                 Médicaments prescrits
               </Text>
               <Text style={[styles.colCode, styles.headerCell]}>Qté</Text>
-              <Text style={[styles.colPrix, styles.headerCell]}>Montant ($)</Text>
-            </View>
+            <Text style={[styles.colPrix, styles.headerCell]}>Montant (Fc)</Text>
+          </View>
             {medicaments.map((m, index) => {
               const ligne = m.prixUnitaire * Math.max(1, m.quantite || 1);
               const desc = [m.nom, m.dosage, m.frequence, m.duree]
@@ -525,7 +541,7 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
                   <Text style={styles.colN}>{index + 1}</Text>
                   <Text style={styles.colDesc}>{desc}</Text>
                   <Text style={styles.colCode}>{m.quantite}</Text>
-                  <Text style={styles.colPrix}>{formaterPrix(ligne)}</Text>
+                  <Text style={styles.colPrix}>{formaterPrixFc(ligne)}</Text>
                 </View>
               );
             })}
@@ -536,7 +552,7 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
               </Text>
               <Text style={styles.colCode}> </Text>
               <Text style={[styles.colPrix, { fontWeight: "bold" }]}>
-                {formaterPrix(sousTotalMeds)}
+                {formaterPrixFc(sousTotalMeds)}
               </Text>
             </View>
           </View>
@@ -555,23 +571,38 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
               {"• Tarifs susceptibles d'évoluer selon protocoles."}
             </Text>
             <Text style={styles.conditionsLigne}>
+              • Examens en USD ($) · Médicaments en Fc.
+            </Text>
+            <Text style={styles.conditionsLigne}>
               • Devis valable 15 jours à compter de la date.
             </Text>
           </View>
 
           <View style={styles.totaux}>
             <View style={styles.totalLigne}>
-              <Text>Sous-total</Text>
-              <Text>{formaterPrix(sousTotal)}</Text>
+              <Text>Sous-total examens</Text>
+              <Text>{formaterPrixUsd(sousTotalExamens)}</Text>
             </View>
             <View style={styles.totalLigne}>
-              <Text>Remise</Text>
-              <Text>{formaterPrix(remise)}</Text>
+              <Text>Remise (examens)</Text>
+              <Text>{formaterPrixUsd(remise)}</Text>
             </View>
+            <View style={styles.totalLigne}>
+              <Text>Total examens net</Text>
+              <Text>{formaterPrixUsd(totalExamensNet)}</Text>
+            </View>
+            {medicaments.length > 0 ? (
+              <View style={styles.totalLigne}>
+                <Text>Total médicaments</Text>
+                <Text>{formaterPrixFc(sousTotalMeds)}</Text>
+              </View>
+            ) : null}
             <View style={styles.totalFinal}>
-              <Text style={styles.totalFinalLabel}>MONTANT TOTAL</Text>
+              <Text style={styles.totalFinalLabel}>À RÉGLER</Text>
               <Text style={styles.totalFinalValeur}>
-                {formaterPrix(montantTotal)}
+                {medicaments.length > 0
+                  ? `${formaterPrixUsd(totalExamensNet)} + ${formaterPrixFc(sousTotalMeds)}`
+                  : formaterPrixUsd(totalExamensNet)}
               </Text>
             </View>
           </View>

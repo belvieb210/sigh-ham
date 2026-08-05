@@ -79,6 +79,8 @@ export type PatientDuJour = {
   debutLe: string;
   finLe: string | null;
   medecin: string;
+  /** true si le patient est encore en file médecins aujourd'hui */
+  enFile?: boolean;
 };
 
 export type NoteMedicaleResume = {
@@ -90,6 +92,28 @@ export type NoteMedicaleResume = {
   typeActe: string;
   notes: string | null;
   creeLe: string;
+};
+
+/** Dossier patient avec consultations et ordonnances (page Notes) */
+export type DossierNotesMedecins = {
+  dossierId: string;
+  nomComplet: string;
+  numeroDossier: string;
+  telephone: string;
+  updatedAt: string;
+  consultations: {
+    id: string;
+    debutLe: string;
+    motif: string;
+    finLe: string | null;
+    medecin: string;
+  }[];
+  ordonnances: {
+    id: string;
+    prescritLe: string;
+    medecin: string;
+    notes: string | null;
+  }[];
 };
 
 export type DossierRechercheMedecins = {

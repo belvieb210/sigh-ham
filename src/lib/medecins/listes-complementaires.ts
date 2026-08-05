@@ -2,12 +2,14 @@ import "server-only";
 import { calculerAge } from "@/features/caisse/utils-format";
 import { prisma } from "@/lib/prisma";
 import type {
+  DossierNotesMedecins,
   DossierRechercheMedecins,
   NoteMedicaleResume,
   PatientDuJour,
   PatientFileMedecins,
   PatientTransfereCaisse,
 } from "@/lib/medecins/types";
+import { listerPatientsMedecins } from "@/lib/medecins/lister-patients-medecins";
 
 const COULEURS_ORIENTATION: Record<string, string> = {
   Infirmiers: "bg-violet-100 text-violet-700",
@@ -200,27 +202,66 @@ export async function listerPatientsTransferesSortantsMedecins(): Promise<
 
 export async function listerPatientsDuJourMedecins(): Promise<PatientDuJour[]> {
   const debut = debutJourLocal();
-  const rows = await prisma.consultation.findMany({
-    where: { debutLe: { gte: debut } },
-    include: {
-      dossier: { include: { patient: true } },
-      medecin: { select: { prenom: true, nom: true } },
-    },
-    orderBy: { debutLe: "desc" },
-    take: 100,
-  });
+  const [consultations, file] = await Promise.all([
+    prisma.consultation.findMany({
+      where: { debutLe: { gte: debut } },
+      include: {
+        dossier: { include: { patient: true } },
+        medecin: { select: { prenom: true, nom: true } },
+      },
+      orderBy: { debutLe: "desc" },
+      take: 200,
+    }),
+    listerPatientsMedecins(),
+  ]);
 
-  return rows.map((c) => ({
-    dossierId: c.dossierId,
-    consultationId: c.id,
-    nomComplet: `${c.dossier.patient.prenom} ${c.dossier.patient.nom}`.trim(),
-    numeroDossier: c.dossier.numeroDossier,
-    telephone: c.dossier.patient.telephone ?? "",
-    motif: c.motif,
-    debutLe: c.debutLe.toISOString(),
-    finLe: c.finLe?.toISOString() ?? null,
-    medecin: `${c.medecin.prenom} ${c.medecin.nom}`.trim(),
-  }));
+  const parDossier = new Map<string, PatientDuJour>();
+
+  for (const c of consultations) {
+    parDossier.set(c.dossierId, {
+      dossierId: c.dossierId,
+      consultationId: c.id,
+      nomComplet: `${c.dossier.patient.prenom} ${c.dossier.patient.nom}`.trim(),
+      numeroDossier: c.dossier.numeroDossier,
+      telephone: c.dossier.patient.telephone ?? "",
+      motif: c.motif,
+      debutLe: c.debutLe.toISOString(),
+      finLe: c.finLe?.toISOString() ?? null,
+      medecin: `${c.medecin.prenom} ${c.medecin.nom}`.trim(),
+      enFile: false,
+    });
+  }
+
+  for (const p of file) {
+    const existant = parDossier.get(p.dossierId);
+    if (existant) {
+      existant.enFile = true;
+      if (!existant.telephone && p.telephone !== "—") {
+        existant.telephone = p.telephone;
+      }
+      continue;
+    }
+    const iso =
+      p.arriveeLe && !Number.isNaN(Date.parse(p.arriveeLe))
+        ? new Date(p.arriveeLe).toISOString()
+        : debut.toISOString();
+    parDossier.set(p.dossierId, {
+      dossierId: p.dossierId,
+      consultationId: null,
+      nomComplet: p.nomComplet,
+      numeroDossier: p.numeroDossier,
+      telephone: p.telephone === "—" ? "" : p.telephone,
+      motif: p.motif === "—" ? "" : p.motif,
+      debutLe: iso,
+      finLe: null,
+      medecin: "—",
+      enFile: true,
+    });
+  }
+
+  return [...parDossier.values()].sort(
+    (a, b) => new Date(b.debutLe).getTime() - new Date(a.debutLe).getTime()
+  );
 }
 
 export async function rechercherDossiersMedecins(
@@ -256,6 +297,49 @@ export async function rechercherDossiersMedecins(
     sexe: d.patient.sexe,
     updatedAt: d.updatedAt.toISOString(),
   }));
+}
+
+export async function listerDossiersNotesMedecins(): Promise<
+  DossierNotesMedecins[]
+> {
+  const dossiers = await prisma.dossierPatient.findMany({
+    include: {
+      patient: true,
+      consultations: {
+        include: { medecin: { select: { prenom: true, nom: true } } },
+        orderBy: { debutLe: "desc" },
+        take: 20,
+      },
+      ordonnances: {
+        include: { medecin: { select: { prenom: true, nom: true } } },
+        orderBy: { prescritLe: "desc" },
+        take: 20,
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+    take: 200,
+  });
+
+  return dossiers.map((d) => ({
+      dossierId: d.id,
+      nomComplet: `${d.patient.prenom} ${d.patient.nom}`.trim(),
+      numeroDossier: d.numeroDossier,
+      telephone: d.patient.telephone ?? "",
+      updatedAt: d.updatedAt.toISOString(),
+      consultations: d.consultations.map((c) => ({
+        id: c.id,
+        debutLe: c.debutLe.toISOString(),
+        motif: c.motif,
+        finLe: c.finLe?.toISOString() ?? null,
+        medecin: `${c.medecin.prenom} ${c.medecin.nom}`.trim(),
+      })),
+      ordonnances: d.ordonnances.map((o) => ({
+        id: o.id,
+        prescritLe: o.prescritLe.toISOString(),
+        medecin: `${o.medecin.prenom} ${o.medecin.nom}`.trim(),
+        notes: o.notes,
+      })),
+    }));
 }
 
 export async function listerNotesMedicalesRecentes(): Promise<

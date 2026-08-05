@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { obtenirSessionApiMedecins } from "@/lib/auth/garde-api-medecins";
-import { listerNotesMedicalesRecentes } from "@/lib/medecins/listes-complementaires";
+import { listerDossiersNotesMedecins } from "@/lib/medecins/listes-complementaires";
 
 export async function GET() {
   const session = await obtenirSessionApiMedecins();
@@ -8,12 +8,12 @@ export async function GET() {
     return NextResponse.json({ erreur: "Non autorisé." }, { status: 401 });
   }
   try {
-    const notes = await listerNotesMedicalesRecentes();
-    return NextResponse.json({ notes });
+    const dossiers = await listerDossiersNotesMedecins();
+    return NextResponse.json({ dossiers });
   } catch (e) {
     console.error("[GET /api/medecins/notes]", e);
     return NextResponse.json(
-      { erreur: "Impossible de charger les notes." },
+      { erreur: "Impossible de charger les dossiers médicaux." },
       { status: 500 }
     );
   }

@@ -9,10 +9,12 @@ import {
   Save,
   SlidersHorizontal,
   Stethoscope,
+  X,
   XCircle,
 } from "lucide-react";
 import { BoutonsOutilsListe } from "@/components/ui/boutons-outils-liste";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
+import { PaginationListe } from "@/components/ui/pagination-liste";
 import { EVENEMENT_MEDECINS_PATIENTS_MODIFIES } from "@/constants/medecins";
 import {
   compterFiltresActifs,
@@ -107,6 +109,7 @@ export function CorpsConsultation({ utilisateur }: Props) {
     FILTRES_FACTURATION_VIDES
   );
   const [formulaireOuvert, setFormulaireOuvert] = useState(false);
+  const [pageListe, setPageListe] = useState(1);
   const [consultation, setConsultation] =
     useState<ConsultationDetailMedecins | null>(null);
   const [historique, setHistorique] = useState<ConsultationDetailMedecins[]>(
@@ -270,9 +273,19 @@ export function CorpsConsultation({ utilisateur }: Props) {
     [patients, filtresAppliques]
   );
 
+  useEffect(() => {
+    setPageListe(1);
+  }, [filtresAppliques]);
+
   const nbFiltresActifs = compterFiltresActifs(filtresAppliques, {
     ignorerNumeroFacture: true,
   });
+
+  const PAR_PAGE = 7;
+  const totalPages = Math.max(1, Math.ceil(filtrés.length / PAR_PAGE));
+  const pageCourante = Math.min(pageListe, totalPages);
+  const debutPage = (pageCourante - 1) * PAR_PAGE;
+  const patientsPage = filtrés.slice(debutPage, debutPage + PAR_PAGE);
 
   const tousCoches =
     filtrés.length > 0 && filtrés.every((p) => dossiersCoches.includes(p.dossierId));
@@ -605,6 +618,20 @@ export function CorpsConsultation({ utilisateur }: Props) {
                 Clôturer
               </button>
             ) : null}
+            <button
+              type="button"
+              onClick={() => {
+                setFormulaireOuvert(false);
+                setModeModifier(false);
+                selectionnerPatient(null);
+                setMessage(null);
+                setErreur(null);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gris-bordure bg-white px-4 py-2.5 text-sm font-medium text-texte-principal hover:bg-gris-tres-clair"
+            >
+              <X className="h-4 w-4" />
+              Annuler
+            </button>
           </div>
         </div>
       ) : null}
@@ -671,7 +698,7 @@ export function CorpsConsultation({ utilisateur }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {filtrés.map((p) => {
+                {patientsPage.map((p) => {
                   const selectionne =
                     patientSelectionne?.dossierId === p.dossierId &&
                     formulaireOuvert;
@@ -750,6 +777,13 @@ export function CorpsConsultation({ utilisateur }: Props) {
                 })}
               </tbody>
             </table>
+            <PaginationListe
+              page={pageCourante}
+              totalPages={totalPages}
+              totalItems={filtrés.length}
+              parPage={PAR_PAGE}
+              onChange={setPageListe}
+            />
           </div>
         )}
         <SectionsMobileMedecinsPatients />

@@ -10,9 +10,11 @@ import {
   Printer,
   Save,
   SlidersHorizontal,
+  X,
 } from "lucide-react";
 import { BoutonsOutilsListe } from "@/components/ui/boutons-outils-liste";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
+import { PaginationListe } from "@/components/ui/pagination-liste";
 import {
   CLASSE_CHAMP_RECEPTION,
   CLASSE_LABEL_RECEPTION,
@@ -92,11 +94,18 @@ const IMAGERIE_VIDE: DetailsImagerie = {
   conduiteATenir: "",
 };
 
-function formaterPrix(prix: number): string {
+function formaterPrixUsd(prix: number): string {
   return `$ ${prix.toLocaleString("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })}`;
+}
+
+function formaterPrixFc(prix: number): string {
+  return `${prix.toLocaleString("fr-FR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })} Fc`;
 }
 
 function CorpsOrdonnances({ utilisateur }: Props) {
@@ -137,6 +146,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
     FILTRES_FACTURATION_VIDES
   );
   const [formulaireOuvert, setFormulaireOuvert] = useState(false);
+  const [pageListe, setPageListe] = useState(1);
   const [chargement, setChargement] = useState(true);
   const [enCours, setEnCours] = useState(false);
   const [impression, setImpression] = useState(false);
@@ -203,6 +213,10 @@ function CorpsOrdonnances({ utilisateur }: Props) {
     [patients, filtresAppliques]
   );
 
+  useEffect(() => {
+    setPageListe(1);
+  }, [filtresAppliques]);
+
   const nbFiltresActifs = compterFiltresActifs(filtresAppliques, {
     ignorerNumeroFacture: true,
   });
@@ -214,9 +228,14 @@ function CorpsOrdonnances({ utilisateur }: Props) {
       (t, l) => t + l.prixUnitaire * Math.max(1, Number(l.quantite) || 1),
       0
     );
-  const sousTotal = totalExamens + totalMeds;
-  const remiseEff = Math.min(Math.max(0, remise), sousTotal);
-  const totalNet = Math.max(0, sousTotal - remiseEff);
+  const remiseEff = Math.min(Math.max(0, remise), totalExamens);
+  const totalExamensNet = Math.max(0, totalExamens - remiseEff);
+
+  const PAR_PAGE = 7;
+  const totalPages = Math.max(1, Math.ceil(filtrés.length / PAR_PAGE));
+  const pageCourante = Math.min(pageListe, totalPages);
+  const debutPage = (pageCourante - 1) * PAR_PAGE;
+  const patientsPage = filtrés.slice(debutPage, debutPage + PAR_PAGE);
 
   const lignesApi = lignes
     .filter((l) => l.medicamentId)
@@ -519,19 +538,19 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                             {e.code} — {e.libelle}
                           </span>
                           <span className="font-medium">
-                            {formaterPrix(e.prix)}
+                            {formaterPrixUsd(e.prix)}
                           </span>
                         </li>
                       ))}
                     </ul>
                   )}
                   <p className="mt-2 border-t border-gris-bordure pt-2 text-right text-sm font-bold">
-                    Sous-total : {formaterPrix(totalExamens)}
+                    Sous-total : {formaterPrixUsd(totalExamens)}
                   </p>
                 </div>
                 <div className="rounded-lg border border-gris-bordure bg-white p-3">
                   <p className="mb-2 text-xs font-semibold uppercase text-texte-secondaire">
-                    Médicaments
+                    Médicaments (Fc)
                   </p>
                   {lignesApi.length === 0 ? (
                     <p className="text-xs text-texte-secondaire">
@@ -547,7 +566,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                               {l.nom} × {l.quantite || 1}
                             </span>
                             <span className="font-medium">
-                              {formaterPrix(
+                              {formaterPrixFc(
                                 l.prixUnitaire *
                                   Math.max(1, Number(l.quantite) || 1)
                               )}
@@ -557,13 +576,15 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                     </ul>
                   )}
                   <p className="mt-2 border-t border-gris-bordure pt-2 text-right text-sm font-bold">
-                    Sous-total : {formaterPrix(totalMeds)}
+                    Sous-total : {formaterPrixFc(totalMeds)}
                   </p>
                 </div>
               </div>
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>Remise ($)</label>
+                  <label className={CLASSE_LABEL_RECEPTION}>
+                    Remise examens ($)
+                  </label>
                   <input
                     type="number"
                     min={0}
@@ -575,16 +596,20 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                 </div>
                 <div className="rounded-lg border border-gris-bordure bg-white px-4 py-3 text-sm">
                   <div className="flex justify-between gap-8">
-                    <span>Sous-total</span>
-                    <span>{formaterPrix(sousTotal)}</span>
+                    <span>Examens</span>
+                    <span>{formaterPrixUsd(totalExamens)}</span>
                   </div>
                   <div className="flex justify-between gap-8 text-texte-secondaire">
                     <span>Remise</span>
-                    <span>- {formaterPrix(remiseEff)}</span>
+                    <span>- {formaterPrixUsd(remiseEff)}</span>
                   </div>
-                  <div className="mt-1 flex justify-between gap-8 border-t border-gris-bordure pt-1 font-bold text-bleu-medical">
-                    <span>Total net</span>
-                    <span>{formaterPrix(totalNet)}</span>
+                  <div className="flex justify-between gap-8 font-bold text-bleu-medical">
+                    <span>Total examens</span>
+                    <span>{formaterPrixUsd(totalExamensNet)}</span>
+                  </div>
+                  <div className="mt-1 flex justify-between gap-8 border-t border-gris-bordure pt-1 font-bold text-texte-principal">
+                    <span>Total médicaments</span>
+                    <span>{formaterPrixFc(totalMeds)}</span>
                   </div>
                 </div>
                 <button
@@ -631,6 +656,20 @@ function CorpsOrdonnances({ utilisateur }: Props) {
             >
               <Calculator className="h-4 w-4" />
               Estimation
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFormulaireOuvert(false);
+                setModeEstimation(false);
+                selectionnerPatient(null);
+                setMessage(null);
+                setErreur(null);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gris-bordure bg-white px-4 py-2.5 text-sm font-medium text-texte-principal hover:bg-gris-tres-clair"
+            >
+              <X className="h-4 w-4" />
+              Annuler
             </button>
           </div>
         </div>
@@ -683,7 +722,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {filtrés.map((p) => {
+                {patientsPage.map((p) => {
                   const sel =
                     patientSelectionne?.dossierId === p.dossierId &&
                     formulaireOuvert;
@@ -757,6 +796,13 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                 })}
               </tbody>
             </table>
+            <PaginationListe
+              page={pageCourante}
+              totalPages={totalPages}
+              totalItems={filtrés.length}
+              parPage={PAR_PAGE}
+              onChange={setPageListe}
+            />
           </div>
         )}
         <SectionsMobileMedecinsPatients />

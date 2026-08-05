@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Plus, Search, Trash2, X } from "lucide-react";
@@ -64,11 +64,18 @@ export function nouvelleLigneMed(): LigneMedicamentDraft {
   };
 }
 
-function formaterPrix(prix: number): string {
+function formaterPrixUsd(prix: number): string {
   return `$ ${prix.toLocaleString("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })}`;
+}
+
+function formaterPrixFc(prix: number): string {
+  return `${prix.toLocaleString("fr-FR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })} Fc`;
 }
 
 /** Recherche / sélection examens (style caisse-réception) */
@@ -170,7 +177,7 @@ export function SelectionExamensOrdonnances({
                         ({e.categorie})
                       </span>
                     </span>
-                    <span className="shrink-0 font-medium">{formaterPrix(e.prix)}</span>
+                    <span className="shrink-0 font-medium">{formaterPrixUsd(e.prix)}</span>
                   </button>
                 </li>
               ))
@@ -216,7 +223,7 @@ export function SelectionExamensOrdonnances({
                         {e.categorie}
                       </span>
                     </td>
-                    <td className="px-3 py-2 font-medium">{formaterPrix(e.prix)}</td>
+                    <td className="px-3 py-2 font-medium">{formaterPrixUsd(e.prix)}</td>
                     <td className="px-3 py-2">
                       <button
                         type="button"
@@ -236,7 +243,7 @@ export function SelectionExamensOrdonnances({
                     Montant total estimé
                   </td>
                   <td className="px-3 py-2 font-bold" colSpan={2}>
-                    {formaterPrix(total)}
+                    {formaterPrixUsd(total)}
                   </td>
                 </tr>
               </tbody>

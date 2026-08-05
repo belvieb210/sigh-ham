@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import {
   ArrowRight,
+  Calendar,
   Image as ImageIcon,
   LayoutDashboard,
   Mail,
@@ -22,6 +23,7 @@ interface StatsClient {
   brouillons: number;
   diaposHero: number;
   messagesContactNonLus: number;
+  demandesRdvNouvelles: number;
   genereLe: string;
 }
 
@@ -76,6 +78,12 @@ export function ContenuAccueilClient({
 
   const raccourcis = [
     {
+      href: "/sigh/client/rendez-vous",
+      icone: Calendar,
+      titre: t("client.raccourcis.rdv"),
+      desc: t("client.raccourcis.rdvDesc"),
+    },
+    {
       href: "/sigh/client/campagnes",
       icone: Megaphone,
       titre: t("client.raccourcis.campagnes"),
@@ -117,6 +125,23 @@ export function ContenuAccueilClient({
 
         {stats ? (
           <>
+            {stats.demandesRdvNouvelles > 0 ? (
+              <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+                <p>
+                  {t("client.dashboard.alerteRdv", {
+                    count: stats.demandesRdvNouvelles,
+                  })}
+                </p>
+                <Link
+                  href="/sigh/client/rendez-vous"
+                  className="mt-1 inline-flex items-center gap-1 font-medium text-bleu-medical hover:underline"
+                >
+                  {t("client.dashboard.voirRdv")}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            ) : null}
+
             {stats.messagesContactNonLus > 0 ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 <p>
@@ -134,7 +159,7 @@ export function ContenuAccueilClient({
               </div>
             ) : null}
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
               <CarteKpi
                 label={t("client.dashboard.campagnesActives")}
                 valeur={stats.campagnesActives}
@@ -154,6 +179,10 @@ export function ContenuAccueilClient({
               <CarteKpi
                 label={t("client.dashboard.messagesNonLus")}
                 valeur={stats.messagesContactNonLus}
+              />
+              <CarteKpi
+                label={t("client.dashboard.demandesRdv")}
+                valeur={stats.demandesRdvNouvelles}
               />
             </div>
 

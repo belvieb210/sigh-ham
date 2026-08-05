@@ -28,6 +28,11 @@ export function useNavigationAdmin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [t, langue]
   );
+  const referentiels = useMemo(
+    () => mapSection(NAVIGATION_ADMIN.referentiels),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, langue]
+  );
   const systeme = useMemo(
     () => mapSection(NAVIGATION_ADMIN.systeme),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -52,5 +57,13 @@ export function useNavigationAdmin() {
     [t, langue]
   );
 
-  return { principal, gouvernance, systeme, communication, compte, basse };
+  return {
+    principal,
+    gouvernance,
+    referentiels,
+    systeme,
+    communication,
+    compte,
+    basse,
+  };
 }

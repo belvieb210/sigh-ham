@@ -82,32 +82,40 @@ export function obtenirLibellePrestation(_id: string): string {
   return _id;
 }
 
-function genererReference(): string {
-  const maintenant = new Date();
-  const datePart = [
-    maintenant.getFullYear(),
-    pad2(maintenant.getMonth() + 1),
-    pad2(maintenant.getDate()),
-  ].join("");
-  const aleatoire = Math.floor(1000 + Math.random() * 9000);
-  return `HAM-RDV-${datePart}-${aleatoire}`;
-}
-
-/** Soumet une demande de rendez-vous — Phase future : POST /api/rendez-vous */
+/** Soumet une demande de rendez-vous vers le CMS / file métier. */
 export async function soumettreReservationRendezVous(
   donnees: DonneesReservationRendezVous
 ): Promise<ReponseReservationRendezVous> {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  const res = await fetch("/api/public/rendez-vous", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      typePrestation: donnees.typePrestation,
+      date: donnees.date,
+      creneau: donnees.creneau,
+      nomComplet: donnees.nomComplet,
+      email: donnees.email,
+      telephone: donnees.telephone,
+      dateNaissance: donnees.dateNaissance,
+      motif: donnees.motif,
+      premiereVisite: donnees.premiereVisite,
+      consentement: donnees.consentement,
+    }),
+  });
 
-  if (process.env.NODE_ENV === "development") {
-    console.info("[Rendez-vous] Réservation :", donnees);
+  const data = (await res.json()) as {
+    succes?: boolean;
+    reference?: string;
+    message?: string;
+  };
+
+  if (!res.ok) {
+    throw new Error(data.message ?? "Échec de la réservation");
   }
-
-  const reference = genererReference();
 
   return {
     succes: true,
-    reference,
+    reference: data.reference,
   };
 }
 

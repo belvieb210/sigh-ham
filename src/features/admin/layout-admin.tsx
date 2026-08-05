@@ -36,7 +36,7 @@ function LiensNavigation({
   const pathname = usePathname();
   const router = useRouter();
   const branding = useBrandingRuntime();
-  const { principal, gouvernance, systeme, communication, compte } =
+  const { principal, gouvernance, referentiels, systeme, communication, compte } =
     useNavigationAdmin();
 
   const estActif = (href: string) =>
@@ -120,6 +120,7 @@ function LiensNavigation({
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         {rendreSection(t("admin.layout.sectionPrincipal"), principal)}
         {rendreSection(t("admin.layout.sectionGouvernance"), gouvernance)}
+        {rendreSection(t("admin.layout.sectionReferentiels"), referentiels)}
         {rendreSection(t("admin.layout.sectionSysteme"), systeme)}
         {rendreSection(t("admin.layout.sectionCommunication"), communication)}
         {rendreSection(t("admin.layout.sectionCompte"), compte)}

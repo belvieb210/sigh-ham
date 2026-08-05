@@ -1,20 +1,26 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { obtenirSessionApiMedecins } from "@/lib/auth/garde-api-medecins";
 import {
-  changerStatutRendezVousMedecins,
-  creerRendezVousMedecins,
-  listerRendezVousMedecins,
-} from "@/lib/medecins/gestion-rdv";
+  creerDemandeRdvManuelle,
+  compterDemandesRdvParStatut,
+  listerDemandesRdv,
+  mettreAJourDemandeRdv,
+} from "@/lib/rdv/gestion-demandes";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await obtenirSessionApiMedecins();
   if (!session) {
     return NextResponse.json({ erreur: "Non autorisé." }, { status: 401 });
   }
 
   try {
-    const rendezVous = await listerRendezVousMedecins();
-    return NextResponse.json({ rendezVous });
+    const statut = request.nextUrl.searchParams.get("statut") ?? undefined;
+    const q = request.nextUrl.searchParams.get("q") ?? undefined;
+    const [rendezVous, compteurs] = await Promise.all([
+      listerDemandesRdv({ statut, q }),
+      compterDemandesRdvParStatut(),
+    ]);
+    return NextResponse.json({ rendezVous, demandes: rendezVous, compteurs });
   } catch (e) {
     console.error("[api/medecins/rendez-vous GET]", e);
     return NextResponse.json(
@@ -51,11 +57,11 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
-      const rendezVous = await changerStatutRendezVousMedecins(
-        body.id.trim(),
-        body.statut.trim()
-      );
-      return NextResponse.json({ rendezVous });
+      const rendezVous = await mettreAJourDemandeRdv(body.id.trim(), {
+        statut: body.statut.trim(),
+        notes: body.notes,
+      });
+      return NextResponse.json({ rendezVous, demande: rendezVous });
     }
 
     if (
@@ -70,7 +76,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const rendezVous = await creerRendezVousMedecins({
+    const rendezVous = await creerDemandeRdvManuelle({
       prenom: body.prenom,
       nom: body.nom,
       telephone: body.telephone,
@@ -78,9 +84,14 @@ export async function POST(req: Request) {
       motif: body.motif,
       dateSouhaitee: body.dateSouhaitee,
       notes: body.notes,
+      typePrestation: "consultation",
+      service: "Consultation médicale",
     });
 
-    return NextResponse.json({ rendezVous }, { status: 201 });
+    return NextResponse.json(
+      { rendezVous, demande: rendezVous },
+      { status: 201 }
+    );
   } catch (e) {
     const code = e instanceof Error ? e.message : "";
     if (code === "CHAMPS_REQUIS" || code === "DATE_INVALIDE") {

@@ -193,14 +193,21 @@ export interface AdmissionMedecins {
 
 export interface RendezVousMedecins {
   id: string;
+  reference: string;
   prenom: string;
   nom: string;
   telephone: string;
   email: string | null;
   service: string;
+  typePrestation: string | null;
+  creneau: string | null;
   motif: string | null;
+  dateNaissance: string | null;
+  premiereVisite: boolean | null;
   dateSouhaitee: string;
   statut: string;
   notes: string | null;
+  source: string;
   createdAt: string;
+  updatedAt: string;
 }

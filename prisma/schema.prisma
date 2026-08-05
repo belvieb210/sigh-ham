@@ -1097,19 +1097,27 @@ model Admission {
 // ─── Site public — Rendez-vous ────────────────────────────────────────────────
 
 model DemandeRendezVous {
-  id            String           @id @default(cuid())
-  prenom        String
-  nom           String
-  telephone     String
-  email         String?
-  service       String
-  motif         String?
-  dateSouhaitee DateTime         @map("date_souhaitee")
-  statut        StatutRendezVous @default(DEMANDE)
-  notes         String?
-  createdAt     DateTime         @default(now()) @map("created_at")
-  updatedAt     DateTime         @updatedAt @map("updated_at")
+  id              String           @id @default(cuid())
+  reference       String           @unique
+  prenom          String
+  nom             String
+  telephone       String
+  email           String?
+  service         String
+  typePrestation  String?          @map("type_prestation")
+  creneau         String?
+  motif           String?
+  dateNaissance   DateTime?        @map("date_naissance")
+  premiereVisite  Boolean?         @map("premiere_visite")
+  dateSouhaitee   DateTime         @map("date_souhaitee")
+  statut          StatutRendezVous @default(DEMANDE)
+  notes           String?
+  source          String           @default("SITE_PUBLIC")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
 
+  @@index([statut, dateSouhaitee])
+  @@index([createdAt])
   @@map("demandes_rendez_vous")
 }
 

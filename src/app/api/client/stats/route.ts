@@ -18,6 +18,7 @@ export async function GET() {
       diaposHero,
       messagesContactNonLus,
       messagesTotal,
+      demandesRdvNouvelles,
     ] = await Promise.all([
       prisma.campagnePublique.count({ where: { publie: true } }),
       prisma.campagnePublique.count({
@@ -32,6 +33,7 @@ export async function GET() {
       prisma.diapositiveHero.count({ where: { actif: true } }),
       prisma.messageContact.count({ where: { lu: false } }),
       prisma.messageContact.count(),
+      prisma.demandeRendezVous.count({ where: { statut: "DEMANDE" } }),
     ]);
 
     const campagnesActives = await prisma.campagnePublique.count({
@@ -51,6 +53,7 @@ export async function GET() {
       messagesContactNonLus,
       messagesNonLus: messagesContactNonLus,
       messagesTotal,
+      demandesRdvNouvelles,
       genereLe: new Date().toISOString(),
     });
   } catch (error) {

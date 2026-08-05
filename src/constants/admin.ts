@@ -14,6 +14,8 @@ import {
   DatabaseBackup,
   Activity,
   Lock,
+  FlaskConical,
+  Pill,
 } from "lucide-react";
 
 export const NAVIGATION_ADMIN = {
@@ -26,6 +28,10 @@ export const NAVIGATION_ADMIN = {
     { href: "/sigh/admin/utilisateurs", id: "utilisateurs", icone: Users },
     { href: "/sigh/admin/roles", id: "roles", icone: Shield },
     { href: "/sigh/admin/services", id: "services", icone: Building2 },
+  ],
+  referentiels: [
+    { href: "/sigh/admin/examens", id: "examens", icone: FlaskConical },
+    { href: "/sigh/admin/medicaments", id: "medicaments", icone: Pill },
   ],
   systeme: [
     { href: "/sigh/admin/parametres", id: "parametres", icone: Settings },

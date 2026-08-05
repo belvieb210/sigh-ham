@@ -12,11 +12,13 @@ import {
   Bell,
   UserCircle,
   FileText,
+  Calendar,
 } from "lucide-react";
 
 export const NAVIGATION_CLIENT = {
   principal: [
     { href: "/sigh/client", id: "accueil", icone: Home, actif: true },
+    { href: "/sigh/client/rendez-vous", id: "rendezVous", icone: Calendar },
     { href: "/sigh/client/messages", id: "messages", icone: Mail },
   ],
   contenu: [
@@ -38,7 +40,7 @@ export const NAVIGATION_CLIENT = {
 
 export const NAVIGATION_BASSE_CLIENT = [
   { href: "/sigh/client", id: "accueil", icone: Home },
+  { href: "/sigh/client/rendez-vous", id: "rendezVous", icone: Calendar },
   { href: "/sigh/client/campagnes", id: "campagnes", icone: Megaphone },
-  { href: "/sigh/client/hero", id: "hero", icone: ImageIcon },
   { href: "/sigh/client/messages", id: "messages", icone: Mail },
 ] as const;

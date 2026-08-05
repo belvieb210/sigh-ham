@@ -850,14 +850,15 @@ model MouvementStock {
 }
 
 model Ordonnance {
-  id         String           @id @default(cuid())
-  dossierId  String           @map("dossier_id")
-  dossier    DossierPatient   @relation(fields: [dossierId], references: [id])
-  medecinId  String           @map("medecin_id")
-  medecin    Utilisateur      @relation(fields: [medecinId], references: [id])
-  statut     StatutOrdonnance @default(EN_ATTENTE)
-  prescritLe DateTime         @default(now()) @map("prescrit_le")
-  notes      String?
+  id                   String           @id @default(cuid())
+  dossierId            String           @map("dossier_id")
+  dossier              DossierPatient   @relation(fields: [dossierId], references: [id])
+  medecinId            String           @map("medecin_id")
+  medecin              Utilisateur      @relation(fields: [medecinId], references: [id])
+  statut               StatutOrdonnance @default(EN_ATTENTE)
+  prescritLe           DateTime         @default(now()) @map("prescrit_le")
+  notes                String?
+  detailsPrescription  Json?            @map("details_prescription")
 
   lignes      LigneOrdonnance[]
   delivrances DelivrancePharmacie[]

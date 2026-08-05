@@ -14,7 +14,16 @@ export async function GET(req: Request) {
 
   try {
     const { searchParams } = new URL(req.url);
-    if (searchParams.get("types") === "1") {
+    if (searchParams.get("types") === "1" || searchParams.has("q")) {
+      const { rechercherTypesExamen } = await import(
+        "@/lib/reception/rechercher-types-examen"
+      );
+      const q = searchParams.get("q") ?? undefined;
+      const limite = Number(searchParams.get("limite") ?? "12") || 12;
+      if (searchParams.has("q") || searchParams.get("recherche") === "1") {
+        const examens = await rechercherTypesExamen(q, limite);
+        return NextResponse.json({ examens, types: examens });
+      }
       const types = await listerTypesExamenMedecins();
       return NextResponse.json({ types });
     }
@@ -22,7 +31,7 @@ export async function GET(req: Request) {
     const dossierId = searchParams.get("dossierId")?.trim();
     if (!dossierId) {
       return NextResponse.json(
-        { erreur: "dossierId ou types=1 requis." },
+        { erreur: "dossierId ou types=1 / q requis." },
         { status: 400 }
       );
     }

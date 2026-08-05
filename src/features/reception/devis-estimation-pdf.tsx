@@ -10,8 +10,20 @@ import {
 import type { TypeExamenReception } from "@/lib/reception/types";
 import { INFOS_LEGALES_TICKET } from "@/constants/ticket-thermique";
 
+export interface LigneMedicammentDevis {
+  nom: string;
+  dosage?: string;
+  frequence?: string;
+  duree?: string;
+  quantite: number;
+  prixUnitaire: number;
+  code?: string;
+}
+
 export interface DonneesDevisEstimation {
   examens: TypeExamenReception[];
+  /** Médicaments (section séparée sous les examens dans le PDF) */
+  medicaments?: LigneMedicammentDevis[];
   medecinResponsable: string;
   nomPatient: string;
   prenomPatient: string;
@@ -20,7 +32,7 @@ export interface DonneesDevisEstimation {
   dateEnregistrement: string;
   /** Utilisateur connecté (réception) qui émet le devis */
   agentNom?: string;
-  /** Remise commerciale en USD (≥ 0) */
+  /** Remise commerciale en USD (≥ 0) appliquée sur le total examens+médicaments */
   remise?: number;
   labels: {
     titreTicket: string;
@@ -343,7 +355,13 @@ interface PropsDocumentDevisEstimation {
 
 export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimation) {
   const L = INFOS_LEGALES_TICKET;
-  const sousTotal = donnees.examens.reduce((t, e) => t + e.prix, 0);
+  const medicaments = donnees.medicaments ?? [];
+  const sousTotalExamens = donnees.examens.reduce((t, e) => t + e.prix, 0);
+  const sousTotalMeds = medicaments.reduce(
+    (t, m) => t + m.prixUnitaire * Math.max(1, m.quantite || 1),
+    0
+  );
+  const sousTotal = sousTotalExamens + sousTotalMeds;
   const remise = Math.min(Math.max(0, Number(donnees.remise) || 0), sousTotal);
   const montantTotal = Math.max(0, sousTotal - remise);
   const patient = `${donnees.prenomPatient} ${donnees.nomPatient}`.trim();
@@ -434,10 +452,14 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
               <Text style={styles.carteLabel}>Examens : </Text>
               {donnees.examens.length} sélectionné
               {donnees.examens.length > 1 ? "s" : ""}
+              {medicaments.length > 0
+                ? ` · Médicaments : ${medicaments.length}`
+                : ""}
             </Text>
           </View>
         </View>
 
+        {donnees.examens.length > 0 ? (
         <View style={styles.table}>
           <View style={styles.tableHeader}>
             <Text style={[styles.colN, styles.headerCell]}>N°</Text>
@@ -462,7 +484,63 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
               <Text style={styles.colPrix}>{formaterPrix(examen.prix)}</Text>
             </View>
           ))}
+          <View style={[styles.tableRow, styles.tableRowAlt]} wrap={false}>
+            <Text style={styles.colN}> </Text>
+            <Text style={[styles.colDesc, { fontWeight: "bold" }]}>
+              Sous-total examens
+            </Text>
+            <Text style={styles.colCode}> </Text>
+            <Text style={[styles.colPrix, { fontWeight: "bold" }]}>
+              {formaterPrix(sousTotalExamens)}
+            </Text>
+          </View>
         </View>
+        ) : null}
+
+        {medicaments.length > 0 ? (
+          <View style={[styles.table, { marginTop: donnees.examens.length ? 10 : 0 }]}>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.colN, styles.headerCell]}>N°</Text>
+              <Text style={[styles.colDesc, styles.headerCell]}>
+                Médicaments prescrits
+              </Text>
+              <Text style={[styles.colCode, styles.headerCell]}>Qté</Text>
+              <Text style={[styles.colPrix, styles.headerCell]}>Montant ($)</Text>
+            </View>
+            {medicaments.map((m, index) => {
+              const ligne = m.prixUnitaire * Math.max(1, m.quantite || 1);
+              const desc = [m.nom, m.dosage, m.frequence, m.duree]
+                .filter(Boolean)
+                .join(" · ");
+              return (
+                <View
+                  key={`${m.nom}-${index}`}
+                  style={
+                    index % 2 === 1
+                      ? [styles.tableRow, styles.tableRowAlt]
+                      : styles.tableRow
+                  }
+                  wrap={false}
+                >
+                  <Text style={styles.colN}>{index + 1}</Text>
+                  <Text style={styles.colDesc}>{desc}</Text>
+                  <Text style={styles.colCode}>{m.quantite}</Text>
+                  <Text style={styles.colPrix}>{formaterPrix(ligne)}</Text>
+                </View>
+              );
+            })}
+            <View style={[styles.tableRow, styles.tableRowAlt]} wrap={false}>
+              <Text style={styles.colN}> </Text>
+              <Text style={[styles.colDesc, { fontWeight: "bold" }]}>
+                Sous-total médicaments
+              </Text>
+              <Text style={styles.colCode}> </Text>
+              <Text style={[styles.colPrix, { fontWeight: "bold" }]}>
+                {formaterPrix(sousTotalMeds)}
+              </Text>
+            </View>
+          </View>
+        ) : null}
 
         <View style={styles.basTable}>
           <View style={styles.conditions}>

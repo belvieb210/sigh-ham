@@ -1,4 +1,5 @@
 import "server-only";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type {
   MedicamentMedecins,
@@ -142,6 +143,7 @@ export async function creerOrdonnance(
   input: {
     dossierId: string;
     notes?: string | null;
+    detailsPrescription?: Record<string, unknown> | null;
     lignes: {
       medicamentId: string;
       quantite: number;
@@ -159,7 +161,12 @@ export async function creerOrdonnance(
 
   const dossierId = input.dossierId.trim();
   if (!dossierId) throw new Error("DOSSIER_ID_REQUIS");
-  if (!input.lignes?.length) throw new Error("LIGNES_REQUISES");
+  const lignes = (input.lignes ?? []).filter((l) => l.medicamentId?.trim());
+  const aDetails = Boolean(
+    input.detailsPrescription &&
+      Object.keys(input.detailsPrescription).length > 0
+  );
+  if (!lignes.length && !aDetails) throw new Error("LIGNES_REQUISES");
 
   const dossier = await prisma.dossierPatient.findUnique({
     where: { id: dossierId },
@@ -167,20 +174,21 @@ export async function creerOrdonnance(
   });
   if (!dossier) throw new Error("DOSSIER_INTROUVABLE");
 
-  for (const ligne of input.lignes) {
-    if (!ligne.medicamentId?.trim()) throw new Error("MEDICAMENT_REQUIS");
+  for (const ligne of lignes) {
     if (!Number.isFinite(ligne.quantite) || ligne.quantite < 1) {
       throw new Error("QUANTITE_INVALIDE");
     }
   }
 
-  const medIds = input.lignes.map((l) => l.medicamentId);
-  const meds = await prisma.medicament.findMany({
-    where: { id: { in: medIds }, actif: true },
-    select: { id: true },
-  });
-  if (meds.length !== new Set(medIds).size) {
-    throw new Error("MEDICAMENT_INVALIDE");
+  if (lignes.length > 0) {
+    const medIds = lignes.map((l) => l.medicamentId);
+    const meds = await prisma.medicament.findMany({
+      where: { id: { in: medIds }, actif: true },
+      select: { id: true },
+    });
+    if (meds.length !== new Set(medIds).size) {
+      throw new Error("MEDICAMENT_INVALIDE");
+    }
   }
 
   const o = await prisma.ordonnance.create({
@@ -188,21 +196,27 @@ export async function creerOrdonnance(
       dossierId,
       medecinId,
       notes: input.notes?.trim() || null,
+      detailsPrescription: input.detailsPrescription
+        ? (input.detailsPrescription as Prisma.InputJsonValue)
+        : undefined,
       statut: "EN_ATTENTE",
-      lignes: {
-        create: input.lignes.map((l) => ({
-          medicamentId: l.medicamentId,
-          quantite: Math.floor(l.quantite),
-          posologie: l.posologie?.trim() || null,
-          dureeJours: l.dureeJours ?? null,
-        })),
-      },
+      lignes:
+        lignes.length > 0
+          ? {
+              create: lignes.map((l) => ({
+                medicamentId: l.medicamentId,
+                quantite: Math.floor(l.quantite),
+                posologie: l.posologie?.trim() || null,
+                dureeJours: l.dureeJours ?? null,
+              })),
+            }
+          : undefined,
     },
     include: includeOrdonnance,
   });
 
   let transfertPharmacie: { ok: boolean; message?: string } | undefined;
-  if (input.orienterVersPharmacie !== false) {
+  if (input.orienterVersPharmacie !== false && lignes.length > 0) {
     try {
       const { reorienterPatientDepuisMedecins } = await import(
         "@/lib/medecins/reorienter-patient-medecins"

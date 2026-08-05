@@ -35,7 +35,9 @@ export async function POST(req: Request) {
     const body = (await req.json()) as {
       dossierId?: string;
       notes?: string | null;
+      detailsPrescription?: Record<string, unknown> | null;
       orienterVersPharmacie?: boolean;
+      typeExamenIds?: string[];
       lignes?: {
         medicamentId: string;
         quantite: number;
@@ -44,25 +46,55 @@ export async function POST(req: Request) {
       }[];
     };
 
-    if (!body.dossierId?.trim() || !Array.isArray(body.lignes)) {
+    if (!body.dossierId?.trim()) {
+      return NextResponse.json({ erreur: "dossierId requis." }, { status: 400 });
+    }
+
+    const lignes = body.lignes ?? [];
+    const typeExamenIds = body.typeExamenIds ?? [];
+    const aContenu =
+      lignes.some((l) => l.medicamentId?.trim()) ||
+      typeExamenIds.length > 0 ||
+      Boolean(body.detailsPrescription);
+
+    if (!aContenu) {
       return NextResponse.json(
-        { erreur: "dossierId et lignes requis." },
+        { erreur: "Ajoutez au moins un médicament, un examen ou de l'imagerie." },
         { status: 400 }
       );
     }
 
-    const { ordonnance, transfertPharmacie } = await creerOrdonnance(
-      session.utilisateur.id,
-      {
+    let examens = null;
+    if (typeExamenIds.length > 0) {
+      const { prescrireExamensMedecins } = await import(
+        "@/lib/medecins/prescrire-examens"
+      );
+      examens = await prescrireExamensMedecins(session.utilisateur.id, {
+        dossierId: body.dossierId,
+        typeExamenIds,
+        notes: body.notes,
+      });
+    }
+
+    let ordonnance = null;
+    let transfertPharmacie = undefined;
+    if (
+      lignes.some((l) => l.medicamentId?.trim()) ||
+      body.detailsPrescription
+    ) {
+      const resultat = await creerOrdonnance(session.utilisateur.id, {
         dossierId: body.dossierId,
         notes: body.notes,
-        lignes: body.lignes,
+        detailsPrescription: body.detailsPrescription,
+        lignes,
         orienterVersPharmacie: body.orienterVersPharmacie,
-      }
-    );
+      });
+      ordonnance = resultat.ordonnance;
+      transfertPharmacie = resultat.transfertPharmacie;
+    }
 
     return NextResponse.json(
-      { ordonnance, transfertPharmacie },
+      { ordonnance, examens, transfertPharmacie },
       { status: 201 }
     );
   } catch (e) {

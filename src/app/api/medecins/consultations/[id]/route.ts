@@ -49,6 +49,8 @@ export async function PATCH(req: Request, ctx: Ctx) {
       anamnese?: string | null;
       examenClinique?: string | null;
       conclusion?: string | null;
+      formulaireClinique?: import("@/lib/medecins/types").FormulaireCliniqueMedecins | null;
+      autoriserCloturee?: boolean;
     };
 
     if (body.action === "cloturer") {
@@ -56,12 +58,17 @@ export async function PATCH(req: Request, ctx: Ctx) {
       return NextResponse.json({ consultation });
     }
 
-    const consultation = await mettreAJourConsultation(id, {
-      motif: body.motif,
-      anamnese: body.anamnese,
-      examenClinique: body.examenClinique,
-      conclusion: body.conclusion,
-    });
+    const consultation = await mettreAJourConsultation(
+      id,
+      {
+        motif: body.motif,
+        anamnese: body.anamnese,
+        examenClinique: body.examenClinique,
+        conclusion: body.conclusion,
+        formulaireClinique: body.formulaireClinique,
+      },
+      { autoriserCloturee: Boolean(body.autoriserCloturee) }
+    );
 
     return NextResponse.json({ consultation });
   } catch (e) {

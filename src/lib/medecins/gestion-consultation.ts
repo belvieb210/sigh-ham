@@ -1,11 +1,21 @@
 import "server-only";
+import { calculerAge } from "@/features/caisse/utils-format";
 import { prisma } from "@/lib/prisma";
 import type {
   ActeConsultationMedecins,
   ConsultationDetailMedecins,
   ConsultationHistoriqueMedecins,
   DiagnosticConsultationMedecins,
+  FormulaireCliniqueMedecins,
 } from "@/lib/medecins/types";
+import { Prisma } from "@/generated/prisma/client";
+
+function parserFormulaire(
+  raw: Prisma.JsonValue | null | undefined
+): FormulaireCliniqueMedecins | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  return raw as FormulaireCliniqueMedecins;
+}
 
 function mapperDiagnostic(d: {
   id: string;
@@ -45,6 +55,7 @@ function mapperConsultation(c: {
   anamnese: string | null;
   examenClinique: string | null;
   conclusion: string | null;
+  formulaireClinique?: Prisma.JsonValue | null;
   debutLe: Date;
   finLe: Date | null;
   medecin: { prenom: string; nom: string };
@@ -73,6 +84,7 @@ function mapperConsultation(c: {
     };
   };
 }): ConsultationDetailMedecins {
+  const dateNaissance = c.dossier.patient.dateNaissance?.toISOString() ?? null;
   return {
     id: c.id,
     dossierId: c.dossierId,
@@ -81,6 +93,7 @@ function mapperConsultation(c: {
     anamnese: c.anamnese,
     examenClinique: c.examenClinique,
     conclusion: c.conclusion,
+    formulaireClinique: parserFormulaire(c.formulaireClinique),
     debutLe: c.debutLe.toISOString(),
     finLe: c.finLe?.toISOString() ?? null,
     medecin: `${c.medecin.prenom} ${c.medecin.nom}`.trim(),
@@ -94,6 +107,8 @@ function mapperConsultation(c: {
       nomComplet: `${c.dossier.patient.prenom} ${c.dossier.patient.nom}`.trim(),
       telephone: c.dossier.patient.telephone,
       sexe: c.dossier.patient.sexe,
+      dateNaissance,
+      age: calculerAge(dateNaissance),
     },
   };
 }
@@ -148,6 +163,7 @@ export async function creerConsultation(
     anamnese?: string | null;
     examenClinique?: string | null;
     conclusion?: string | null;
+    formulaireClinique?: FormulaireCliniqueMedecins | null;
   }
 ): Promise<ConsultationDetailMedecins> {
   const dossier = await prisma.dossierPatient.findUnique({
@@ -179,6 +195,8 @@ export async function creerConsultation(
       anamnese: input.anamnese?.trim() || null,
       examenClinique: input.examenClinique?.trim() || null,
       conclusion: input.conclusion?.trim() || null,
+      formulaireClinique:
+        (input.formulaireClinique as Prisma.InputJsonValue) ?? undefined,
     },
     include: includeConsultation,
   });
@@ -193,20 +211,25 @@ export async function mettreAJourConsultation(
     anamnese?: string | null;
     examenClinique?: string | null;
     conclusion?: string | null;
-  }
+    formulaireClinique?: FormulaireCliniqueMedecins | null;
+  },
+  options?: { autoriserCloturee?: boolean }
 ): Promise<ConsultationDetailMedecins> {
   const existante = await prisma.consultation.findUnique({
     where: { id },
     select: { id: true, finLe: true },
   });
   if (!existante) throw new Error("CONSULTATION_INTROUVABLE");
-  if (existante.finLe) throw new Error("CONSULTATION_CLOTUREE");
+  if (existante.finLe && !options?.autoriserCloturee) {
+    throw new Error("CONSULTATION_CLOTUREE");
+  }
 
   const data: {
     motif?: string;
     anamnese?: string | null;
     examenClinique?: string | null;
     conclusion?: string | null;
+    formulaireClinique?: Prisma.InputJsonValue | typeof Prisma.DbNull;
   } = {};
 
   if (input.motif !== undefined) {
@@ -222,6 +245,11 @@ export async function mettreAJourConsultation(
   }
   if (input.conclusion !== undefined) {
     data.conclusion = input.conclusion?.trim() || null;
+  }
+  if (input.formulaireClinique !== undefined) {
+    data.formulaireClinique = input.formulaireClinique
+      ? (input.formulaireClinique as Prisma.InputJsonValue)
+      : Prisma.DbNull;
   }
 
   const c = await prisma.consultation.update({
@@ -355,6 +383,18 @@ function debutSemaineLocal(d = new Date()) {
   const debut = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   debut.setDate(debut.getDate() - diff);
   return debut;
+}
+
+export async function listerConsultationsDossier(
+  dossierId: string
+): Promise<ConsultationDetailMedecins[]> {
+  const rows = await prisma.consultation.findMany({
+    where: { dossierId },
+    include: includeConsultation,
+    orderBy: { debutLe: "desc" },
+    take: 30,
+  });
+  return rows.map(mapperConsultation);
 }
 
 export async function listerConsultationsHistorique(opts?: {

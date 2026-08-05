@@ -1,119 +1,171 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
   Loader2,
-  Plus,
-  Printer,
+  Pencil,
   Save,
-  Trash2,
+  Search,
+  Stethoscope,
   XCircle,
 } from "lucide-react";
+import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
+import { EVENEMENT_MEDECINS_PATIENTS_MODIFIES } from "@/constants/medecins";
 import {
   MiseEnPageMedecins,
   type UtilisateurMedecins,
 } from "@/features/medecins/mise-en-page-medecins";
-import { imprimerCrConsultation } from "@/lib/medecins/imprimer-cr-consultation";
+import {
+  FORMULAIRE_VIDE,
+  FormulaireConsultationClinique,
+  signesDepuisConstantes,
+  synthetiserChampsTexte,
+} from "@/features/medecins/formulaire-consultation-clinique";
+import { MenuActionsTransfertMedecins } from "@/features/medecins/menu-actions-transfert-medecins";
+import {
+  PanneauDroitMedecins,
+  SectionsMobileMedecinsPatients,
+} from "@/features/medecins/panneau-droit-medecins";
+import { useSelectionMedecins } from "@/features/medecins/contexte-selection-medecins";
 import type {
   ConsultationDetailMedecins,
   ConstanteVitaleResume,
+  FormulaireCliniqueMedecins,
   PatientFileMedecins,
 } from "@/lib/medecins/types";
+import { cn } from "@/lib/utils";
 
-interface PropsContenuConsultationMedecins {
+interface Props {
   utilisateur: UtilisateurMedecins;
 }
 
-export function ContenuConsultationMedecins({
-  utilisateur,
-}: PropsContenuConsultationMedecins) {
+function aujourdhuiInput() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export function CorpsConsultation({ utilisateur }: Props) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const dossierUrl = searchParams.get("dossier")?.trim() ?? "";
 
+  const {
+    patientSelectionne,
+    selectionnerPatient,
+    dossiersCoches,
+    basculerDossierCoche,
+    definirCoches,
+    synchroniserSelection,
+  } = useSelectionMedecins();
+
   const [patients, setPatients] = useState<PatientFileMedecins[]>([]);
-  const [dossierId, setDossierId] = useState(dossierUrl);
+  const [chargementListe, setChargementListe] = useState(true);
+  const [recherche, setRecherche] = useState("");
   const [consultation, setConsultation] =
     useState<ConsultationDetailMedecins | null>(null);
+  const [historique, setHistorique] = useState<ConsultationDetailMedecins[]>(
+    []
+  );
   const [constantes, setConstantes] = useState<ConstanteVitaleResume | null>(
     null
   );
   const [motif, setMotif] = useState("");
-  const [anamnese, setAnamnese] = useState("");
-  const [examenClinique, setExamenClinique] = useState("");
-  const [conclusion, setConclusion] = useState("");
-  const [diagLibelle, setDiagLibelle] = useState("");
-  const [diagCode, setDiagCode] = useState("");
-  const [diagPrincipal, setDiagPrincipal] = useState(false);
-  const [acteType, setActeType] = useState("SOIN");
-  const [acteLibelle, setActeLibelle] = useState("");
-  const [chargement, setChargement] = useState(true);
+  const [formulaire, setFormulaire] =
+    useState<FormulaireCliniqueMedecins>(FORMULAIRE_VIDE);
+  const [dateConsult, setDateConsult] = useState(aujourdhuiInput());
+  const [modeModifier, setModeModifier] = useState(false);
   const [enCours, setEnCours] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
-  const patientSelectionne = useMemo(
-    () => patients.find((p) => p.dossierId === dossierId) ?? null,
-    [patients, dossierId]
-  );
+  const dossierId = patientSelectionne?.dossierId ?? "";
 
-  const cloturee = Boolean(consultation?.finLe);
-
-  const appliquerConsultation = useCallback(
-    (c: ConsultationDetailMedecins | null) => {
-      setConsultation(c);
-      if (c) {
-        setMotif(c.motif);
-        setAnamnese(c.anamnese ?? "");
-        setExamenClinique(c.examenClinique ?? "");
-        setConclusion(c.conclusion ?? "");
-      } else {
-        setMotif(patientSelectionne?.motif !== "—" ? patientSelectionne?.motif ?? "" : "");
-        setAnamnese("");
-        setExamenClinique("");
-        setConclusion("");
+  const chargerPatients = useCallback(async () => {
+    setChargementListe(true);
+    try {
+      const res = await fetch("/api/medecins/patients");
+      const data = (await res.json()) as {
+        patients?: PatientFileMedecins[];
+        erreur?: string;
+      };
+      if (!res.ok) {
+        setErreur(data.erreur ?? t("medecins.erreurs.chargementPatients"));
+        return;
       }
-    },
-    [patientSelectionne?.motif]
-  );
-
-  useEffect(() => {
-    let annule = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/medecins/patients");
-        const data = (await res.json()) as {
-          patients?: PatientFileMedecins[];
-          erreur?: string;
-        };
-        if (annule) return;
-        if (!res.ok) {
-          setErreur(data.erreur ?? t("medecins.erreurs.chargementPatients"));
-          return;
-        }
-        setPatients(data.patients ?? []);
-      } catch {
-        if (!annule) setErreur(t("medecins.erreurs.chargementPatients"));
-      } finally {
-        if (!annule) setChargement(false);
-      }
-    })();
-    return () => {
-      annule = true;
-    };
+      setPatients(data.patients ?? []);
+    } catch {
+      setErreur(t("medecins.erreurs.chargementPatients"));
+    } finally {
+      setChargementListe(false);
+    }
   }, [t]);
 
   useEffect(() => {
-    if (dossierUrl) setDossierId(dossierUrl);
-  }, [dossierUrl]);
+    void chargerPatients();
+  }, [chargerPatients]);
+
+  useEffect(() => {
+    const onModifie = () => void chargerPatients();
+    window.addEventListener(EVENEMENT_MEDECINS_PATIENTS_MODIFIES, onModifie);
+    return () =>
+      window.removeEventListener(EVENEMENT_MEDECINS_PATIENTS_MODIFIES, onModifie);
+  }, [chargerPatients]);
+
+  useEffect(() => {
+    synchroniserSelection(patients);
+  }, [patients, synchroniserSelection]);
+
+  useEffect(() => {
+    if (!dossierUrl || patients.length === 0) return;
+    const p = patients.find((x) => x.dossierId === dossierUrl);
+    if (p) selectionnerPatient(p);
+  }, [dossierUrl, patients, selectionnerPatient]);
+
+  const reinitaliserFormulaire = useCallback(
+    (opts?: {
+      patient?: PatientFileMedecins | null;
+      constantes?: ConstanteVitaleResume | null;
+      consultation?: ConsultationDetailMedecins | null;
+      medecinNom?: string;
+    }) => {
+      const c = opts?.consultation ?? null;
+      const patient = opts?.patient;
+      const constantesLocal = opts?.constantes ?? null;
+      if (c) {
+        setConsultation(c);
+        setMotif(c.motif);
+        setFormulaire({
+          ...FORMULAIRE_VIDE,
+          ...(c.formulaireClinique ?? {}),
+          signesVitaux: {
+            ...signesDepuisConstantes(constantesLocal),
+            ...(c.formulaireClinique?.signesVitaux ?? {}),
+          },
+          drRef: c.formulaireClinique?.drRef || opts?.medecinNom || c.medecin,
+        });
+        setDateConsult(c.debutLe.slice(0, 10));
+        return;
+      }
+      setConsultation(null);
+      setMotif(patient?.motif && patient.motif !== "—" ? patient.motif : "");
+      setFormulaire({
+        ...FORMULAIRE_VIDE,
+        drRef: opts?.medecinNom ?? "",
+        signesVitaux: signesDepuisConstantes(constantesLocal),
+      });
+      setDateConsult(aujourdhuiInput());
+    },
+    []
+  );
 
   useEffect(() => {
     if (!dossierId) {
-      appliquerConsultation(null);
+      reinitaliserFormulaire();
       setConstantes(null);
+      setHistorique([]);
+      setModeModifier(false);
       return;
     }
 
@@ -122,21 +174,32 @@ export function ContenuConsultationMedecins({
       setErreur(null);
       try {
         const [resConsult, resDetail] = await Promise.all([
-          fetch(`/api/medecins/consultations?dossierId=${encodeURIComponent(dossierId)}`),
+          fetch(
+            `/api/medecins/consultations?dossierId=${encodeURIComponent(dossierId)}`
+          ),
           fetch(`/api/medecins/patients/${encodeURIComponent(dossierId)}`),
         ]);
         const dataConsult = (await resConsult.json()) as {
           consultation?: ConsultationDetailMedecins | null;
+          historique?: ConsultationDetailMedecins[];
         };
         const dataDetail = (await resDetail.json()) as {
-          patient?: { constantesVitales?: ConstanteVitaleResume | null; motif?: string };
+          patient?: {
+            constantesVitales?: ConstanteVitaleResume | null;
+            motif?: string;
+          };
         };
         if (annule) return;
-        appliquerConsultation(dataConsult.consultation ?? null);
-        setConstantes(dataDetail.patient?.constantesVitales ?? null);
-        if (!dataConsult.consultation && dataDetail.patient?.motif) {
-          setMotif((m) => m || (dataDetail.patient?.motif !== "—" ? dataDetail.patient?.motif ?? "" : ""));
-        }
+        const constantesLocal = dataDetail.patient?.constantesVitales ?? null;
+        setConstantes(constantesLocal);
+        setHistorique(dataConsult.historique ?? []);
+        setModeModifier(false);
+        reinitaliserFormulaire({
+          patient: patientSelectionne,
+          constantes: constantesLocal,
+          consultation: dataConsult.consultation ?? null,
+          medecinNom: `${utilisateur.prenom} ${utilisateur.nom}`.trim(),
+        });
       } catch {
         if (!annule) setErreur(t("medecins.consultation.erreurChargement"));
       }
@@ -145,18 +208,70 @@ export function ContenuConsultationMedecins({
     return () => {
       annule = true;
     };
-  }, [dossierId, appliquerConsultation, t]);
+  }, [
+    dossierId,
+    patientSelectionne,
+    reinitaliserFormulaire,
+    t,
+    utilisateur.nom,
+    utilisateur.prenom,
+  ]);
+
+  const filtrés = useMemo(() => {
+    const q = recherche.trim().toLowerCase();
+    if (!q) return patients;
+    return patients.filter((p) =>
+      [p.nomComplet, p.telephone, p.numeroDossier, p.numeroPatient, p.motif]
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [patients, recherche]);
+
+  const tousCoches =
+    filtrés.length > 0 && filtrés.every((p) => dossiersCoches.includes(p.dossierId));
 
   async function sauvegarder() {
-    if (!dossierId || !motif.trim()) {
-      setErreur(t("medecins.consultation.motifRequis"));
+    if (!dossierId) {
+      setErreur("Sélectionnez un patient.");
+      return;
+    }
+    if (!motif.trim()) {
+      setErreur("Le motif de consultation est requis.");
       return;
     }
     setEnCours(true);
     setErreur(null);
     setMessage(null);
+    const { anamnese, examenClinique, conclusion } =
+      synthetiserChampsTexte(formulaire);
     try {
-      if (!consultation) {
+      if (consultation) {
+        const res = await fetch(
+          `/api/medecins/consultations/${encodeURIComponent(consultation.id)}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              motif,
+              anamnese,
+              examenClinique,
+              conclusion,
+              formulaireClinique: formulaire,
+              autoriserCloturee: Boolean(consultation.finLe),
+            }),
+          }
+        );
+        const data = (await res.json()) as {
+          consultation?: ConsultationDetailMedecins;
+          erreur?: string;
+        };
+        if (!res.ok || !data.consultation) {
+          throw new Error(data.erreur ?? "Enregistrement impossible.");
+        }
+        setConsultation(data.consultation);
+        setMessage(t("medecins.consultation.enregistree"));
+      } else {
         const res = await fetch("/api/medecins/consultations", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -166,6 +281,7 @@ export function ContenuConsultationMedecins({
             anamnese,
             examenClinique,
             conclusion,
+            formulaireClinique: formulaire,
           }),
         });
         const data = (await res.json()) as {
@@ -173,487 +289,347 @@ export function ContenuConsultationMedecins({
           erreur?: string;
         };
         if (!res.ok || !data.consultation) {
-          setErreur(data.erreur ?? t("medecins.actions.erreurInattendue"));
-          return;
+          throw new Error(data.erreur ?? "Enregistrement impossible.");
         }
-        appliquerConsultation(data.consultation);
-        setMessage(t("medecins.consultation.enregistree"));
-      } else {
-        const res = await fetch(`/api/medecins/consultations/${consultation.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ motif, anamnese, examenClinique, conclusion }),
-        });
-        const data = (await res.json()) as {
-          consultation?: ConsultationDetailMedecins;
-          erreur?: string;
-        };
-        if (!res.ok || !data.consultation) {
-          setErreur(data.erreur ?? t("medecins.actions.erreurInattendue"));
-          return;
-        }
-        appliquerConsultation(data.consultation);
+        setConsultation(data.consultation);
         setMessage(t("medecins.consultation.enregistree"));
       }
-    } catch {
-      setErreur(t("medecins.actions.erreurInattendue"));
+      const histRes = await fetch(
+        `/api/medecins/consultations?dossierId=${encodeURIComponent(dossierId)}`
+      );
+      const histData = (await histRes.json()) as {
+        historique?: ConsultationDetailMedecins[];
+      };
+      setHistorique(histData.historique ?? []);
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Erreur d'enregistrement.");
     } finally {
       setEnCours(false);
     }
   }
 
   async function cloturer() {
-    if (!consultation) {
-      await sauvegarder();
-      return;
-    }
+    if (!consultation) return;
     setEnCours(true);
     setErreur(null);
     try {
-      await fetch(`/api/medecins/consultations/${consultation.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ motif, anamnese, examenClinique, conclusion }),
-      });
-      const res = await fetch(`/api/medecins/consultations/${consultation.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "cloturer" }),
-      });
+      const res = await fetch(
+        `/api/medecins/consultations/${encodeURIComponent(consultation.id)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "cloturer" }),
+        }
+      );
       const data = (await res.json()) as {
         consultation?: ConsultationDetailMedecins;
         erreur?: string;
       };
       if (!res.ok || !data.consultation) {
-        setErreur(data.erreur ?? t("medecins.actions.erreurInattendue"));
-        return;
+        throw new Error(data.erreur ?? "Clôture impossible.");
       }
-      appliquerConsultation(data.consultation);
+      setConsultation(data.consultation);
       setMessage(t("medecins.consultation.cloturee"));
-    } catch {
-      setErreur(t("medecins.actions.erreurInattendue"));
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Erreur de clôture.");
     } finally {
       setEnCours(false);
     }
   }
 
-  async function ajouterDiag() {
-    if (!consultation || !diagLibelle.trim()) return;
-    setEnCours(true);
-    try {
-      const res = await fetch(
-        `/api/medecins/consultations/${consultation.id}/diagnostics`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            libelle: diagLibelle,
-            codeCim: diagCode || null,
-            principal: diagPrincipal,
-          }),
-        }
-      );
-      const data = (await res.json()) as {
-        diagnostic?: ConsultationDetailMedecins["diagnostics"][number];
-        erreur?: string;
-      };
-      if (!res.ok || !data.diagnostic) {
-        setErreur(data.erreur ?? t("medecins.actions.erreurInattendue"));
-        return;
-      }
-      setConsultation({
-        ...consultation,
-        diagnostics: [...consultation.diagnostics, data.diagnostic],
-      });
-      setDiagLibelle("");
-      setDiagCode("");
-      setDiagPrincipal(false);
-    } finally {
-      setEnCours(false);
-    }
-  }
-
-  async function supprimerDiag(id: string) {
-    if (!consultation) return;
-    const res = await fetch(`/api/medecins/diagnostics/${id}`, { method: "DELETE" });
-    if (!res.ok) return;
-    setConsultation({
-      ...consultation,
-      diagnostics: consultation.diagnostics.filter((d) => d.id !== id),
+  const chargerHistorique = (c: ConsultationDetailMedecins) => {
+    reinitaliserFormulaire({
+      patient: patientSelectionne,
+      constantes,
+      consultation: c,
+      medecinNom: c.medecin,
     });
-  }
+    setModeModifier(true);
+    setMessage(`Consultation du ${new Date(c.debutLe).toLocaleString("fr-FR")} chargée.`);
+  };
 
-  async function ajouterActeUi() {
-    if (!consultation || !acteLibelle.trim()) return;
-    setEnCours(true);
-    try {
-      const res = await fetch(
-        `/api/medecins/consultations/${consultation.id}/actes`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ typeActe: acteType, libelle: acteLibelle }),
-        }
-      );
-      const data = (await res.json()) as {
-        acte?: ConsultationDetailMedecins["actes"][number];
-        erreur?: string;
-      };
-      if (!res.ok || !data.acte) {
-        setErreur(data.erreur ?? t("medecins.actions.erreurInattendue"));
-        return;
-      }
-      setConsultation({
-        ...consultation,
-        actes: [...consultation.actes, data.acte],
-      });
-      setActeLibelle("");
-    } finally {
-      setEnCours(false);
-    }
-  }
+  const identite = {
+    nom: patientSelectionne
+      ? `${patientSelectionne.nom.toUpperCase()} ${patientSelectionne.prenom}`
+      : "",
+    age: patientSelectionne?.age != null ? String(patientSelectionne.age) : "",
+    sexe: patientSelectionne?.sexe ?? "",
+    date: dateConsult,
+    telPat: patientSelectionne?.telephone === "—" ? "" : patientSelectionne?.telephone ?? "",
+    numeroEnreg: patientSelectionne?.numeroDossier ?? "",
+    lectureSeuleIdentite: true as const,
+    onChangeIdentite: (champ: string, v: string) => {
+      if (champ === "date") setDateConsult(v);
+    },
+  };
 
-  async function supprimerActeUi(id: string) {
-    if (!consultation) return;
-    const res = await fetch(`/api/medecins/actes/${id}`, { method: "DELETE" });
-    if (!res.ok) return;
-    setConsultation({
-      ...consultation,
-      actes: consultation.actes.filter((a) => a.id !== id),
-    });
-  }
+  return (
+    <div className="mx-auto w-full max-w-[1200px] space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <Stethoscope className="h-5 w-5 text-bleu-medical" />
+            <h2 className="text-xl font-bold text-texte-principal">
+              {t("medecins.consultation.titre")}
+            </h2>
+          </div>
+            <p className="mt-1 text-sm text-texte-secondaire">
+              {patientSelectionne
+                ? `Patient : ${patientSelectionne.nomComplet}`
+                : "Sélectionnez un patient dans la liste ci-dessous."}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={enCours || !dossierId}
+              onClick={() => void sauvegarder()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-bleu-medical px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+            >
+              {enCours ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              Enregistrer
+            </button>
+            <button
+              type="button"
+              disabled={!dossierId || historique.length === 0}
+              onClick={() => setModeModifier((v) => !v)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium",
+                modeModifier
+                  ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                  : "border-gris-bordure text-texte-principal hover:bg-gris-tres-clair"
+              )}
+            >
+              <Pencil className="h-4 w-4" />
+              Modifier
+            </button>
+            {consultation && !consultation.finLe ? (
+              <button
+                type="button"
+                disabled={enCours}
+                onClick={() => void cloturer()}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+              >
+                <XCircle className="h-4 w-4" />
+                Clôturer
+              </button>
+            ) : null}
+          </div>
+        </div>
 
-  async function imprimer() {
-    if (!consultation) return;
-    await imprimerCrConsultation({
-      hopital: "HAM — Centre des diagnostics et d'analyses médicales",
-      medecin: consultation.medecin || `${utilisateur.prenom} ${utilisateur.nom}`,
-      patient: consultation.patient.nomComplet,
-      numeroDossier: consultation.patient.numeroDossier,
-      motif: consultation.motif,
-      anamnese: consultation.anamnese,
-      examenClinique: consultation.examenClinique,
-      conclusion: consultation.conclusion,
-      diagnostics: consultation.diagnostics.map((d) => ({
-        libelle: d.libelle,
-        codeCim: d.codeCim,
-        principal: d.principal,
-      })),
-      actes: consultation.actes.map((a) => ({
-        libelle: a.libelle,
-        typeActe: a.typeActe,
-        quantite: a.quantite,
-      })),
-      debutLe: consultation.debutLe,
-      finLe: consultation.finLe,
-    });
-  }
+        {message ? (
+          <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            {message}
+          </p>
+        ) : null}
+        {erreur ? <p className="text-sm text-red-600">{erreur}</p> : null}
 
-  const champ =
-    "w-full rounded-lg border border-gris-bordure bg-white px-3 py-2 text-sm text-texte-principal outline-none focus:border-bleu-medical";
+        {modeModifier && historique.length > 0 ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+            <p className="mb-2 text-xs font-semibold uppercase text-amber-900">
+              Consultations enregistrées — cliquez pour charger dans le formulaire
+            </p>
+            <ul className="flex flex-wrap gap-2">
+              {historique.map((h) => (
+                <li key={h.id}>
+                  <button
+                    type="button"
+                    onClick={() => chargerHistorique(h)}
+                    className={cn(
+                      "rounded-lg border px-2.5 py-1.5 text-xs font-medium",
+                      consultation?.id === h.id
+                        ? "border-bleu-medical bg-white text-bleu-medical"
+                        : "border-amber-200 bg-white text-texte-principal hover:border-bleu-medical"
+                    )}
+                  >
+                    {new Date(h.debutLe).toLocaleString("fr-FR", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    {h.finLe ? " · clôturée" : " · ouverte"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        <FormulaireConsultationClinique
+          formulaire={formulaire}
+          onChange={setFormulaire}
+          motif={motif}
+          onMotifChange={setMotif}
+          identite={identite}
+          desactive={!dossierId}
+        />
+
+        {/* Liste patients (image 6) */}
+        <section className="space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-texte-principal">
+              Patients récemment enregistrés
+            </h3>
+            <div className="relative w-full sm:max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
+              <input
+                type="search"
+                value={recherche}
+                onChange={(e) => setRecherche(e.target.value)}
+                placeholder={t("medecins.patients.recherche")}
+                className="w-full rounded-xl border border-gris-bordure bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-bleu-medical"
+              />
+            </div>
+          </div>
+
+          {chargementListe ? (
+            <div className="flex items-center gap-2 text-sm text-texte-secondaire">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {t("medecins.patients.chargement")}
+            </div>
+          ) : filtrés.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-gris-bordure bg-white p-8 text-center text-sm text-texte-secondaire">
+              {t("medecins.patients.vide")}
+            </p>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b border-gris-bordure bg-gris-tres-clair/60 text-xs uppercase tracking-wide text-texte-secondaire">
+                  <tr>
+                    <th className="px-3 py-3">
+                      <CaseCocheLigne
+                        coche={tousCoches}
+                        onChange={(coche) =>
+                          definirCoches(
+                            filtrés.map((p) => p.dossierId),
+                            coche
+                          )
+                        }
+                        ariaLabel={t("medecins.patients.selectionnerTout")}
+                      />
+                    </th>
+                    <th className="px-3 py-3">ID</th>
+                    <th className="px-3 py-3">
+                      {t("medecins.patients.colonnes.patient")}
+                    </th>
+                    <th className="hidden px-3 py-3 md:table-cell">
+                      {t("medecins.patients.colonnes.telephone")}
+                    </th>
+                    <th className="hidden px-3 py-3 lg:table-cell">
+                      {t("medecins.patients.colonnes.motif")}
+                    </th>
+                    <th className="px-3 py-3">
+                      {t("medecins.patients.colonnes.orientation")}
+                    </th>
+                    <th className="px-3 py-3">
+                      {t("medecins.patients.colonnes.statut")}
+                    </th>
+                    <th className="px-3 py-3">
+                      {t("medecins.patients.colonnes.heure")}
+                    </th>
+                    <th className="px-3 py-3">
+                      {t("medecins.patients.colonnes.actions")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtrés.map((p) => {
+                    const selectionne =
+                      patientSelectionne?.dossierId === p.dossierId;
+                    return (
+                      <tr
+                        key={p.cleListe}
+                        onClick={() => selectionnerPatient(p)}
+                        className={cn(
+                          "cursor-pointer border-b border-gris-bordure/70 hover:bg-bleu-medical-clair/20",
+                          selectionne && "bg-bleu-medical-clair/40"
+                        )}
+                      >
+                        <td
+                          className="px-3 py-3"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <CaseCocheLigne
+                            coche={dossiersCoches.includes(p.dossierId)}
+                            onChange={() => basculerDossierCoche(p.dossierId)}
+                            ariaLabel={p.nomComplet}
+                          />
+                        </td>
+                        <td className="px-3 py-3 font-mono text-[11px] text-texte-secondaire">
+                          {p.numeroPatient}
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className="font-bold uppercase">{p.nom}</span>{" "}
+                          <span className="lowercase">{p.prenom}</span>
+                        </td>
+                        <td className="hidden px-3 py-3 text-texte-secondaire md:table-cell">
+                          {p.telephone}
+                        </td>
+                        <td className="hidden max-w-[9rem] truncate px-3 py-3 text-texte-secondaire lg:table-cell">
+                          {p.motif}
+                        </td>
+                        <td className="px-3 py-3">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                              p.orientationCouleur
+                            )}
+                          >
+                            {p.orientation}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                              p.statutCouleur
+                            )}
+                          >
+                            {p.statut}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-texte-secondaire">
+                          {p.heure}
+                        </td>
+                        <td
+                          className="px-3 py-3"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MenuActionsTransfertMedecins
+                            patient={p}
+                            onRafraichir={chargerPatients}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <SectionsMobileMedecinsPatients />
+        </section>
+      </div>
+  );
+}
+
+export function ContenuConsultationMedecins({ utilisateur }: Props) {
+  const { t } = useTranslation();
 
   return (
     <MiseEnPageMedecins
       utilisateur={utilisateur}
       titre={t("medecins.consultation.titre")}
       sousTitre={t("medecins.consultation.sousTitre")}
+      panneauDroit={<PanneauDroitMedecins />}
+      activerSelection
     >
-      <div className="mx-auto w-full max-w-[1100px] space-y-5">
-        {chargement ? (
-          <div className="flex items-center gap-2 text-sm text-texte-secondaire">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            {t("medecins.consultation.chargement")}
-          </div>
-        ) : (
-          <>
-            <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-              <label className="text-xs font-medium text-texte-secondaire">
-                {t("medecins.consultation.selectionPatient")}
-              </label>
-              <select
-                className={`${champ} mt-1`}
-                value={dossierId}
-                onChange={(e) => setDossierId(e.target.value)}
-              >
-                <option value="">{t("medecins.consultation.choisirPatient")}</option>
-                {patients.map((p) => (
-                  <option key={p.dossierId} value={p.dossierId}>
-                    {p.nomComplet} — {p.numeroDossier}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {dossierId ? (
-              <>
-                <div className="grid gap-4 lg:grid-cols-3">
-                  <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm lg:col-span-2">
-                    <h3 className="text-sm font-semibold text-texte-principal">
-                      {consultation?.patient.nomComplet ??
-                        patientSelectionne?.nomComplet ??
-                        "—"}
-                    </h3>
-                    <p className="mt-1 text-xs text-texte-secondaire">
-                      {t("medecins.consultation.dossier")}{" "}
-                      {consultation?.patient.numeroDossier ??
-                        patientSelectionne?.numeroDossier}{" "}
-                      · {consultation?.patient.sexe ?? patientSelectionne?.sexe ?? "—"}{" "}
-                      · {patientSelectionne?.age != null ? `${patientSelectionne.age} ans` : ""}
-                    </p>
-                    {constantes ? (
-                      <p className="mt-3 text-xs text-texte-secondaire">
-                        {t("medecins.consultation.constantes")} : T°{" "}
-                        {constantes.temperature ?? "—"} · TA{" "}
-                        {constantes.tensionSystolique ?? "—"}/
-                        {constantes.tensionDiastolique ?? "—"} · FC{" "}
-                        {constantes.frequenceCardiaque ?? "—"} · FR{" "}
-                        {constantes.frequenceRespiratoire ?? "—"} · SpO₂{" "}
-                        {constantes.saturationO2 ?? "—"} ·{" "}
-                        {constantes.poidsKg ?? "—"} kg · {constantes.tailleCm ?? "—"}{" "}
-                        cm
-                        {constantes.glycemie != null
-                          ? ` · Gly ${constantes.glycemie}`
-                          : ""}
-                        {constantes.observations
-                          ? ` — ${constantes.observations}`
-                          : ""}
-                      </p>
-                    ) : (
-                      <p className="mt-3 text-xs text-texte-secondaire">
-                        {t("medecins.consultation.pasConstantes")}
-                      </p>
-                    )}
-                  </div>
-                  <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-                    <p className="text-xs text-texte-secondaire">
-                      {cloturee
-                        ? t("medecins.consultation.statutCloturee")
-                        : consultation
-                          ? t("medecins.consultation.statutOuverte")
-                          : t("medecins.consultation.statutNouvelle")}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-3 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm md:col-span-2">
-                    <div>
-                      <label className="text-xs font-medium text-texte-secondaire">
-                        {t("medecins.consultation.motif")}
-                      </label>
-                      <input
-                        className={`${champ} mt-1`}
-                        value={motif}
-                        disabled={cloturee}
-                        onChange={(e) => setMotif(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-texte-secondaire">
-                        {t("medecins.consultation.anamnese")}
-                      </label>
-                      <textarea
-                        className={`${champ} mt-1 min-h-[80px]`}
-                        value={anamnese}
-                        disabled={cloturee}
-                        onChange={(e) => setAnamnese(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-texte-secondaire">
-                        {t("medecins.consultation.examenClinique")}
-                      </label>
-                      <textarea
-                        className={`${champ} mt-1 min-h-[80px]`}
-                        value={examenClinique}
-                        disabled={cloturee}
-                        onChange={(e) => setExamenClinique(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-texte-secondaire">
-                        {t("medecins.consultation.conclusion")}
-                      </label>
-                      <textarea
-                        className={`${champ} mt-1 min-h-[80px]`}
-                        value={conclusion}
-                        disabled={cloturee}
-                        onChange={(e) => setConclusion(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-                    <h4 className="text-sm font-semibold">
-                      {t("medecins.consultation.diagnostics")}
-                    </h4>
-                    <ul className="mt-3 space-y-2">
-                      {(consultation?.diagnostics ?? []).map((d) => (
-                        <li
-                          key={d.id}
-                          className="flex items-start justify-between gap-2 rounded-lg bg-gris-fond px-3 py-2 text-sm"
-                        >
-                          <span>
-                            {d.principal ? "★ " : ""}
-                            {d.libelle}
-                            {d.codeCim ? ` (${d.codeCim})` : ""}
-                          </span>
-                          {!cloturee && (
-                            <button
-                              type="button"
-                              onClick={() => void supprimerDiag(d.id)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                    {!cloturee && consultation && (
-                      <div className="mt-3 space-y-2">
-                        <input
-                          className={champ}
-                          placeholder={t("medecins.consultation.libelleDiagnostic")}
-                          value={diagLibelle}
-                          onChange={(e) => setDiagLibelle(e.target.value)}
-                        />
-                        <input
-                          className={champ}
-                          placeholder={t("medecins.consultation.codeCim")}
-                          value={diagCode}
-                          onChange={(e) => setDiagCode(e.target.value)}
-                        />
-                        <label className="flex items-center gap-2 text-xs">
-                          <input
-                            type="checkbox"
-                            checked={diagPrincipal}
-                            onChange={(e) => setDiagPrincipal(e.target.checked)}
-                          />
-                          {t("medecins.consultation.principal")}
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => void ajouterDiag()}
-                          className="inline-flex items-center gap-1 rounded-lg bg-bleu-medical px-3 py-1.5 text-xs font-semibold text-white"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                          {t("medecins.consultation.ajouterDiagnostic")}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-                    <h4 className="text-sm font-semibold">
-                      {t("medecins.consultation.actes")}
-                    </h4>
-                    <ul className="mt-3 space-y-2">
-                      {(consultation?.actes ?? []).map((a) => (
-                        <li
-                          key={a.id}
-                          className="flex items-start justify-between gap-2 rounded-lg bg-gris-fond px-3 py-2 text-sm"
-                        >
-                          <span>
-                            {a.libelle} · {a.typeActe} ×{a.quantite}
-                          </span>
-                          {!cloturee && (
-                            <button
-                              type="button"
-                              onClick={() => void supprimerActeUi(a.id)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                    {!cloturee && consultation && (
-                      <div className="mt-3 space-y-2">
-                        <input
-                          className={champ}
-                          placeholder={t("medecins.consultation.typeActe")}
-                          value={acteType}
-                          onChange={(e) => setActeType(e.target.value)}
-                        />
-                        <input
-                          className={champ}
-                          placeholder={t("medecins.consultation.libelleActe")}
-                          value={acteLibelle}
-                          onChange={(e) => setActeLibelle(e.target.value)}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => void ajouterActeUi()}
-                          className="inline-flex items-center gap-1 rounded-lg bg-bleu-medical px-3 py-1.5 text-xs font-semibold text-white"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                          {t("medecins.consultation.ajouterActe")}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {message && <p className="text-sm text-emerald-700">{message}</p>}
-                {erreur && <p className="text-sm text-red-600">{erreur}</p>}
-
-                <div className="flex flex-wrap gap-2">
-                  {!cloturee && (
-                    <>
-                      <button
-                        type="button"
-                        disabled={enCours}
-                        onClick={() => void sauvegarder()}
-                        className="inline-flex items-center gap-2 rounded-lg bg-bleu-medical px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                      >
-                        {enCours ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Save className="h-4 w-4" />
-                        )}
-                        {t("medecins.consultation.enregistrer")}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={enCours || !consultation}
-                        onClick={() => void cloturer()}
-                        className="inline-flex items-center gap-2 rounded-lg border border-gris-bordure bg-white px-4 py-2 text-sm font-semibold text-texte-principal disabled:opacity-60"
-                      >
-                        <XCircle className="h-4 w-4" />
-                        {t("medecins.consultation.cloturer")}
-                      </button>
-                    </>
-                  )}
-                  {consultation && (
-                    <button
-                      type="button"
-                      onClick={() => void imprimer()}
-                      className="inline-flex items-center gap-2 rounded-lg border border-gris-bordure bg-white px-4 py-2 text-sm font-semibold"
-                    >
-                      <Printer className="h-4 w-4" />
-                      {t("medecins.consultation.imprimerCr")}
-                    </button>
-                  )}
-                  {cloturee && (
-                    <Link
-                      href={`/sigh/medecins/file-attente`}
-                      className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
-                    >
-                      {t("medecins.consultation.lienOrientation")}
-                    </Link>
-                  )}
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-texte-secondaire">
-                {t("medecins.consultation.aideSelection")}
-              </p>
-            )}
-          </>
-        )}
-      </div>
+      <CorpsConsultation utilisateur={utilisateur} />
     </MiseEnPageMedecins>
   );
 }

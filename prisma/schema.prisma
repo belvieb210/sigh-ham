@@ -589,17 +589,18 @@ model ConstantesVitales {
 // ─── Médecins ─────────────────────────────────────────────────────────────────
 
 model Consultation {
-  id             String         @id @default(cuid())
-  dossierId      String         @map("dossier_id")
-  dossier        DossierPatient @relation(fields: [dossierId], references: [id])
-  medecinId      String         @map("medecin_id")
-  medecin        Utilisateur    @relation(fields: [medecinId], references: [id])
-  motif          String
-  anamnese       String?
-  examenClinique String?        @map("examen_clinique")
-  conclusion     String?
-  debutLe        DateTime       @default(now()) @map("debut_le")
-  finLe          DateTime?      @map("fin_le")
+  id                 String         @id @default(cuid())
+  dossierId          String         @map("dossier_id")
+  dossier            DossierPatient @relation(fields: [dossierId], references: [id])
+  medecinId          String         @map("medecin_id")
+  medecin            Utilisateur    @relation(fields: [medecinId], references: [id])
+  motif              String
+  anamnese           String?
+  examenClinique     String?        @map("examen_clinique")
+  conclusion         String?
+  formulaireClinique Json?          @map("formulaire_clinique")
+  debutLe            DateTime       @default(now()) @map("debut_le")
+  finLe              DateTime?      @map("fin_le")
 
   diagnostics Diagnostic[]
   actes       PrescriptionActe[]

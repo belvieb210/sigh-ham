@@ -107,8 +107,8 @@ export const medecinsEn: MedecinsFr = {
     titre: "Transferred patients",
     sousTitre: "Patients routed to cashier (payment)",
     description:
-      "Outgoing transfers to cashier — awaiting confirmation or recently confirmed.",
-    vide: "No patients transferred to cashier.",
+      "Outgoing transfers from the doctors' room — confirm, reject or restore via the menu. Select a patient to reorient from the right panel.",
+    vide: "No transferred patients yet.",
     erreur: "Unable to load transferred patients.",
     chargement: "Loading…",
     statutEnAttente: "Pending",

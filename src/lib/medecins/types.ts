@@ -130,6 +130,42 @@ export interface DetailPatientMedecins extends PatientFileMedecins {
   consultations: ConsultationResume[];
 }
 
+export type SilhouettePhysique =
+  | "mince"
+  | "maigre"
+  | "robuste"
+  | "gros"
+  | "athletique";
+
+export type FormulaireCliniqueMedecins = {
+  silhouette?: SilhouettePhysique | null;
+  antecedents?: string;
+  histoireMaladie?: string;
+  complementAnamnese?: string;
+  mensurations?: string;
+  etatGeneral?: string;
+  thoraxCoeur?: string;
+  thoraxPoumons?: string;
+  abdomen?: string;
+  membresInferieurs?: string;
+  autresPrecisions?: string;
+  diagnosticPresomption?: string;
+  diagnosticCertitude?: string;
+  drRef?: string;
+  telDr?: string;
+  cliniqueHopital?: string;
+  numeroRecu?: string;
+  signesVitaux?: {
+    tailleCm?: number | null;
+    poidsKg?: number | null;
+    temperature?: number | null;
+    frequenceCardiaque?: number | null;
+    tensionSystolique?: number | null;
+    tensionDiastolique?: number | null;
+    saturationO2?: number | null;
+  };
+};
+
 export interface DiagnosticConsultationMedecins {
   id: string;
   codeCim: string | null;
@@ -153,6 +189,7 @@ export interface ConsultationDetailMedecins {
   anamnese: string | null;
   examenClinique: string | null;
   conclusion: string | null;
+  formulaireClinique: FormulaireCliniqueMedecins | null;
   debutLe: string;
   finLe: string | null;
   medecin: string;
@@ -166,6 +203,8 @@ export interface ConsultationDetailMedecins {
     nomComplet: string;
     telephone: string | null;
     sexe: string | null;
+    dateNaissance: string | null;
+    age: number | null;
   };
 }
 

@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { obtenirSessionApiMedecins } from "@/lib/auth/garde-api-medecins";
 import {
   creerConsultation,
+  listerConsultationsDossier,
   listerConsultationsHistorique,
   obtenirConsultationOuverteDossier,
 } from "@/lib/medecins/gestion-consultation";
+import type { FormulaireCliniqueMedecins } from "@/lib/medecins/types";
 
 export async function GET(req: Request) {
   const session = await obtenirSessionApiMedecins();
@@ -16,8 +18,11 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const dossierId = searchParams.get("dossierId")?.trim();
     if (dossierId) {
-      const consultation = await obtenirConsultationOuverteDossier(dossierId);
-      return NextResponse.json({ consultation });
+      const [consultation, historique] = await Promise.all([
+        obtenirConsultationOuverteDossier(dossierId),
+        listerConsultationsDossier(dossierId),
+      ]);
+      return NextResponse.json({ consultation, historique });
     }
     const periode =
       searchParams.get("periode") === "semaine" ? "semaine" : "jour";
@@ -45,6 +50,7 @@ export async function POST(req: Request) {
       anamnese?: string | null;
       examenClinique?: string | null;
       conclusion?: string | null;
+      formulaireClinique?: FormulaireCliniqueMedecins | null;
     };
 
     if (!body.dossierId?.trim() || !body.motif?.trim()) {
@@ -60,6 +66,7 @@ export async function POST(req: Request) {
       anamnese: body.anamnese,
       examenClinique: body.examenClinique,
       conclusion: body.conclusion,
+      formulaireClinique: body.formulaireClinique,
     });
 
     return NextResponse.json({ consultation }, { status: 201 });

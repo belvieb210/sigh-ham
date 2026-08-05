@@ -107,8 +107,8 @@ export const medecinsFr = {
     titre: "Patients transférés",
     sousTitre: "Patients orientés vers la caisse (paiement)",
     description:
-      "Transferts sortants vers la caisse — en attente de confirmation ou récemment confirmés.",
-    vide: "Aucun patient transféré vers la caisse.",
+      "Transferts sortants depuis la salle médecins — confirmez, rejetez ou restaurez via le menu ⋮. Sélectionnez un patient pour l'orienter depuis le panneau droit.",
+    vide: "Aucun patient transféré pour le moment.",
     erreur: "Impossible de charger les patients transférés.",
     chargement: "Chargement…",
     statutEnAttente: "En attente",

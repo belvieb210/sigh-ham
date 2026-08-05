@@ -54,21 +54,21 @@ export function SectionGrilleCampagnes() {
   const [filtreCategorie, setFiltreCategorie] =
     useState<FiltreCategorie>("toutes");
 
-  const traductionsParId = useMemo(
-    () => Object.fromEntries(campagnesTraduits.map((c) => [c.id, c])),
+  const traductionsParSlug = useMemo(
+    () => Object.fromEntries(campagnesTraduits.map((c) => [c.slug, c])),
     [campagnesTraduits]
   );
 
   const appliquerTraduction = useCallback(
     (campagne: NonNullable<typeof campagnes>[number]) => {
-      const trad = traductionsParId[campagne.id];
+      const trad = traductionsParSlug[campagne.slug];
       return {
         ...campagne,
         titre: trad?.titre ?? campagne.titre,
         description: trad?.extrait ?? campagne.description,
       };
     },
-    [traductionsParId]
+    [traductionsParSlug]
   );
 
   const campagnesFiltrees = useMemo(() => {

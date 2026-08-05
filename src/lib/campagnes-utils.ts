@@ -41,16 +41,29 @@ export function versFormatAccueil(
       return priorite[statutA] - priorite[statutB];
     })
     .slice(0, 4)
-    .map(({ id, titre, periode, href, couleurFond, couleurIllustration, couleurAccent, icone }) => ({
-      id,
-      titre,
-      periode,
-      href,
-      couleurFond,
-      couleurIllustration,
-      couleurAccent,
-      icone,
-    }));
+    .map(
+      ({
+        id,
+        titre,
+        periode,
+        href,
+        couleurFond,
+        couleurIllustration,
+        couleurAccent,
+        icone,
+        imageUrl,
+      }) => ({
+        id,
+        titre,
+        periode,
+        href,
+        couleurFond,
+        couleurIllustration,
+        couleurAccent,
+        icone,
+        imageUrl,
+      })
+    );
 }
 
 export const LIBELLES_STATUT: Record<StatutCampagne, string> = {

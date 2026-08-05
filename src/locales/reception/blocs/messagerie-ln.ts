@@ -172,6 +172,7 @@ export const messagerieLn = {
     AGENT_EGLISE: "Mosadisi ya nzambi",
     MEDECIN_EXTERNE: "Nganga ya libanda",
     INFIRMIER_HOSP: "Mosadisi ya kulala na ndako",
+    AGENT_CLIENT: "Mosadisi ya service client",
   },
   epingle: "Bomba lisolo",
   desepingle: "Longola kobomba",

@@ -24,6 +24,7 @@
     "db:seed:medecin-externe": "npx tsx prisma/seed-utilisateur-medecin-externe.ts",
     "db:seed:eglise": "npx tsx prisma/seed-utilisateur-eglise.ts",
     "db:seed:admin": "npx tsx prisma/seed-utilisateur-admin.ts",
+    "db:seed:client": "npx tsx prisma/seed-utilisateur-client.ts",
     "db:seed:permissions": "npx tsx prisma/seed-permissions-run.ts",
     "db:seed:medicaments-medecins": "npx tsx prisma/seed-medicaments-medecins.ts",
     "db:seed:messagerie": "npx tsx prisma/seed-messagerie.ts",

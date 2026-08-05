@@ -1,24 +1,24 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CAMPAGNES_PUBLICATIONS } from "@/constants/campagnes";
 import { calculerStatutCampagne } from "@/lib/campagnes-utils";
 import { DetailCampagneClient } from "@/features/campagnes/detail-campagne-client";
+import {
+  obtenirCampagneParSlug,
+  obtenirCampagnesPubliees,
+} from "@/services/service-campagnes";
 
 interface PropsPage {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
-  return CAMPAGNES_PUBLICATIONS.filter((c) => c.publie).map((c) => ({
-    slug: c.slug,
-  }));
+  const campagnes = await obtenirCampagnesPubliees();
+  return campagnes.map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params }: PropsPage): Promise<Metadata> {
   const { slug } = await params;
-  const campagne = CAMPAGNES_PUBLICATIONS.find(
-    (c) => c.slug === slug && c.publie
-  );
+  const campagne = await obtenirCampagneParSlug(slug);
   if (!campagne) return { title: "Campagne introuvable" };
   return {
     title: campagne.titre,
@@ -28,9 +28,7 @@ export async function generateMetadata({ params }: PropsPage): Promise<Metadata>
 
 export default async function PageDetailCampagne({ params }: PropsPage) {
   const { slug } = await params;
-  const campagne = CAMPAGNES_PUBLICATIONS.find(
-    (c) => c.slug === slug && c.publie
-  );
+  const campagne = await obtenirCampagneParSlug(slug);
 
   if (!campagne) notFound();
 

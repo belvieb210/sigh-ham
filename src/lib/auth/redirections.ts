@@ -12,6 +12,7 @@ const ROUTES_PAR_SALLE: Record<CodeSalle, string> = {
   MEDECINS_EXTERNES: "/sigh/medecins-externes",
   HOSPITALISATION: "/sigh/hospitalisation",
   ADMIN: "/sigh/admin",
+  CLIENT: "/sigh/client",
   MESSAGERIE: "/sigh/messagerie",
 };
 
@@ -38,6 +39,14 @@ export function utilisateurPeutAccederSalle(
   salleCode: CodeSalle,
   role: RoleRedirection
 ): boolean {
+  // CMS site public : AGENT_CLIENT + SUPER_ADMIN (pas ADMIN médical)
+  if (salleCode === "CLIENT") {
+    return (
+      role.code === "SUPER_ADMIN" ||
+      role.code === "AGENT_CLIENT" ||
+      role.salle?.code === "CLIENT"
+    );
+  }
   if (role.code === "SUPER_ADMIN" || role.code === "ADMIN") return true;
   return role.salle?.code === salleCode;
 }

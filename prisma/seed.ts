@@ -17,7 +17,8 @@ const SALLES: { code: CodeSalle; nom: string; ordre: number }[] = [
   { code: "MEDECINS_EXTERNES", nom: "Médecins externes", ordre: 8 },
   { code: "HOSPITALISATION", nom: "Hospitalisation", ordre: 9 },
   { code: "ADMIN", nom: "Administration", ordre: 10 },
-  { code: "MESSAGERIE", nom: "Messagerie", ordre: 11 },
+  { code: "CLIENT", nom: "Service Client", ordre: 11 },
+  { code: "MESSAGERIE", nom: "Messagerie", ordre: 12 },
 ];
 
 const ROLES: {
@@ -37,6 +38,7 @@ const ROLES: {
   { code: "AGENT_EGLISE", nom: "Agent pastoral", salleCode: "EGLISE" },
   { code: "MEDECIN_EXTERNE", nom: "Médecin externe", salleCode: "MEDECINS_EXTERNES" },
   { code: "INFIRMIER_HOSP", nom: "Infirmier hospitalisation", salleCode: "HOSPITALISATION" },
+  { code: "AGENT_CLIENT", nom: "Agent service client", salleCode: "CLIENT" },
 ];
 
 async function main() {

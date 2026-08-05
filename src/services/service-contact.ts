@@ -6,15 +6,25 @@ export interface ReponseEnvoiContact {
   succes: boolean;
 }
 
-/** Envoie un message de contact — Phase future : POST /api/contact */
+/** Envoie un message de contact vers le CMS Service Client. */
 export async function envoyerMessageContact(
   donnees: DonneesFormulaireContact
 ): Promise<ReponseEnvoiContact> {
-  await new Promise((resolve) => setTimeout(resolve, 800));
+  const res = await fetch("/api/public/contact", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      nom: donnees.nomComplet,
+      email: donnees.email,
+      telephone: donnees.telephone,
+      sujet: donnees.sujet,
+      message: donnees.message,
+    }),
+  });
 
-  if (process.env.NODE_ENV === "development") {
-    console.info("[Contact] Message reçu :", donnees.sujet, donnees.email);
+  const data = (await res.json()) as { succes?: boolean; message?: string };
+  if (!res.ok) {
+    throw new Error(data.message ?? "Échec de l'envoi");
   }
-
   return { succes: true };
 }

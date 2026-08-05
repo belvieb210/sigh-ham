@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import { CONTENU_A_PROPOS } from "@/constants/a-propos";
 import {
   CAMPAGNES_PUBLICATIONS,
@@ -10,6 +11,7 @@ import {
 import { CONTENU_CONTACT } from "@/constants/contact";
 import { CONTENU_RENDEZ_VOUS } from "@/constants/rendez-vous";
 import { CONTENU_SERVICES } from "@/constants/services";
+import { useCampagnes } from "@/hooks/use-campagnes";
 import type { PagesFr } from "@/locales/pages/fr";
 
 function usePages(): PagesFr {
@@ -185,6 +187,29 @@ export function useContenuRendezVous() {
 export function useContenuServices() {
   const pages = usePages();
   const services = pages.services;
+  const { data: servicesDb } = useQuery({
+    queryKey: ["public", "services-vitrine"],
+    queryFn: async () => {
+      const res = await fetch("/api/public/services-vitrine");
+      if (!res.ok) return null;
+      const data = (await res.json()) as {
+        services?: {
+          id: string;
+          slug: string;
+          titre: string;
+          description: string;
+          imageUrl?: string;
+          categorie: string;
+          points: string[];
+          badge?: string;
+          href?: string;
+          icone: string;
+        }[];
+      };
+      return data.services ?? null;
+    },
+    staleTime: 60_000,
+  });
 
   return useMemo(
     () => ({
@@ -220,22 +245,48 @@ export function useContenuServices() {
       })),
       vedette: services.vedette,
       grille: services.grille,
-      services: CONTENU_SERVICES.services.map((service) => {
-        const trad =
-          services.items[service.id as keyof typeof services.items];
-        return {
-          ...service,
-          titre: trad?.titre ?? service.titre,
-          description: trad?.description ?? service.description,
-          points: trad?.points ?? service.points,
-          badge:
-            "badge" in (trad ?? {}) && trad && "badge" in trad
-              ? trad.badge
-              : "badge" in service
-                ? service.badge
-                : undefined,
-        };
-      }),
+      services: (servicesDb && servicesDb.length > 0
+        ? servicesDb.map((s) => {
+            const base = CONTENU_SERVICES.services.find((x) => x.id === s.slug);
+            const trad =
+              services.items[s.slug as keyof typeof services.items];
+            return {
+              id: s.slug,
+              categorie: (s.categorie ||
+                base?.categorie ||
+                "diagnostic") as (typeof CONTENU_SERVICES.services)[number]["categorie"],
+              titre: trad?.titre ?? s.titre,
+              description: trad?.description ?? s.description,
+              points: trad?.points ?? s.points,
+              badge: s.badge ?? ("badge" in (base ?? {}) ? (base as { badge?: string }).badge : undefined),
+              href: s.href ?? base?.href ?? `/services#${s.slug}`,
+              imageUrl:
+                s.imageUrl ??
+                ("imageUrl" in (base ?? {})
+                  ? (base as { imageUrl?: string }).imageUrl
+                  : undefined),
+              icone: (s.icone || base?.icone || "laboratoire") as (typeof CONTENU_SERVICES.services)[number]["icone"],
+              couleurIcone: base?.couleurIcone ?? "text-bleu-medical",
+              fondIcone: base?.fondIcone ?? "bg-bleu-medical-clair",
+              accent: base?.accent ?? "from-bleu-medical/10 to-bleu-medical-clair",
+            };
+          })
+        : CONTENU_SERVICES.services.map((service) => {
+            const trad =
+              services.items[service.id as keyof typeof services.items];
+            return {
+              ...service,
+              titre: trad?.titre ?? service.titre,
+              description: trad?.description ?? service.description,
+              points: trad?.points ?? service.points,
+              badge:
+                "badge" in (trad ?? {}) && trad && "badge" in trad
+                  ? trad.badge
+                  : "badge" in service
+                    ? service.badge
+                    : undefined,
+            };
+          })),
       impact: {
         titre: services.impact.titre,
         sousTitre: services.impact.sousTitre,
@@ -290,7 +341,7 @@ export function useContenuServices() {
         telephone: CONTENU_SERVICES.cta.telephone,
       },
     }),
-    [services]
+    [services, servicesDb]
   );
 }
 
@@ -372,32 +423,58 @@ export function useContenuCampagnes() {
 export function useCampagnesTraduits() {
   const pages = usePages();
   const items = pages.campagnes.items;
+  const { data: campagnesDb } = useCampagnes();
 
-  return useMemo(
-    () =>
-      CAMPAGNES_PUBLICATIONS.map((campagne) => {
-        const trad = items[campagne.id as keyof typeof items];
-        return {
-          ...campagne,
-          titre: trad?.titre ?? campagne.titre,
-          extrait: trad?.extrait ?? campagne.extrait,
-          description:
-            (trad as { description?: string } | undefined)?.description ??
-            campagne.description,
-          periode:
-            (trad as { periode?: string } | undefined)?.periode ??
-            campagne.periode,
-          lieu:
-            (trad as { lieu?: string } | undefined)?.lieu ?? campagne.lieu,
-        };
-      }),
-    [items]
-  );
+  return useMemo(() => {
+    const source =
+      campagnesDb && campagnesDb.length > 0
+        ? campagnesDb
+        : CAMPAGNES_PUBLICATIONS.filter((c) => c.publie);
+
+    return source.map((campagne) => {
+      const constMatch = CAMPAGNES_PUBLICATIONS.find(
+        (c) => c.slug === campagne.slug
+      );
+      const trad = constMatch
+        ? items[constMatch.id as keyof typeof items]
+        : undefined;
+      return {
+        ...campagne,
+        titre: trad?.titre ?? campagne.titre,
+        extrait: trad?.extrait ?? campagne.extrait,
+        description:
+          (trad as { description?: string } | undefined)?.description ??
+          campagne.description,
+        periode:
+          (trad as { periode?: string } | undefined)?.periode ??
+          campagne.periode,
+        lieu: (trad as { lieu?: string } | undefined)?.lieu ?? campagne.lieu,
+      };
+    });
+  }, [items, campagnesDb]);
 }
 
 export function useContenuAPropos() {
   const pages = usePages();
   const aPropos = pages.aPropos;
+  const { data: medecinsDb } = useQuery({
+    queryKey: ["public", "medecins-vitrine"],
+    queryFn: async () => {
+      const res = await fetch("/api/public/medecins-vitrine");
+      if (!res.ok) return null;
+      const data = (await res.json()) as {
+        medecins?: {
+          id: string;
+          nom: string;
+          prenom: string;
+          specialite: string;
+          photoUrl?: string;
+        }[];
+      };
+      return data.medecins ?? null;
+    },
+    staleTime: 60_000,
+  });
 
   return useMemo(
     () => ({
@@ -439,12 +516,21 @@ export function useContenuAPropos() {
       equipe: {
         titre: aPropos.equipe.titre,
         sousTitre: aPropos.equipe.sousTitre,
-        membres: CONTENU_A_PROPOS.equipe.membres.map((membre, index) => ({
-          id: membre.id,
-          nom: aPropos.equipe.membres[index]?.nom ?? membre.nom,
-          fonction: aPropos.equipe.membres[index]?.fonction ?? membre.fonction,
-          photoUrl: membre.photoUrl,
-        })),
+        membres:
+          medecinsDb && medecinsDb.length > 0
+            ? medecinsDb.map((m) => ({
+                id: m.id,
+                nom: `${m.prenom} ${m.nom}`.trim(),
+                fonction: m.specialite,
+                photoUrl: m.photoUrl ?? "/images/equipe/personnel-1.png",
+              }))
+            : CONTENU_A_PROPOS.equipe.membres.map((membre, index) => ({
+                id: membre.id,
+                nom: aPropos.equipe.membres[index]?.nom ?? membre.nom,
+                fonction:
+                  aPropos.equipe.membres[index]?.fonction ?? membre.fonction,
+                photoUrl: membre.photoUrl,
+              })),
       },
       certifications: {
         titre: aPropos.certifications.titre,
@@ -490,6 +576,6 @@ export function useContenuAPropos() {
         telephone: CONTENU_A_PROPOS.cta.telephone,
       },
     }),
-    [aPropos]
+    [aPropos, medecinsDb]
   );
 }

@@ -13,6 +13,7 @@ const NOM_VERS_CODE: Record<string, string> = {
   "Agent pastoral": "AGENT_EGLISE",
   "Médecin externe": "MEDECIN_EXTERNE",
   "Infirmier hospitalisation": "INFIRMIER_HOSP",
+  "Agent service client": "AGENT_CLIENT",
 };
 
 export function traduireRoleHospitalier(role: string, t: TFunction): string {

@@ -1,0 +1,18 @@
+import type { Metadata } from "next";
+import { ContenuServicesClient } from "@/features/client/contenu-services-client";
+import { verifierAccesClient } from "@/lib/auth/garde-salle";
+import { propsUtilisateurClient } from "@/lib/auth/props-utilisateur-client";
+
+export const metadata: Metadata = {
+  title: "Services — Service Client",
+  robots: { index: false, follow: false },
+};
+
+export default async function Page() {
+  const utilisateur = await verifierAccesClient();
+  return (
+    <ContenuServicesClient
+      utilisateur={propsUtilisateurClient(utilisateur)}
+    />
+  );
+}

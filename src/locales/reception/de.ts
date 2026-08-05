@@ -650,6 +650,7 @@ export const receptionDe = {
       AGENT_EGLISE: "Agent pastoral",
       MEDECIN_EXTERNE: "Médecin externe",
       INFIRMIER_HOSP: "Infirmier hospitalisation",
+      AGENT_CLIENT: "Agent service client",
     },
     epingle: "Épingler la conversation",
     desepingle: "Désépingler",

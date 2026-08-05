@@ -1,0 +1,120 @@
+/** Traductions FR — Service Client (CMS) */
+
+export const clientFr = {
+  layout: {
+    titre: "Service Client",
+    sousTitre: "CMS du site public — campagnes, contenus et communication",
+    badgeClient: "Service Client",
+    sectionPrincipal: "Pilotage",
+    sectionContenu: "Contenu vitrine",
+    sectionCommunication: "Communication",
+    sectionCompte: "Compte",
+    deconnecter: "Se déconnecter",
+    ouvrirMenu: "Ouvrir le menu",
+    fermerMenu: "Fermer le menu",
+    navigationMobile: "Navigation service client",
+  },
+  nav: {
+    accueil: "Tableau de bord",
+    messages: "Messages contact",
+    campagnes: "Campagnes & pubs",
+    hero: "Hero / bannières",
+    services: "Services vitrine",
+    pages: "Pages publiques",
+    medecins: "Médecins vitrine",
+    galerie: "Galerie",
+    messagerie: "Messagerie",
+    notifications: "Notifications",
+    profil: "Mon profil",
+  },
+  navBas: {
+    accueil: "Accueil",
+    campagnes: "Campagnes",
+    hero: "Hero",
+    messages: "Messages",
+    menu: "Menu",
+  },
+  common: {
+    salle: "Service Client",
+    chargement: "Chargement…",
+    erreur: "Une erreur est survenue",
+    enregistrer: "Enregistrer",
+    creer: "Créer",
+    modifier: "Modifier",
+    supprimer: "Supprimer",
+    annuler: "Annuler",
+    publie: "Publié",
+    brouillon: "Brouillon",
+    actif: "Actif",
+    inactif: "Inactif",
+    telecharger: "Téléverser une image",
+  },
+  dashboard: {
+    titre: "Espace Service Client",
+    description:
+      "Gérez les campagnes, publicités et contenus du site public sans accès aux données médicales.",
+    campagnesActives: "Campagnes actives",
+    pubsEnCours: "Publicités en cours",
+    brouillons: "Brouillons",
+    diaposHero: "Diapos hero",
+    messagesNonLus: "Messages non lus",
+    majAuto: "Actualisé automatiquement",
+    alerteMessages: "{{count}} message(s) de contact non lu(s)",
+    voirMessages: "Voir les messages",
+  },
+  raccourcis: {
+    campagnes: "Campagnes & publicités",
+    campagnesDesc: "Publier, mettre en avant, planifier les dates",
+    hero: "Carrousel accueil",
+    heroDesc: "Images et ordre du bandeau principal",
+    messages: "Boîte de contact",
+    messagesDesc: "Messages reçus depuis le formulaire public",
+  },
+  campagnes: {
+    titre: "Campagnes & publicités",
+    description: "Contenus visibles sur /campagnes et l'accueil.",
+    nouvelle: "Nouvelle publication",
+    vide: "Aucune campagne pour le moment.",
+  },
+  hero: {
+    titre: "Hero / bannières",
+    description: "Diapositives du carrousel page d'accueil.",
+    nouvelle: "Ajouter une diapositive",
+  },
+  services: {
+    titre: "Services vitrine",
+    description: "Présentation publique des services sur /services.",
+  },
+  pages: {
+    titre: "Pages publiques",
+    description: "Blocs éditables (À propos, Services, Contact…).",
+  },
+  medecins: {
+    titre: "Médecins vitrine",
+    description: "Fiches publiques (sans lien dossier médical).",
+  },
+  galerie: {
+    titre: "Galerie",
+    description: "Images et médias du site.",
+  },
+  messages: {
+    titre: "Messages contact",
+    description: "Formulaire public /contact.",
+    marquerLu: "Marquer comme lu",
+    vide: "Aucun message.",
+  },
+  messagerie: {
+    titre: "Messagerie",
+    description: "Conversations internes du service.",
+  },
+  notifications: {
+    titre: "Notifications",
+    description: "Alertes du service client.",
+  },
+  profil: {
+    titre: "Mon profil",
+    description: "Informations du compte agent client.",
+  },
+};
+
+export type ClientFr = typeof clientFr;

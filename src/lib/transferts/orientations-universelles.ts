@@ -67,6 +67,11 @@ export const META_ORIENTATION_SALLE: Record<
     description: "Administration",
     couleur: "border-slate-300 bg-slate-50 text-slate-700",
   },
+  CLIENT: {
+    label: "Service Client",
+    description: "CMS site public",
+    couleur: "border-sky-300 bg-sky-50 text-sky-800",
+  },
   MESSAGERIE: {
     label: "Messagerie",
     description: "Messagerie",

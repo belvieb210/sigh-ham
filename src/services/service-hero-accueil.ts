@@ -1,17 +1,18 @@
-import {
-  DIAPOSITIVES_HERO_ACCUEIL,
-} from "@/constants/hero-accueil";
+import { DIAPOSITIVES_HERO_ACCUEIL } from "@/constants/hero-accueil";
+import { chargerDiapositivesHero } from "@/lib/client/contenu-public";
 import type { DiapositiveHeroAccueil } from "@/types/hero-accueil";
 
 /**
- * Récupère les diapositives du hero accueil.
- * Phase future : remplacer par GET /api/hero-accueil?publie=true
+ * Récupère les diapositives du hero accueil (DB, fallback constants).
  */
 export async function obtenirDiapositivesHeroAccueil(): Promise<
   DiapositiveHeroAccueil[]
 > {
-  // await fetch('/api/hero-accueil') …
-  return DIAPOSITIVES_HERO_ACCUEIL.filter((d) => d.publie).sort(
-    (a, b) => a.ordre - b.ordre
-  );
+  try {
+    return await chargerDiapositivesHero();
+  } catch {
+    return DIAPOSITIVES_HERO_ACCUEIL.filter((d) => d.publie).sort(
+      (a, b) => a.ordre - b.ordre
+    );
+  }
 }

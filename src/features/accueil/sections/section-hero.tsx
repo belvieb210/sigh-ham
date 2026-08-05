@@ -67,7 +67,11 @@ function VagueDecorative() {
   );
 }
 
-export function SectionHero() {
+export function SectionHero({
+  diapositives,
+}: {
+  diapositives?: import("@/types/hero-accueil").DiapositiveHeroAccueil[];
+}) {
   const { t } = useTranslation();
 
   const CLES_STATS: Record<string, string> = {
@@ -82,7 +86,7 @@ export function SectionHero() {
       className="section-hero relative min-h-[580px] overflow-hidden lg:min-h-[640px]"
       aria-labelledby="titre-hero"
     >
-      <CarrouselFondHero />
+      <CarrouselFondHero diapositives={diapositives} />
 
       <div
         className="hero-overlay-degrade absolute inset-0"

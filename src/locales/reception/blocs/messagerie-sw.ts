@@ -172,6 +172,7 @@ export const messagerieSw = {
     AGENT_EGLISE: "Mwajiri wa kanisa",
     MEDECIN_EXTERNE: "Daktari wa nje",
     INFIRMIER_HOSP: "Muuguzi wa kulazwa",
+    AGENT_CLIENT: "Wakala wa huduma kwa wateja",
   },
   epingle: "Bandika mazungumzo",
   desepingle: "Ondoa ubandikaji",

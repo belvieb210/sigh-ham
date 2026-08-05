@@ -56,9 +56,18 @@ export function DetailCampagneClient({ slug, statut }: PropsDetailCampagne) {
           </Link>
 
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-            <div className={`${campagne.couleurAccent}`}>
-              <Icone />
-            </div>
+            {campagne.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={campagne.imageUrl}
+                alt=""
+                className="h-28 w-40 shrink-0 rounded-xl object-cover shadow-md sm:h-32 sm:w-48"
+              />
+            ) : (
+              <div className={`${campagne.couleurAccent}`}>
+                <Icone />
+              </div>
+            )}
             <div>
               <div className="flex flex-wrap gap-2">
                 <span className="rounded-full bg-white/80 px-3 py-0.5 text-xs font-bold uppercase text-bleu-medical">

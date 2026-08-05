@@ -10,6 +10,7 @@ import { pharmacieEs } from "./pharmacie/es";
 import { medecinsExternesEs } from "./medecins-externes/es";
 import { egliseEs } from "./eglise/es";
 import { adminEs } from "./admin/es";
+import { clientEs } from "./client/es";
 
 const es: { translation: TraductionsSite } = {
   translation: {
@@ -165,6 +166,7 @@ const es: { translation: TraductionsSite } = {
     medecinsExternes: medecinsExternesEs,
     eglise: egliseEs,
     admin: adminEs,
+    client: clientEs,
     ...communEs,
   },
 };

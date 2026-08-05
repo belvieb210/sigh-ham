@@ -10,6 +10,7 @@ import { pharmacieKg } from "./pharmacie/kg";
 import { medecinsExternesKg } from "./medecins-externes/kg";
 import { egliseKg } from "./eglise/kg";
 import { adminKg } from "./admin/kg";
+import { clientKg } from "./client/kg";
 
 /** Kikongo — traductions principales du site public */
 const kg: { translation: TraductionsSite } = {
@@ -169,6 +170,7 @@ const kg: { translation: TraductionsSite } = {
     medecinsExternes: medecinsExternesKg,
     eglise: egliseKg,
     admin: adminKg,
+    client: clientKg,
     ...communKg,
   },
 };

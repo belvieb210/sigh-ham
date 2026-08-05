@@ -10,6 +10,7 @@ import { pharmacieLn } from "./pharmacie/ln";
 import { medecinsExternesLn } from "./medecins-externes/ln";
 import { egliseLn } from "./eglise/ln";
 import { adminLn } from "./admin/ln";
+import { clientLn } from "./client/ln";
 
 /** Lingala — traductions principales du site public */
 const ln: { translation: TraductionsSite } = {
@@ -169,6 +170,7 @@ const ln: { translation: TraductionsSite } = {
     medecinsExternes: medecinsExternesLn,
     eglise: egliseLn,
     admin: adminLn,
+    client: clientLn,
     ...communLn,
   },
 };

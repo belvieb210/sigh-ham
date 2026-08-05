@@ -646,6 +646,7 @@ export const receptionEn = {
       AGENT_EGLISE: "Pastoral agent",
       MEDECIN_EXTERNE: "External doctor",
       INFIRMIER_HOSP: "Hospitalization nurse",
+      AGENT_CLIENT: "Client service agent",
     },
     epingle: "Pin conversation",
     desepingle: "Unpin",

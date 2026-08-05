@@ -14,6 +14,7 @@ const SALLES_CANAUX: CodeSalle[] = [
   "MEDECINS_EXTERNES",
   "HOSPITALISATION",
   "ADMIN",
+  "CLIENT",
 ];
 
 /** Crée les canaux officiels par service s'ils n'existent pas encore. */

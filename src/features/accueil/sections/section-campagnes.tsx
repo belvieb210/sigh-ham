@@ -150,11 +150,20 @@ export function SectionCampagnes() {
                     </Link>
                   </div>
                   <div
-                    className={`flex w-[38%] items-center justify-center bg-gradient-to-br ${campagne.couleurIllustration}`}
+                    className={`relative flex w-[38%] items-center justify-center overflow-hidden bg-gradient-to-br ${campagne.couleurIllustration}`}
                   >
-                    <div className={campagne.couleurAccent}>
-                      <Icone />
-                    </div>
+                    {campagne.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={campagne.imageUrl}
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className={campagne.couleurAccent}>
+                        <Icone />
+                      </div>
+                    )}
                   </div>
                 </div>
               </article>
@@ -202,13 +211,22 @@ export function SectionCampagnes() {
                 className="carte-campagne group flex flex-col overflow-hidden rounded-2xl border border-gris-bordure/60 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-bleu-medical/20 hover:shadow-[0_16px_40px_-12px_rgba(26,77,124,0.15)]"
               >
                 <div
-                  className={`relative flex h-32 items-center justify-center bg-gradient-to-br ${campagne.couleurIllustration}`}
+                  className={`relative flex h-32 items-center justify-center overflow-hidden bg-gradient-to-br ${campagne.couleurIllustration}`}
                 >
-                  <div
-                    className={`transition-transform duration-300 group-hover:scale-110 ${campagne.couleurAccent}`}
-                  >
-                    <Icone />
-                  </div>
+                  {campagne.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={campagne.imageUrl}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div
+                      className={`transition-transform duration-300 group-hover:scale-110 ${campagne.couleurAccent}`}
+                    >
+                      <Icone />
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-1 flex-col p-5">
                   <h3 className="mb-1.5 text-[15px] font-bold leading-snug text-[#2d2a6e]">

@@ -1,0 +1,120 @@
+/** Translations EN — Client Service (CMS) */
+
+export const clientEn = {
+  layout: {
+    titre: "Client Service",
+    sousTitre: "Public website CMS — campaigns, content and outreach",
+    badgeClient: "Client Service",
+    sectionPrincipal: "Overview",
+    sectionContenu: "Showcase content",
+    sectionCommunication: "Communication",
+    sectionCompte: "Account",
+    deconnecter: "Sign out",
+    ouvrirMenu: "Open menu",
+    fermerMenu: "Close menu",
+    navigationMobile: "Client service navigation",
+  },
+  nav: {
+    accueil: "Dashboard",
+    messages: "Contact messages",
+    campagnes: "Campaigns & ads",
+    hero: "Hero / banners",
+    services: "Showcase services",
+    pages: "Public pages",
+    medecins: "Showcase doctors",
+    galerie: "Gallery",
+    messagerie: "Messaging",
+    notifications: "Notifications",
+    profil: "My profile",
+  },
+  navBas: {
+    accueil: "Home",
+    campagnes: "Campaigns",
+    hero: "Hero",
+    messages: "Messages",
+    menu: "Menu",
+  },
+  common: {
+    salle: "Client Service",
+    chargement: "Loading…",
+    erreur: "Something went wrong",
+    enregistrer: "Save",
+    creer: "Create",
+    modifier: "Edit",
+    supprimer: "Delete",
+    annuler: "Cancel",
+    publie: "Published",
+    brouillon: "Draft",
+    actif: "Active",
+    inactif: "Inactive",
+    telecharger: "Upload image",
+  },
+  dashboard: {
+    titre: "Client Service workspace",
+    description:
+      "Manage campaigns, ads and public content with no access to medical records.",
+    campagnesActives: "Active campaigns",
+    pubsEnCours: "Ads running",
+    brouillons: "Drafts",
+    diaposHero: "Hero slides",
+    messagesNonLus: "Unread messages",
+    majAuto: "Auto-refreshed",
+    alerteMessages: "{{count}} unread contact message(s)",
+    voirMessages: "View messages",
+  },
+  raccourcis: {
+    campagnes: "Campaigns & ads",
+    campagnesDesc: "Publish, feature and schedule content",
+    hero: "Home carousel",
+    heroDesc: "Images and order of the main banner",
+    messages: "Contact inbox",
+    messagesDesc: "Messages from the public contact form",
+  },
+  campagnes: {
+    titre: "Campaigns & ads",
+    description: "Content shown on /campagnes and the home page.",
+    nouvelle: "New publication",
+    vide: "No campaigns yet.",
+  },
+  hero: {
+    titre: "Hero / banners",
+    description: "Home page carousel slides.",
+    nouvelle: "Add a slide",
+  },
+  services: {
+    titre: "Showcase services",
+    description: "Public services listed on /services.",
+  },
+  pages: {
+    titre: "Public pages",
+    description: "Editable blocks (About, Services, Contact…).",
+  },
+  medecins: {
+    titre: "Showcase doctors",
+    description: "Public profiles (no medical record link).",
+  },
+  galerie: {
+    titre: "Gallery",
+    description: "Website images and media.",
+  },
+  messages: {
+    titre: "Contact messages",
+    description: "Public /contact form inbox.",
+    marquerLu: "Mark as read",
+    vide: "No messages.",
+  },
+  messagerie: {
+    titre: "Messaging",
+    description: "Internal service conversations.",
+  },
+  notifications: {
+    titre: "Notifications",
+    description: "Client service alerts.",
+  },
+  profil: {
+    titre: "My profile",
+    description: "Client agent account details.",
+  },
+};
+
+export type ClientEn = typeof clientEn;

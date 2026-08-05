@@ -111,3 +111,15 @@ export async function verifierAccesAdmin() {
 
   return session.utilisateur;
 }
+
+/** Accès Service Client — CMS site public (AGENT_CLIENT / SUPER_ADMIN). */
+export async function verifierAccesClient() {
+  const session = await lireSessionDepuisCookie();
+  if (!session) redirect("/connexion");
+
+  if (!utilisateurPeutAccederSalle("CLIENT", session.utilisateur.role)) {
+    redirect(obtenirRouteApresConnexion(session.utilisateur.role));
+  }
+
+  return session.utilisateur;
+}

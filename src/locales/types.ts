@@ -135,6 +135,7 @@ export interface TraductionsSite {
   medecinsExternes: DeepString<import("./medecins-externes/fr").MedecinsExternesFr>;
   eglise: DeepString<import("./eglise/fr").EgliseFr>;
   admin: DeepString<import("./admin/fr").AdminFr>;
+  client: DeepString<import("./client/fr").ClientFr>;
 }
 
 export type CodeLangue =

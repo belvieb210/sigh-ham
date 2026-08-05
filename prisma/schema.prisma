@@ -24,6 +24,7 @@ enum CodeSalle {
   MEDECINS_EXTERNES
   HOSPITALISATION
   ADMIN
+  CLIENT
   MESSAGERIE
 }
 
@@ -1351,4 +1352,128 @@ model ParametreSysteme {
 
   @@index([categorie])
   @@map("parametres_systeme")
+}
+
+// ─── Service Client — CMS site public ────────────────────────────────────────
+
+model CampagnePublique {
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  titre              String
+  extrait            String   @db.Text
+  description        String   @db.Text
+  periode            String
+  dateDebut          DateTime @map("date_debut")
+  dateFin            DateTime @map("date_fin")
+  categorie          String
+  typePublication    String   @map("type_publication")
+  publie             Boolean  @default(false)
+  misEnAvant         Boolean  @default(false) @map("mis_en_avant")
+  imageUrl           String?  @map("image_url")
+  lieu               String?
+  couleurFond        String   @default("#E8F4FC") @map("couleur_fond")
+  couleurIllustration String  @default("#0B6E99") @map("couleur_illustration")
+  couleurAccent      String   @default("#0B6E99") @map("couleur_accent")
+  icone              String   @default("coeur")
+  datePublication    DateTime? @map("date_publication")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@index([publie, dateDebut, dateFin])
+  @@index([typePublication, publie])
+  @@index([misEnAvant, publie])
+  @@map("campagnes_publiques")
+}
+
+model DiapositiveHero {
+  id        String   @id @default(cuid())
+  url       String
+  alt       String
+  titre     String?
+  lienHref  String?  @map("lien_href")
+  ordre     Int      @default(0)
+  actif     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([actif, ordre])
+  @@map("diapositives_hero")
+}
+
+model PagePublique {
+  id        String   @id @default(cuid())
+  cle       String   @unique
+  titre     String
+  contenu   Json     @default("{}")
+  publie    Boolean  @default(true)
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("pages_publiques")
+}
+
+model ServiceVitrine {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  titre       String
+  description String   @db.Text
+  imageUrl    String?  @map("image_url")
+  categorie   String   @default("diagnostic")
+  pointsJson  Json     @default("[]") @map("points_json")
+  badge       String?
+  href        String?
+  icone       String   @default("laboratoire")
+  ordre       Int      @default(0)
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([actif, ordre])
+  @@map("services_vitrine")
+}
+
+model MedecinVitrine {
+  id          String   @id @default(cuid())
+  nom         String
+  prenom      String
+  specialite  String
+  bio         String?  @db.Text
+  photoUrl    String?  @map("photo_url")
+  horaires    String?
+  ordre       Int      @default(0)
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([actif, ordre])
+  @@map("medecins_vitrine")
+}
+
+model MediaGalerie {
+  id        String   @id @default(cuid())
+  url       String
+  type      String   @default("image")
+  legende   String?
+  album     String   @default("general")
+  ordre     Int      @default(0)
+  actif     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([album, actif, ordre])
+  @@map("medias_galerie")
+}
+
+model MessageContact {
+  id        String   @id @default(cuid())
+  nom       String
+  email     String
+  telephone String?
+  sujet     String
+  message   String   @db.Text
+  lu        Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([lu, createdAt])
+  @@map("messages_contact")
 }

@@ -169,6 +169,7 @@ export const messagerieZh = {
     AGENT_EGLISE: "牧灵专员",
     MEDECIN_EXTERNE: "外部医生",
     INFIRMIER_HOSP: "住院护士",
+    AGENT_CLIENT: "客户服务专员",
   },
   epingle: "置顶会话",
   desepingle: "取消置顶",

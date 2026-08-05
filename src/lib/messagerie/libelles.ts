@@ -11,6 +11,7 @@ const LIBELLES_SALLE: Record<CodeSalle, string> = {
   MEDECINS_EXTERNES: "Médecins externes",
   HOSPITALISATION: "Hospitalisation",
   ADMIN: "Administration",
+  CLIENT: "Service Client",
   MESSAGERIE: "Messagerie",
 };
 

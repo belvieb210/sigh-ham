@@ -290,28 +290,156 @@ export async function obtenirStatsMedecins(): Promise<StatsMedecinsJour> {
   const debut = debutJourLocal();
   const patients = await listerPatientsMedecins();
 
-  const [consultationsAujourdhui, ordonnancesAujourdhui, admissionsActives] =
-    await Promise.all([
-      prisma.consultation.count({
-        where: { debutLe: { gte: debut } },
-      }),
-      prisma.ordonnance.count({
-        where: { prescritLe: { gte: debut } },
-      }),
-      prisma.admission.count({
-        where: {
-          sortiLe: null,
-          statut: { in: ["ADMIS", "EN_SOINS"] },
-        },
-      }),
-    ]);
+  const [
+    consultationsAujourdhui,
+    ordonnancesAujourdhui,
+    examensAujourdhui,
+    patientsTransferesCaisse,
+    admissionsActives,
+  ] = await Promise.all([
+    prisma.consultation.count({
+      where: { debutLe: { gte: debut } },
+    }),
+    prisma.ordonnance.count({
+      where: { prescritLe: { gte: debut } },
+    }),
+    prisma.examenLaboratoire.count({
+      where: { createdAt: { gte: debut } },
+    }),
+    prisma.transfert.count({
+      where: {
+        salleOrigine: { code: "MEDECINS" },
+        salleDestination: { code: "CAISSE" },
+        OR: [
+          { statut: "EN_ATTENTE" },
+          {
+            statut: { in: ["ACCEPTE", "EN_TRAITEMENT", "TERMINE"] },
+            emisLe: { gte: debut },
+          },
+        ],
+      },
+    }),
+    prisma.admission.count({
+      where: {
+        sortiLe: null,
+        statut: { in: ["ADMIS", "EN_SOINS"] },
+      },
+    }),
+  ]);
 
   return {
     patientsEnFile: patients.length,
     consultationsAujourdhui,
     ordonnancesAujourdhui,
+    examensAujourdhui,
+    patientsTransferesCaisse,
     admissionsActives,
     arriveesFileIso: patients.map((p) => p.arriveeLe),
     dateReference: new Date().toISOString(),
+  };
+}
+
+export async function obtenirApercuDashboardMedecins(): Promise<
+  import("@/lib/medecins/types").ApercuDashboardMedecins
+> {
+  const debut = debutJourLocal();
+  const [stats, file] = await Promise.all([
+    obtenirStatsMedecins(),
+    listerPatientsMedecins(),
+  ]);
+
+  const enConsultation = file.find((p) => p.consultationOuverteId);
+  const cible = enConsultation ?? file[0] ?? null;
+  const consultationEnCours = cible
+    ? await obtenirDetailPatientMedecins(cible.dossierId)
+    : null;
+
+  let diagnosticsEnCours: import("@/lib/medecins/types").DiagnosticConsultationMedecins[] =
+    [];
+  const consultationOuverteId =
+    cible?.consultationOuverteId ??
+    consultationEnCours?.consultationOuverteId ??
+    null;
+  if (consultationOuverteId) {
+    const diags = await prisma.diagnostic.findMany({
+      where: { consultationId: consultationOuverteId },
+      orderBy: [{ principal: "desc" }, { libelle: "asc" }],
+    });
+    diagnosticsEnCours = diags.map((d) => ({
+      id: d.id,
+      codeCim: d.codeCim,
+      libelle: d.libelle,
+      principal: d.principal,
+    }));
+  }
+
+  const [ordonnances, examens, transferts] = await Promise.all([
+    prisma.ordonnance.findMany({
+      where: { prescritLe: { gte: debut } },
+      include: {
+        dossier: { include: { patient: true } },
+      },
+      orderBy: { prescritLe: "desc" },
+      take: 8,
+    }),
+    prisma.examenLaboratoire.findMany({
+      where: { createdAt: { gte: debut } },
+      include: {
+        dossier: { include: { patient: true } },
+        typeExamen: { select: { libelle: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    }),
+    prisma.transfert.findMany({
+      where: {
+        salleOrigine: { code: "MEDECINS" },
+        salleDestination: { code: "CAISSE" },
+        emisLe: { gte: debut },
+      },
+      include: {
+        dossier: { include: { patient: true } },
+      },
+      orderBy: { emisLe: "desc" },
+      take: 8,
+    }),
+  ]);
+
+  type Act = import("@/lib/medecins/types").ActiviteRecenteMedecins;
+  const activites: Act[] = [
+    ...ordonnances.map((o) => ({
+      id: `ord-${o.id}`,
+      type: "ORDONNANCE" as const,
+      libelle: "Ordonnance émise",
+      patient: `${o.dossier.patient.prenom} ${o.dossier.patient.nom}`.trim(),
+      heure: formaterHeure(o.prescritLe.toISOString()),
+      iso: o.prescritLe.toISOString(),
+    })),
+    ...examens.map((e) => ({
+      id: `ex-${e.id}`,
+      type: "EXAMEN" as const,
+      libelle: `Examen demandé — ${e.typeExamen.libelle}`,
+      patient: `${e.dossier.patient.prenom} ${e.dossier.patient.nom}`.trim(),
+      heure: formaterHeure(e.createdAt.toISOString()),
+      iso: e.createdAt.toISOString(),
+    })),
+    ...transferts.map((t) => ({
+      id: `tr-${t.id}`,
+      type: "TRANSFERT_CAISSE" as const,
+      libelle: "Transmis à la caisse",
+      patient: `${t.dossier.patient.prenom} ${t.dossier.patient.nom}`.trim(),
+      heure: formaterHeure(t.emisLe.toISOString()),
+      iso: t.emisLe.toISOString(),
+    })),
+  ]
+    .sort((a, b) => b.iso.localeCompare(a.iso))
+    .slice(0, 10);
+
+  return {
+    stats,
+    file: file.slice(0, 8),
+    consultationEnCours,
+    diagnosticsEnCours,
+    activites,
   };
 }

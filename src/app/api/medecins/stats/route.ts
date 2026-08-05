@@ -1,14 +1,21 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { obtenirSessionApiMedecins } from "@/lib/auth/garde-api-medecins";
-import { obtenirStatsMedecins } from "@/lib/medecins/lister-patients-medecins";
+import {
+  obtenirApercuDashboardMedecins,
+  obtenirStatsMedecins,
+} from "@/lib/medecins/lister-patients-medecins";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await obtenirSessionApiMedecins();
   if (!session) {
     return NextResponse.json({ erreur: "Non autorisé." }, { status: 401 });
   }
 
   try {
+    if (request.nextUrl.searchParams.get("apercu") === "1") {
+      const apercu = await obtenirApercuDashboardMedecins();
+      return NextResponse.json({ stats: apercu.stats, apercu });
+    }
     const stats = await obtenirStatsMedecins();
     return NextResponse.json({ stats });
   } catch (e) {

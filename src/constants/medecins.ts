@@ -16,16 +16,43 @@ import {
   UserCircle,
   ClipboardList,
   FileText,
+  FolderOpen,
+  NotebookPen,
+  ArrowRightLeft,
+  BarChart3,
+  ScrollText,
+  CalendarDays,
 } from "lucide-react";
 
+/** Clés de compteurs pour badges sidebar */
+export type CleBadgeMedecins =
+  | "fileAttente"
+  | "patientsDuJour"
+  | "ordonnances"
+  | "examens"
+  | "patientsTransferes";
+
 export const NAVIGATION_MEDECINS = {
-  tableauDeBord: [{ href: "/sigh/medecins", id: "accueil", icone: Home }],
-  medecins: [
+  tableauDeBord: [
+    { href: "/sigh/medecins", id: "accueil", icone: Home, actif: true },
+  ],
+  salle: [
     {
-      href: "/sigh/medecins/patients",
-      id: "patients",
+      href: "/sigh/medecins/file-attente",
+      id: "fileAttente",
       icone: Users,
-      badge: true,
+      badge: "fileAttente" as CleBadgeMedecins,
+    },
+    {
+      href: "/sigh/medecins/patients-du-jour",
+      id: "patientsDuJour",
+      icone: CalendarDays,
+      badge: "patientsDuJour" as CleBadgeMedecins,
+    },
+    {
+      href: "/sigh/medecins/dossiers",
+      id: "dossiersPatients",
+      icone: FolderOpen,
     },
     {
       href: "/sigh/medecins/consultation",
@@ -33,19 +60,27 @@ export const NAVIGATION_MEDECINS = {
       icone: Stethoscope,
     },
     {
-      href: "/sigh/medecins/examens",
-      id: "examens",
-      icone: FlaskConical,
-    },
-    {
       href: "/sigh/medecins/ordonnances",
       id: "ordonnances",
       icone: Pill,
+      badge: "ordonnances" as CleBadgeMedecins,
     },
     {
-      href: "/sigh/medecins/hospitalisations",
-      id: "hospitalisations",
-      icone: BedDouble,
+      href: "/sigh/medecins/examens",
+      id: "demandesExamens",
+      icone: FlaskConical,
+      badge: "examens" as CleBadgeMedecins,
+    },
+    {
+      href: "/sigh/medecins/notes",
+      id: "notesMedicales",
+      icone: NotebookPen,
+    },
+    {
+      href: "/sigh/medecins/patients-transferes",
+      id: "patientsTransferes",
+      icone: ArrowRightLeft,
+      badge: "patientsTransferes" as CleBadgeMedecins,
     },
     {
       href: "/sigh/medecins/rendez-vous",
@@ -57,21 +92,45 @@ export const NAVIGATION_MEDECINS = {
       id: "historique",
       icone: History,
     },
+    {
+      href: "/sigh/medecins/rapports",
+      id: "rapports",
+      icone: BarChart3,
+    },
   ],
   communication: [
     { href: "/sigh/medecins/messagerie", id: "messagerie", icone: MessageSquare },
     { href: "/sigh/medecins/notifications", id: "notifications", icone: Bell },
   ],
   parametres: [
+    {
+      href: "/sigh/medecins/modeles-ordonnance",
+      id: "modelesOrdonnance",
+      icone: ScrollText,
+    },
+    {
+      href: "/sigh/medecins/parametres",
+      id: "parametresConsultation",
+      icone: Settings,
+    },
+    {
+      href: "/sigh/medecins/hospitalisations",
+      id: "hospitalisations",
+      icone: BedDouble,
+    },
     { href: "/sigh/medecins/profil", id: "profil", icone: UserCircle },
-    { href: "/sigh/medecins/parametres", id: "parametres", icone: Settings },
   ],
 } as const;
 
 export const NAVIGATION_BASSE_MEDECINS = [
   { href: "/sigh/medecins", id: "accueil", icone: Home },
-  { href: "/sigh/medecins/patients", id: "patients", icone: Users },
-  { href: "/sigh/medecins/consultation", id: "consultation", icone: Stethoscope, fab: true },
+  { href: "/sigh/medecins/file-attente", id: "fileAttente", icone: Users },
+  {
+    href: "/sigh/medecins/consultation",
+    id: "consultation",
+    icone: Stethoscope,
+    fab: true,
+  },
   { href: "/sigh/medecins/ordonnances", id: "ordonnances", icone: Pill },
 ] as const;
 

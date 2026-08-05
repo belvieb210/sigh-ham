@@ -23,8 +23,8 @@ export function useNavigationMedecins() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [t, langue]
   );
-  const medecins = useMemo(
-    () => mapSection(NAVIGATION_MEDECINS.medecins),
+  const salle = useMemo(
+    () => mapSection(NAVIGATION_MEDECINS.salle),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [t, langue]
   );
@@ -48,5 +48,5 @@ export function useNavigationMedecins() {
     [t, langue]
   );
 
-  return { tableauDeBord, medecins, communication, parametres, basse };
+  return { tableauDeBord, salle, communication, parametres, basse };
 }

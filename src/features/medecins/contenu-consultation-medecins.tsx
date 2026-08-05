@@ -638,7 +638,7 @@ export function ContenuConsultationMedecins({
                   )}
                   {cloturee && (
                     <Link
-                      href={`/sigh/medecins/patients`}
+                      href={`/sigh/medecins/file-attente`}
                       className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
                     >
                       {t("medecins.consultation.lienOrientation")}

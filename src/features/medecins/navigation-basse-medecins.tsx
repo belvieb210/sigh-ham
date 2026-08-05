@@ -26,7 +26,9 @@ export function NavigationBasseMedecins({ onMenu }: PropsNavigationBasseMedecins
           const actif =
             pathname === item.href ||
             (item.id === "accueil" && pathname === "/sigh/medecins") ||
-            (item.id === "patients" && pathname.startsWith("/sigh/medecins/patients")) ||
+            (item.id === "fileAttente" &&
+              (pathname.startsWith("/sigh/medecins/file-attente") ||
+                pathname.startsWith("/sigh/medecins/patients"))) ||
             (item.id === "consultation" &&
               pathname.startsWith("/sigh/medecins/consultation")) ||
             (item.id === "ordonnances" &&

@@ -33,10 +33,74 @@ export interface StatsMedecinsJour {
   patientsEnFile: number;
   consultationsAujourdhui: number;
   ordonnancesAujourdhui: number;
+  examensAujourdhui: number;
+  patientsTransferesCaisse: number;
   admissionsActives: number;
   arriveesFileIso: string[];
   dateReference: string;
 }
+
+export type ActiviteRecenteMedecins = {
+  id: string;
+  type: "ORDONNANCE" | "EXAMEN" | "NOTE" | "TRANSFERT_CAISSE";
+  libelle: string;
+  patient: string;
+  heure: string;
+  iso: string;
+};
+
+export type ApercuDashboardMedecins = {
+  stats: StatsMedecinsJour;
+  file: PatientFileMedecins[];
+  consultationEnCours: DetailPatientMedecins | null;
+  diagnosticsEnCours: DiagnosticConsultationMedecins[];
+  activites: ActiviteRecenteMedecins[];
+};
+
+export type PatientTransfereCaisse = {
+  id: string;
+  dossierId: string;
+  nomComplet: string;
+  numeroDossier: string;
+  telephone: string;
+  statut: string;
+  destination: string;
+  emisLe: string;
+  heure: string;
+};
+
+export type PatientDuJour = {
+  dossierId: string;
+  consultationId: string | null;
+  nomComplet: string;
+  numeroDossier: string;
+  telephone: string;
+  motif: string;
+  debutLe: string;
+  finLe: string | null;
+  medecin: string;
+};
+
+export type NoteMedicaleResume = {
+  id: string;
+  dossierId: string;
+  consultationId: string;
+  patient: string;
+  libelle: string;
+  typeActe: string;
+  notes: string | null;
+  creeLe: string;
+};
+
+export type DossierRechercheMedecins = {
+  id: string;
+  numero: string;
+  nomComplet: string;
+  telephone: string;
+  age: number | null;
+  sexe: string | null;
+  updatedAt: string;
+};
 
 export interface ConstanteVitaleResume {
   id: string;

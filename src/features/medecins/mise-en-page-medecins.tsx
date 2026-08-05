@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import {
   BarreLateraleMedecins,
   EnTeteMedecins,
+  type BadgesNavMedecins,
 } from "@/features/medecins/layout-medecins";
 import { NavigationBasseMedecins } from "@/features/medecins/navigation-basse-medecins";
 import { FournisseurOrientationMedecins } from "@/features/medecins/contexte-orientation-medecins";
@@ -33,7 +34,7 @@ export function MiseEnPageMedecins({
   children,
 }: PropsMiseEnPageMedecins) {
   const [menuOuvert, setMenuOuvert] = useState(false);
-  const [badgeFile, setBadgeFile] = useState(0);
+  const [badges, setBadges] = useState<BadgesNavMedecins>({});
 
   useEffect(() => {
     let annule = false;
@@ -41,10 +42,22 @@ export function MiseEnPageMedecins({
       try {
         const res = await fetch("/api/medecins/stats");
         const data = (await res.json()) as {
-          stats?: { patientsEnFile?: number };
+          stats?: {
+            patientsEnFile?: number;
+            consultationsAujourdhui?: number;
+            ordonnancesAujourdhui?: number;
+            examensAujourdhui?: number;
+            patientsTransferesCaisse?: number;
+          };
         };
-        if (!annule && res.ok) {
-          setBadgeFile(data.stats?.patientsEnFile ?? 0);
+        if (!annule && res.ok && data.stats) {
+          setBadges({
+            fileAttente: data.stats.patientsEnFile ?? 0,
+            patientsDuJour: data.stats.consultationsAujourdhui ?? 0,
+            ordonnances: data.stats.ordonnancesAujourdhui ?? 0,
+            examens: data.stats.examensAujourdhui ?? 0,
+            patientsTransferes: data.stats.patientsTransferesCaisse ?? 0,
+          });
         }
       } catch {
         /* ignore */
@@ -61,7 +74,7 @@ export function MiseEnPageMedecins({
         utilisateur={utilisateur}
         ouvert={menuOuvert}
         onFermer={() => setMenuOuvert(false)}
-        badgeFile={badgeFile}
+        badges={badges}
       />
 
       <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col">

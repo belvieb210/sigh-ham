@@ -19,7 +19,7 @@ export function lienFileSalle(code: CodeSalle): string {
     case "INFIRMIERS":
       return "/sigh/infirmiers";
     case "MEDECINS":
-      return "/sigh/medecins";
+      return "/sigh/medecins/file-attente";
     case "MEDECINS_EXTERNES":
       return "/sigh/medecins-externes/patients";
     case "EGLISE":

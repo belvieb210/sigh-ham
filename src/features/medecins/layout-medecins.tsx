@@ -15,29 +15,32 @@ import { BadgeMessagerieSidebar } from "@/features/messagerie/badge-messagerie-s
 import { BadgeNotificationsSidebar } from "@/features/notifications/badge-notifications-sidebar";
 import { BoutonNotificationsEnTete } from "@/features/notifications/composants/bouton-notifications-entete";
 import { useNavigationMedecins } from "@/hooks/use-navigation-medecins";
+import type { CleBadgeMedecins } from "@/constants/medecins";
 import type { UtilisateurMedecins } from "@/lib/auth/props-utilisateur-medecins";
 import { cn } from "@/lib/utils";
+
+export type BadgesNavMedecins = Partial<Record<CleBadgeMedecins, number>>;
 
 interface PropsBarreLateraleMedecins {
   utilisateur: UtilisateurMedecins;
   ouvert?: boolean;
   onFermer?: () => void;
-  badgeFile?: number;
+  badges?: BadgesNavMedecins;
 }
 
 function LiensNavigation({
   utilisateur,
   onFermer,
-  badgeFile = 0,
+  badges = {},
 }: {
   utilisateur: UtilisateurMedecins;
   onFermer?: () => void;
-  badgeFile?: number;
+  badges?: BadgesNavMedecins;
 }) {
   const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
-  const { tableauDeBord, medecins, communication, parametres } =
+  const { tableauDeBord, salle, communication, parametres } =
     useNavigationMedecins();
 
   const estActif = (href: string) => {
@@ -65,7 +68,17 @@ function LiensNavigation({
     id: string;
     icone: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
     etiquette: string;
-    badge?: boolean;
+    badge?: CleBadgeMedecins;
+  };
+
+  const couleurBadge = (id: string) => {
+    if (id === "fileAttente" || id === "demandesExamens") {
+      return "bg-amber-500 text-white";
+    }
+    if (id === "patientsDuJour" || id === "ordonnances" || id === "patientsTransferes") {
+      return "bg-emerald-600 text-white";
+    }
+    return "bg-bleu-medical text-white";
   };
 
   const rendreSection = (titre: string, items: ItemNav[]) => (
@@ -76,7 +89,9 @@ function LiensNavigation({
       <ul className="space-y-0.5">
         {items.map((item) => {
           const Icone = item.icone;
-          const afficherBadge = Boolean(item.badge) && badgeFile > 0;
+          const compteur =
+            item.badge && badges[item.badge] != null ? badges[item.badge]! : 0;
+          const afficherBadge = Boolean(item.badge) && compteur > 0;
           return (
             <li key={item.href}>
               <Link href={item.href} onClick={onFermer} className={lienClasse(item.href)}>
@@ -85,13 +100,13 @@ function LiensNavigation({
                 {afficherBadge ? (
                   <span
                     className={cn(
-                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                      "min-w-[1.25rem] rounded-md px-1.5 py-0.5 text-center text-[10px] font-bold",
                       estActif(item.href)
-                        ? "bg-white/20 text-white"
-                        : "bg-bleu-medical text-white"
+                        ? "bg-white/25 text-white"
+                        : couleurBadge(item.id)
                     )}
                   >
-                    {badgeFile}
+                    {compteur}
                   </span>
                 ) : null}
                 {item.id === "messagerie" ? (
@@ -134,7 +149,7 @@ function LiensNavigation({
           t("medecins.layout.sectionTableauDeBord"),
           tableauDeBord as ItemNav[]
         )}
-        {rendreSection(t("medecins.layout.sectionMedecins"), medecins as ItemNav[])}
+        {rendreSection(t("medecins.layout.sectionSalle"), salle as ItemNav[])}
         {rendreSection(
           t("medecins.layout.sectionCommunication"),
           communication as ItemNav[]
@@ -183,7 +198,7 @@ export function BarreLateraleMedecins({
   utilisateur,
   ouvert = false,
   onFermer,
-  badgeFile = 0,
+  badges = {},
 }: PropsBarreLateraleMedecins) {
   const { t } = useTranslation();
 
@@ -199,7 +214,7 @@ export function BarreLateraleMedecins({
   return (
     <>
       <aside className="hidden h-full w-[260px] shrink-0 flex-col border-r border-gris-bordure bg-white lg:flex">
-        <LiensNavigation utilisateur={utilisateur} badgeFile={badgeFile} />
+        <LiensNavigation utilisateur={utilisateur} badges={badges} />
       </aside>
 
       {ouvert && (
@@ -218,7 +233,7 @@ export function BarreLateraleMedecins({
             <LiensNavigation
               utilisateur={utilisateur}
               onFermer={onFermer}
-              badgeFile={badgeFile}
+              badges={badges}
             />
           </aside>
         </>

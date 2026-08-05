@@ -7,12 +7,19 @@ import {
   Loader2,
   Pencil,
   Save,
-  Search,
+  SlidersHorizontal,
   Stethoscope,
   XCircle,
 } from "lucide-react";
+import { BoutonsOutilsListe } from "@/components/ui/boutons-outils-liste";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import { EVENEMENT_MEDECINS_PATIENTS_MODIFIES } from "@/constants/medecins";
+import {
+  compterFiltresActifs,
+  FILTRES_FACTURATION_VIDES,
+  FormulaireFiltresFacturationCaisse,
+  type FiltresFacturationCaisse,
+} from "@/features/caisse/formulaire-filtres-facturation-caisse";
 import {
   MiseEnPageMedecins,
   type UtilisateurMedecins,
@@ -46,6 +53,36 @@ function aujourdhuiInput() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function patientCorrespondFiltres(
+  p: PatientFileMedecins,
+  f: FiltresFacturationCaisse
+): boolean {
+  const nom = f.nom.trim().toLowerCase();
+  const prenom = f.prenom.trim().toLowerCase();
+  const tel = f.telephone.trim().toLowerCase();
+  const enreg = f.numeroEnreg.trim().toLowerCase();
+  const idEntite = f.idEntite.trim().toLowerCase();
+  if (nom && !`${p.nom} ${p.nomComplet}`.toLowerCase().includes(nom)) return false;
+  if (prenom && !`${p.prenom} ${p.nomComplet}`.toLowerCase().includes(prenom))
+    return false;
+  if (tel && !(p.telephone || "").toLowerCase().includes(tel)) return false;
+  if (
+    enreg &&
+    !(p.numeroDossier || "").toLowerCase().includes(enreg) &&
+    !(p.numeroPatient || "").toLowerCase().includes(enreg)
+  ) {
+    return false;
+  }
+  if (
+    idEntite &&
+    !(p.numeroPatient || "").toLowerCase().includes(idEntite) &&
+    !(p.dossierId || "").toLowerCase().includes(idEntite)
+  ) {
+    return false;
+  }
+  return true;
+}
+
 export function CorpsConsultation({ utilisateur }: Props) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
@@ -62,7 +99,14 @@ export function CorpsConsultation({ utilisateur }: Props) {
 
   const [patients, setPatients] = useState<PatientFileMedecins[]>([]);
   const [chargementListe, setChargementListe] = useState(true);
-  const [recherche, setRecherche] = useState("");
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillonFiltres, setBrouillonFiltres] = useState<FiltresFacturationCaisse>(
+    FILTRES_FACTURATION_VIDES
+  );
+  const [filtresAppliques, setFiltresAppliques] = useState<FiltresFacturationCaisse>(
+    FILTRES_FACTURATION_VIDES
+  );
+  const [formulaireOuvert, setFormulaireOuvert] = useState(false);
   const [consultation, setConsultation] =
     useState<ConsultationDetailMedecins | null>(null);
   const [historique, setHistorique] = useState<ConsultationDetailMedecins[]>(
@@ -120,7 +164,10 @@ export function CorpsConsultation({ utilisateur }: Props) {
   useEffect(() => {
     if (!dossierUrl || patients.length === 0) return;
     const p = patients.find((x) => x.dossierId === dossierUrl);
-    if (p) selectionnerPatient(p);
+    if (p) {
+      selectionnerPatient(p);
+      setFormulaireOuvert(true);
+    }
   }, [dossierUrl, patients, selectionnerPatient]);
 
   const reinitaliserFormulaire = useCallback(
@@ -166,6 +213,7 @@ export function CorpsConsultation({ utilisateur }: Props) {
       setConstantes(null);
       setHistorique([]);
       setModeModifier(false);
+      setFormulaireOuvert(false);
       return;
     }
 
@@ -217,19 +265,23 @@ export function CorpsConsultation({ utilisateur }: Props) {
     utilisateur.prenom,
   ]);
 
-  const filtrés = useMemo(() => {
-    const q = recherche.trim().toLowerCase();
-    if (!q) return patients;
-    return patients.filter((p) =>
-      [p.nomComplet, p.telephone, p.numeroDossier, p.numeroPatient, p.motif]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
-    );
-  }, [patients, recherche]);
+  const filtrés = useMemo(
+    () => patients.filter((p) => patientCorrespondFiltres(p, filtresAppliques)),
+    [patients, filtresAppliques]
+  );
+
+  const nbFiltresActifs = compterFiltresActifs(filtresAppliques, {
+    ignorerNumeroFacture: true,
+  });
 
   const tousCoches =
     filtrés.length > 0 && filtrés.every((p) => dossiersCoches.includes(p.dossierId));
+
+  function fermerFormulaireApresAction() {
+    setFormulaireOuvert(false);
+    setModeModifier(false);
+    selectionnerPatient(null);
+  }
 
   async function sauvegarder() {
     if (!dossierId) {
@@ -269,7 +321,6 @@ export function CorpsConsultation({ utilisateur }: Props) {
         if (!res.ok || !data.consultation) {
           throw new Error(data.erreur ?? "Enregistrement impossible.");
         }
-        setConsultation(data.consultation);
         setMessage(t("medecins.consultation.enregistree"));
       } else {
         const res = await fetch("/api/medecins/consultations", {
@@ -291,16 +342,10 @@ export function CorpsConsultation({ utilisateur }: Props) {
         if (!res.ok || !data.consultation) {
           throw new Error(data.erreur ?? "Enregistrement impossible.");
         }
-        setConsultation(data.consultation);
         setMessage(t("medecins.consultation.enregistree"));
       }
-      const histRes = await fetch(
-        `/api/medecins/consultations?dossierId=${encodeURIComponent(dossierId)}`
-      );
-      const histData = (await histRes.json()) as {
-        historique?: ConsultationDetailMedecins[];
-      };
-      setHistorique(histData.historique ?? []);
+      await chargerPatients();
+      fermerFormulaireApresAction();
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Erreur d'enregistrement.");
     } finally {
@@ -328,8 +373,9 @@ export function CorpsConsultation({ utilisateur }: Props) {
       if (!res.ok || !data.consultation) {
         throw new Error(data.erreur ?? "Clôture impossible.");
       }
-      setConsultation(data.consultation);
       setMessage(t("medecins.consultation.cloturee"));
+      await chargerPatients();
+      fermerFormulaireApresAction();
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Erreur de clôture.");
     } finally {
@@ -345,7 +391,10 @@ export function CorpsConsultation({ utilisateur }: Props) {
       medecinNom: c.medecin,
     });
     setModeModifier(true);
-    setMessage(`Consultation du ${new Date(c.debutLe).toLocaleString("fr-FR")} chargée.`);
+    setFormulaireOuvert(true);
+    setMessage(
+      `Consultation du ${new Date(c.debutLe).toLocaleString("fr-FR")} chargée.`
+    );
   };
 
   const identite = {
@@ -355,13 +404,18 @@ export function CorpsConsultation({ utilisateur }: Props) {
     age: patientSelectionne?.age != null ? String(patientSelectionne.age) : "",
     sexe: patientSelectionne?.sexe ?? "",
     date: dateConsult,
-    telPat: patientSelectionne?.telephone === "—" ? "" : patientSelectionne?.telephone ?? "",
+    telPat:
+      patientSelectionne?.telephone === "—"
+        ? ""
+        : (patientSelectionne?.telephone ?? ""),
     numeroEnreg: patientSelectionne?.numeroDossier ?? "",
     lectureSeuleIdentite: true as const,
     onChangeIdentite: (champ: string, v: string) => {
       if (champ === "date") setDateConsult(v);
     },
   };
+
+  const afficherFormulaire = formulaireOuvert && Boolean(dossierId);
 
   return (
     <div className="mx-auto w-full max-w-[1200px] space-y-5">
@@ -373,18 +427,148 @@ export function CorpsConsultation({ utilisateur }: Props) {
               {t("medecins.consultation.titre")}
             </h2>
           </div>
-            <p className="mt-1 text-sm text-texte-secondaire">
-              {patientSelectionne
-                ? `Patient : ${patientSelectionne.nomComplet}`
-                : "Sélectionnez un patient dans la liste ci-dessous."}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
+          <p className="mt-1 text-sm text-texte-secondaire">
+            {afficherFormulaire && patientSelectionne
+              ? `Consultation — ${patientSelectionne.nomComplet}`
+              : "Sélectionnez un patient orienté vers la consultation."}
+          </p>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setFiltresOuverts((o) => !o)}
+            aria-expanded={filtresOuverts}
+            aria-label={
+              filtresOuverts
+                ? t("caisse.facturation.fermerFiltres")
+                : t("caisse.facturation.ouvrirFiltres")
+            }
+            className={cn(
+              "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+              filtresOuverts
+                ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
+            )}
+          >
+            <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
+            <span
+              className={cn(
+                "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
+                nbFiltresActifs > 0 ? "bg-red-500" : "bg-slate-400"
+              )}
+            >
+              {nbFiltresActifs}
+            </span>
+          </button>
+          <BoutonsOutilsListe
+            toutSelectionne={tousCoches}
+            onSelectionnerTout={() =>
+              definirCoches(
+                filtrés.map((p) => p.dossierId),
+                !tousCoches
+              )
+            }
+            onExporter={() => {
+              const ids =
+                dossiersCoches.length > 0
+                  ? dossiersCoches
+                  : filtrés.map((p) => p.dossierId);
+              const lignes = patients.filter((p) => ids.includes(p.dossierId));
+              const csv = [
+                "numero;nom;prenom;telephone;motif;statut;heure",
+                ...lignes.map(
+                  (p) =>
+                    `${p.numeroPatient};${p.nom};${p.prenom};${p.telephone};${p.motif};${p.statut};${p.heure}`
+                ),
+              ].join("\n");
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "file-consultation.csv";
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            labelSelectionnerTout={t("medecins.patients.selectionnerTout")}
+            labelExporter={t("caisse.transferts.exporterSelection")}
+          />
+        </div>
+      </div>
+
+      {filtresOuverts ? (
+        <FormulaireFiltresFacturationCaisse
+          valeurs={brouillonFiltres}
+          onChange={setBrouillonFiltres}
+          onRechercher={() => {
+            setFiltresAppliques(brouillonFiltres);
+            setFiltresOuverts(false);
+          }}
+          onReinitialiser={() => {
+            setBrouillonFiltres(FILTRES_FACTURATION_VIDES);
+            setFiltresAppliques(FILTRES_FACTURATION_VIDES);
+          }}
+          idPrefix="filtre-consultation"
+          masquerNumeroFacture
+        />
+      ) : null}
+
+      {message ? (
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          {message}
+        </p>
+      ) : null}
+      {erreur ? <p className="text-sm text-red-600">{erreur}</p> : null}
+
+      {afficherFormulaire ? (
+        <div className="space-y-5">
+          {modeModifier && historique.length > 0 ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase text-amber-900">
+                Consultations enregistrées — cliquez pour charger dans le formulaire
+              </p>
+              <ul className="flex flex-wrap gap-2">
+                {historique.map((h) => (
+                  <li key={h.id}>
+                    <button
+                      type="button"
+                      onClick={() => chargerHistorique(h)}
+                      className={cn(
+                        "rounded-lg border px-2.5 py-1.5 text-xs font-medium",
+                        consultation?.id === h.id
+                          ? "border-bleu-medical bg-white text-bleu-medical"
+                          : "border-amber-200 bg-white text-texte-principal hover:border-bleu-medical"
+                      )}
+                    >
+                      {new Date(h.debutLe).toLocaleString("fr-FR", {
+                        day: "2-digit",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                      {h.finLe ? " · clôturée" : " · ouverte"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <FormulaireConsultationClinique
+            formulaire={formulaire}
+            onChange={setFormulaire}
+            motif={motif}
+            onMotifChange={setMotif}
+            identite={identite}
+            desactive={!dossierId}
+          />
+
+          <div className="flex flex-wrap gap-2 border-t border-gris-bordure pt-4">
             <button
               type="button"
               disabled={enCours || !dossierId}
               onClick={() => void sauvegarder()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-bleu-medical px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-bleu-medical px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
             >
               {enCours ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -396,9 +580,12 @@ export function CorpsConsultation({ utilisateur }: Props) {
             <button
               type="button"
               disabled={!dossierId || historique.length === 0}
-              onClick={() => setModeModifier((v) => !v)}
+              onClick={() => {
+                setModeModifier((v) => !v);
+                setFormulaireOuvert(true);
+              }}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium",
+                "inline-flex items-center gap-1.5 rounded-lg border bg-white px-4 py-2.5 text-sm font-medium",
                 modeModifier
                   ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
                   : "border-gris-bordure text-texte-principal hover:bg-gris-tres-clair"
@@ -412,7 +599,7 @@ export function CorpsConsultation({ utilisateur }: Props) {
                 type="button"
                 disabled={enCours}
                 onClick={() => void cloturer()}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50"
               >
                 <XCircle className="h-4 w-4" />
                 Clôturer
@@ -420,201 +607,154 @@ export function CorpsConsultation({ utilisateur }: Props) {
             ) : null}
           </div>
         </div>
+      ) : null}
 
-        {message ? (
-          <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            {message}
+      <section className="space-y-3">
+        <h3 className="text-sm font-bold uppercase tracking-wide text-texte-principal">
+          Patients orientés vers la consultation
+        </h3>
+        <p className="text-xs text-texte-secondaire">
+          File médicale : patients transmis depuis les autres salles vers les
+          médecins.
+        </p>
+
+        {chargementListe ? (
+          <div className="flex items-center gap-2 text-sm text-texte-secondaire">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {t("medecins.patients.chargement")}
+          </div>
+        ) : filtrés.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-gris-bordure bg-white p-8 text-center text-sm text-texte-secondaire">
+            {nbFiltresActifs > 0
+              ? t("caisse.facturation.filtres.aucunResultat")
+              : t("medecins.patients.vide")}
           </p>
-        ) : null}
-        {erreur ? <p className="text-sm text-red-600">{erreur}</p> : null}
-
-        {modeModifier && historique.length > 0 ? (
-          <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
-            <p className="mb-2 text-xs font-semibold uppercase text-amber-900">
-              Consultations enregistrées — cliquez pour charger dans le formulaire
-            </p>
-            <ul className="flex flex-wrap gap-2">
-              {historique.map((h) => (
-                <li key={h.id}>
-                  <button
-                    type="button"
-                    onClick={() => chargerHistorique(h)}
-                    className={cn(
-                      "rounded-lg border px-2.5 py-1.5 text-xs font-medium",
-                      consultation?.id === h.id
-                        ? "border-bleu-medical bg-white text-bleu-medical"
-                        : "border-amber-200 bg-white text-texte-principal hover:border-bleu-medical"
-                    )}
-                  >
-                    {new Date(h.debutLe).toLocaleString("fr-FR", {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                    {h.finLe ? " · clôturée" : " · ouverte"}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        <FormulaireConsultationClinique
-          formulaire={formulaire}
-          onChange={setFormulaire}
-          motif={motif}
-          onMotifChange={setMotif}
-          identite={identite}
-          desactive={!dossierId}
-        />
-
-        {/* Liste patients (image 6) */}
-        <section className="space-y-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wide text-texte-principal">
-              Patients récemment enregistrés
-            </h3>
-            <div className="relative w-full sm:max-w-xs">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
-              <input
-                type="search"
-                value={recherche}
-                onChange={(e) => setRecherche(e.target.value)}
-                placeholder={t("medecins.patients.recherche")}
-                className="w-full rounded-xl border border-gris-bordure bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-bleu-medical"
-              />
-            </div>
-          </div>
-
-          {chargementListe ? (
-            <div className="flex items-center gap-2 text-sm text-texte-secondaire">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {t("medecins.patients.chargement")}
-            </div>
-          ) : filtrés.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-gris-bordure bg-white p-8 text-center text-sm text-texte-secondaire">
-              {t("medecins.patients.vide")}
-            </p>
-          ) : (
-            <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-gris-bordure bg-gris-tres-clair/60 text-xs uppercase tracking-wide text-texte-secondaire">
-                  <tr>
-                    <th className="px-3 py-3">
-                      <CaseCocheLigne
-                        coche={tousCoches}
-                        onChange={(coche) =>
-                          definirCoches(
-                            filtrés.map((p) => p.dossierId),
-                            coche
-                          )
-                        }
-                        ariaLabel={t("medecins.patients.selectionnerTout")}
-                      />
-                    </th>
-                    <th className="px-3 py-3">ID</th>
-                    <th className="px-3 py-3">
-                      {t("medecins.patients.colonnes.patient")}
-                    </th>
-                    <th className="hidden px-3 py-3 md:table-cell">
-                      {t("medecins.patients.colonnes.telephone")}
-                    </th>
-                    <th className="hidden px-3 py-3 lg:table-cell">
-                      {t("medecins.patients.colonnes.motif")}
-                    </th>
-                    <th className="px-3 py-3">
-                      {t("medecins.patients.colonnes.orientation")}
-                    </th>
-                    <th className="px-3 py-3">
-                      {t("medecins.patients.colonnes.statut")}
-                    </th>
-                    <th className="px-3 py-3">
-                      {t("medecins.patients.colonnes.heure")}
-                    </th>
-                    <th className="px-3 py-3">
-                      {t("medecins.patients.colonnes.actions")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtrés.map((p) => {
-                    const selectionne =
-                      patientSelectionne?.dossierId === p.dossierId;
-                    return (
-                      <tr
-                        key={p.cleListe}
-                        onClick={() => selectionnerPatient(p)}
-                        className={cn(
-                          "cursor-pointer border-b border-gris-bordure/70 hover:bg-bleu-medical-clair/20",
-                          selectionne && "bg-bleu-medical-clair/40"
-                        )}
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-gris-bordure bg-gris-tres-clair/60 text-xs uppercase tracking-wide text-texte-secondaire">
+                <tr>
+                  <th className="px-3 py-3">
+                    <CaseCocheLigne
+                      coche={tousCoches}
+                      onChange={(coche) =>
+                        definirCoches(
+                          filtrés.map((p) => p.dossierId),
+                          coche
+                        )
+                      }
+                      ariaLabel={t("medecins.patients.selectionnerTout")}
+                    />
+                  </th>
+                  <th className="px-3 py-3">ID</th>
+                  <th className="px-3 py-3">
+                    {t("medecins.patients.colonnes.patient")}
+                  </th>
+                  <th className="hidden px-3 py-3 md:table-cell">
+                    {t("medecins.patients.colonnes.telephone")}
+                  </th>
+                  <th className="hidden px-3 py-3 lg:table-cell">
+                    {t("medecins.patients.colonnes.motif")}
+                  </th>
+                  <th className="px-3 py-3">
+                    {t("medecins.patients.colonnes.orientation")}
+                  </th>
+                  <th className="px-3 py-3">
+                    {t("medecins.patients.colonnes.statut")}
+                  </th>
+                  <th className="px-3 py-3">
+                    {t("medecins.patients.colonnes.heure")}
+                  </th>
+                  <th className="px-3 py-3">
+                    {t("medecins.patients.colonnes.actions")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtrés.map((p) => {
+                  const selectionne =
+                    patientSelectionne?.dossierId === p.dossierId &&
+                    formulaireOuvert;
+                  return (
+                    <tr
+                      key={p.cleListe}
+                      onClick={() => {
+                        selectionnerPatient(p);
+                        setFormulaireOuvert(true);
+                        setModeModifier(false);
+                        setMessage(null);
+                        setErreur(null);
+                      }}
+                      className={cn(
+                        "cursor-pointer border-b border-gris-bordure/70 hover:bg-bleu-medical-clair/20",
+                        selectionne && "bg-bleu-medical-clair/40"
+                      )}
+                    >
+                      <td
+                        className="px-3 py-3"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <td
-                          className="px-3 py-3"
-                          onClick={(e) => e.stopPropagation()}
+                        <CaseCocheLigne
+                          coche={dossiersCoches.includes(p.dossierId)}
+                          onChange={() => basculerDossierCoche(p.dossierId)}
+                          ariaLabel={p.nomComplet}
+                        />
+                      </td>
+                      <td className="px-3 py-3 font-mono text-[11px] text-texte-secondaire">
+                        {p.numeroPatient}
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="font-bold uppercase">{p.nom}</span>{" "}
+                        <span className="lowercase">{p.prenom}</span>
+                      </td>
+                      <td className="hidden px-3 py-3 text-texte-secondaire md:table-cell">
+                        {p.telephone}
+                      </td>
+                      <td className="hidden max-w-[9rem] truncate px-3 py-3 text-texte-secondaire lg:table-cell">
+                        {p.motif}
+                      </td>
+                      <td className="px-3 py-3">
+                        <span
+                          className={cn(
+                            "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                            p.orientationCouleur
+                          )}
                         >
-                          <CaseCocheLigne
-                            coche={dossiersCoches.includes(p.dossierId)}
-                            onChange={() => basculerDossierCoche(p.dossierId)}
-                            ariaLabel={p.nomComplet}
-                          />
-                        </td>
-                        <td className="px-3 py-3 font-mono text-[11px] text-texte-secondaire">
-                          {p.numeroPatient}
-                        </td>
-                        <td className="px-3 py-3">
-                          <span className="font-bold uppercase">{p.nom}</span>{" "}
-                          <span className="lowercase">{p.prenom}</span>
-                        </td>
-                        <td className="hidden px-3 py-3 text-texte-secondaire md:table-cell">
-                          {p.telephone}
-                        </td>
-                        <td className="hidden max-w-[9rem] truncate px-3 py-3 text-texte-secondaire lg:table-cell">
-                          {p.motif}
-                        </td>
-                        <td className="px-3 py-3">
-                          <span
-                            className={cn(
-                              "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
-                              p.orientationCouleur
-                            )}
-                          >
-                            {p.orientation}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3">
-                          <span
-                            className={cn(
-                              "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
-                              p.statutCouleur
-                            )}
-                          >
-                            {p.statut}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-texte-secondaire">
-                          {p.heure}
-                        </td>
-                        <td
-                          className="px-3 py-3"
-                          onClick={(e) => e.stopPropagation()}
+                          {p.orientation}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span
+                          className={cn(
+                            "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                            p.statutCouleur
+                          )}
                         >
-                          <MenuActionsTransfertMedecins
-                            patient={p}
-                            onRafraichir={chargerPatients}
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <SectionsMobileMedecinsPatients />
-        </section>
-      </div>
+                          {p.statut}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-texte-secondaire">
+                        {p.heure}
+                      </td>
+                      <td
+                        className="px-3 py-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MenuActionsTransfertMedecins
+                          patient={p}
+                          onRafraichir={chargerPatients}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <SectionsMobileMedecinsPatients />
+      </section>
+    </div>
   );
 }
 

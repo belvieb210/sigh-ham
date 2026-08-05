@@ -2,12 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Plus, Search, Trash2, X } from "lucide-react";
+import {
+  CLASSE_CHAMP_RECEPTION,
+  CLASSE_LABEL_RECEPTION,
+} from "@/constants/reception";
 import type { MedicamentMedecins, TypeExamenMedecins } from "@/lib/medecins/types";
 import { cn } from "@/lib/utils";
 
-const labelCls = "mb-1 block text-sm font-medium text-sky-600";
+const labelCls = CLASSE_LABEL_RECEPTION;
 const inputSousLigne =
-  "w-full border-0 border-b border-dotted border-sky-300 bg-transparent px-1 py-1 text-sm outline-none focus:border-sky-500";
+  "w-full border-0 border-b border-dotted border-gris-bordure bg-transparent px-1 py-1 text-sm text-texte-principal outline-none focus:border-bleu-medical";
+const areaCls = `${CLASSE_CHAMP_RECEPTION} min-h-[4.5rem] resize-y`;
 
 export type LigneMedicamentDraft = {
   key: string;
@@ -116,7 +121,7 @@ export function SelectionExamensOrdonnances({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-base font-bold text-[#1a4d7c]">Examens recommandés</h3>
+      <h3 className="text-base font-bold text-texte-principal">Examens recommandés</h3>
       <p className="text-xs text-texte-secondaire">
         Recherchez et prescrivez les examens de laboratoire (optionnel).
       </p>
@@ -132,7 +137,7 @@ export function SelectionExamensOrdonnances({
           }}
           onFocus={() => setListeOuverte(true)}
           placeholder="Rechercher un examen (code ou nom)…"
-          className="w-full rounded-lg border border-sky-300/80 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-sky-500"
+          className={CLASSE_CHAMP_RECEPTION + " pl-9"}
         />
         {listeOuverte && !desactive ? (
           <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-gris-bordure bg-white shadow-lg">
@@ -176,7 +181,7 @@ export function SelectionExamensOrdonnances({
 
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-sm font-semibold text-[#1a4d7c]">
+          <p className="text-sm font-semibold text-texte-principal">
             Examens sélectionnés
           </p>
           <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-bleu-medical px-1.5 text-xs font-bold text-white">
@@ -190,7 +195,7 @@ export function SelectionExamensOrdonnances({
         ) : (
           <div className="overflow-hidden rounded-lg border border-gris-bordure">
             <table className="w-full text-left text-sm">
-              <thead className="bg-gris-tres-clair text-xs uppercase text-sky-700">
+              <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
                 <tr>
                   <th className="px-3 py-2">Code</th>
                   <th className="px-3 py-2">Nom</th>
@@ -300,8 +305,8 @@ export function LignesMedicamentsOrdonnances({
 
   return (
     <div className="space-y-3" ref={conteneurRef}>
-      <h3 className="text-base font-bold text-[#1a4d7c]">Médicaments recommandés</h3>
-      <div className="hidden grid-cols-[auto_1.4fr_0.8fr_0.8fr_0.7fr_0.5fr_auto] gap-2 text-xs font-medium text-sky-600 sm:grid">
+      <h3 className="text-base font-bold text-texte-principal">Médicaments recommandés</h3>
+      <div className="hidden grid-cols-[auto_1.4fr_0.8fr_0.8fr_0.7fr_0.5fr_auto] gap-2 text-xs font-medium text-texte-secondaire sm:grid">
         <span>Recherche</span>
         <span>Médicament (nom)</span>
         <span>Dosage</span>
@@ -324,7 +329,7 @@ export function LignesMedicamentsOrdonnances({
                   setRechercheOuverte(l.key);
                   setTerme("");
                 }}
-                className="inline-flex items-center gap-1 rounded-md border border-sky-300 bg-sky-50 px-2 py-1.5 text-xs font-medium text-sky-800"
+                className="inline-flex items-center gap-1 rounded-md border border-gris-bordure bg-bleu-medical-clair px-2 py-1.5 text-xs font-medium text-bleu-medical"
               >
                 <Search className="h-3.5 w-3.5" />
                 Recherche
@@ -406,7 +411,7 @@ export function LignesMedicamentsOrdonnances({
               type="button"
               disabled={desactive || lignes.length <= 1}
               onClick={() => onChange(lignes.filter((x) => x.key !== l.key))}
-              className="rounded-md bg-sky-100 px-2 py-1 text-xs font-medium text-sky-800 disabled:opacity-40"
+              className="rounded-md bg-bleu-medical-clair px-2 py-1 text-xs font-medium text-bleu-medical disabled:opacity-40"
             >
               Suppr
             </button>
@@ -417,7 +422,7 @@ export function LignesMedicamentsOrdonnances({
         type="button"
         disabled={desactive}
         onClick={() => onChange([...lignes, nouvelleLigneMed()])}
-        className="inline-flex items-center gap-1 rounded-lg bg-sky-100 px-3 py-1.5 text-sm font-medium text-sky-800"
+        className="inline-flex items-center gap-1 rounded-lg bg-bleu-medical-clair px-3 py-1.5 text-sm font-medium text-bleu-medical"
       >
         <Plus className="h-4 w-4" />
         Ajouter médicament
@@ -447,14 +452,14 @@ export function SectionImagerieOrdonnances({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-base font-bold uppercase tracking-wide text-[#1a4d7c]">
+      <h3 className="text-base font-bold uppercase tracking-wide text-texte-principal">
         Imagerie
       </h3>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {IMAGERIE_CATEGORIES.map((cat) => (
           <label
             key={cat}
-            className="flex flex-col items-start gap-1 text-sm text-sky-700"
+            className="flex flex-col items-start gap-1 text-sm text-texte-secondaire"
           >
             <span>{cat}</span>
             <input
@@ -493,7 +498,7 @@ export function SectionImagerieOrdonnances({
                     autres: value.autres.filter((_, j) => j !== i),
                   })
                 }
-                className="text-xs font-medium text-sky-700"
+                className="text-xs font-medium text-texte-secondaire"
               >
                 Suppr
               </button>
@@ -504,7 +509,7 @@ export function SectionImagerieOrdonnances({
           type="button"
           disabled={desactive}
           onClick={() => onChange({ ...value, autres: [...value.autres, ""] })}
-          className="mt-2 rounded-lg bg-sky-100 px-3 py-1.5 text-sm font-medium text-sky-800"
+          className="mt-2 rounded-lg bg-bleu-medical-clair px-3 py-1.5 text-sm font-medium text-bleu-medical"
         >
           Ajouter un champ autres
         </button>
@@ -514,7 +519,7 @@ export function SectionImagerieOrdonnances({
         <label className={labelCls}>Type de l&apos;examen :</label>
         <textarea
           disabled={desactive}
-          className="min-h-[4rem] w-full rounded-md border border-sky-300/80 px-2 py-1.5 text-sm outline-none focus:border-sky-500"
+          className={areaCls}
           placeholder="Écrire le type d'examen (ex: Échographie abdominale, Scanner thoracique)"
           value={value.typeExamen}
           onChange={(e) => onChange({ ...value, typeExamen: e.target.value })}
@@ -524,7 +529,7 @@ export function SectionImagerieOrdonnances({
         <label className={labelCls}>But de l&apos;imagerie :</label>
         <textarea
           disabled={desactive}
-          className="min-h-[4rem] w-full rounded-md border border-sky-300/80 px-2 py-1.5 text-sm outline-none focus:border-sky-500"
+          className={areaCls}
           placeholder="Précisez le but/raison de l'imagerie"
           value={value.but}
           onChange={(e) => onChange({ ...value, but: e.target.value })}
@@ -534,7 +539,7 @@ export function SectionImagerieOrdonnances({
         <label className={labelCls}>Conduite à tenir :</label>
         <textarea
           disabled={desactive}
-          className="min-h-[5rem] w-full rounded-md border border-sky-300/80 px-2 py-1.5 text-sm outline-none focus:border-sky-500"
+          className={`${areaCls} min-h-[5rem]`}
           value={value.conduiteATenir}
           onChange={(e) =>
             onChange({ ...value, conduiteATenir: e.target.value })

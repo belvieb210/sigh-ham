@@ -43,7 +43,7 @@ function initiales(prenom: string, nom: string) {
 interface ContexteSelectionMedecins {
   patientSelectionne: PatientFileMedecins | null;
   resume: ResumePatientMedecins;
-  selectionnerPatient: (patient: PatientFileMedecins) => void;
+  selectionnerPatient: (patient: PatientFileMedecins | null) => void;
   dossiersCoches: string[];
   basculerDossierCoche: (dossierId: string) => void;
   definirCoches: (dossierIds: string[], coche: boolean) => void;
@@ -67,8 +67,13 @@ export function FournisseurSelectionMedecins({ children }: { children: ReactNode
   const [messagePanneau, setMessagePanneau] = useState<string | null>(null);
 
   const selectionnerPatient = useCallback(
-    (patient: PatientFileMedecins) => {
+    (patient: PatientFileMedecins | null) => {
       setMessagePanneau(null);
+      if (!patient) {
+        setPatientSelectionne(null);
+        setResume(RESUME_MEDECINS_VIDE);
+        return;
+      }
       setPatientSelectionne(patient);
       const codes =
         patient.codesSalleDestination?.length

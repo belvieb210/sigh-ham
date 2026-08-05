@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight, ChevronDown, Megaphone } from "lucide-react";
 import { IMAGE_HERO_CAMPAGNES } from "@/constants/images";
-import { obtenirCampagnesPublieesSync } from "@/services/service-campagnes";
+import { obtenirCampagnesPublieesSync } from "@/services/service-campagnes-sync";
 import { Bouton } from "@/components/ui/bouton";
 import { useContenuCampagnes } from "@/hooks/use-contenu-page";
 

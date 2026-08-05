@@ -9,7 +9,7 @@ import {
   LIBELLES_CATEGORIE,
   LIBELLES_STATUT,
 } from "@/lib/campagnes-utils";
-import type { CampagneAvecStatut } from "@/services/service-campagnes";
+import type { CampagneAvecStatut } from "@/services/service-campagnes-sync";
 import { cn } from "@/lib/utils";
 
 const STYLES_STATUT = {

@@ -1,80 +1,104 @@
 # =============================================================================
-# SIGH HAM — Push GitHub + déploiement VPS (depuis votre PC Windows)
+# SIGH HAM — Push GitHub + deploiement VPS (build + restart)
 #
-# Usage (PowerShell, à la racine du projet) :
-#   .\deploy\push-and-deploy.ps1
-#   .\deploy\push-and-deploy.ps1 -Message "fix pdf medecins"
-#   .\deploy\push-and-deploy.ps1 -SkipCommit          # push seulement si déjà commité
-#   .\deploy\push-and-deploy.ps1 -DeployOnly           # pas de git : force deploy VPS
+# Double-clic : DEPLOIEMENT-VPS.bat (racine du projet)
+# Ou :         .\deploy\push-and-deploy.ps1
 #
-# Mot de passe VPS (ne pas committer) :
-#   $env:SIGH_VPS_PASSWORD = "votre_mot_de_passe"
-#   sinon le script le demande une fois (saisie masquée).
-#
-# Équivalent de ce que fait l'agent : push main → auto-deploy-cron.sh --force
+# Config (une seule fois) : deploy\vps.local.env  (mot de passe VPS)
 # =============================================================================
 [CmdletBinding()]
 param(
   [string]$Message = "",
   [switch]$SkipCommit,
-  [switch]$DeployOnly,
-  [string]$VpsHost = "185.202.236.210",
-  [string]$VpsUser = "root",
-  [string]$AppDir = "/var/www/sigh-ham"
+  [switch]$DeployOnly
 )
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
 
+$EnvFile = Join-Path $PSScriptRoot "vps.local.env"
+$EnvExample = Join-Path $PSScriptRoot "vps.local.env.example"
+
 function Write-Step([string]$t) {
   Write-Host ""
   Write-Host "==> $t" -ForegroundColor Cyan
 }
 
-function Get-VpsPassword {
-  if ($env:SIGH_VPS_PASSWORD -and $env:SIGH_VPS_PASSWORD.Trim().Length -gt 0) {
-    return $env:SIGH_VPS_PASSWORD.Trim()
+function Import-VpsLocalEnv {
+  if (-not (Test-Path $EnvFile)) {
+    if (Test-Path $EnvExample) {
+      Copy-Item $EnvExample $EnvFile
+    }
+    Write-Host ""
+    Write-Host "Fichier manquant : deploy\vps.local.env" -ForegroundColor Yellow
+    Write-Host "1. Ouvrez deploy\vps.local.env"
+    Write-Host "2. Remplacez VPS_PASSWORD=... par le mot de passe root du VPS"
+    Write-Host "3. Relancez DEPLOIEMENT-VPS.bat"
+    Write-Host ""
+    notepad $EnvFile
+    throw "Configurez deploy\vps.local.env puis relancez."
   }
-  $sec = Read-Host "Mot de passe VPS ($VpsUser@$VpsHost)" -AsSecureString
-  $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)
-  try {
-    return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
-  } finally {
-    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+
+  $map = @{}
+  Get-Content $EnvFile -Encoding UTF8 | ForEach-Object {
+    $line = $_.Trim()
+    if (-not $line -or $line.StartsWith("#")) { return }
+    $i = $line.IndexOf("=")
+    if ($i -lt 1) { return }
+    $k = $line.Substring(0, $i).Trim()
+    $v = $line.Substring($i + 1).Trim()
+    if (($v.StartsWith('"') -and $v.EndsWith('"')) -or ($v.StartsWith("'") -and $v.EndsWith("'"))) {
+      $v = $v.Substring(1, $v.Length - 2)
+    }
+    $map[$k] = $v
   }
+  return $map
 }
 
-function Invoke-VpsDeploy([string]$Password) {
+function Invoke-VpsDeploy {
+  param(
+    [string]$HostName,
+    [string]$User,
+    [string]$Password,
+    [string]$AppDir
+  )
+
+  # Askpass ecrit le mot de passe en clair dans un .cmd temporaire
+  # (OpenSSH Windows n'herite pas toujours les variables d'env vers SSH_ASKPASS)
   $askpass = Join-Path $env:TEMP ("sigh-askpass-{0}.cmd" -f [guid]::NewGuid().ToString("N"))
-  # Échappe % pour cmd et écrit le mot de passe
-  $pwEsc = $Password -replace '%', '%%'
-  Set-Content -Path $askpass -Value ("@echo {0}" -f $pwEsc) -Encoding ASCII
+  $pwForCmd = $Password `
+    -replace '\^', '^^' `
+    -replace '&', '^&' `
+    -replace '<', '^<' `
+    -replace '>', '^>' `
+    -replace '\|', '^|' `
+    -replace '%', '%%'
+  @(
+    '@echo off'
+    "echo $($pwForCmd)"
+  ) | Set-Content -Path $askpass -Encoding ASCII
+
   $prevAsk = $env:SSH_ASKPASS
   $prevReq = $env:SSH_ASKPASS_REQUIRE
   $prevDisp = $env:DISPLAY
+
   $env:SSH_ASKPASS = $askpass
   $env:SSH_ASKPASS_REQUIRE = "force"
   $env:DISPLAY = "unused"
+
   try {
-    $remote = @"
-set -euo pipefail
-cd '$AppDir'
-git fetch origin main
-git pull origin main
-bash deploy/auto-deploy-cron.sh --force
-git -C '$AppDir' log -1 --oneline
-systemctl is-active sigh-web sigh-socket
-"@
-    $remoteOneLine = ($remote -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }) -join "; "
+    $cmd = "cd '$AppDir' && git fetch origin main && git pull origin main && bash deploy/auto-deploy-cron.sh --force && git log -1 --oneline && systemctl is-active sigh-web sigh-socket"
+    # Pas de TTY alloue : force l'utilisation de SSH_ASKPASS
     & ssh `
       -o StrictHostKeyChecking=accept-new `
       -o PreferredAuthentications=password `
       -o PubkeyAuthentication=no `
-      ("{0}@{1}" -f $VpsUser, $VpsHost) `
-      $remoteOneLine
+      -o NumberOfPasswordPrompts=1 `
+      ("{0}@{1}" -f $User, $HostName) `
+      $cmd
     if ($LASTEXITCODE -ne 0) {
-      throw "Échec SSH / déploiement VPS (code $LASTEXITCODE)."
+      throw "Echec SSH / deploiement VPS (code $LASTEXITCODE). Verifiez VPS_PASSWORD dans deploy\vps.local.env"
     }
   } finally {
     Remove-Item -Force $askpass -ErrorAction SilentlyContinue
@@ -84,41 +108,54 @@ systemctl is-active sigh-web sigh-socket
   }
 }
 
-Write-Host "SIGH HAM — push + déploiement VPS" -ForegroundColor Green
-Write-Host "Dépôt : $RepoRoot"
-Write-Host "VPS   : $VpsUser@$VpsHost → $AppDir"
+$cfg = Import-VpsLocalEnv
+$VpsHost = if ($cfg["VPS_HOST"]) { $cfg["VPS_HOST"] } else { "185.202.236.210" }
+$VpsUser = if ($cfg["VPS_USER"]) { $cfg["VPS_USER"] } else { "root" }
+$AppDir = if ($cfg["APP_DIR"]) { $cfg["APP_DIR"] } else { "/var/www/sigh-ham" }
+$SiteUrl = if ($cfg["SITE_URL"]) { $cfg["SITE_URL"] } else { "https://hamlab5.duckdns.org" }
+$Password = $cfg["VPS_PASSWORD"]
+
+if (-not $Password -or $Password -eq "votre_mot_de_passe_ici") {
+  notepad $EnvFile
+  throw "Indiquez le vrai mot de passe dans deploy\vps.local.env (cle VPS_PASSWORD)."
+}
+
+Write-Host "SIGH HAM - deploiement automatique" -ForegroundColor Green
+Write-Host "PC  : $RepoRoot"
+Write-Host ("VPS : {0}@{1}  ({2})" -f $VpsUser, $VpsHost, $AppDir)
 
 if (-not $DeployOnly) {
-  Write-Step "État Git"
+  Write-Step "Git - statut"
   git status --short
 
   $status = git status --porcelain
   if ($status -and -not $SkipCommit) {
-    Write-Step "Commit des changements locaux"
+    Write-Step "Git - commit"
     git add -A
     if (-not $Message -or $Message.Trim().Length -eq 0) {
-      $Message = "chore: mise a jour $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+      $Message = "chore: deploiement $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
     }
     git commit -m $Message
-  } elseif ($status -and $SkipCommit) {
-    Write-Host "⚠️  Des fichiers modifiés ne seront PAS commités (-SkipCommit)." -ForegroundColor Yellow
-  } else {
-    Write-Host "Rien à committer (working tree clean)."
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host "Commit ignore (peut-etre rien de nouveau)." -ForegroundColor Yellow
+    }
+  }
+  elseif ($status -and $SkipCommit) {
+    Write-Host "Modifications locales NON committees (-SkipCommit)." -ForegroundColor Yellow
+  }
+  else {
+    Write-Host "Rien a committer."
   }
 
-  Write-Step "Push vers origin/main"
+  Write-Step "Git - push origin/main"
   git push origin main
-  if ($LASTEXITCODE -ne 0) {
-    throw "Échec git push."
-  }
-  Write-Host "✓ Push GitHub OK" -ForegroundColor Green
+  if ($LASTEXITCODE -ne 0) { throw "Echec git push vers GitHub." }
+  Write-Host "Push OK" -ForegroundColor Green
 }
 
-Write-Step "Déploiement VPS (auto-deploy --force)"
-$pwdVps = Get-VpsPassword
-if (-not $pwdVps) { throw "Mot de passe VPS vide." }
-Invoke-VpsDeploy -Password $pwdVps
+Write-Step "VPS - pull + migrate + build + restart"
+Invoke-VpsDeploy -HostName $VpsHost -User $VpsUser -Password $Password -AppDir $AppDir
 
 Write-Host ""
-Write-Host "✅ Terminé — site : https://hamlab5.duckdns.org" -ForegroundColor Green
-Write-Host "   Logs VPS : tail -f /var/www/sigh-ham/logs/auto-deploy.log"
+Write-Host ("Termine - {0}" -f $SiteUrl) -ForegroundColor Green
+Write-Host "Logs VPS : tail -f /var/www/sigh-ham/logs/auto-deploy.log"

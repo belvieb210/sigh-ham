@@ -2,50 +2,52 @@
 
 Tous les scripts sont dans `/var/www/sigh-ham/deploy/`.
 
-## Depuis votre PC Windows (recommandé)
+## Depuis votre PC — un seul fichier
 
-Après une modification locale, déployez comme l’agent :
+1. **Une seule fois** : vérifiez le mot de passe dans `deploy/vps.local.env`  
+   (copie de `deploy/vps.local.env.example` — **jamais** sur GitHub).
+
+2. **À chaque modification** : double-cliquez à la racine du projet :
+
+```
+DEPLOIEMENT-VPS.bat
+```
+
+Cela fait automatiquement :
+
+| Étape | Action |
+|-------|--------|
+| 1 | `git add` + `commit` des changements locaux |
+| 2 | `git push` vers GitHub `main` |
+| 3 | SSH VPS → `git pull` |
+| 4 | `auto-deploy-cron.sh --force` → migrate + **build** + **restart** `sigh-web` / `sigh-socket` |
+
+Équivalent PowerShell :
 
 ```powershell
 cd C:\xampp\htdocs\ham-projet
-
-# Option A — mot de passe en variable (session courante uniquement)
-$env:SIGH_VPS_PASSWORD = "votre_mot_de_passe_vps"
-.\deploy\push-and-deploy.ps1 -Message "feat: description courte"
-
-# Option B — le script demande le mot de passe (saisie masquée)
-.\deploy\push-and-deploy.ps1 -Message "fix pdf"
-
-# Déjà tout commité / poussé ? Forcer uniquement le build VPS :
+.\deploy\push-and-deploy.ps1
+.\deploy\push-and-deploy.ps1 -Message "feat: mon changement"
 .\deploy\push-and-deploy.ps1 -DeployOnly
 ```
 
-Le script fait : `git add` + `commit` (si changements) → `git push origin main` → SSH VPS → `auto-deploy-cron.sh --force`.
-
 ---
 
-## Auto-déploiement (sur le VPS)
+## Auto-déploiement (sur le VPS, en fond)
 
-Exécuté **chaque minute** par crontab — ne rebuild **que** s’il y a du nouveau.
+Même sans lancer le `.bat`, un **crontab chaque minute** peut détecter un nouveau commit GitHub et rebuild. Installer / vérifier :
 
 ```bash
-# Installer / mettre à jour le crontab
 bash /var/www/sigh-ham/deploy/install-crontab.sh
-
-# Forcer un déploiement maintenant
 bash /var/www/sigh-ham/deploy/auto-deploy-cron.sh --force
-
-# Voir les logs
 tail -f /var/www/sigh-ham/logs/auto-deploy.log
 ```
-
-### Comment ça se déclenche
 
 | Événement | Action |
 |-----------|--------|
 | `git push` sur GitHub `main` | Pull + migrate + build + restart |
-| Dump déposé dans `prisma/backups/inbox/` | Import UTF-8 + fix accents + build + restart |
-| Rien de nouveau | **Rien** (pas de build inutile) |
+| Dump dans `prisma/backups/inbox/` | Import + build + restart |
+| Rien de nouveau | Aucun build |
 
 ### Importer une base depuis votre PC
 
@@ -62,6 +64,8 @@ Pas besoin de lancer d’autres commandes sur le VPS.
 
 | Script | Rôle |
 |--------|------|
+| `DEPLOIEMENT-VPS.bat` (PC) | Tout-en-un depuis Windows |
+| `push-and-deploy.ps1` (PC) | Même chose en PowerShell |
 | `auto-deploy-cron.sh` | Tout-en-un intelligent (crontab 1 min) |
 | `migrate-db.sh --pull` | Migrations seules |
 | `deploy-app.sh` | Déploiement complet manuel |
@@ -74,7 +78,8 @@ Pas besoin de lancer d’autres commandes sur le VPS.
 
 ## Après un push GitHub
 
-Rien à faire sur le VPS : le cron détecte le commit sous **1 minute**.
+- **Recommandé** : double-clic `DEPLOIEMENT-VPS.bat` (immédiat).
+- **Sinon** : le cron VPS détecte le commit sous **~1 minute**.
 
 ---
 

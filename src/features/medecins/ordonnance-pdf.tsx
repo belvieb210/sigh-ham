@@ -8,6 +8,7 @@ import {
 } from "@react-pdf/renderer";
 import type { SignesVitauxPdf } from "@/features/medecins/consultation-pdf";
 import {
+  CartePatientPdf,
   EnTetePdfLabo,
   PiedPdfLabo,
   type BrandingPdfLabo,
@@ -61,50 +62,35 @@ const styles = StyleSheet.create({
   page: {
     fontFamily: "Roboto",
     fontSize: 10,
-    paddingTop: 20,
-    paddingHorizontal: 28,
-    paddingBottom: 48,
+    paddingTop: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 42,
     color: "#111111",
   },
-  carte: {
-    borderWidth: 1,
-    borderColor: BLEU_CONTOUR,
-    borderRadius: 4,
-    padding: 8,
-    marginBottom: 8,
-  },
-  carteTitre: {
+  ligne: { marginBottom: 1, lineHeight: 1.2, fontSize: 10 },
+  sectionTitre: {
     fontSize: 10,
     fontWeight: "bold",
     color: BLEU,
-    marginBottom: 4,
-    textTransform: "uppercase",
-  },
-  ligne: { marginBottom: 2, lineHeight: 1.35 },
-  label: { fontWeight: "bold" },
-  sectionTitre: {
-    fontSize: 11,
-    fontWeight: "bold",
-    color: BLEU,
-    marginBottom: 4,
-    marginTop: 6,
+    marginBottom: 2,
+    marginTop: 4,
     borderBottomWidth: 1,
     borderBottomColor: "#cfe0ef",
-    paddingBottom: 2,
+    paddingBottom: 1,
   },
-  grilleVitaux: { flexDirection: "row", flexWrap: "wrap" },
-  vital: { width: "33%", marginBottom: 3 },
+  grilleVitaux: { flexDirection: "row", flexWrap: "wrap", marginBottom: 2 },
+  vital: { width: "33%", marginBottom: 1, fontSize: 9, lineHeight: 1.15 },
   tableHeader: {
     flexDirection: "row",
     backgroundColor: BLEU,
-    paddingVertical: 4,
-    paddingHorizontal: 6,
+    paddingVertical: 3,
+    paddingHorizontal: 5,
   },
   headerCell: { color: "#fff", fontWeight: "bold", fontSize: 9 },
   tableRow: {
     flexDirection: "row",
-    paddingVertical: 3,
-    paddingHorizontal: 6,
+    paddingVertical: 2,
+    paddingHorizontal: 5,
     borderBottomWidth: 1,
     borderBottomColor: BLEU_CONTOUR,
   },
@@ -160,31 +146,32 @@ export function DocumentOrdonnancePdf({
           lignesBadge={["ORDONNANCE", "MÉDICALE"]}
         />
 
-        <View style={styles.carte}>
-          <Text style={styles.carteTitre}>Patient &amp; prescritteur</Text>
-          <Text style={styles.ligne}>
-            <Text style={styles.label}>Patient : </Text>
-            {donnees.patient}
-          </Text>
-          <Text style={styles.ligne}>
-            <Text style={styles.label}>N° dossier : </Text>
-            {donnees.numeroDossier}
-            {donnees.telephone ? `  ·  Tél. : ${donnees.telephone}` : ""}
-          </Text>
-          <Text style={styles.ligne}>
-            <Text style={styles.label}>Âge / Sexe : </Text>
-            {donnees.age != null ? `${donnees.age} ans` : "—"}
-            {donnees.sexe ? ` / ${donnees.sexe}` : ""}
-          </Text>
-          <Text style={styles.ligne}>
-            <Text style={styles.label}>Médecin : </Text>
-            {donnees.medecin}
-          </Text>
-          <Text style={styles.ligne}>
-            <Text style={styles.label}>Prescrit le : </Text>
-            {formaterDate(donnees.prescritLe)}
-          </Text>
-        </View>
+        <CartePatientPdf
+          titre="Patient & prescritteur"
+          lignes={[
+            { label: "Patient", valeur: donnees.patient || "—" },
+            {
+              label: "N° dossier",
+              valeur: [
+                donnees.numeroDossier || "—",
+                donnees.telephone ? `Tél. : ${donnees.telephone}` : null,
+              ]
+                .filter(Boolean)
+                .join("  ·  "),
+            },
+            {
+              label: "Âge / Sexe",
+              valeur: [
+                donnees.age != null ? `${donnees.age} ans` : "—",
+                donnees.sexe || null,
+              ]
+                .filter(Boolean)
+                .join(" / "),
+            },
+            { label: "Médecin", valeur: donnees.medecin || "—" },
+            { label: "Prescrit le", valeur: formaterDate(donnees.prescritLe) },
+          ]}
+        />
 
         {vitaux.length > 0 ? (
           <View>
@@ -211,7 +198,11 @@ export function DocumentOrdonnancePdf({
               <Text style={[styles.colDur, styles.headerCell]}>Durée</Text>
             </View>
             {donnees.lignes.map((l, i) => (
-              <View key={`${l.medicament}-${i}`} style={styles.tableRow} wrap={false}>
+              <View
+                key={`${l.medicament}-${i}`}
+                style={styles.tableRow}
+                wrap={false}
+              >
                 <Text style={styles.colMed}>
                   {l.medicament}
                   {l.dosage ? ` (${l.dosage})` : ""}
@@ -232,7 +223,8 @@ export function DocumentOrdonnancePdf({
           donnees.imagerie.but) ? (
           <View>
             <Text style={styles.sectionTitre}>Imagerie / examens</Text>
-            {donnees.imagerie.categories && donnees.imagerie.categories.length > 0 ? (
+            {donnees.imagerie.categories &&
+            donnees.imagerie.categories.length > 0 ? (
               <Text style={styles.ligne}>
                 Catégories : {donnees.imagerie.categories.join(", ")}
               </Text>

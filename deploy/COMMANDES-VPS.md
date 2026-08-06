@@ -2,7 +2,29 @@
 
 Tous les scripts sont dans `/var/www/sigh-ham/deploy/`.
 
-## Auto-déploiement (recommandé)
+## Depuis votre PC Windows (recommandé)
+
+Après une modification locale, déployez comme l’agent :
+
+```powershell
+cd C:\xampp\htdocs\ham-projet
+
+# Option A — mot de passe en variable (session courante uniquement)
+$env:SIGH_VPS_PASSWORD = "votre_mot_de_passe_vps"
+.\deploy\push-and-deploy.ps1 -Message "feat: description courte"
+
+# Option B — le script demande le mot de passe (saisie masquée)
+.\deploy\push-and-deploy.ps1 -Message "fix pdf"
+
+# Déjà tout commité / poussé ? Forcer uniquement le build VPS :
+.\deploy\push-and-deploy.ps1 -DeployOnly
+```
+
+Le script fait : `git add` + `commit` (si changements) → `git push origin main` → SSH VPS → `auto-deploy-cron.sh --force`.
+
+---
+
+## Auto-déploiement (sur le VPS)
 
 Exécuté **chaque minute** par crontab — ne rebuild **que** s’il y a du nouveau.
 

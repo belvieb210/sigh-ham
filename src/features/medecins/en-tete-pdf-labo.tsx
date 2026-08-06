@@ -23,36 +23,99 @@ export const BRANDING_PDF_FALLBACK: BrandingPdfLabo = {
 const BLEU = "#1a4d7c";
 const BLEU_CONTOUR = "#7eb6e0";
 const GRIS = "#555555";
+const NOIR = "#111111";
 
+/** Styles calqués sur devis-estimation-pdf (compact, sans espaces fantômes react-pdf). */
 const styles = StyleSheet.create({
   enTete: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 6,
+    alignItems: "flex-start",
+    marginBottom: 0,
+    paddingBottom: 0,
   },
-  enTeteGauche: { flexDirection: "row", width: "62%" },
-  logo: { width: 44, height: 44, objectFit: "contain" },
-  infos: { paddingLeft: 8, flex: 1 },
-  nomLabo: { fontSize: 12, fontWeight: "bold", marginBottom: 1 },
-  sousNom: { fontSize: 8, color: GRIS, lineHeight: 1.2 },
-  badge: {
+  enTeteGauche: {
+    flexDirection: "row",
+    width: "58%",
+    alignItems: "flex-start",
+  },
+  logo: {
+    width: 48,
+    height: 48,
+    objectFit: "contain",
+  },
+  enTeteInfos: {
+    flex: 1,
+    paddingLeft: 8,
+  },
+  nomLabo: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: NOIR,
+    marginBottom: 1,
+  },
+  sousNom: {
+    fontSize: 8,
+    color: GRIS,
+    marginBottom: 0,
+    lineHeight: 1.2,
+  },
+  contact: {
+    fontSize: 8,
+    color: GRIS,
+    marginTop: 0,
+    lineHeight: 1.2,
+  },
+  enTeteDroite: {
+    width: "40%",
+    alignItems: "flex-end",
+  },
+  badgeTitre: {
     borderWidth: 1.5,
     borderColor: BLEU,
     borderRadius: 3,
-    paddingVertical: 3,
+    paddingVertical: 2,
     paddingHorizontal: 8,
-    alignSelf: "flex-start",
+    marginBottom: 0,
   },
-  badgeTexte: {
+  badgeTitreTexte: {
     color: BLEU,
     fontSize: 9,
     fontWeight: "bold",
     textAlign: "center",
+    lineHeight: 1.15,
   },
-  separateur: {
+  separateurEnTete: {
     borderBottomWidth: 1.5,
     borderBottomColor: BLEU_CONTOUR,
-    marginVertical: 8,
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  carte: {
+    borderWidth: 1,
+    borderColor: BLEU_CONTOUR,
+    borderRadius: 4,
+    padding: 6,
+    marginBottom: 6,
+  },
+  carteTitre: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: BLEU,
+    marginBottom: 3,
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  /** Une seule Text par ligne : évite la hauteur min. excessives de react-pdf */
+  carteLigne: {
+    fontSize: 10,
+    color: NOIR,
+    marginBottom: 1,
+    lineHeight: 1.2,
+  },
+  carteLabel: {
+    fontWeight: "bold",
+    color: NOIR,
   },
   pied: {
     position: "absolute",
@@ -60,57 +123,83 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: BLEU,
-    paddingVertical: 7,
-    paddingHorizontal: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
   },
-  piedTexte: { color: "#ffffff", fontSize: 8, textAlign: "center" },
+  piedTexte: { color: "#ffffff", fontSize: 7, textAlign: "center" },
 });
 
 export function EnTetePdfLabo({
   branding = BRANDING_PDF_FALLBACK,
   lignesBadge,
-  compact,
 }: {
   branding?: BrandingPdfLabo | null;
   lignesBadge: string[];
+  /** @deprecated conservé pour compat — l'en-tête est toujours compact */
   compact?: boolean;
 }) {
   const b = branding ?? BRANDING_PDF_FALLBACK;
   const L = INFOS_LEGALES_TICKET;
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const logoSrc = `${origin}/images/logo-ham-laboratoire.png`;
-  const telephone = b.telephone || L.telephones;
-  const email = b.email || L.email;
+  /** Tél. / email : ticket légal (comme estimation) + fallback branding */
+  const telephone = L.telephones || b.telephone;
+  const email = L.email || b.email;
+  const nom = b.nom?.trim() || "HAM LABORATOIRE";
 
   return (
     <>
       <View style={styles.enTete}>
-        <View style={[styles.enTeteGauche, compact ? { width: "65%" } : {}]}>
+        <View style={styles.enTeteGauche}>
           <Image src={logoSrc} style={styles.logo} />
-          <View style={styles.infos}>
-            <Text style={styles.nomLabo}>{b.nom || "HAM LABORATOIRE"}</Text>
+          <View style={styles.enTeteInfos}>
+            <Text style={styles.nomLabo}>{nom}</Text>
             <Text style={styles.sousNom}>
-              {b.nomComplet ||
-                "Centre de Diagnostic et d'Analyses Médicales"}
+              Centre de Diagnostic et d&apos;Analyses Médicales
             </Text>
             <Text style={styles.sousNom}>{L.rccm}</Text>
-            <Text style={styles.sousNom}>Tél. {telephone}</Text>
-            <Text style={styles.sousNom}>{email}</Text>
-            {b.adresse ? (
-              <Text style={styles.sousNom}>{b.adresse}</Text>
-            ) : null}
+            <Text style={styles.contact}>Tél. {telephone}</Text>
+            <Text style={styles.contact}>{email}</Text>
           </View>
         </View>
-        <View style={styles.badge}>
-          {lignesBadge.map((ligne) => (
-            <Text key={ligne} style={styles.badgeTexte}>
-              {ligne}
-            </Text>
-          ))}
+        <View style={styles.enTeteDroite}>
+          <View style={styles.badgeTitre}>
+            {lignesBadge.map((ligne) => (
+              <Text key={ligne} style={styles.badgeTitreTexte}>
+                {ligne}
+              </Text>
+            ))}
+          </View>
         </View>
       </View>
-      <View style={styles.separateur} />
+      <View style={styles.separateurEnTete} />
     </>
+  );
+}
+
+export type LigneCartePatientPdf = {
+  label: string;
+  valeur: string;
+};
+
+/** Carte patient compacte — même rendu que « Informations du patient » / estimation. */
+export function CartePatientPdf({
+  titre,
+  lignes,
+}: {
+  titre: string;
+  lignes: LigneCartePatientPdf[];
+}) {
+  return (
+    <View style={styles.carte}>
+      <Text style={styles.carteTitre}>{titre}</Text>
+      {lignes.map((l) => (
+        <Text key={`${l.label}-${l.valeur}`} style={styles.carteLigne}>
+          <Text style={styles.carteLabel}>{l.label} : </Text>
+          {l.valeur}
+        </Text>
+      ))}
+    </View>
   );
 }
 
@@ -123,8 +212,8 @@ export function PiedPdfLabo({
 }) {
   const b = branding ?? BRANDING_PDF_FALLBACK;
   const L = INFOS_LEGALES_TICKET;
-  const telephone = b.telephone || L.telephones;
-  const adresse = b.adresse || L.adresseComplete;
+  const telephone = L.telephones || b.telephone;
+  const adresse = L.adresseComplete || b.adresse;
   const slogan = b.slogan || L.sloganPied;
   const corps = prefixe
     ? `${prefixe} — ${slogan} — ${telephone}`

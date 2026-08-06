@@ -7,6 +7,7 @@ import {
   Font,
 } from "@react-pdf/renderer";
 import {
+  CartePatientPdf,
   EnTetePdfLabo,
   PiedPdfLabo,
   type BrandingPdfLabo,
@@ -65,45 +66,29 @@ export function enregistrerPolicesPdfConsultation() {
 }
 
 const BLEU = "#1a4d7c";
-const BLEU_CONTOUR = "#7eb6e0";
 
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Roboto",
     fontSize: 10,
-    paddingTop: 20,
-    paddingHorizontal: 28,
-    paddingBottom: 48,
+    paddingTop: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 42,
     color: "#111111",
   },
-  carte: {
-    borderWidth: 1,
-    borderColor: BLEU_CONTOUR,
-    borderRadius: 4,
-    padding: 8,
-    marginBottom: 8,
-  },
-  carteTitre: {
+  ligne: { marginBottom: 1, lineHeight: 1.2, fontSize: 10 },
+  section: { marginTop: 4, marginBottom: 1 },
+  sectionTitre: {
     fontSize: 10,
     fontWeight: "bold",
     color: BLEU,
-    marginBottom: 4,
-    textTransform: "uppercase",
-  },
-  ligne: { marginBottom: 2, lineHeight: 1.35 },
-  label: { fontWeight: "bold" },
-  section: { marginTop: 8, marginBottom: 2 },
-  sectionTitre: {
-    fontSize: 11,
-    fontWeight: "bold",
-    color: BLEU,
-    marginBottom: 3,
+    marginBottom: 2,
     borderBottomWidth: 1,
     borderBottomColor: "#cfe0ef",
-    paddingBottom: 2,
+    paddingBottom: 1,
   },
   grilleVitaux: { flexDirection: "row", flexWrap: "wrap" },
-  vital: { width: "33%", marginBottom: 3 },
+  vital: { width: "33%", marginBottom: 1, fontSize: 9, lineHeight: 1.15 },
 });
 
 function formaterDate(iso: string) {
@@ -152,32 +137,39 @@ export function DocumentCrConsultation({
           lignesBadge={["COMPTE RENDU", "CONSULTATION"]}
         />
 
-        <View style={styles.carte}>
-          <Text style={styles.carteTitre}>Informations patient</Text>
-          <Text style={styles.ligne}>
-            <Text style={styles.label}>Nom : </Text>
-            {donnees.patient}
-          </Text>
-          <Text style={styles.ligne}>
-            <Text style={styles.label}>N° dossier : </Text>
-            {donnees.numeroDossier}
-            {donnees.telephone ? `  ·  Tél. : ${donnees.telephone}` : ""}
-          </Text>
-          <Text style={styles.ligne}>
-            <Text style={styles.label}>Âge / Sexe : </Text>
-            {donnees.age != null ? `${donnees.age} ans` : "—"}
-            {donnees.sexe ? ` / ${donnees.sexe}` : ""}
-          </Text>
-          <Text style={styles.ligne}>
-            <Text style={styles.label}>Médecin : </Text>
-            {donnees.medecin}
-          </Text>
-          <Text style={styles.ligne}>
-            <Text style={styles.label}>Date : </Text>
-            {formaterDate(donnees.debutLe)}
-            {donnees.finLe ? ` — Clôturée : ${formaterDate(donnees.finLe)}` : ""}
-          </Text>
-        </View>
+        <CartePatientPdf
+          titre="Informations patient"
+          lignes={[
+            { label: "Patient", valeur: donnees.patient || "—" },
+            {
+              label: "N° dossier",
+              valeur: [
+                donnees.numeroDossier || "—",
+                donnees.telephone ? `Tél. : ${donnees.telephone}` : null,
+              ]
+                .filter(Boolean)
+                .join("  ·  "),
+            },
+            {
+              label: "Âge / Sexe",
+              valeur: [
+                donnees.age != null ? `${donnees.age} ans` : "—",
+                donnees.sexe || null,
+              ]
+                .filter(Boolean)
+                .join(" / "),
+            },
+            { label: "Médecin", valeur: donnees.medecin || "—" },
+            {
+              label: "Date",
+              valeur:
+                formaterDate(donnees.debutLe) +
+                (donnees.finLe
+                  ? ` — Clôturée : ${formaterDate(donnees.finLe)}`
+                  : ""),
+            },
+          ]}
+        />
 
         {vitaux.length > 0 ? (
           <View style={styles.section}>

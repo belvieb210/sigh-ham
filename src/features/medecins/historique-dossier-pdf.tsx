@@ -8,6 +8,7 @@ import {
 } from "@react-pdf/renderer";
 import type { DonneesCrConsultation } from "@/features/medecins/consultation-pdf";
 import {
+  CartePatientPdf,
   EnTetePdfLabo,
   PiedPdfLabo,
   type BrandingPdfLabo,
@@ -31,7 +32,6 @@ export interface DonneesHistoriqueDossierPdf {
   consultations: DonneesCrConsultation[];
   ordonnances: DonneesOrdonnancePdf[];
   differences: DifferenceHistorique[];
-  /** Libellés de la paire comparée (ex. dates A/B) */
   comparaisonLibelle?: string | null;
   branding?: BrandingPdfLabo | null;
 }
@@ -56,41 +56,51 @@ const BLEU_CONTOUR = "#7eb6e0";
 const VERT = "#166534";
 const ROUGE = "#b91c1c";
 const AMBRE = "#92400e";
+const NOIR = "#111111";
 
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Roboto",
     fontSize: 9,
-    paddingTop: 18,
+    paddingTop: 16,
     paddingHorizontal: 24,
-    paddingBottom: 44,
-    color: "#111111",
+    paddingBottom: 40,
+    color: NOIR,
   },
-  titre: { fontSize: 12, fontWeight: "bold", color: BLEU, marginBottom: 4 },
   sectionTitre: {
     fontSize: 10,
     fontWeight: "bold",
     color: BLEU,
-    marginTop: 8,
-    marginBottom: 3,
+    marginTop: 4,
+    marginBottom: 2,
     borderBottomWidth: 1,
     borderBottomColor: "#cfe0ef",
-    paddingBottom: 2,
+    paddingBottom: 1,
   },
-  ligne: { marginBottom: 2, lineHeight: 1.3 },
+  ligne: {
+    fontSize: 9,
+    marginBottom: 1,
+    lineHeight: 1.2,
+  },
   label: { fontWeight: "bold" },
   bloc: {
     borderWidth: 1,
     borderColor: BLEU_CONTOUR,
     borderRadius: 3,
-    padding: 6,
-    marginBottom: 6,
+    padding: 5,
+    marginBottom: 4,
   },
   diffAjoute: { color: VERT },
   diffRetire: { color: ROUGE },
   diffModifie: { color: AMBRE },
-  grilleVitaux: { flexDirection: "row", flexWrap: "wrap" },
-  vital: { width: "33%", marginBottom: 2, fontSize: 8 },
+  grilleVitaux: { flexDirection: "row", flexWrap: "wrap", marginTop: 1 },
+  vital: { width: "33%", marginBottom: 1, fontSize: 8, lineHeight: 1.15 },
+  msgNeutre: {
+    fontSize: 8,
+    color: "#555555",
+    marginBottom: 2,
+    lineHeight: 1.2,
+  },
 });
 
 function formaterDate(iso: string) {
@@ -111,6 +121,32 @@ export function DocumentHistoriqueDossierPdf({
 }: {
   donnees: DonneesHistoriqueDossierPdf;
 }) {
+  const lignesPatient = [
+    { label: "Patient", valeur: donnees.patient || "—" },
+    {
+      label: "N° dossier",
+      valeur: [
+        donnees.numeroDossier || "—",
+        donnees.telephone ? `Tél. : ${donnees.telephone}` : null,
+      ]
+        .filter(Boolean)
+        .join("  ·  "),
+    },
+    {
+      label: "Âge / Sexe",
+      valeur: [
+        donnees.age != null ? `${donnees.age} ans` : "—",
+        donnees.sexe || null,
+      ]
+        .filter(Boolean)
+        .join(" / "),
+    },
+    {
+      label: "Actes",
+      valeur: `${donnees.consultations.length} consultation(s) · ${donnees.ordonnances.length} ordonnance(s)`,
+    },
+  ];
+
   return (
     <Document
       title={`Historique médical — ${donnees.patient}`}
@@ -120,24 +156,12 @@ export function DocumentHistoriqueDossierPdf({
         <EnTetePdfLabo
           branding={donnees.branding}
           lignesBadge={["HISTORIQUE", "MÉDICAL"]}
-          compact
         />
 
-        <Text style={styles.titre}>Dossier patient — synthèse &amp; comparaison</Text>
-        <Text style={styles.ligne}>
-          <Text style={styles.label}>Patient : </Text>
-          {donnees.patient} · {donnees.numeroDossier}
-          {donnees.telephone ? ` · ${donnees.telephone}` : ""}
-        </Text>
-        <Text style={styles.ligne}>
-          <Text style={styles.label}>Âge / Sexe : </Text>
-          {donnees.age != null ? `${donnees.age} ans` : "—"}
-          {donnees.sexe ? ` / ${donnees.sexe}` : ""}
-        </Text>
-        <Text style={styles.ligne}>
-          {donnees.consultations.length} consultation(s) ·{" "}
-          {donnees.ordonnances.length} ordonnance(s)
-        </Text>
+        <CartePatientPdf
+          titre="Dossier patient — synthèse & comparaison"
+          lignes={lignesPatient}
+        />
 
         {donnees.differences.length > 0 ? (
           <View>
@@ -145,7 +169,7 @@ export function DocumentHistoriqueDossierPdf({
               Différences
               {donnees.comparaisonLibelle
                 ? ` — ${donnees.comparaisonLibelle}`
-                : " (paire sélectionnée)"}
+                : ""}
             </Text>
             {donnees.differences.map((d, i) => (
               <Text
@@ -169,7 +193,7 @@ export function DocumentHistoriqueDossierPdf({
             ))}
           </View>
         ) : (
-          <Text style={styles.ligne}>
+          <Text style={styles.msgNeutre}>
             Aucune différence significative entre les actes comparés (ou un seul
             acte).
           </Text>
@@ -261,7 +285,9 @@ export function DocumentHistoriqueDossierPdf({
                   </Text>
                 ))
               )}
-              {o.notes ? <Text style={styles.ligne}>Notes : {o.notes}</Text> : null}
+              {o.notes ? (
+                <Text style={styles.ligne}>Notes : {o.notes}</Text>
+              ) : null}
             </View>
           ))
         )}

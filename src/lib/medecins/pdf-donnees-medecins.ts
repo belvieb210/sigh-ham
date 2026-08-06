@@ -1,17 +1,69 @@
-import type { DonneesCrConsultation } from "@/features/medecins/consultation-pdf";
+import type {
+  BrandingPdfLabo,
+} from "@/features/medecins/en-tete-pdf-labo";
+import type {
+  DonneesCrConsultation,
+  SignesVitauxPdf,
+} from "@/features/medecins/consultation-pdf";
 import type { DifferenceHistorique } from "@/features/medecins/historique-dossier-pdf";
 import type { DonneesOrdonnancePdf } from "@/features/medecins/ordonnance-pdf";
 import type {
+  ConstanteVitaleResume,
   ConsultationDetailMedecins,
+  FormulaireCliniqueMedecins,
   OrdonnanceMedecins,
 } from "@/lib/medecins/types";
 
-export function consultationVersDonneesPdf(
-  c: ConsultationDetailMedecins
-): DonneesCrConsultation {
-  const sv = c.formulaireClinique?.signesVitaux;
+function fusionnerSignesVitaux(
+  sv?: FormulaireCliniqueMedecins["signesVitaux"] | null,
+  constantes?: ConstanteVitaleResume | null
+): SignesVitauxPdf | null {
+  const hasSv =
+    sv &&
+    Object.values(sv).some((v) => v !== null && v !== undefined);
+  if (hasSv && sv) {
+    return {
+      temperature: sv.temperature ?? constantes?.temperature ?? null,
+      tensionSystolique:
+        sv.tensionSystolique ?? constantes?.tensionSystolique ?? null,
+      tensionDiastolique:
+        sv.tensionDiastolique ?? constantes?.tensionDiastolique ?? null,
+      frequenceCardiaque:
+        sv.frequenceCardiaque ?? constantes?.frequenceCardiaque ?? null,
+      frequenceRespiratoire: constantes?.frequenceRespiratoire ?? null,
+      poidsKg: sv.poidsKg ?? constantes?.poidsKg ?? null,
+      tailleCm: sv.tailleCm ?? constantes?.tailleCm ?? null,
+      saturationO2: sv.saturationO2 ?? constantes?.saturationO2 ?? null,
+      glycemie: constantes?.glycemie ?? null,
+    };
+  }
+  if (!constantes) return null;
   return {
-    hopital: "HAM LABORATOIRE",
+    temperature: constantes.temperature,
+    tensionSystolique: constantes.tensionSystolique,
+    tensionDiastolique: constantes.tensionDiastolique,
+    frequenceCardiaque: constantes.frequenceCardiaque,
+    frequenceRespiratoire: constantes.frequenceRespiratoire,
+    poidsKg: constantes.poidsKg,
+    tailleCm: constantes.tailleCm,
+    saturationO2: constantes.saturationO2,
+    glycemie: constantes.glycemie,
+  };
+}
+
+export function consultationVersDonneesPdf(
+  c: ConsultationDetailMedecins,
+  extras?: {
+    constantesVitales?: ConstanteVitaleResume | null;
+    branding?: BrandingPdfLabo | null;
+  }
+): DonneesCrConsultation {
+  const sv = fusionnerSignesVitaux(
+    c.formulaireClinique?.signesVitaux,
+    extras?.constantesVitales
+  );
+  return {
+    hopital: extras?.branding?.nom ?? "HAM LABORATOIRE",
     medecin: c.medecin,
     patient: c.patient.nomComplet,
     numeroDossier: c.patient.numeroDossier,
@@ -32,19 +84,10 @@ export function consultationVersDonneesPdf(
       typeActe: a.typeActe,
       quantite: a.quantite,
     })),
-    signesVitaux: sv
-      ? {
-          temperature: sv.temperature,
-          tensionSystolique: sv.tensionSystolique,
-          tensionDiastolique: sv.tensionDiastolique,
-          frequenceCardiaque: sv.frequenceCardiaque,
-          poidsKg: sv.poidsKg,
-          tailleCm: sv.tailleCm,
-          saturationO2: sv.saturationO2,
-        }
-      : null,
+    signesVitaux: sv,
     debutLe: c.debutLe,
     finLe: c.finLe,
+    branding: extras?.branding ?? null,
   };
 }
 
@@ -55,6 +98,9 @@ export function ordonnanceVersDonneesPdf(
     age?: number | null;
     sexe?: string | null;
     detailsPrescription?: Record<string, unknown> | null;
+    constantesVitales?: ConstanteVitaleResume | null;
+    signesVitauxConsultation?: FormulaireCliniqueMedecins["signesVitaux"] | null;
+    branding?: BrandingPdfLabo | null;
   }
 ): DonneesOrdonnancePdf {
   const details = extras?.detailsPrescription ?? null;
@@ -80,6 +126,11 @@ export function ordonnanceVersDonneesPdf(
       dureeJours: l.dureeJours,
     })),
     imagerie,
+    signesVitaux: fusionnerSignesVitaux(
+      extras?.signesVitauxConsultation,
+      extras?.constantesVitales
+    ),
+    branding: extras?.branding ?? null,
   };
 }
 
@@ -91,8 +142,8 @@ function comparerChamp(
   differences: DifferenceHistorique[],
   domaine: string,
   champ: string,
-  avant: string,
-  apres: string
+  avant: string | null | undefined,
+  apres: string | null | undefined
 ) {
   const a = normaliser(avant);
   const b = normaliser(apres);
@@ -106,7 +157,7 @@ function comparerChamp(
   }
 }
 
-/** Compare la consultation la plus ancienne à la plus récente (ordre chronologique). */
+/** Compare deux consultations (ordre chronologique A→B). */
 export function comparerConsultations(
   consultations: DonneesCrConsultation[]
 ): DifferenceHistorique[] {
@@ -140,6 +191,7 @@ export function comparerConsultations(
     avant.diagnostics.map((d) => d.libelle).join(", "),
     apres.diagnostics.map((d) => d.libelle).join(", ")
   );
+  comparerChamp(diffs, "Consultation", "Médecin", avant.medecin, apres.medecin);
 
   const svA = avant.signesVitaux;
   const svB = apres.signesVitaux;
@@ -164,9 +216,44 @@ export function comparerConsultations(
   comparerChamp(
     diffs,
     "Signes vitaux",
+    "Fréquence cardiaque",
+    svA?.frequenceCardiaque != null ? String(svA.frequenceCardiaque) : "",
+    svB?.frequenceCardiaque != null ? String(svB.frequenceCardiaque) : ""
+  );
+  comparerChamp(
+    diffs,
+    "Signes vitaux",
+    "Fréquence respiratoire",
+    svA?.frequenceRespiratoire != null ? String(svA.frequenceRespiratoire) : "",
+    svB?.frequenceRespiratoire != null ? String(svB.frequenceRespiratoire) : ""
+  );
+  comparerChamp(
+    diffs,
+    "Signes vitaux",
     "Poids",
     svA?.poidsKg != null ? String(svA.poidsKg) : "",
     svB?.poidsKg != null ? String(svB.poidsKg) : ""
+  );
+  comparerChamp(
+    diffs,
+    "Signes vitaux",
+    "Taille",
+    svA?.tailleCm != null ? String(svA.tailleCm) : "",
+    svB?.tailleCm != null ? String(svB.tailleCm) : ""
+  );
+  comparerChamp(
+    diffs,
+    "Signes vitaux",
+    "SpO₂",
+    svA?.saturationO2 != null ? String(svA.saturationO2) : "",
+    svB?.saturationO2 != null ? String(svB.saturationO2) : ""
+  );
+  comparerChamp(
+    diffs,
+    "Signes vitaux",
+    "Glycémie",
+    svA?.glycemie != null ? String(svA.glycemie) : "",
+    svB?.glycemie != null ? String(svB.glycemie) : ""
   );
   return diffs;
 }
@@ -183,6 +270,9 @@ export function comparerOrdonnances(
   const apres = triees[triees.length - 1];
   const diffs: DifferenceHistorique[] = [];
 
+  comparerChamp(diffs, "Ordonnance", "Médecin", avant.medecin, apres.medecin);
+  comparerChamp(diffs, "Ordonnance", "Notes", avant.notes, apres.notes);
+
   const setA = new Map(
     avant.lignes.map((l) => [l.medicament.toLowerCase(), l])
   );
@@ -196,7 +286,7 @@ export function comparerOrdonnances(
         domaine: "Ordonnance",
         champ: ligne.medicament,
         avant: "",
-        apres: `×${ligne.quantite}${ligne.posologie ? ` — ${ligne.posologie}` : ""}`,
+        apres: `×${ligne.quantite}${ligne.dosage ? ` (${ligne.dosage})` : ""}${ligne.posologie ? ` — ${ligne.posologie}` : ""}${ligne.dureeJours != null ? ` · ${ligne.dureeJours} j` : ""}`,
         type: "ajoute",
       });
     } else {
@@ -205,8 +295,8 @@ export function comparerOrdonnances(
         diffs,
         "Ordonnance",
         ligne.medicament,
-        `×${old.quantite}${old.posologie ? ` — ${old.posologie}` : ""}`,
-        `×${ligne.quantite}${ligne.posologie ? ` — ${ligne.posologie}` : ""}`
+        `×${old.quantite}${old.dosage ? ` (${old.dosage})` : ""}${old.posologie ? ` — ${old.posologie}` : ""}${old.dureeJours != null ? ` · ${old.dureeJours} j` : ""}`,
+        `×${ligne.quantite}${ligne.dosage ? ` (${ligne.dosage})` : ""}${ligne.posologie ? ` — ${ligne.posologie}` : ""}${ligne.dureeJours != null ? ` · ${ligne.dureeJours} j` : ""}`
       );
     }
   }
@@ -215,7 +305,7 @@ export function comparerOrdonnances(
       diffs.push({
         domaine: "Ordonnance",
         champ: ligne.medicament,
-        avant: `×${ligne.quantite}`,
+        avant: `×${ligne.quantite}${ligne.dosage ? ` (${ligne.dosage})` : ""}`,
         apres: "",
         type: "retire",
       });

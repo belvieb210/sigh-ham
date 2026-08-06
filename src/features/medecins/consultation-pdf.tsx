@@ -5,9 +5,12 @@ import {
   View,
   StyleSheet,
   Font,
-  Image,
 } from "@react-pdf/renderer";
-import { INFOS_LEGALES_TICKET } from "@/constants/ticket-thermique";
+import {
+  EnTetePdfLabo,
+  PiedPdfLabo,
+  type BrandingPdfLabo,
+} from "@/features/medecins/en-tete-pdf-labo";
 
 export interface SignesVitauxPdf {
   temperature?: number | null;
@@ -43,6 +46,7 @@ export interface DonneesCrConsultation {
   signesVitaux?: SignesVitauxPdf | null;
   debutLe: string;
   finLe?: string | null;
+  branding?: BrandingPdfLabo | null;
 }
 
 let policesEnregistrees = false;
@@ -62,7 +66,6 @@ export function enregistrerPolicesPdfConsultation() {
 
 const BLEU = "#1a4d7c";
 const BLEU_CONTOUR = "#7eb6e0";
-const GRIS = "#555555";
 
 const styles = StyleSheet.create({
   page: {
@@ -72,30 +75,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingBottom: 48,
     color: "#111111",
-  },
-  enTete: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 6,
-  },
-  enTeteGauche: { flexDirection: "row", width: "62%" },
-  logo: { width: 44, height: 44, objectFit: "contain" },
-  infos: { paddingLeft: 8, flex: 1 },
-  nomLabo: { fontSize: 12, fontWeight: "bold", marginBottom: 1 },
-  sousNom: { fontSize: 8, color: GRIS, lineHeight: 1.2 },
-  badge: {
-    borderWidth: 1.5,
-    borderColor: BLEU,
-    borderRadius: 3,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    alignSelf: "flex-start",
-  },
-  badgeTexte: { color: BLEU, fontSize: 9, fontWeight: "bold" },
-  separateur: {
-    borderBottomWidth: 1.5,
-    borderBottomColor: BLEU_CONTOUR,
-    marginVertical: 8,
   },
   carte: {
     borderWidth: 1,
@@ -125,16 +104,6 @@ const styles = StyleSheet.create({
   },
   grilleVitaux: { flexDirection: "row", flexWrap: "wrap" },
   vital: { width: "33%", marginBottom: 3 },
-  pied: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: BLEU,
-    paddingVertical: 7,
-    paddingHorizontal: 20,
-  },
-  piedTexte: { color: "#ffffff", fontSize: 8, textAlign: "center" },
 });
 
 function formaterDate(iso: string) {
@@ -155,9 +124,6 @@ export function DocumentCrConsultation({
 }: {
   donnees: DonneesCrConsultation;
 }) {
-  const L = INFOS_LEGALES_TICKET;
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const logoSrc = `${origin}/images/logo-ham-laboratoire.png`;
   const sv = donnees.signesVitaux;
   const vitaux = [
     ligneVital("Température (°C)", sv?.temperature),
@@ -178,28 +144,13 @@ export function DocumentCrConsultation({
   return (
     <Document
       title={`CR Consultation — ${donnees.patient}`}
-      author="HAM Laboratoire"
+      author={donnees.branding?.nom ?? "HAM Laboratoire"}
     >
       <Page size="A4" style={styles.page}>
-        <View style={styles.enTete}>
-          <View style={styles.enTeteGauche}>
-            <Image src={logoSrc} style={styles.logo} />
-            <View style={styles.infos}>
-              <Text style={styles.nomLabo}>HAM LABORATOIRE</Text>
-              <Text style={styles.sousNom}>
-                Centre de Diagnostic et d&apos;Analyses Médicales
-              </Text>
-              <Text style={styles.sousNom}>{L.rccm}</Text>
-              <Text style={styles.sousNom}>Tél. {L.telephones}</Text>
-              <Text style={styles.sousNom}>{L.email}</Text>
-            </View>
-          </View>
-          <View style={styles.badge}>
-            <Text style={styles.badgeTexte}>COMPTE RENDU</Text>
-            <Text style={styles.badgeTexte}>CONSULTATION</Text>
-          </View>
-        </View>
-        <View style={styles.separateur} />
+        <EnTetePdfLabo
+          branding={donnees.branding}
+          lignesBadge={["COMPTE RENDU", "CONSULTATION"]}
+        />
 
         <View style={styles.carte}>
           <Text style={styles.carteTitre}>Informations patient</Text>
@@ -303,11 +254,7 @@ export function DocumentCrConsultation({
           <Text style={styles.ligne}>{donnees.conclusion || "—"}</Text>
         </View>
 
-        <View style={styles.pied} fixed>
-          <Text style={styles.piedTexte}>
-            {L.sloganPied} — {L.telephones} — {L.adresseComplete}
-          </Text>
-        </View>
+        <PiedPdfLabo branding={donnees.branding} />
       </Page>
     </Document>
   );

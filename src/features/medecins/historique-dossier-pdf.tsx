@@ -5,10 +5,13 @@ import {
   View,
   StyleSheet,
   Font,
-  Image,
 } from "@react-pdf/renderer";
-import { INFOS_LEGALES_TICKET } from "@/constants/ticket-thermique";
 import type { DonneesCrConsultation } from "@/features/medecins/consultation-pdf";
+import {
+  EnTetePdfLabo,
+  PiedPdfLabo,
+  type BrandingPdfLabo,
+} from "@/features/medecins/en-tete-pdf-labo";
 import type { DonneesOrdonnancePdf } from "@/features/medecins/ordonnance-pdf";
 
 export type DifferenceHistorique = {
@@ -28,6 +31,9 @@ export interface DonneesHistoriqueDossierPdf {
   consultations: DonneesCrConsultation[];
   ordonnances: DonneesOrdonnancePdf[];
   differences: DifferenceHistorique[];
+  /** Libellés de la paire comparée (ex. dates A/B) */
+  comparaisonLibelle?: string | null;
+  branding?: BrandingPdfLabo | null;
 }
 
 let polices = false;
@@ -47,7 +53,6 @@ export function enregistrerPolicesPdfHistorique() {
 
 const BLEU = "#1a4d7c";
 const BLEU_CONTOUR = "#7eb6e0";
-const GRIS = "#555555";
 const VERT = "#166534";
 const ROUGE = "#b91c1c";
 const AMBRE = "#92400e";
@@ -60,25 +65,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 44,
     color: "#111111",
-  },
-  enTete: { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
-  enTeteGauche: { flexDirection: "row", width: "65%" },
-  logo: { width: 40, height: 40, objectFit: "contain" },
-  infos: { paddingLeft: 8, flex: 1 },
-  nomLabo: { fontSize: 11, fontWeight: "bold" },
-  sousNom: { fontSize: 7, color: GRIS, lineHeight: 1.2 },
-  badge: {
-    borderWidth: 1.5,
-    borderColor: BLEU,
-    borderRadius: 3,
-    paddingVertical: 3,
-    paddingHorizontal: 6,
-  },
-  badgeTexte: { color: BLEU, fontSize: 8, fontWeight: "bold", textAlign: "center" },
-  separateur: {
-    borderBottomWidth: 1.5,
-    borderBottomColor: BLEU_CONTOUR,
-    marginVertical: 6,
   },
   titre: { fontSize: 12, fontWeight: "bold", color: BLEU, marginBottom: 4 },
   sectionTitre: {
@@ -103,16 +89,8 @@ const styles = StyleSheet.create({
   diffAjoute: { color: VERT },
   diffRetire: { color: ROUGE },
   diffModifie: { color: AMBRE },
-  pied: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: BLEU,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-  },
-  piedTexte: { color: "#fff", fontSize: 7, textAlign: "center" },
+  grilleVitaux: { flexDirection: "row", flexWrap: "wrap" },
+  vital: { width: "33%", marginBottom: 2, fontSize: 8 },
 });
 
 function formaterDate(iso: string) {
@@ -123,40 +101,27 @@ function formaterDate(iso: string) {
   }
 }
 
+function ligneVital(label: string, valeur: string | number | null | undefined) {
+  if (valeur === null || valeur === undefined || valeur === "") return null;
+  return `${label} : ${valeur}`;
+}
+
 export function DocumentHistoriqueDossierPdf({
   donnees,
 }: {
   donnees: DonneesHistoriqueDossierPdf;
 }) {
-  const L = INFOS_LEGALES_TICKET;
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const logoSrc = `${origin}/images/logo-ham-laboratoire.png`;
-
   return (
     <Document
       title={`Historique médical — ${donnees.patient}`}
-      author="HAM Laboratoire"
+      author={donnees.branding?.nom ?? "HAM Laboratoire"}
     >
       <Page size="A4" style={styles.page}>
-        <View style={styles.enTete}>
-          <View style={styles.enTeteGauche}>
-            <Image src={logoSrc} style={styles.logo} />
-            <View style={styles.infos}>
-              <Text style={styles.nomLabo}>HAM LABORATOIRE</Text>
-              <Text style={styles.sousNom}>
-                Centre de Diagnostic et d&apos;Analyses Médicales
-              </Text>
-              <Text style={styles.sousNom}>
-                {L.rccm} · Tél. {L.telephones}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.badge}>
-            <Text style={styles.badgeTexte}>HISTORIQUE</Text>
-            <Text style={styles.badgeTexte}>MÉDICAL</Text>
-          </View>
-        </View>
-        <View style={styles.separateur} />
+        <EnTetePdfLabo
+          branding={donnees.branding}
+          lignesBadge={["HISTORIQUE", "MÉDICAL"]}
+          compact
+        />
 
         <Text style={styles.titre}>Dossier patient — synthèse &amp; comparaison</Text>
         <Text style={styles.ligne}>
@@ -177,7 +142,10 @@ export function DocumentHistoriqueDossierPdf({
         {donnees.differences.length > 0 ? (
           <View>
             <Text style={styles.sectionTitre}>
-              Différences (comparaison chronologique)
+              Différences
+              {donnees.comparaisonLibelle
+                ? ` — ${donnees.comparaisonLibelle}`
+                : " (paire sélectionnée)"}
             </Text>
             {donnees.differences.map((d, i) => (
               <Text
@@ -211,37 +179,61 @@ export function DocumentHistoriqueDossierPdf({
         {donnees.consultations.length === 0 ? (
           <Text style={styles.ligne}>Aucune consultation.</Text>
         ) : (
-          donnees.consultations.map((c, idx) => (
-            <View key={`c-${idx}`} style={styles.bloc} wrap={false}>
-              <Text style={styles.ligne}>
-                <Text style={styles.label}>
-                  #{idx + 1} — {formaterDate(c.debutLe)}
-                </Text>
-                {" · "}
-                {c.medecin}
-                {c.finLe ? " · clôturée" : " · ouverte"}
-              </Text>
-              <Text style={styles.ligne}>
-                <Text style={styles.label}>Motif : </Text>
-                {c.motif || "—"}
-              </Text>
-              {c.anamnese ? (
-                <Text style={styles.ligne}>Anamnèse : {c.anamnese}</Text>
-              ) : null}
-              {c.examenClinique ? (
-                <Text style={styles.ligne}>Examen : {c.examenClinique}</Text>
-              ) : null}
-              {c.conclusion ? (
-                <Text style={styles.ligne}>Conclusion : {c.conclusion}</Text>
-              ) : null}
-              {c.diagnostics.length > 0 ? (
+          donnees.consultations.map((c, idx) => {
+            const sv = c.signesVitaux;
+            const vitaux = [
+              ligneVital("T°", sv?.temperature),
+              ligneVital(
+                "TA",
+                sv?.tensionSystolique != null && sv?.tensionDiastolique != null
+                  ? `${sv.tensionSystolique}/${sv.tensionDiastolique}`
+                  : null
+              ),
+              ligneVital("FC", sv?.frequenceCardiaque),
+              ligneVital("Poids", sv?.poidsKg),
+              ligneVital("SpO₂", sv?.saturationO2),
+            ].filter(Boolean) as string[];
+            return (
+              <View key={`c-${idx}`} style={styles.bloc} wrap={false}>
                 <Text style={styles.ligne}>
-                  Diagnostics :{" "}
-                  {c.diagnostics.map((d) => d.libelle).join(" · ")}
+                  <Text style={styles.label}>
+                    #{idx + 1} — {formaterDate(c.debutLe)}
+                  </Text>
+                  {" · "}
+                  {c.medecin}
+                  {c.finLe ? " · clôturée" : " · ouverte"}
                 </Text>
-              ) : null}
-            </View>
-          ))
+                <Text style={styles.ligne}>
+                  <Text style={styles.label}>Motif : </Text>
+                  {c.motif || "—"}
+                </Text>
+                {vitaux.length > 0 ? (
+                  <View style={styles.grilleVitaux}>
+                    {vitaux.map((v) => (
+                      <Text key={v} style={styles.vital}>
+                        {v}
+                      </Text>
+                    ))}
+                  </View>
+                ) : null}
+                {c.anamnese ? (
+                  <Text style={styles.ligne}>Anamnèse : {c.anamnese}</Text>
+                ) : null}
+                {c.examenClinique ? (
+                  <Text style={styles.ligne}>Examen : {c.examenClinique}</Text>
+                ) : null}
+                {c.conclusion ? (
+                  <Text style={styles.ligne}>Conclusion : {c.conclusion}</Text>
+                ) : null}
+                {c.diagnostics.length > 0 ? (
+                  <Text style={styles.ligne}>
+                    Diagnostics :{" "}
+                    {c.diagnostics.map((d) => d.libelle).join(" · ")}
+                  </Text>
+                ) : null}
+              </View>
+            );
+          })
         )}
 
         <Text style={styles.sectionTitre}>Ordonnances</Text>
@@ -262,8 +254,10 @@ export function DocumentHistoriqueDossierPdf({
               ) : (
                 o.lignes.map((l, j) => (
                   <Text key={`${l.medicament}-${j}`} style={styles.ligne}>
-                    • {l.medicament} ×{l.quantite}
+                    • {l.medicament}
+                    {l.dosage ? ` (${l.dosage})` : ""} ×{l.quantite}
                     {l.posologie ? ` — ${l.posologie}` : ""}
+                    {l.dureeJours != null ? ` · ${l.dureeJours} j` : ""}
                   </Text>
                 ))
               )}
@@ -272,11 +266,10 @@ export function DocumentHistoriqueDossierPdf({
           ))
         )}
 
-        <View style={styles.pied} fixed>
-          <Text style={styles.piedTexte}>
-            Document de synthèse médicale — {L.sloganPied} — {L.telephones}
-          </Text>
-        </View>
+        <PiedPdfLabo
+          branding={donnees.branding}
+          prefixe="Document de synthèse médicale"
+        />
       </Page>
     </Document>
   );

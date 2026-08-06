@@ -3,12 +3,26 @@ import { calculerAge } from "@/features/caisse/utils-format";
 import { prisma } from "@/lib/prisma";
 import type {
   ActeConsultationMedecins,
+  ConstanteVitaleResume,
   ConsultationDetailMedecins,
   ConsultationHistoriqueMedecins,
   DiagnosticConsultationMedecins,
   FormulaireCliniqueMedecins,
 } from "@/lib/medecins/types";
 import { Prisma } from "@/generated/prisma/client";
+
+function decimalOuNull(
+  valeur: { toNumber?: () => number } | number | string | null | undefined
+): number | null {
+  if (valeur == null) return null;
+  if (typeof valeur === "number") return valeur;
+  if (typeof valeur === "string") {
+    const n = Number.parseFloat(valeur);
+    return Number.isFinite(n) ? n : null;
+  }
+  if (typeof valeur.toNumber === "function") return valeur.toNumber();
+  return null;
+}
 
 function parserFormulaire(
   raw: Prisma.JsonValue | null | undefined
@@ -395,6 +409,30 @@ export async function listerConsultationsDossier(
     take: 30,
   });
   return rows.map(mapperConsultation);
+}
+
+export async function obtenirConstantesVitalesDossier(
+  dossierId: string
+): Promise<ConstanteVitaleResume | null> {
+  const constantes = await prisma.constantesVitales.findFirst({
+    where: { dossierId },
+    orderBy: { mesureLe: "desc" },
+  });
+  if (!constantes) return null;
+  return {
+    id: constantes.id,
+    temperature: decimalOuNull(constantes.temperature),
+    tensionSystolique: constantes.tensionSystolique,
+    tensionDiastolique: constantes.tensionDiastolique,
+    frequenceCardiaque: constantes.frequenceCardiaque,
+    frequenceRespiratoire: constantes.frequenceRespiratoire,
+    poidsKg: decimalOuNull(constantes.poidsKg),
+    tailleCm: decimalOuNull(constantes.tailleCm),
+    saturationO2: constantes.saturationO2,
+    glycemie: decimalOuNull(constantes.glycemie),
+    observations: constantes.observations,
+    mesureLe: constantes.mesureLe.toISOString(),
+  };
 }
 
 export async function listerConsultationsHistorique(opts?: {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
   FileText,
@@ -21,10 +22,6 @@ import {
   MiseEnPageMedecins,
   type UtilisateurMedecins,
 } from "@/features/medecins/mise-en-page-medecins";
-import {
-  ModalHistoriquePatientMedecins,
-  type PatientHistoriqueCible,
-} from "@/features/medecins/modal-historique-patient-medecins";
 import { PanneauDroitMedecins } from "@/features/medecins/panneau-droit-medecins";
 import {
   imprimerCrConsultation,
@@ -36,6 +33,7 @@ import {
 } from "@/lib/medecins/pdf-donnees-medecins";
 import type {
   ConsultationDetailMedecins,
+  ConstanteVitaleResume,
   OrdonnanceMedecins,
   PatientDuJour,
 } from "@/lib/medecins/types";
@@ -63,6 +61,7 @@ function correspondFiltres(p: PatientDuJour, f: FiltresFacturationCaisse) {
 
 export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const [patients, setPatients] = useState<PatientDuJour[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -72,8 +71,6 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
   const [page, setPage] = useState(1);
   const [selection, setSelection] = useState<string[]>([]);
   const [pdfEnCours, setPdfEnCours] = useState<string | null>(null);
-  const [historiquePatient, setHistoriquePatient] =
-    useState<PatientHistoriqueCible | null>(null);
 
   const charger = useCallback(async () => {
     setChargement(true);
@@ -136,6 +133,7 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
       const data = (await res.json()) as {
         consultation?: ConsultationDetailMedecins | null;
         historique?: ConsultationDetailMedecins[];
+        constantesVitales?: ConstanteVitaleResume | null;
         erreur?: string;
       };
       if (!res.ok) throw new Error(data.erreur ?? "Consultation introuvable.");
@@ -146,7 +144,11 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
         data.consultation ??
         data.historique?.[0];
       if (!c) throw new Error("Aucune consultation pour ce patient.");
-      const ok = await imprimerCrConsultation(consultationVersDonneesPdf(c));
+      const ok = await imprimerCrConsultation(
+        consultationVersDonneesPdf(c, {
+          constantesVitales: data.constantesVitales,
+        })
+      );
       if (!ok) throw new Error("Génération PDF impossible.");
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Erreur PDF consultation.");
@@ -159,19 +161,34 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
     setPdfEnCours(`o-${p.dossierId}`);
     setErreur(null);
     try {
-      const res = await fetch(
-        `/api/medecins/ordonnances?dossierId=${encodeURIComponent(p.dossierId)}`
-      );
-      const data = (await res.json()) as {
+      const [resO, resC] = await Promise.all([
+        fetch(
+          `/api/medecins/ordonnances?dossierId=${encodeURIComponent(p.dossierId)}`
+        ),
+        fetch(
+          `/api/medecins/consultations?dossierId=${encodeURIComponent(p.dossierId)}`
+        ),
+      ]);
+      const data = (await resO.json()) as {
         ordonnances?: OrdonnanceMedecins[];
         erreur?: string;
       };
-      if (!res.ok) throw new Error(data.erreur ?? "Ordonnance introuvable.");
+      const dataC = (await resC.json()) as {
+        historique?: ConsultationDetailMedecins[];
+        consultation?: ConsultationDetailMedecins | null;
+        constantesVitales?: ConstanteVitaleResume | null;
+      };
+      if (!resO.ok) throw new Error(data.erreur ?? "Ordonnance introuvable.");
       const o = data.ordonnances?.[0];
       if (!o) throw new Error("Aucune ordonnance pour ce patient.");
+      const ref = dataC.consultation ?? dataC.historique?.[0];
       const ok = await imprimerOrdonnancePdf(
         ordonnanceVersDonneesPdf(o, {
           telephone: p.telephone,
+          age: ref?.patient.age,
+          sexe: ref?.patient.sexe,
+          constantesVitales: dataC.constantesVitales,
+          signesVitauxConsultation: ref?.formulaireClinique?.signesVitaux,
         })
       );
       if (!ok) throw new Error("Génération PDF impossible.");
@@ -377,12 +394,9 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
                         <button
                           type="button"
                           onClick={() =>
-                            setHistoriquePatient({
-                              dossierId: p.dossierId,
-                              nomComplet: p.nomComplet,
-                              numeroDossier: p.numeroDossier,
-                              telephone: p.telephone,
-                            })
+                            router.push(
+                              `/sigh/medecins/notes?dossierId=${encodeURIComponent(p.dossierId)}`
+                            )
                           }
                           className="inline-flex items-center gap-1 rounded-lg bg-bleu-medical px-2.5 py-1.5 text-xs font-medium text-white"
                         >
@@ -405,11 +419,6 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
           </div>
         )}
       </div>
-
-      <ModalHistoriquePatientMedecins
-        patient={historiquePatient}
-        onFermer={() => setHistoriquePatient(null)}
-      />
     </MiseEnPageMedecins>
   );
 }

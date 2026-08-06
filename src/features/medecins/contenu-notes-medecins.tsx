@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
   ChevronDown,
@@ -39,6 +40,7 @@ import {
 } from "@/lib/medecins/pdf-donnees-medecins";
 import type {
   ConsultationDetailMedecins,
+  ConstanteVitaleResume,
   DossierNotesMedecins,
   OrdonnanceMedecins,
 } from "@/lib/medecins/types";
@@ -66,6 +68,10 @@ function correspondFiltres(d: DossierNotesMedecins, f: FiltresFacturationCaisse)
 
 export function ContenuNotesMedecins({ utilisateur }: Props) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const dossierIdParam = searchParams.get("dossierId")?.trim() || null;
+  const deepLinkTraite = useRef<string | null>(null);
   const [dossiers, setDossiers] = useState<DossierNotesMedecins[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -103,6 +109,23 @@ export function ContenuNotesMedecins({ utilisateur }: Props) {
   useEffect(() => {
     void charger();
   }, [charger]);
+
+  useEffect(() => {
+    if (!dossierIdParam || chargement || dossiers.length === 0) return;
+    if (deepLinkTraite.current === dossierIdParam) return;
+    const cible = dossiers.find((d) => d.dossierId === dossierIdParam);
+    if (!cible) return;
+    deepLinkTraite.current = dossierIdParam;
+    const idx = dossiers.findIndex((d) => d.dossierId === dossierIdParam);
+    if (idx >= 0) setPage(Math.floor(idx / PAR_PAGE) + 1);
+    setOuverts((prev) => new Set(prev).add(cible.dossierId));
+    setHistoriquePatient({
+      dossierId: cible.dossierId,
+      nomComplet: cible.nomComplet,
+      numeroDossier: cible.numeroDossier,
+      telephone: cible.telephone,
+    });
+  }, [dossierIdParam, chargement, dossiers]);
 
   const filtrés = useMemo(
     () => dossiers.filter((d) => correspondFiltres(d, filtresAppliques)),
@@ -151,12 +174,17 @@ export function ContenuNotesMedecins({ utilisateur }: Props) {
       const data = (await res.json()) as {
         historique?: ConsultationDetailMedecins[];
         consultation?: ConsultationDetailMedecins | null;
+        constantesVitales?: ConstanteVitaleResume | null;
       };
       const c =
         data.historique?.find((x) => x.id === consultationId) ??
         (data.consultation?.id === consultationId ? data.consultation : null);
       if (!c) throw new Error("Consultation introuvable.");
-      const ok = await imprimerCrConsultation(consultationVersDonneesPdf(c));
+      const ok = await imprimerCrConsultation(
+        consultationVersDonneesPdf(c, {
+          constantesVitales: data.constantesVitales,
+        })
+      );
       if (!ok) throw new Error("PDF consultation impossible.");
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Erreur PDF.");
@@ -169,21 +197,46 @@ export function ContenuNotesMedecins({ utilisateur }: Props) {
     setPdfEnCours(ordonnanceId);
     setErreur(null);
     try {
-      const res = await fetch(
-        `/api/medecins/ordonnances?dossierId=${encodeURIComponent(dossierId)}`
-      );
-      const data = (await res.json()) as { ordonnances?: OrdonnanceMedecins[] };
+      const [resO, resC] = await Promise.all([
+        fetch(
+          `/api/medecins/ordonnances?dossierId=${encodeURIComponent(dossierId)}`
+        ),
+        fetch(
+          `/api/medecins/consultations?dossierId=${encodeURIComponent(dossierId)}`
+        ),
+      ]);
+      const data = (await resO.json()) as { ordonnances?: OrdonnanceMedecins[] };
+      const dataC = (await resC.json()) as {
+        historique?: ConsultationDetailMedecins[];
+        consultation?: ConsultationDetailMedecins | null;
+        constantesVitales?: ConstanteVitaleResume | null;
+      };
       const o = data.ordonnances?.find((x) => x.id === ordonnanceId);
       if (!o) throw new Error("Ordonnance introuvable.");
       const dossier = dossiers.find((d) => d.dossierId === dossierId);
+      const ref = dataC.consultation ?? dataC.historique?.[0];
       const ok = await imprimerOrdonnancePdf(
-        ordonnanceVersDonneesPdf(o, { telephone: dossier?.telephone })
+        ordonnanceVersDonneesPdf(o, {
+          telephone: dossier?.telephone,
+          age: ref?.patient.age,
+          sexe: ref?.patient.sexe,
+          constantesVitales: dataC.constantesVitales,
+          signesVitauxConsultation: ref?.formulaireClinique?.signesVitaux,
+        })
       );
       if (!ok) throw new Error("PDF ordonnance impossible.");
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Erreur PDF.");
     } finally {
       setPdfEnCours(null);
+    }
+  }
+
+  function fermerHistorique() {
+    setHistoriquePatient(null);
+    if (dossierIdParam) {
+      router.replace("/sigh/medecins/notes", { scroll: false });
+      deepLinkTraite.current = null;
     }
   }
 
@@ -471,7 +524,7 @@ export function ContenuNotesMedecins({ utilisateur }: Props) {
 
       <ModalHistoriquePatientMedecins
         patient={historiquePatient}
-        onFermer={() => setHistoriquePatient(null)}
+        onFermer={fermerHistorique}
       />
     </MiseEnPageMedecins>
   );

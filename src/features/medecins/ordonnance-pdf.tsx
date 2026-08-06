@@ -5,9 +5,13 @@ import {
   View,
   StyleSheet,
   Font,
-  Image,
 } from "@react-pdf/renderer";
-import { INFOS_LEGALES_TICKET } from "@/constants/ticket-thermique";
+import type { SignesVitauxPdf } from "@/features/medecins/consultation-pdf";
+import {
+  EnTetePdfLabo,
+  PiedPdfLabo,
+  type BrandingPdfLabo,
+} from "@/features/medecins/en-tete-pdf-labo";
 
 export interface DonneesOrdonnancePdf {
   medecin: string;
@@ -31,6 +35,8 @@ export interface DonneesOrdonnancePdf {
     but?: string;
     conduiteATenir?: string;
   } | null;
+  signesVitaux?: SignesVitauxPdf | null;
+  branding?: BrandingPdfLabo | null;
 }
 
 let polices = false;
@@ -50,7 +56,6 @@ export function enregistrerPolicesPdfOrdonnance() {
 
 const BLEU = "#1a4d7c";
 const BLEU_CONTOUR = "#7eb6e0";
-const GRIS = "#555555";
 
 const styles = StyleSheet.create({
   page: {
@@ -60,29 +65,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingBottom: 48,
     color: "#111111",
-  },
-  enTete: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 6,
-  },
-  enTeteGauche: { flexDirection: "row", width: "62%" },
-  logo: { width: 44, height: 44, objectFit: "contain" },
-  infos: { paddingLeft: 8, flex: 1 },
-  nomLabo: { fontSize: 12, fontWeight: "bold", marginBottom: 1 },
-  sousNom: { fontSize: 8, color: GRIS, lineHeight: 1.2 },
-  badge: {
-    borderWidth: 1.5,
-    borderColor: BLEU,
-    borderRadius: 3,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-  },
-  badgeTexte: { color: BLEU, fontSize: 9, fontWeight: "bold", textAlign: "center" },
-  separateur: {
-    borderBottomWidth: 1.5,
-    borderBottomColor: BLEU_CONTOUR,
-    marginVertical: 8,
   },
   carte: {
     borderWidth: 1,
@@ -110,6 +92,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "#cfe0ef",
     paddingBottom: 2,
   },
+  grilleVitaux: { flexDirection: "row", flexWrap: "wrap" },
+  vital: { width: "33%", marginBottom: 3 },
   tableHeader: {
     flexDirection: "row",
     backgroundColor: BLEU,
@@ -128,16 +112,6 @@ const styles = StyleSheet.create({
   colPos: { width: "28%", fontSize: 9 },
   colQte: { width: "12%", fontSize: 9 },
   colDur: { width: "18%", fontSize: 9 },
-  pied: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: BLEU,
-    paddingVertical: 7,
-    paddingHorizontal: 20,
-  },
-  piedTexte: { color: "#ffffff", fontSize: 8, textAlign: "center" },
 });
 
 function formaterDate(iso: string) {
@@ -148,37 +122,43 @@ function formaterDate(iso: string) {
   }
 }
 
+function ligneVital(label: string, valeur: string | number | null | undefined) {
+  if (valeur === null || valeur === undefined || valeur === "") return null;
+  return `${label} : ${valeur}`;
+}
+
 export function DocumentOrdonnancePdf({
   donnees,
 }: {
   donnees: DonneesOrdonnancePdf;
 }) {
-  const L = INFOS_LEGALES_TICKET;
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const logoSrc = `${origin}/images/logo-ham-laboratoire.png`;
+  const sv = donnees.signesVitaux;
+  const vitaux = [
+    ligneVital("Température (°C)", sv?.temperature),
+    ligneVital(
+      "TA (mmHg)",
+      sv?.tensionSystolique != null && sv?.tensionDiastolique != null
+        ? `${sv.tensionSystolique}/${sv.tensionDiastolique}`
+        : null
+    ),
+    ligneVital("FC (bpm)", sv?.frequenceCardiaque),
+    ligneVital("FR", sv?.frequenceRespiratoire),
+    ligneVital("Poids (kg)", sv?.poidsKg),
+    ligneVital("Taille (cm)", sv?.tailleCm),
+    ligneVital("SpO₂ (%)", sv?.saturationO2),
+    ligneVital("Glycémie", sv?.glycemie),
+  ].filter(Boolean) as string[];
 
   return (
-    <Document title={`Ordonnance — ${donnees.patient}`} author="HAM Laboratoire">
+    <Document
+      title={`Ordonnance — ${donnees.patient}`}
+      author={donnees.branding?.nom ?? "HAM Laboratoire"}
+    >
       <Page size="A4" style={styles.page}>
-        <View style={styles.enTete}>
-          <View style={styles.enTeteGauche}>
-            <Image src={logoSrc} style={styles.logo} />
-            <View style={styles.infos}>
-              <Text style={styles.nomLabo}>HAM LABORATOIRE</Text>
-              <Text style={styles.sousNom}>
-                Centre de Diagnostic et d&apos;Analyses Médicales
-              </Text>
-              <Text style={styles.sousNom}>{L.rccm}</Text>
-              <Text style={styles.sousNom}>Tél. {L.telephones}</Text>
-              <Text style={styles.sousNom}>{L.email}</Text>
-            </View>
-          </View>
-          <View style={styles.badge}>
-            <Text style={styles.badgeTexte}>ORDONNANCE</Text>
-            <Text style={styles.badgeTexte}>MÉDICALE</Text>
-          </View>
-        </View>
-        <View style={styles.separateur} />
+        <EnTetePdfLabo
+          branding={donnees.branding}
+          lignesBadge={["ORDONNANCE", "MÉDICALE"]}
+        />
 
         <View style={styles.carte}>
           <Text style={styles.carteTitre}>Patient &amp; prescritteur</Text>
@@ -205,6 +185,19 @@ export function DocumentOrdonnancePdf({
             {formaterDate(donnees.prescritLe)}
           </Text>
         </View>
+
+        {vitaux.length > 0 ? (
+          <View>
+            <Text style={styles.sectionTitre}>Signes vitaux</Text>
+            <View style={styles.grilleVitaux}>
+              {vitaux.map((v) => (
+                <Text key={v} style={styles.vital}>
+                  {v}
+                </Text>
+              ))}
+            </View>
+          </View>
+        ) : null}
 
         <Text style={styles.sectionTitre}>Médicaments prescrits</Text>
         {donnees.lignes.length === 0 ? (
@@ -267,11 +260,7 @@ export function DocumentOrdonnancePdf({
           </View>
         ) : null}
 
-        <View style={styles.pied} fixed>
-          <Text style={styles.piedTexte}>
-            {L.sloganPied} — {L.telephones} — {L.adresseComplete}
-          </Text>
-        </View>
+        <PiedPdfLabo branding={donnees.branding} />
       </Page>
     </Document>
   );

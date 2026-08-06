@@ -4,6 +4,7 @@ import {
   creerConsultation,
   listerConsultationsDossier,
   listerConsultationsHistorique,
+  obtenirConstantesVitalesDossier,
   obtenirConsultationOuverteDossier,
 } from "@/lib/medecins/gestion-consultation";
 import type { FormulaireCliniqueMedecins } from "@/lib/medecins/types";
@@ -18,11 +19,16 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const dossierId = searchParams.get("dossierId")?.trim();
     if (dossierId) {
-      const [consultation, historique] = await Promise.all([
+      const [consultation, historique, constantesVitales] = await Promise.all([
         obtenirConsultationOuverteDossier(dossierId),
         listerConsultationsDossier(dossierId),
+        obtenirConstantesVitalesDossier(dossierId),
       ]);
-      return NextResponse.json({ consultation, historique });
+      return NextResponse.json({
+        consultation,
+        historique,
+        constantesVitales,
+      });
     }
     const periode =
       searchParams.get("periode") === "semaine" ? "semaine" : "jour";

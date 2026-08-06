@@ -21,6 +21,7 @@ import {
 } from "@/lib/medecins/pdf-donnees-medecins";
 import type {
   ConsultationDetailMedecins,
+  ConstanteVitaleResume,
   OrdonnanceMedecins,
 } from "@/lib/medecins/types";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,8 @@ export function ModalHistoriquePatientMedecins({ patient, onFermer }: Props) {
     []
   );
   const [ordonnances, setOrdonnances] = useState<OrdonnanceMedecins[]>([]);
+  const [constantesVitales, setConstantesVitales] =
+    useState<ConstanteVitaleResume | null>(null);
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [pdfEnCours, setPdfEnCours] = useState<string | null>(null);
@@ -65,6 +68,7 @@ export function ModalHistoriquePatientMedecins({ patient, onFermer }: Props) {
       const dataC = (await resC.json()) as {
         historique?: ConsultationDetailMedecins[];
         consultation?: ConsultationDetailMedecins | null;
+        constantesVitales?: ConstanteVitaleResume | null;
         erreur?: string;
       };
       const dataO = (await resO.json()) as {
@@ -85,6 +89,7 @@ export function ModalHistoriquePatientMedecins({ patient, onFermer }: Props) {
       );
       setConsultations(fusion);
       setOrdonnances(dataO.ordonnances ?? []);
+      setConstantesVitales(dataC.constantesVitales ?? null);
       if (fusion.length >= 2) {
         setConsultA(fusion[fusion.length - 1].id);
         setConsultB(fusion[0].id);
@@ -111,10 +116,21 @@ export function ModalHistoriquePatientMedecins({ patient, onFermer }: Props) {
     if (!patient) {
       setConsultations([]);
       setOrdonnances([]);
+      setConstantesVitales(null);
       return;
     }
     void charger(patient.dossierId);
   }, [patient, charger]);
+
+  const extrasPdf = useMemo(
+    () => ({
+      telephone: patient?.telephone,
+      age: consultations[0]?.patient.age,
+      sexe: consultations[0]?.patient.sexe,
+      constantesVitales,
+    }),
+    [patient?.telephone, consultations, constantesVitales]
+  );
 
   const diffs = useMemo(() => {
     const cSel = consultations.filter(
@@ -122,21 +138,55 @@ export function ModalHistoriquePatientMedecins({ patient, onFermer }: Props) {
     );
     const oSel = ordonnances.filter((o) => o.id === ordA || o.id === ordB);
     return construireDifferencesHistorique(
-      cSel.map(consultationVersDonneesPdf),
+      cSel.map((c) =>
+        consultationVersDonneesPdf(c, { constantesVitales })
+      ),
       oSel.map((o) =>
         ordonnanceVersDonneesPdf(o, {
-          telephone: patient?.telephone,
-          age: cSel[0]?.patient.age,
-          sexe: cSel[0]?.patient.sexe,
+          ...extrasPdf,
+          signesVitauxConsultation:
+            consultations.find((c) => c.id === consultA || c.id === consultB)
+              ?.formulaireClinique?.signesVitaux ??
+            consultations[0]?.formulaireClinique?.signesVitaux,
         })
       )
     );
-  }, [consultations, ordonnances, consultA, consultB, ordA, ordB, patient]);
+  }, [
+    consultations,
+    ordonnances,
+    consultA,
+    consultB,
+    ordA,
+    ordB,
+    constantesVitales,
+    extrasPdf,
+  ]);
+
+  const comparaisonLibelle = useMemo(() => {
+    const parts: string[] = [];
+    const ca = consultations.find((c) => c.id === consultA);
+    const cb = consultations.find((c) => c.id === consultB);
+    if (ca && cb && ca.id !== cb.id) {
+      parts.push(
+        `Consult. ${new Date(ca.debutLe).toLocaleDateString("fr-FR")} ↔ ${new Date(cb.debutLe).toLocaleDateString("fr-FR")}`
+      );
+    }
+    const oa = ordonnances.find((o) => o.id === ordA);
+    const ob = ordonnances.find((o) => o.id === ordB);
+    if (oa && ob && oa.id !== ob.id) {
+      parts.push(
+        `Ord. ${new Date(oa.prescritLe).toLocaleDateString("fr-FR")} ↔ ${new Date(ob.prescritLe).toLocaleDateString("fr-FR")}`
+      );
+    }
+    return parts.length > 0 ? parts.join(" · ") : null;
+  }, [consultations, ordonnances, consultA, consultB, ordA, ordB]);
 
   async function pdfConsultation(c: ConsultationDetailMedecins) {
     setPdfEnCours(c.id);
     try {
-      const ok = await imprimerCrConsultation(consultationVersDonneesPdf(c));
+      const ok = await imprimerCrConsultation(
+        consultationVersDonneesPdf(c, { constantesVitales })
+      );
       if (!ok) setErreur("Impossible de générer le PDF consultation.");
     } finally {
       setPdfEnCours(null);
@@ -152,6 +202,8 @@ export function ModalHistoriquePatientMedecins({ patient, onFermer }: Props) {
           telephone: patient?.telephone ?? ref?.patient.telephone,
           age: ref?.patient.age,
           sexe: ref?.patient.sexe,
+          constantesVitales,
+          signesVitauxConsultation: ref?.formulaireClinique?.signesVitaux,
         })
       );
       if (!ok) setErreur("Impossible de générer le PDF ordonnance.");
@@ -164,12 +216,17 @@ export function ModalHistoriquePatientMedecins({ patient, onFermer }: Props) {
     if (!patient) return;
     setPdfEnCours("synthese");
     try {
-      const consultPdf = consultations.map(consultationVersDonneesPdf);
+      const consultPdf = consultations.map((c) =>
+        consultationVersDonneesPdf(c, { constantesVitales })
+      );
       const ordPdf = ordonnances.map((o) =>
         ordonnanceVersDonneesPdf(o, {
           telephone: patient.telephone,
           age: consultations[0]?.patient.age,
           sexe: consultations[0]?.patient.sexe,
+          constantesVitales,
+          signesVitauxConsultation:
+            consultations[0]?.formulaireClinique?.signesVitaux,
         })
       );
       const ok = await imprimerHistoriqueDossierPdf({
@@ -180,7 +237,8 @@ export function ModalHistoriquePatientMedecins({ patient, onFermer }: Props) {
         sexe: consultations[0]?.patient.sexe,
         consultations: consultPdf,
         ordonnances: ordPdf,
-        differences: construireDifferencesHistorique(consultPdf, ordPdf),
+        differences: diffs,
+        comparaisonLibelle,
       });
       if (!ok) setErreur("Impossible de générer le PDF historique.");
     } finally {

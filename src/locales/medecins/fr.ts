@@ -338,6 +338,8 @@ export const medecinsFr = {
     champsRequis: "Prénom, nom, téléphone et date sont requis.",
     recherche: "Nom, téléphone, référence…",
     tousStatuts: "Tous les statuts",
+    listeTitre: "Demandes reçues",
+    resultats: "{{count}} demande(s)",
     notes: "Notes",
     enregistrer: "Enregistrer",
     statut: "Statut",

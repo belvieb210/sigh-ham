@@ -39,6 +39,8 @@ export function ContenuRendezVousClient({
       identite: t("client.rdv.identite"),
       contact: t("client.rdv.contact"),
       planning: t("client.rdv.planning"),
+      listeTitre: t("client.rdv.listeTitre"),
+      resultats: (count: number) => t("client.rdv.resultats", { count }),
       libelleStatut: (s: string) => t(`client.rdv.statuts.${s}`, s),
     }),
     [t]

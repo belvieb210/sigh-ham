@@ -51,6 +51,8 @@ export function ContenuRdvMedecins({ utilisateur }: Props) {
       identite: t("medecins.rdv.identite"),
       contact: t("medecins.rdv.contact"),
       planning: t("medecins.rdv.planning"),
+      listeTitre: t("medecins.rdv.listeTitre"),
+      resultats: (count: number) => t("medecins.rdv.resultats", { count }),
       libelleStatut: (s: string) => t(`medecins.rdv.statuts.${s}`, s),
     }),
     [t]

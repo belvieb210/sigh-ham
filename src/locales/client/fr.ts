@@ -238,6 +238,8 @@ export const clientFr = {
       "Toutes les demandes du site public — confirmation, contact patient et notes.",
     recherche: "Nom, téléphone, référence…",
     tousStatuts: "Tous les statuts",
+    listeTitre: "Demandes reçues",
+    resultats: "{{count}} demande(s)",
     vide: "Aucune demande de rendez-vous.",
     notes: "Notes internes",
     statut: "Statut",

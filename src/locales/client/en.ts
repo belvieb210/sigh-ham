@@ -236,6 +236,8 @@ export const clientEn = {
       "All public website requests — confirm, contact patients and add notes.",
     recherche: "Name, phone, reference…",
     tousStatuts: "All statuses",
+    listeTitre: "Incoming requests",
+    resultats: "{{count}} request(s)",
     vide: "No appointment requests.",
     notes: "Internal notes",
     statut: "Status",

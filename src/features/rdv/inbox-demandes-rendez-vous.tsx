@@ -1,13 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Calendar,
+  CalendarCheck,
+  CalendarClock,
   Clock,
   Loader2,
   Mail,
   Phone,
   Search,
+  SlidersHorizontal,
   User,
 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
@@ -50,6 +54,12 @@ const COULEUR_STATUT: Record<string, string> = {
   ABSENT: "bg-orange-100 text-orange-800 border-orange-200",
 };
 
+const CLASSE_CHAMP =
+  "w-full rounded-lg border border-gris-bordure bg-white px-3 py-2.5 text-sm text-texte-principal placeholder:text-texte-secondaire/70 focus:border-bleu-medical focus:outline-none focus:ring-2 focus:ring-bleu-medical/15";
+
+const CLASSE_LABEL =
+  "mb-1 block text-[10px] font-bold uppercase tracking-wider text-texte-secondaire";
+
 function formaterDateHeure(iso: string, locale = "fr-FR") {
   try {
     return new Date(iso).toLocaleString(locale, {
@@ -89,6 +99,8 @@ interface PropsInboxRdv {
     identite: string;
     contact: string;
     planning: string;
+    listeTitre: string;
+    resultats: (count: number) => string;
     libelleStatut: (s: string) => string;
   };
   /** Création manuelle (médecins) */
@@ -103,29 +115,29 @@ export function InboxDemandesRendezVous({
   formulaireCreation,
   onLoaded,
 }: PropsInboxRdv) {
+  const { t } = useTranslation();
   const [demandes, setDemandes] = useState<DemandeRdvUi[]>([]);
   const [compteurs, setCompteurs] = useState<CompteursRdv | null>(null);
   const [selectionId, setSelectionId] = useState<string | null>(null);
-  const [filtreStatut, setFiltreStatut] = useState<string>("");
-  const [q, setQ] = useState("");
-  const [qDebounced, setQDebounced] = useState("");
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillonQ, setBrouillonQ] = useState("");
+  const [brouillonStatut, setBrouillonStatut] = useState("");
+  const [appliqueQ, setAppliqueQ] = useState("");
+  const [appliqueStatut, setAppliqueStatut] = useState("");
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const [notesDraft, setNotesDraft] = useState("");
   const [statutDraft, setStatutDraft] = useState("DEMANDE");
 
-  useEffect(() => {
-    const id = window.setTimeout(() => setQDebounced(q.trim()), 300);
-    return () => window.clearTimeout(id);
-  }, [q]);
+  const nbFiltres = (appliqueQ ? 1 : 0) + (appliqueStatut ? 1 : 0);
 
   const charger = useCallback(async () => {
     setErreur(null);
     try {
       const params = new URLSearchParams();
-      if (filtreStatut) params.set("statut", filtreStatut);
-      if (qDebounced) params.set("q", qDebounced);
+      if (appliqueStatut) params.set("statut", appliqueStatut);
+      if (appliqueQ) params.set("q", appliqueQ);
       const res = await fetch(
         `${apiBase}${params.toString() ? `?${params}` : ""}`
       );
@@ -151,13 +163,13 @@ export function InboxDemandesRendezVous({
     } finally {
       setChargement(false);
     }
-  }, [apiBase, filtreStatut, qDebounced, libelles.erreur, onLoaded, selectionId]);
+  }, [apiBase, appliqueStatut, appliqueQ, libelles.erreur, onLoaded, selectionId]);
 
   useEffect(() => {
     setChargement(true);
     void charger();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiBase, filtreStatut, qDebounced]);
+  }, [apiBase, appliqueStatut, appliqueQ]);
 
   const selection = useMemo(
     () => demandes.find((d) => d.id === selectionId) ?? null,
@@ -169,6 +181,19 @@ export function InboxDemandesRendezVous({
     setNotesDraft(selection.notes ?? "");
     setStatutDraft(selection.statut);
   }, [selection]);
+
+  const appliquerFiltres = () => {
+    setAppliqueQ(brouillonQ.trim());
+    setAppliqueStatut(brouillonStatut);
+    setFiltresOuverts(false);
+  };
+
+  const reinitialiserFiltres = () => {
+    setBrouillonQ("");
+    setBrouillonStatut("");
+    setAppliqueQ("");
+    setAppliqueStatut("");
+  };
 
   const sauvegarder = async () => {
     if (!selection) return;
@@ -215,57 +240,176 @@ export function InboxDemandesRendezVous({
     }
   };
 
+  const kpis = compteurs
+    ? [
+        {
+          label: libelles.libelleStatut("DEMANDE"),
+          valeur: compteurs.nouvelles,
+          icone: CalendarClock,
+          couleur: "bg-amber-100 text-amber-600",
+        },
+        {
+          label: libelles.libelleStatut("CONFIRME"),
+          valeur: compteurs.confirmees,
+          icone: CalendarCheck,
+          couleur: "bg-emerald-100 text-emerald-600",
+        },
+        {
+          label: libelles.aujourdhui,
+          valeur: compteurs.aujourdhui,
+          icone: Calendar,
+          couleur: "bg-blue-100 text-blue-600",
+        },
+      ]
+    : [];
+
   return (
     <div className="space-y-4">
-      {compteurs ? (
-        <div className="grid gap-3 sm:grid-cols-3">
-          {[
-            { label: libelles.libelleStatut("DEMANDE"), valeur: compteurs.nouvelles },
-            {
-              label: libelles.libelleStatut("CONFIRME"),
-              valeur: compteurs.confirmees,
-            },
-            { label: libelles.aujourdhui, valeur: compteurs.aujourdhui },
-          ].map((k) => (
-            <div
-              key={k.label}
-              className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm"
-            >
-              <p className="text-xs font-medium uppercase tracking-wide text-texte-secondaire">
-                {k.label}
-              </p>
-              <p className="mt-1 text-2xl font-bold text-texte-principal">
-                {k.valeur}
-              </p>
-            </div>
-          ))}
-        </div>
+      {kpis.length > 0 ? (
+        <>
+          <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 snap-x snap-mandatory md:hidden">
+            {kpis.map((k) => {
+              const Icone = k.icone;
+              return (
+                <div
+                  key={k.label}
+                  className="min-w-[148px] flex-shrink-0 snap-start rounded-xl border border-gris-bordure bg-white p-3 shadow-sm"
+                >
+                  <div className={`mb-2 inline-flex rounded-lg p-1.5 ${k.couleur}`}>
+                    <Icone className="h-4 w-4" />
+                  </div>
+                  <p className="text-2xl font-bold text-texte-principal">{k.valeur}</p>
+                  <p className="text-xs font-medium text-texte-principal">{k.label}</p>
+                </div>
+              );
+            })}
+          </div>
+          <div className="hidden gap-4 md:grid md:grid-cols-3">
+            {kpis.map((k) => {
+              const Icone = k.icone;
+              return (
+                <div
+                  key={k.label}
+                  className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-texte-secondaire">{k.label}</p>
+                      <p className="mt-1 text-3xl font-bold text-texte-principal">
+                        {k.valeur}
+                      </p>
+                    </div>
+                    <div className={`rounded-lg p-2.5 ${k.couleur}`}>
+                      <Icone className="h-5 w-5" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       ) : null}
 
       {formulaireCreation}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={libelles.recherche}
-            className="w-full rounded-xl border border-gris-bordure bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-bleu-medical focus:ring-2 focus:ring-bleu-medical/20"
-          />
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
+              {libelles.listeTitre}
+            </h2>
+            <p className="mt-0.5 text-xs text-texte-secondaire">
+              {libelles.resultats(demandes.length)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFiltresOuverts((o) => !o)}
+            aria-expanded={filtresOuverts}
+            aria-label={
+              filtresOuverts
+                ? t("reception.tableau.fermerFiltres")
+                : t("reception.tableau.ouvrirFiltres")
+            }
+            className={cn(
+              "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+              filtresOuverts
+                ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
+            )}
+          >
+            <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
+            <span
+              className={cn(
+                "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
+                nbFiltres > 0 ? "bg-red-500" : "bg-slate-400"
+              )}
+            >
+              {nbFiltres}
+            </span>
+          </button>
         </div>
-        <select
-          value={filtreStatut}
-          onChange={(e) => setFiltreStatut(e.target.value)}
-          className="rounded-xl border border-gris-bordure bg-white px-3 py-2.5 text-sm"
-        >
-          <option value="">{libelles.tousStatuts}</option>
-          {STATUTS.map((s) => (
-            <option key={s} value={s}>
-              {libelles.libelleStatut(s)}
-            </option>
-          ))}
-        </select>
+
+        {filtresOuverts ? (
+          <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm sm:p-5">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-1">
+                <label className={CLASSE_LABEL} htmlFor="filtre-rdv-q">
+                  {t("reception.tableau.filtres.nom")}
+                </label>
+                <input
+                  id="filtre-rdv-q"
+                  type="text"
+                  value={brouillonQ}
+                  onChange={(e) => setBrouillonQ(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") appliquerFiltres();
+                  }}
+                  placeholder={libelles.recherche}
+                  className={CLASSE_CHAMP}
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <label className={CLASSE_LABEL} htmlFor="filtre-rdv-statut">
+                  {libelles.statut}
+                </label>
+                <select
+                  id="filtre-rdv-statut"
+                  value={brouillonStatut}
+                  onChange={(e) => setBrouillonStatut(e.target.value)}
+                  className={CLASSE_CHAMP}
+                >
+                  <option value="">{libelles.tousStatuts}</option>
+                  {STATUTS.map((s) => (
+                    <option key={s} value={s}>
+                      {libelles.libelleStatut(s)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+              <Bouton
+                type="button"
+                variante="contour"
+                taille="moyen"
+                onClick={reinitialiserFiltres}
+              >
+                {t("reception.tableau.filtres.reinitialiser")}
+              </Bouton>
+              <Bouton
+                type="button"
+                variante="primaire"
+                taille="moyen"
+                onClick={appliquerFiltres}
+              >
+                <Search className="h-4 w-4" />
+                {t("reception.tableau.filtres.rechercher")}
+              </Bouton>
+            </div>
+          </section>
+        ) : null}
       </div>
 
       {erreur ? (

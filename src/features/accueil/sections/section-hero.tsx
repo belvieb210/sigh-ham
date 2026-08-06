@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import {
   ArrowRight,
   Calendar,
@@ -73,6 +74,9 @@ export function SectionHero({
   diapositives?: import("@/types/hero-accueil").DiapositiveHeroAccueil[];
 }) {
   const { t } = useTranslation();
+  const [slideActif, setSlideActif] = useState(
+    diapositives?.[0] ?? undefined
+  );
 
   const CLES_STATS: Record<string, string> = {
     medecins: "accueil.stats.medecins",
@@ -81,12 +85,20 @@ export function SectionHero({
     certification: "accueil.stats.certification",
   };
 
+  const legendeSlide =
+    slideActif?.titre?.trim() ||
+    slideActif?.alt?.trim() ||
+    null;
+
   return (
     <section
       className="section-hero relative min-h-[580px] overflow-hidden lg:min-h-[640px]"
       aria-labelledby="titre-hero"
     >
-      <CarrouselFondHero diapositives={diapositives} />
+      <CarrouselFondHero
+        diapositives={diapositives}
+        onIndexChange={(_i, slide) => setSlideActif(slide)}
+      />
 
       <div
         className="hero-overlay-degrade absolute inset-0"
@@ -126,11 +138,14 @@ export function SectionHero({
           </h1>
 
           <p className="max-w-md text-sm leading-relaxed text-texte-secondaire sm:text-[15px]">
-            {t("hopital.description")}
+            {legendeSlide ?? t("hopital.description")}
           </p>
 
           <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center">
-            <Link href="/services" className="w-full sm:w-auto">
+            <Link
+              href={slideActif?.lienHref || "/services"}
+              className="w-full sm:w-auto"
+            >
               <Bouton
                 variante="primaire"
                 taille="grand"

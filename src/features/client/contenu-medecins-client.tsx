@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ImagePlus, Loader2, Plus, Stethoscope, Trash2 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
@@ -12,13 +12,29 @@ import {
 } from "@/features/client/mise-en-page-client";
 import { televerserFichierClient } from "@/features/client/televerser-fichier-client";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
+import { cn } from "@/lib/utils";
 
-const CATEGORIES = [
-  { value: "MEDECIN", label: "Médecin" },
-  { value: "PERSONNEL", label: "Personnel" },
-  { value: "RESPONSABLE_LABO", label: "Responsable labo" },
-  { value: "MEDECIN_EXTERNE", label: "Médecin externe" },
-  { value: "SERVICE_EGLISE", label: "Service Église" },
+const ONGLETS = [
+  {
+    value: "MEDECIN",
+    labelKey: "client.medecins.ongletEquipe" as const,
+  },
+  {
+    value: "RESPONSABLE_LABO",
+    labelKey: "client.medecins.ongletResponsable" as const,
+  },
+  {
+    value: "PERSONNEL",
+    labelKey: "client.medecins.ongletPersonnel" as const,
+  },
+  {
+    value: "MEDECIN_EXTERNE",
+    labelKey: "client.medecins.ongletExternes" as const,
+  },
+  {
+    value: "SERVICE_EGLISE",
+    labelKey: "client.medecins.ongletEglise" as const,
+  },
 ] as const;
 
 interface MedecinVitrine {
@@ -38,19 +54,21 @@ interface MedecinVitrine {
 
 type FormMedecin = Omit<MedecinVitrine, "id"> & { id?: string };
 
-const FORM_VIDE: FormMedecin = {
-  nom: "",
-  prenom: "",
-  specialite: "",
-  bio: "",
-  photoUrl: null,
-  horaires: "",
-  telephone: "",
-  email: "",
-  categorie: "MEDECIN",
-  ordre: 0,
-  actif: true,
-};
+function formVide(categorie: string): FormMedecin {
+  return {
+    nom: "",
+    prenom: "",
+    specialite: "",
+    bio: "",
+    photoUrl: null,
+    horaires: "",
+    telephone: "",
+    email: "",
+    categorie,
+    ordre: 0,
+    actif: true,
+  };
+}
 
 export function ContenuMedecinsClient({
   utilisateur,
@@ -58,8 +76,9 @@ export function ContenuMedecinsClient({
   utilisateur: UtilisateurClient;
 }) {
   const { t } = useTranslation();
+  const [onglet, setOnglet] = useState<string>("MEDECIN");
   const [liste, setListe] = useState<MedecinVitrine[]>([]);
-  const [form, setForm] = useState<FormMedecin>(FORM_VIDE);
+  const [form, setForm] = useState<FormMedecin>(formVide("MEDECIN"));
   const [modeForm, setModeForm] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -84,10 +103,21 @@ export function ContenuMedecinsClient({
     charger();
   }, [charger]);
 
+  const filtrés = useMemo(
+    () => liste.filter((m) => (m.categorie || "MEDECIN") === onglet),
+    [liste, onglet]
+  );
+
   const majChamp = <K extends keyof FormMedecin>(
     cle: K,
     valeur: FormMedecin[K]
   ) => setForm((prev) => ({ ...prev, [cle]: valeur }));
+
+  const ouvrirNouveau = () => {
+    setForm(formVide(onglet));
+    setModeForm(true);
+    setErreur(null);
+  };
 
   const enregistrer = async () => {
     setEnCours(true);
@@ -101,6 +131,7 @@ export function ContenuMedecinsClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          categorie: onglet,
           bio: form.bio || null,
           horaires: form.horaires || null,
           telephone: form.telephone || null,
@@ -110,7 +141,7 @@ export function ContenuMedecinsClient({
       const data = (await res.json()) as { message?: string };
       if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
       setModeForm(false);
-      setForm(FORM_VIDE);
+      setForm(formVide(onglet));
       charger();
     } catch (e: unknown) {
       setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
@@ -148,8 +179,16 @@ export function ContenuMedecinsClient({
     }
   };
 
-  const labelCategorie = (c: string) =>
-    CATEGORIES.find((x) => x.value === c)?.label ?? c;
+  const titreForm =
+    onglet === "MEDECIN_EXTERNE"
+      ? "Médecin externe"
+      : onglet === "SERVICE_EGLISE"
+        ? "Service Église"
+        : onglet === "RESPONSABLE_LABO"
+          ? "Responsable / Direction"
+          : onglet === "PERSONNEL"
+            ? "Personnel"
+            : "Médecin / agent";
 
   return (
     <MiseEnPageClient
@@ -174,15 +213,29 @@ export function ContenuMedecinsClient({
           </p>
         ) : null}
 
+        <div className="flex flex-wrap gap-2 rounded-xl border border-gris-bordure bg-white p-2 shadow-sm">
+          {ONGLETS.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              onClick={() => {
+                setOnglet(o.value);
+                setModeForm(false);
+              }}
+              className={cn(
+                "rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:text-sm",
+                onglet === o.value
+                  ? "bg-bleu-medical text-white"
+                  : "text-texte-secondaire hover:bg-gris-tres-clair hover:text-texte-principal"
+              )}
+            >
+              {t(o.labelKey)}
+            </button>
+          ))}
+        </div>
+
         <div className="flex justify-end">
-          <Bouton
-            variante="primaire"
-            taille="petit"
-            onClick={() => {
-              setForm(FORM_VIDE);
-              setModeForm(true);
-            }}
-          >
+          <Bouton variante="primaire" taille="petit" onClick={ouvrirNouveau}>
             <Plus className="h-4 w-4" />
             {t("client.medecins.nouveau")}
           </Bouton>
@@ -190,6 +243,9 @@ export function ContenuMedecinsClient({
 
         {modeForm ? (
           <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
+            <h2 className="mb-4 text-sm font-bold text-[#2d2a6e]">
+              {form.id ? `Modifier — ${titreForm}` : `Nouveau — ${titreForm}`}
+            </h2>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className={CLASSE_LABEL_RECEPTION}>
@@ -212,20 +268,6 @@ export function ContenuMedecinsClient({
                 />
               </div>
               <div>
-                <label className={CLASSE_LABEL_RECEPTION}>Catégorie</label>
-                <select
-                  className={CLASSE_CHAMP_RECEPTION}
-                  value={form.categorie}
-                  onChange={(e) => majChamp("categorie", e.target.value)}
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
                 <label className={CLASSE_LABEL_RECEPTION}>
                   {t("client.medecins.specialite")}
                 </label>
@@ -233,33 +275,6 @@ export function ContenuMedecinsClient({
                   className={CLASSE_CHAMP_RECEPTION}
                   value={form.specialite}
                   onChange={(e) => majChamp("specialite", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={CLASSE_LABEL_RECEPTION}>Téléphone</label>
-                <input
-                  className={CLASSE_CHAMP_RECEPTION}
-                  value={form.telephone ?? ""}
-                  onChange={(e) => majChamp("telephone", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={CLASSE_LABEL_RECEPTION}>Email</label>
-                <input
-                  type="email"
-                  className={CLASSE_CHAMP_RECEPTION}
-                  value={form.email ?? ""}
-                  onChange={(e) => majChamp("email", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("client.medecins.horaires")}
-                </label>
-                <input
-                  className={CLASSE_CHAMP_RECEPTION}
-                  value={form.horaires ?? ""}
-                  onChange={(e) => majChamp("horaires", e.target.value)}
                 />
               </div>
               <div>
@@ -271,6 +286,37 @@ export function ContenuMedecinsClient({
                   className={CLASSE_CHAMP_RECEPTION}
                   value={form.ordre}
                   onChange={(e) => majChamp("ordre", Number(e.target.value))}
+                />
+              </div>
+              <div>
+                <label className={CLASSE_LABEL_RECEPTION}>
+                  {t("client.medecins.telephone")}
+                </label>
+                <input
+                  className={CLASSE_CHAMP_RECEPTION}
+                  value={form.telephone ?? ""}
+                  onChange={(e) => majChamp("telephone", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className={CLASSE_LABEL_RECEPTION}>
+                  {t("client.medecins.email")}
+                </label>
+                <input
+                  type="email"
+                  className={CLASSE_CHAMP_RECEPTION}
+                  value={form.email ?? ""}
+                  onChange={(e) => majChamp("email", e.target.value)}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className={CLASSE_LABEL_RECEPTION}>
+                  {t("client.medecins.horaires")}
+                </label>
+                <input
+                  className={CLASSE_CHAMP_RECEPTION}
+                  value={form.horaires ?? ""}
+                  onChange={(e) => majChamp("horaires", e.target.value)}
                 />
               </div>
               <div className="sm:col-span-2">
@@ -310,7 +356,7 @@ export function ContenuMedecinsClient({
                   <div className="space-y-2">
                     <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-bleu-medical px-3 py-2 text-sm font-semibold text-white hover:bg-bleu-medical-fonce">
                       <ImagePlus className="h-4 w-4" />
-                      Choisir une photo
+                      {t("client.medecins.choisirPhoto")}
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp,image/gif"
@@ -330,7 +376,7 @@ export function ContenuMedecinsClient({
                         taille="petit"
                         onClick={() => majChamp("photoUrl", null)}
                       >
-                        Retirer
+                        {t("client.medecins.retirerPhoto")}
                       </Bouton>
                     ) : null}
                   </div>
@@ -348,11 +394,20 @@ export function ContenuMedecinsClient({
               </div>
             </div>
             <div className="mt-4 flex gap-2">
-              <Bouton variante="primaire" taille="petit" onClick={enregistrer} disabled={enCours}>
+              <Bouton
+                variante="primaire"
+                taille="petit"
+                onClick={enregistrer}
+                disabled={enCours}
+              >
                 {enCours ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {t("client.common.enregistrer")}
               </Bouton>
-              <Bouton variante="contour" taille="petit" onClick={() => setModeForm(false)}>
+              <Bouton
+                variante="contour"
+                taille="petit"
+                onClick={() => setModeForm(false)}
+              >
                 {t("client.common.annuler")}
               </Bouton>
             </div>
@@ -360,7 +415,7 @@ export function ContenuMedecinsClient({
         ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2">
-          {liste.map((m) => (
+          {filtrés.map((m) => (
             <div
               key={m.id}
               className="flex gap-3 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm"
@@ -379,9 +434,6 @@ export function ContenuMedecinsClient({
                   {m.prenom} {m.nom}
                 </p>
                 <p className="text-sm text-texte-secondaire">{m.specialite}</p>
-                <p className="text-[11px] text-texte-secondaire">
-                  {labelCategorie(m.categorie ?? "MEDECIN")}
-                </p>
                 <div className="mt-2 flex gap-2">
                   <Bouton
                     variante="contour"
@@ -393,7 +445,7 @@ export function ContenuMedecinsClient({
                         horaires: m.horaires ?? "",
                         telephone: m.telephone ?? "",
                         email: m.email ?? "",
-                        categorie: m.categorie || "MEDECIN",
+                        categorie: m.categorie || onglet,
                       });
                       setModeForm(true);
                     }}
@@ -412,6 +464,11 @@ export function ContenuMedecinsClient({
               </div>
             </div>
           ))}
+          {filtrés.length === 0 ? (
+            <p className="text-sm text-texte-secondaire sm:col-span-2">
+              {t("client.medecins.vide")}
+            </p>
+          ) : null}
         </div>
       </div>
     </MiseEnPageClient>

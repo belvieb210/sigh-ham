@@ -60,6 +60,8 @@ export async function chargerDiapositivesHero(): Promise<
         alt: d.alt,
         ordre: d.ordre,
         publie: d.actif,
+        titre: d.titre ?? undefined,
+        lienHref: d.lienHref ?? undefined,
       }));
     }
   } catch (error) {

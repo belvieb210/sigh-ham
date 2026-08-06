@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ImageVitrine } from "@/components/ui/image-vitrine";
 import { CHEMIN_LOGO_HAM } from "@/constants/navigation";
 import { useContenuAPropos } from "@/hooks/use-contenu-page";
 import { cn } from "@/lib/utils";
@@ -13,7 +14,9 @@ const DELAI_REPRISE_MS = 7000;
 
 export function SectionHeroAPropos() {
   const { hero } = useContenuAPropos();
-  const images = hero.imagesFond;
+  const images = hero.imagesFond?.length
+    ? hero.imagesFond
+    : [{ url: "/images/a-propos/labo-1.jpg", alt: "HAM Laboratoire" }];
 
   const [indexActif, setIndexActif] = useState(0);
   const [progression, setProgression] = useState(0);
@@ -82,9 +85,9 @@ export function SectionHeroAPropos() {
             transition={{ duration: 1, ease: "easeInOut" }}
             className="absolute inset-0"
           >
-            <Image
+            <ImageVitrine
               src={imageCourante.url}
-              alt={imageCourante.alt}
+              alt={imageCourante.alt || hero.nom}
               fill
               className="object-cover object-center"
               priority={indexActif === 0}
@@ -153,9 +156,9 @@ export function SectionHeroAPropos() {
                 {imageCourante.alt}
               </p>
               <p className="mt-3 text-sm leading-relaxed text-white/75">
-                Centre de diagnostic et d&apos;analyses médicales équipé pour
-                répondre aux exigences les plus strictes en matière de fiabilité
-                et d&apos;accessibilité.
+                {"descriptionCarte" in hero && hero.descriptionCarte
+                  ? String(hero.descriptionCarte)
+                  : "Centre de diagnostic et d'analyses médicales équipé pour répondre aux exigences les plus strictes en matière de fiabilité et d'accessibilité."}
               </p>
             </div>
           </motion.div>

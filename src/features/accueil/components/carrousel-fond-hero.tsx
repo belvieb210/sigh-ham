@@ -1,30 +1,32 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   DIAPOSITIVES_HERO_ACCUEIL,
   INTERVALLE_CARROUSEL_HERO_MS,
 } from "@/constants/hero-accueil";
+import { ImageVitrine } from "@/components/ui/image-vitrine";
 import type { DiapositiveHeroAccueil } from "@/types/hero-accueil";
 
 const DELAI_REPRISE_MS = 6000;
 
 interface PropsCarrouselFondHero {
   diapositives?: DiapositiveHeroAccueil[];
+  onIndexChange?: (index: number, slide: DiapositiveHeroAccueil) => void;
 }
 
 export function CarrouselFondHero({
   diapositives = DIAPOSITIVES_HERO_ACCUEIL.filter((d) => d.publie).sort(
     (a, b) => a.ordre - b.ordre
   ),
+  onIndexChange,
 }: PropsCarrouselFondHero) {
   const [indexActif, setIndexActif] = useState(0);
   const refPause = useRef(false);
 
   const diapositiveSuivante = useCallback(() => {
-    setIndexActif((i) => (i + 1) % diapositives.length);
+    setIndexActif((i) => (i + 1) % Math.max(diapositives.length, 1));
   }, [diapositives.length]);
 
   useEffect(() => {
@@ -38,6 +40,10 @@ export function CarrouselFondHero({
   }, [diapositiveSuivante, diapositives.length]);
 
   const imageCourante = diapositives[indexActif] ?? diapositives[0];
+
+  useEffect(() => {
+    if (imageCourante) onIndexChange?.(indexActif, imageCourante);
+  }, [indexActif, imageCourante, onIndexChange]);
 
   if (!imageCourante) return null;
 
@@ -62,20 +68,20 @@ export function CarrouselFondHero({
             transition={{ duration: 1.1, ease: "easeInOut" }}
             className="absolute inset-0"
           >
-            <Image
+            <ImageVitrine
               src={imageCourante.url}
-              alt=""
+              alt={imageCourante.alt || imageCourante.titre || ""}
               fill
               className="object-cover object-center lg:object-right"
-              priority={indexActif === 0}
               sizes="100vw"
+              priority={indexActif === 0}
             />
           </motion.div>
         </AnimatePresence>
       ) : (
-        <Image
+        <ImageVitrine
           src={imageCourante.url}
-          alt=""
+          alt={imageCourante.alt || ""}
           fill
           className="object-cover object-center lg:object-right"
           priority
@@ -83,7 +89,6 @@ export function CarrouselFondHero({
         />
       )}
 
-      {/* Indicateurs discrets — bas droite, sous le contenu */}
       {diapositives.length > 1 && (
         <div className="absolute bottom-[7.5rem] right-6 z-[5] hidden gap-1.5 sm:flex lg:bottom-[8.5rem] lg:right-8">
           {diapositives.map((slide, index) => (

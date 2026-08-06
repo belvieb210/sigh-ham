@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { Target, Eye, Award, Heart, Quote } from "lucide-react";
-import { useContenuAPropos } from "@/hooks/use-contenu-page";
-import { IMAGE_HERO_SERVICES } from "@/constants/images";
+import { ImageVitrine } from "@/components/ui/image-vitrine";
 import { EnTeteSection } from "@/components/ui/en-tete-section";
+import { IMAGE_HERO_SERVICES } from "@/constants/images";
+import { useContenuAPropos } from "@/hooks/use-contenu-page";
 
 const CARTE_ICONES_VALEURS = {
   fiabilite: Award,
@@ -33,8 +33,11 @@ export function SectionMissionVision() {
               className="relative"
             >
               <div className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl ring-1 ring-gris-bordure">
-                <Image
-                  src={IMAGE_HERO_SERVICES}
+                <ImageVitrine
+                  src={
+                    ("imageUrl" in mission && mission.imageUrl) ||
+                    IMAGE_HERO_SERVICES
+                  }
                   alt="Laboratoire HAM"
                   fill
                   className="object-cover"

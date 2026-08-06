@@ -1,4 +1,5 @@
 import type { CampagnePublique, CampagneImage } from "@/generated/prisma/client";
+import { CAMPAGNES_PUBLICATIONS } from "@/constants/campagnes";
 import type {
   CampagnePublication,
   CategorieCampagne,
@@ -21,7 +22,31 @@ export function campagneDbVersPublication(
     .slice()
     .sort((a, b) => a.ordre - b.ordre)
     .map((i) => ({ url: i.url, legende: i.legende ?? undefined }));
-  const imageUrl = images[0]?.url ?? row.imageUrl ?? undefined;
+  let imageUrl = images[0]?.url ?? row.imageUrl ?? undefined;
+
+  // Si la campagne CMS n'a pas encore de photo, reprendre l'image du catalogue statique (même slug)
+  if (!imageUrl) {
+    const fallback = CAMPAGNES_PUBLICATIONS.find((c) => c.slug === row.slug);
+    if (fallback?.imageUrl) imageUrl = fallback.imageUrl;
+  }
+  // Dernier recours : photo labo par défaut (évite les cartes « icône seule »)
+  if (!imageUrl) {
+    const fonds = [
+      "/images/a-propos/labo-1.jpg",
+      "/images/a-propos/labo-2.jpg",
+      "/images/a-propos/labo-3.jpg",
+      "/images/a-propos/labo-4.jpg",
+    ];
+    const hash = [...row.slug].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+    imageUrl = fonds[Math.abs(hash) % fonds.length]!;
+  }
+
+  const galerie =
+    images.length > 0
+      ? images
+      : imageUrl
+        ? [{ url: imageUrl }]
+        : [];
 
   return {
     id: row.id,
@@ -42,7 +67,7 @@ export function campagneDbVersPublication(
     couleurAccent: row.couleurAccent,
     icone: row.icone as IdIconeCampagne,
     imageUrl,
-    images: images.length > 0 ? images : imageUrl ? [{ url: imageUrl }] : [],
+    images: galerie,
     lieu: row.lieu ?? undefined,
     datePublication: row.datePublication
       ? formatDateIso(row.datePublication)

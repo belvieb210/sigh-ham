@@ -1,12 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Mail, Phone, User } from "lucide-react";
 import { ImageVitrine } from "@/components/ui/image-vitrine";
 import { useContenuAPropos } from "@/hooks/use-contenu-page";
 import { EnTeteSection } from "@/components/ui/en-tete-section";
 import { cn } from "@/lib/utils";
+
+const LIBELLES_CATEGORIE: Record<string, string> = {
+  MEDECIN: "Médecins",
+  PERSONNEL: "Personnel",
+  RESPONSABLE_LABO: "Direction",
+  MEDECIN_EXTERNE: "Médecins externes",
+  SERVICE_EGLISE: "Service Église",
+};
 
 function obtenirInitiales(nom: string) {
   return nom
@@ -17,6 +25,18 @@ function obtenirInitiales(nom: string) {
     .slice(0, 2)
     .toUpperCase();
 }
+
+type Membre = {
+  id: string;
+  nom: string;
+  fonction: string;
+  photoUrl: string;
+  bio?: string;
+  telephone?: string;
+  email?: string;
+  horaires?: string;
+  categorie?: string;
+};
 
 function CarteMembreEquipe({
   nom,
@@ -75,19 +95,14 @@ function CarteMembreEquipe({
   );
 }
 
-type Membre = {
-  id: string;
-  nom: string;
-  fonction: string;
-  photoUrl: string;
-  bio?: string;
-  telephone?: string;
-  email?: string;
-  horaires?: string;
-  categorie?: string;
-};
-
-function CarrouselEquipe({ membres }: { membres: Membre[] }) {
+/** Carrousel des agents d'un même service / catégorie */
+function CarrouselAgentsService({
+  titreService,
+  membres,
+}: {
+  titreService: string;
+  membres: Membre[];
+}) {
   const [index, setIndex] = useState(0);
   const pause = useRef(false);
 
@@ -105,17 +120,20 @@ function CarrouselEquipe({ membres }: { membres: Membre[] }) {
     if (membres.length < 2) return;
     const id = setInterval(() => {
       if (!pause.current) suivant();
-    }, 5000);
+    }, 4800);
     return () => clearInterval(id);
   }, [membres.length, suivant]);
 
-  if (membres.length === 0) return null;
+  useEffect(() => {
+    setIndex(0);
+  }, [titreService, membres.length]);
 
+  if (membres.length === 0) return null;
   const membre = membres[index] ?? membres[0];
 
   return (
-    <div
-      className="relative mx-auto mt-8 max-w-3xl overflow-hidden rounded-3xl border border-gris-bordure bg-white shadow-xl lg:mt-10"
+    <article
+      className="overflow-hidden rounded-2xl border border-gris-bordure bg-white shadow-sm"
       onMouseEnter={() => {
         pause.current = true;
       }}
@@ -123,101 +141,108 @@ function CarrouselEquipe({ membres }: { membres: Membre[] }) {
         pause.current = false;
       }}
     >
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={membre.id}
-          initial={{ opacity: 0, x: 24 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -24 }}
-          transition={{ duration: 0.35 }}
-          className="grid sm:grid-cols-[220px_1fr]"
-        >
-          <div className="relative aspect-[4/5] bg-gradient-to-br from-[#eef0f8] to-white sm:aspect-auto sm:min-h-[280px]">
-            <ImageVitrine
-              src={membre.photoUrl}
-              alt={membre.nom}
-              fill
-              className="object-contain object-center p-4"
-              sizes="220px"
-            />
-          </div>
-          <div className="flex flex-col justify-center p-6 sm:p-8">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-bleu-medical">
-              {membre.categorie === "MEDECIN_EXTERNE"
-                ? "Médecin externe"
-                : membre.categorie === "RESPONSABLE_LABO"
-                  ? "Responsable labo"
-                  : membre.categorie === "PERSONNEL"
-                    ? "Personnel"
-                    : "Médecin"}
-            </p>
-            <h3 className="mt-1 text-xl font-extrabold text-texte-principal sm:text-2xl">
-              {membre.nom}
-            </h3>
-            <p className="mt-1 text-sm text-bleu-medical">{membre.fonction}</p>
-            {membre.bio ? (
-              <p className="mt-4 text-sm leading-relaxed text-texte-secondaire line-clamp-4">
-                {membre.bio}
-              </p>
-            ) : null}
-            <div className="mt-4 space-y-1.5 text-xs text-texte-secondaire">
-              {membre.telephone ? (
-                <p className="flex items-center gap-2">
-                  <Phone className="h-3.5 w-3.5 text-bleu-medical" />
-                  {membre.telephone}
-                </p>
-              ) : null}
-              {membre.email ? (
-                <p className="flex items-center gap-2">
-                  <Mail className="h-3.5 w-3.5 text-bleu-medical" />
-                  {membre.email}
-                </p>
-              ) : null}
-              {membre.horaires ? (
-                <p className="text-texte-secondaire">{membre.horaires}</p>
-              ) : null}
-            </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+      <div className="flex items-center justify-between border-b border-gris-bordure bg-gris-tres-clair px-4 py-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-bleu-medical">
+            Service
+          </p>
+          <h3 className="text-sm font-extrabold text-[#2d2a6e] sm:text-base">
+            {titreService}
+          </h3>
+        </div>
+        <span className="rounded-full bg-bleu-medical/10 px-2.5 py-0.5 text-[11px] font-semibold text-bleu-medical">
+          {membres.length} agent{membres.length > 1 ? "s" : ""}
+        </span>
+      </div>
 
-      {membres.length > 1 ? (
-        <>
-          <div className="absolute right-3 top-3 flex gap-2">
-            <button
-              type="button"
-              aria-label="Précédent"
-              onClick={precedent}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-gris-bordure bg-white text-texte-principal shadow-sm hover:bg-gris-tres-clair"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="Suivant"
-              onClick={suivant}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-gris-bordure bg-white text-texte-principal shadow-sm hover:bg-gris-tres-clair"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="flex justify-center gap-1.5 pb-4">
-            {membres.map((m, i) => (
-              <button
-                key={m.id}
-                type="button"
-                aria-label={m.nom}
-                onClick={() => setIndex(i)}
-                className={cn(
-                  "h-1.5 rounded-full transition-all",
-                  i === index ? "w-6 bg-bleu-medical" : "w-1.5 bg-gris-bordure"
-                )}
+      <div className="relative">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={membre.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="grid sm:grid-cols-[160px_1fr]"
+          >
+            <div className="relative aspect-[4/5] bg-gradient-to-br from-[#eef0f8] to-white sm:aspect-auto sm:min-h-[200px]">
+              <ImageVitrine
+                src={membre.photoUrl}
+                alt={membre.nom}
+                fill
+                className="object-contain object-center p-3"
+                sizes="160px"
               />
-            ))}
-          </div>
-        </>
-      ) : null}
-    </div>
+            </div>
+            <div className="flex flex-col justify-center p-5 sm:p-6">
+              <h4 className="text-lg font-extrabold text-texte-principal">
+                {membre.nom}
+              </h4>
+              <p className="mt-0.5 text-sm text-bleu-medical">{membre.fonction}</p>
+              {membre.bio ? (
+                <p className="mt-3 text-sm leading-relaxed text-texte-secondaire line-clamp-3">
+                  {membre.bio}
+                </p>
+              ) : null}
+              <div className="mt-3 space-y-1 text-xs text-texte-secondaire">
+                {membre.telephone ? (
+                  <p className="flex items-center gap-2">
+                    <Phone className="h-3.5 w-3.5 text-bleu-medical" />
+                    {membre.telephone}
+                  </p>
+                ) : null}
+                {membre.email ? (
+                  <p className="flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5 text-bleu-medical" />
+                    {membre.email}
+                  </p>
+                ) : null}
+                {membre.horaires ? <p>{membre.horaires}</p> : null}
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {membres.length > 1 ? (
+          <>
+            <div className="absolute right-3 top-3 flex gap-1.5">
+              <button
+                type="button"
+                aria-label="Agent précédent"
+                onClick={precedent}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-gris-bordure bg-white text-texte-principal shadow-sm hover:bg-gris-tres-clair"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                aria-label="Agent suivant"
+                onClick={suivant}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-gris-bordure bg-white text-texte-principal shadow-sm hover:bg-gris-tres-clair"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex justify-center gap-1.5 pb-4">
+              {membres.map((m, i) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  aria-label={m.nom}
+                  onClick={() => setIndex(i)}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all",
+                    i === index ? "w-5 bg-bleu-medical" : "w-1.5 bg-gris-bordure"
+                  )}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="h-3" />
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -225,6 +250,22 @@ export function SectionDirectionEquipe() {
   const { direction, equipe } = useContenuAPropos();
   const { responsable } = direction;
   const membres = equipe.membres as Membre[];
+
+  const groupes = useMemo(() => {
+    const map = new Map<string, Membre[]>();
+    for (const m of membres) {
+      const cle = m.categorie || "MEDECIN";
+      const liste = map.get(cle) ?? [];
+      liste.push(m);
+      map.set(cle, liste);
+    }
+    const ordre = ["MEDECIN", "MEDECIN_EXTERNE", "PERSONNEL"];
+    return [...map.entries()].sort(([a], [b]) => {
+      const ia = ordre.indexOf(a);
+      const ib = ordre.indexOf(b);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+  }, [membres]);
 
   return (
     <>
@@ -309,7 +350,20 @@ export function SectionDirectionEquipe() {
             sousTitre={equipe.sousTitre}
           />
 
-          <CarrouselEquipe membres={membres} />
+          <div className="mt-8 grid gap-5 lg:mt-10 lg:grid-cols-2 lg:gap-6">
+            {groupes.map(([categorie, agents]) => (
+              <CarrouselAgentsService
+                key={categorie}
+                titreService={LIBELLES_CATEGORIE[categorie] ?? categorie}
+                membres={agents}
+              />
+            ))}
+            {groupes.length === 0 ? (
+              <p className="text-sm text-texte-secondaire">
+                Aucun membre d&apos;équipe publié pour le moment.
+              </p>
+            ) : null}
+          </div>
         </div>
       </section>
     </>

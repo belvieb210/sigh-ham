@@ -12,6 +12,7 @@ import { CONTENU_CONTACT } from "@/constants/contact";
 import { CONTENU_RENDEZ_VOUS } from "@/constants/rendez-vous";
 import { CONTENU_SERVICES } from "@/constants/services";
 import { useCampagnes } from "@/hooks/use-campagnes";
+import { normaliserContenuAPropos } from "@/lib/client/normaliser-a-propos";
 import type { PagesFr } from "@/locales/pages/fr";
 
 function usePages(): PagesFr {
@@ -497,18 +498,34 @@ export function useContenuAPropos() {
     staleTime: 60_000,
   });
 
-  return useMemo(
-    () => ({
+  const { data: pageDb } = useQuery({
+    queryKey: ["public", "pages", "a-propos"],
+    queryFn: async () => {
+      const res = await fetch("/api/public/pages/a-propos");
+      if (!res.ok) return null;
+      const data = (await res.json()) as {
+        page?: { contenu?: unknown };
+      };
+      return data.page?.contenu ?? null;
+    },
+    staleTime: 60_000,
+  });
+
+  return useMemo(() => {
+    const fallbackCms = {
       hero: {
         typeEtablissement: aPropos.hero.typeEtablissement,
         nom: CONTENU_A_PROPOS.hero.nom,
         badgeSlogan: aPropos.hero.badgeSlogan,
         suiteSlogan: aPropos.hero.suiteSlogan,
-        imagesFond: CONTENU_A_PROPOS.hero.imagesFond,
+        descriptionCarte:
+          "Centre de diagnostic et d'analyses médicales équipé pour répondre aux exigences les plus strictes en matière de fiabilité et d'accessibilité.",
+        imagesFond: [...CONTENU_A_PROPOS.hero.imagesFond],
       },
       mission: {
         titre: aPropos.mission.titre,
         texte: aPropos.mission.texte,
+        imageUrl: "/images/a-propos/labo-3.jpg",
       },
       vision: {
         titre: aPropos.vision.titre,
@@ -522,41 +539,74 @@ export function useContenuAPropos() {
       })),
       histoire: {
         titre: aPropos.histoire.titre,
-        paragraphes: aPropos.histoire.paragraphes,
+        paragraphes: [...aPropos.histoire.paragraphes],
       },
+    };
+
+    const cms = normaliserContenuAPropos(pageDb, fallbackCms);
+
+    const membresBruts =
+      medecinsDb && medecinsDb.length > 0
+        ? medecinsDb.map((m) => ({
+            id: m.id,
+            nom: `${m.prenom} ${m.nom}`.trim(),
+            fonction: m.specialite,
+            photoUrl: m.photoUrl ?? "/images/equipe/personnel-1.png",
+            bio: m.bio,
+            telephone: m.telephone,
+            email: m.email,
+            horaires: m.horaires,
+            categorie: m.categorie ?? "MEDECIN",
+          }))
+        : CONTENU_A_PROPOS.equipe.membres.map((membre, index) => ({
+            id: membre.id,
+            nom: aPropos.equipe.membres[index]?.nom ?? membre.nom,
+            fonction:
+              aPropos.equipe.membres[index]?.fonction ?? membre.fonction,
+            photoUrl: membre.photoUrl,
+            bio: undefined as string | undefined,
+            telephone: undefined as string | undefined,
+            email: undefined as string | undefined,
+            horaires: undefined as string | undefined,
+            categorie: "MEDECIN",
+          }));
+
+    const responsables = membresBruts.filter(
+      (m) => m.categorie === "RESPONSABLE_LABO"
+    );
+    const equipeSansDirection = membresBruts.filter(
+      (m) => m.categorie !== "RESPONSABLE_LABO"
+    );
+
+    const responsableCms = responsables[0];
+
+    return {
+      hero: cms.hero,
+      mission: cms.mission,
+      vision: cms.vision,
+      valeurs: cms.valeurs,
+      histoire: cms.histoire,
       direction: {
         titre: aPropos.direction.titre,
         sousTitre: aPropos.direction.sousTitre,
         responsable: {
-          nom: aPropos.direction.responsable.nom,
-          fonction: aPropos.direction.responsable.fonction,
-          biographie: aPropos.direction.responsable.biographie,
-          photoUrl: CONTENU_A_PROPOS.direction.responsable.photoUrl,
+          nom:
+            responsableCms?.nom ?? aPropos.direction.responsable.nom,
+          fonction:
+            responsableCms?.fonction ??
+            aPropos.direction.responsable.fonction,
+          biographie:
+            responsableCms?.bio ??
+            aPropos.direction.responsable.biographie,
+          photoUrl:
+            responsableCms?.photoUrl ??
+            CONTENU_A_PROPOS.direction.responsable.photoUrl,
         },
       },
       equipe: {
         titre: aPropos.equipe.titre,
         sousTitre: aPropos.equipe.sousTitre,
-        membres:
-          medecinsDb && medecinsDb.length > 0
-            ? medecinsDb.map((m) => ({
-                id: m.id,
-                nom: `${m.prenom} ${m.nom}`.trim(),
-                fonction: m.specialite,
-                photoUrl: m.photoUrl ?? "/images/equipe/personnel-1.png",
-                bio: m.bio,
-                telephone: m.telephone,
-                email: m.email,
-                horaires: m.horaires,
-                categorie: m.categorie ?? "MEDECIN",
-              }))
-            : CONTENU_A_PROPOS.equipe.membres.map((membre, index) => ({
-                id: membre.id,
-                nom: aPropos.equipe.membres[index]?.nom ?? membre.nom,
-                fonction:
-                  aPropos.equipe.membres[index]?.fonction ?? membre.fonction,
-                photoUrl: membre.photoUrl,
-              })),
+        membres: equipeSansDirection,
       },
       certifications: {
         titre: aPropos.certifications.titre,
@@ -577,7 +627,8 @@ export function useContenuAPropos() {
             valeur: indicateur.valeur,
             libelle: aPropos.impact.items[index]?.libelle ?? indicateur.libelle,
             description:
-              aPropos.impact.items[index]?.description ?? indicateur.description,
+              aPropos.impact.items[index]?.description ??
+              indicateur.description,
           })
         ),
       },
@@ -601,7 +652,6 @@ export function useContenuAPropos() {
         },
         telephone: CONTENU_A_PROPOS.cta.telephone,
       },
-    }),
-    [aPropos, medecinsDb]
-  );
+    };
+  }, [aPropos, medecinsDb, pageDb]);
 }

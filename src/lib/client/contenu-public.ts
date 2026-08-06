@@ -1,7 +1,5 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import { CAMPAGNES_PUBLICATIONS } from "@/constants/campagnes";
-import { DIAPOSITIVES_HERO_ACCUEIL } from "@/constants/hero-accueil";
 import { CONTENU_A_PROPOS } from "@/constants/a-propos";
 import { CONTENU_SERVICES } from "@/constants/services";
 import { campagneDbVersPublication } from "@/lib/client/mapper-campagne";
@@ -18,15 +16,12 @@ export async function chargerCampagnesPubliques(options?: {
       include: { images: { orderBy: { ordre: "asc" } } },
       orderBy: [{ datePublication: "desc" }, { createdAt: "desc" }],
     });
-    if (rows.length > 0) {
-      return rows.map(campagneDbVersPublication);
-    }
+    // CMS uniquement — plus de fallback constants/images statiques
+    return rows.map(campagneDbVersPublication);
   } catch (error) {
     console.error("[contenu-public] campagnes DB indisponible:", error);
   }
-  return seulementPubliees
-    ? CAMPAGNES_PUBLICATIONS.filter((c) => c.publie)
-    : CAMPAGNES_PUBLICATIONS;
+  return [];
 }
 
 export async function chargerCampagneParSlug(
@@ -38,11 +33,11 @@ export async function chargerCampagneParSlug(
       include: { images: { orderBy: { ordre: "asc" } } },
     });
     if (row?.publie) return campagneDbVersPublication(row);
-    if (row && !row.publie) return null;
+    return null;
   } catch (error) {
     console.error("[contenu-public] campagne slug DB:", error);
   }
-  return CAMPAGNES_PUBLICATIONS.find((c) => c.slug === slug && c.publie) ?? null;
+  return null;
 }
 
 export async function chargerDiapositivesHero(): Promise<
@@ -53,8 +48,9 @@ export async function chargerDiapositivesHero(): Promise<
       where: { actif: true },
       orderBy: { ordre: "asc" },
     });
-    if (rows.length > 0) {
-      return rows.map((d) => ({
+    return rows
+      .filter((d) => d.url && !d.url.startsWith("/images/"))
+      .map((d) => ({
         id: d.id,
         url: d.url,
         alt: d.alt,
@@ -63,13 +59,10 @@ export async function chargerDiapositivesHero(): Promise<
         titre: d.titre ?? undefined,
         lienHref: d.lienHref ?? undefined,
       }));
-    }
   } catch (error) {
     console.error("[contenu-public] hero DB indisponible:", error);
   }
-  return DIAPOSITIVES_HERO_ACCUEIL.filter((d) => d.publie).sort(
-    (a, b) => a.ordre - b.ordre
-  );
+  return [];
 }
 
 export async function chargerPagePublique(cle: string) {

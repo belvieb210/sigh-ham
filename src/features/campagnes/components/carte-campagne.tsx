@@ -10,6 +10,10 @@ import {
   LIBELLES_CATEGORIE,
   LIBELLES_STATUT,
 } from "@/lib/campagnes-utils";
+import {
+  classeAccentCampagne,
+  styleFondCampagne,
+} from "@/lib/client/couleurs-campagne";
 import type { CampagneAvecStatut } from "@/services/service-campagnes-sync";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +40,7 @@ export function CarteCampagne({
       : campagne.imageUrl
         ? [{ url: campagne.imageUrl }]
         : [];
+  const fond = styleFondCampagne(campagne.couleurIllustration);
 
   return (
     <article
@@ -83,8 +88,9 @@ export function CarteCampagne({
           <div
             className={cn(
               "absolute inset-0 bg-gradient-to-br",
-              campagne.couleurIllustration
+              fond.className
             )}
+            style={fond.style}
           >
             <div
               className="absolute inset-0 opacity-30"
@@ -97,7 +103,7 @@ export function CarteCampagne({
               <div
                 className={cn(
                   "rounded-2xl bg-white/40 p-4 backdrop-blur-sm transition-transform duration-300 group-hover:scale-110",
-                  campagne.couleurAccent
+                  classeAccentCampagne(campagne.couleurAccent)
                 )}
               >
                 <Icone />

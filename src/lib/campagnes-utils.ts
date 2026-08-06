@@ -41,29 +41,18 @@ export function versFormatAccueil(
       return priorite[statutA] - priorite[statutB];
     })
     .slice(0, 4)
-    .map(
-      ({
-        id,
-        titre,
-        periode,
-        href,
-        couleurFond,
-        couleurIllustration,
-        couleurAccent,
-        icone,
-        imageUrl,
-      }) => ({
-        id,
-        titre,
-        periode,
-        href,
-        couleurFond,
-        couleurIllustration,
-        couleurAccent,
-        icone,
-        imageUrl,
-      })
-    );
+    .map((c) => ({
+      id: c.id,
+      titre: c.titre,
+      periode: c.periode,
+      href: c.href,
+      couleurFond: c.couleurFond,
+      couleurIllustration: c.couleurIllustration,
+      couleurAccent: c.couleurAccent,
+      icone: c.icone,
+      imageUrl: c.images?.[0]?.url ?? c.imageUrl,
+      images: c.images,
+    }));
 }
 
 export const LIBELLES_STATUT: Record<StatutCampagne, string> = {

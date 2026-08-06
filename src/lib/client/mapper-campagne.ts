@@ -1,5 +1,4 @@
 import type { CampagnePublique, CampagneImage } from "@/generated/prisma/client";
-import { CAMPAGNES_PUBLICATIONS } from "@/constants/campagnes";
 import type {
   CampagnePublication,
   CategorieCampagne,
@@ -15,37 +14,30 @@ type CampagneAvecImages = CampagnePublique & {
   images?: CampagneImage[];
 };
 
+function estImageCms(url: string | null | undefined): boolean {
+  if (!url) return false;
+  const u = url.trim();
+  // Exclure les anciennes photos statiques du dossier public/images
+  if (u.startsWith("/images/")) return false;
+  return Boolean(u);
+}
+
 export function campagneDbVersPublication(
   row: CampagneAvecImages
 ): CampagnePublication {
   const images = (row.images ?? [])
     .slice()
     .sort((a, b) => a.ordre - b.ordre)
-    .map((i) => ({ url: i.url, legende: i.legende ?? undefined }));
-  let imageUrl = images[0]?.url ?? row.imageUrl ?? undefined;
+    .map((i) => ({ url: i.url, legende: i.legende ?? undefined }))
+    .filter((i) => estImageCms(i.url));
+  const imageUrlLegacy = estImageCms(row.imageUrl) ? row.imageUrl! : undefined;
 
-  // Si la campagne CMS n'a pas encore de photo, reprendre l'image du catalogue statique (même slug)
-  if (!imageUrl) {
-    const fallback = CAMPAGNES_PUBLICATIONS.find((c) => c.slug === row.slug);
-    if (fallback?.imageUrl) imageUrl = fallback.imageUrl;
-  }
-  // Dernier recours : photo labo par défaut (évite les cartes « icône seule »)
-  if (!imageUrl) {
-    const fonds = [
-      "/images/a-propos/labo-1.jpg",
-      "/images/a-propos/labo-2.jpg",
-      "/images/a-propos/labo-3.jpg",
-      "/images/a-propos/labo-4.jpg",
-    ];
-    const hash = [...row.slug].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-    imageUrl = fonds[Math.abs(hash) % fonds.length]!;
-  }
-
+  // Uniquement photos CMS (/uploads, MinIO…) — pas de /images/ statiques
   const galerie =
     images.length > 0
       ? images
-      : imageUrl
-        ? [{ url: imageUrl }]
+      : imageUrlLegacy
+        ? [{ url: imageUrlLegacy }]
         : [];
 
   return {
@@ -66,7 +58,7 @@ export function campagneDbVersPublication(
     couleurIllustration: row.couleurIllustration,
     couleurAccent: row.couleurAccent,
     icone: row.icone as IdIconeCampagne,
-    imageUrl,
+    imageUrl: galerie[0]?.url,
     images: galerie,
     lieu: row.lieu ?? undefined,
     datePublication: row.datePublication

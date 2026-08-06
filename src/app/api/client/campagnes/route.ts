@@ -3,6 +3,7 @@ import {
   obtenirSessionApiClient,
   reponseNonAutoriseClient,
 } from "@/lib/auth/garde-api-client";
+import { versHexPourInputCouleur } from "@/lib/client/couleurs-campagne";
 import {
   campagneDbVersPublication,
   synchroniserImagesCampagne,
@@ -53,9 +54,18 @@ function parserCorps(body: Record<string, unknown>) {
       misEnAvant: Boolean(body.misEnAvant),
       imageUrl,
       lieu: body.lieu ? String(body.lieu) : null,
-      couleurFond: String(body.couleurFond ?? "#E8F4FC"),
-      couleurIllustration: String(body.couleurIllustration ?? "#0B6E99"),
-      couleurAccent: String(body.couleurAccent ?? "#0B6E99"),
+      couleurFond: versHexPourInputCouleur(
+        String(body.couleurFond ?? "#E8F4FC"),
+        "#E8F4FC"
+      ),
+      couleurIllustration: versHexPourInputCouleur(
+        String(body.couleurIllustration ?? "#0B6E99"),
+        "#0B6E99"
+      ),
+      couleurAccent: versHexPourInputCouleur(
+        String(body.couleurAccent ?? "#0B6E99"),
+        "#0B6E99"
+      ),
       icone: String(body.icone ?? "coeur"),
       datePublication: body.datePublication
         ? new Date(String(body.datePublication))

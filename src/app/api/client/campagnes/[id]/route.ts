@@ -7,6 +7,7 @@ import {
   campagneDbVersPublication,
   synchroniserImagesCampagne,
 } from "@/lib/client/mapper-campagne";
+import { versHexPourInputCouleur } from "@/lib/client/couleurs-campagne";
 import { prisma } from "@/lib/prisma";
 
 interface Ctx {
@@ -102,13 +103,28 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
           ? { lieu: body.lieu ? String(body.lieu) : null }
           : {}),
         ...(body.couleurFond != null
-          ? { couleurFond: String(body.couleurFond) }
+          ? {
+              couleurFond: versHexPourInputCouleur(
+                String(body.couleurFond),
+                "#E8F4FC"
+              ),
+            }
           : {}),
         ...(body.couleurIllustration != null
-          ? { couleurIllustration: String(body.couleurIllustration) }
+          ? {
+              couleurIllustration: versHexPourInputCouleur(
+                String(body.couleurIllustration),
+                "#0B6E99"
+              ),
+            }
           : {}),
         ...(body.couleurAccent != null
-          ? { couleurAccent: String(body.couleurAccent) }
+          ? {
+              couleurAccent: versHexPourInputCouleur(
+                String(body.couleurAccent),
+                "#0B6E99"
+              ),
+            }
           : {}),
         ...(body.icone != null ? { icone: String(body.icone) } : {}),
         ...(body.datePublication !== undefined

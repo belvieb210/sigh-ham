@@ -20,6 +20,10 @@ import {
   LIBELLES_CATEGORIE,
   LIBELLES_STATUT,
 } from "@/lib/campagnes-utils";
+import {
+  classeAccentCampagne,
+  styleFondCampagne,
+} from "@/lib/client/couleurs-campagne";
 import { cn } from "@/lib/utils";
 
 const INTERVALLE_MS = 6000;
@@ -98,6 +102,13 @@ export function SectionVedetteCampagnes() {
   if (isLoading || campagnes.length === 0) return null;
 
   const Icone = CARTE_ICONES_CAMPAGNES[campagne.icone];
+  const fond = styleFondCampagne(campagne.couleurIllustration);
+  const galerie =
+    campagne.images && campagne.images.length > 0
+      ? campagne.images
+      : campagne.imageUrl
+        ? [{ url: campagne.imageUrl }]
+        : [];
 
   return (
     <section
@@ -168,20 +179,20 @@ export function SectionVedetteCampagnes() {
             >
               {/* Visuel */}
               <div className="relative min-h-[260px] lg:min-h-[420px]">
-                {campagne.images && campagne.images.length > 1 ? (
+                {galerie.length > 1 ? (
                   <>
                     <CarrouselImagesVitrine
-                      images={campagne.images}
+                      images={galerie}
                       className="absolute inset-0"
                       sizes="(max-width: 1024px) 100vw, 50vw"
                       showNav={false}
                     />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0f172a]/80 via-[#0f172a]/20 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-[#0f172a]/30 lg:to-[#0f172a]/90" />
                   </>
-                ) : campagne.imageUrl ? (
+                ) : galerie[0]?.url ? (
                   <>
                     <ImageVitrine
-                      src={campagne.imageUrl}
+                      src={galerie[0].url}
                       alt=""
                       fill
                       className="object-cover"
@@ -193,13 +204,19 @@ export function SectionVedetteCampagnes() {
                   <div
                     className={cn(
                       "absolute inset-0 bg-gradient-to-br",
-                      campagne.couleurIllustration
+                      fond.className
                     )}
+                    style={fond.style}
                   />
                 )}
 
                 <div className="absolute inset-0 flex items-center justify-center lg:hidden">
-                  <div className={cn("opacity-30", campagne.couleurAccent)}>
+                  <div
+                    className={cn(
+                      "opacity-30",
+                      classeAccentCampagne(campagne.couleurAccent)
+                    )}
+                  >
                     <Icone />
                   </div>
                 </div>

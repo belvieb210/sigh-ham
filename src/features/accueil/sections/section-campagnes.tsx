@@ -6,9 +6,16 @@ import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { versFormatAccueil } from "@/lib/campagnes-utils";
+import {
+  classeAccentCampagne,
+  styleFondCampagne,
+} from "@/lib/client/couleurs-campagne";
 import { useCampagnesTraduits } from "@/hooks/use-contenu-page";
 import { CARTE_ICONES_CAMPAGNES } from "@/components/icones/icones-medicales";
+import { CarrouselImagesVitrine } from "@/components/ui/carrousel-images-vitrine";
 import { EnTeteSection } from "@/components/ui/en-tete-section";
+import { ImageVitrine } from "@/components/ui/image-vitrine";
+import { cn } from "@/lib/utils";
 
 const INTERVALLE_DEFILEMENT_MS = 4500;
 const DELAI_REPRISE_MS = 5000;
@@ -40,13 +47,16 @@ export function SectionCampagnes() {
   }, []);
 
   useEffect(() => {
+    if (campagnes.length <= 1) return;
     const intervalle = setInterval(() => {
       if (refPause.current) return;
 
       setIndexActif((indexCourant) => {
         const indexSuivant = (indexCourant + 1) % campagnes.length;
         const conteneur = refCarrousel.current;
-        const carte = conteneur?.children[indexSuivant] as HTMLElement | undefined;
+        const carte = conteneur?.children[indexSuivant] as
+          | HTMLElement
+          | undefined;
         if (carte && conteneur) {
           conteneur.scrollTo({
             left: carte.offsetLeft - conteneur.offsetLeft,
@@ -85,6 +95,10 @@ export function SectionCampagnes() {
     setIndexActif(Math.min(Math.max(index, 0), campagnes.length - 1));
   }, [campagnes.length]);
 
+  if (campagnes.length === 0) {
+    return null;
+  }
+
   return (
     <section
       className="section-campagnes relative overflow-hidden bg-gradient-to-b from-gris-tres-clair to-white py-12 lg:py-20"
@@ -112,7 +126,6 @@ export function SectionCampagnes() {
           classNameTitre="text-[#2d2a6e]"
         />
 
-        {/* Mobile : carousel */}
         <div
           ref={refCarrousel}
           className="-mx-4 mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 scrollbar-masquee lg:hidden"
@@ -125,6 +138,13 @@ export function SectionCampagnes() {
         >
           {campagnes.map((campagne, index) => {
             const Icone = CARTE_ICONES_CAMPAGNES[campagne.icone];
+            const fond = styleFondCampagne(campagne.couleurIllustration);
+            const galerie =
+              campagne.images && campagne.images.length > 0
+                ? campagne.images
+                : campagne.imageUrl
+                  ? [{ url: campagne.imageUrl }]
+                  : [];
             return (
               <article
                 key={campagne.id}
@@ -150,17 +170,30 @@ export function SectionCampagnes() {
                     </Link>
                   </div>
                   <div
-                    className={`relative flex w-[38%] items-center justify-center overflow-hidden bg-gradient-to-br ${campagne.couleurIllustration}`}
+                    className={cn(
+                      "relative flex w-[38%] items-center justify-center overflow-hidden bg-gradient-to-br",
+                      fond.className
+                    )}
+                    style={fond.style}
                   >
-                    {campagne.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={campagne.imageUrl}
+                    {galerie.length > 1 ? (
+                      <CarrouselImagesVitrine
+                        images={galerie}
+                        className="absolute inset-0"
+                        showNav={false}
+                        showDots={false}
+                        sizes="40vw"
+                      />
+                    ) : galerie[0]?.url ? (
+                      <ImageVitrine
+                        src={galerie[0].url}
                         alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="40vw"
                       />
                     ) : (
-                      <div className={campagne.couleurAccent}>
+                      <div className={classeAccentCampagne(campagne.couleurAccent)}>
                         <Icone />
                       </div>
                     )}
@@ -197,10 +230,16 @@ export function SectionCampagnes() {
             : `Campagne ${indexActif + 1} sur ${campagnes.length}`}
         </p>
 
-        {/* Desktop : grille 4 colonnes premium */}
         <div className="mt-10 hidden gap-5 lg:grid lg:grid-cols-4 lg:gap-6">
           {campagnes.map((campagne, index) => {
             const Icone = CARTE_ICONES_CAMPAGNES[campagne.icone];
+            const fond = styleFondCampagne(campagne.couleurIllustration);
+            const galerie =
+              campagne.images && campagne.images.length > 0
+                ? campagne.images
+                : campagne.imageUrl
+                  ? [{ url: campagne.imageUrl }]
+                  : [];
             return (
               <motion.article
                 key={campagne.id}
@@ -211,18 +250,34 @@ export function SectionCampagnes() {
                 className="carte-campagne group flex flex-col overflow-hidden rounded-2xl border border-gris-bordure/60 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-bleu-medical/20 hover:shadow-[0_16px_40px_-12px_rgba(26,77,124,0.15)]"
               >
                 <div
-                  className={`relative flex h-32 items-center justify-center overflow-hidden bg-gradient-to-br ${campagne.couleurIllustration}`}
+                  className={cn(
+                    "relative flex h-32 items-center justify-center overflow-hidden bg-gradient-to-br",
+                    fond.className
+                  )}
+                  style={fond.style}
                 >
-                  {campagne.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={campagne.imageUrl}
+                  {galerie.length > 1 ? (
+                    <CarrouselImagesVitrine
+                      images={galerie}
+                      className="absolute inset-0"
+                      showNav={false}
+                      showDots
+                      sizes="25vw"
+                    />
+                  ) : galerie[0]?.url ? (
+                    <ImageVitrine
+                      src={galerie[0].url}
                       alt=""
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="25vw"
                     />
                   ) : (
                     <div
-                      className={`transition-transform duration-300 group-hover:scale-110 ${campagne.couleurAccent}`}
+                      className={cn(
+                        "transition-transform duration-300 group-hover:scale-110",
+                        classeAccentCampagne(campagne.couleurAccent)
+                      )}
                     >
                       <Icone />
                     </div>

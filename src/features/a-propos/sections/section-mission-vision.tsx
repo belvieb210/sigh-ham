@@ -2,9 +2,9 @@
 
 import { motion } from "framer-motion";
 import { Target, Eye, Award, Heart, Quote } from "lucide-react";
+import { CarrouselImagesVitrine } from "@/components/ui/carrousel-images-vitrine";
 import { ImageVitrine } from "@/components/ui/image-vitrine";
 import { EnTeteSection } from "@/components/ui/en-tete-section";
-import { IMAGE_HERO_SERVICES } from "@/constants/images";
 import { useContenuAPropos } from "@/hooks/use-contenu-page";
 
 const CARTE_ICONES_VALEURS = {
@@ -33,16 +33,39 @@ export function SectionMissionVision() {
               className="relative"
             >
               <div className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl ring-1 ring-gris-bordure">
-                <ImageVitrine
-                  src={
-                    ("imageUrl" in mission && mission.imageUrl) ||
-                    IMAGE_HERO_SERVICES
+                {(() => {
+                  const imagesMission =
+                    "images" in mission &&
+                    Array.isArray(mission.images) &&
+                    mission.images.length > 0
+                      ? (mission.images as { url: string; alt?: string }[])
+                      : "imageUrl" in mission && mission.imageUrl
+                        ? [{ url: String(mission.imageUrl) }]
+                        : [];
+                  if (imagesMission.length > 1) {
+                    return (
+                      <CarrouselImagesVitrine
+                        images={imagesMission}
+                        className="absolute inset-0"
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                      />
+                    );
                   }
-                  alt="Laboratoire HAM"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
+                  if (imagesMission[0]?.url) {
+                    return (
+                      <ImageVitrine
+                        src={imagesMission[0].url}
+                        alt="Laboratoire HAM"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                      />
+                    );
+                  }
+                  return (
+                    <div className="absolute inset-0 bg-gradient-to-br from-bleu-medical-clair to-white" />
+                  );
+                })()}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#2d2a6e]/60 to-transparent" />
                 <div className="absolute bottom-5 left-5 right-5 rounded-xl border border-white/20 bg-black/40 p-4 backdrop-blur-md">
                   <Quote className="h-5 w-5 text-[#7dd3fc]" />

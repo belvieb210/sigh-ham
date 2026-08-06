@@ -17,7 +17,7 @@ export type ContenuAProposNormalise = {
     descriptionCarte: string;
     imagesFond: ImageFondAPropos[];
   };
-  mission: { titre: string; texte: string; imageUrl?: string };
+  mission: { titre: string; texte: string; imageUrl?: string; images: ImageFondAPropos[] };
   vision: { titre: string; texte: string };
   valeurs: ValeurAPropos[];
   histoire: { titre: string; paragraphes: string[] };
@@ -31,6 +31,11 @@ function asRecord(v: unknown): Record<string, unknown> | null {
 
 function asString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;
+}
+
+function estImageCms(url: string | null | undefined): boolean {
+  if (!url) return false;
+  return !url.trim().startsWith("/images/");
 }
 
 export function normaliserContenuAPropos(
@@ -50,13 +55,18 @@ export function normaliserContenuAPropos(
   const imagesFond: ImageFondAPropos[] = Array.isArray(imagesFondRaw)
     ? imagesFondRaw
         .map((item): ImageFondAPropos | null => {
-          if (typeof item === "string") return { url: item, alt: "" };
+          if (typeof item === "string") {
+            return estImageCms(item) ? { url: item, alt: "" } : null;
+          }
           const o = asRecord(item);
-          if (!o?.url) return null;
+          if (!o?.url || !estImageCms(String(o.url))) return null;
           return { url: String(o.url), alt: asString(o.alt) };
         })
         .filter((x): x is ImageFondAPropos => x != null)
-    : fallback.hero.imagesFond;
+    : [];
+  // Pas de fallback imagesFond statiques CONTENU_A_PROPOS
+  const imagesFondFinal =
+    imagesFond.length > 0 ? imagesFond : fallback.hero.imagesFond.filter((i) => estImageCms(i.url));
 
   let valeurs: ValeurAPropos[] = fallback.valeurs;
   const valeursRaw = root.valeurs;
@@ -113,8 +123,7 @@ export function normaliserContenuAPropos(
         heroRaw.descriptionCarte ?? root.descriptionCarte,
         fallback.hero.descriptionCarte
       ),
-      imagesFond:
-        imagesFond.length > 0 ? imagesFond : fallback.hero.imagesFond,
+      imagesFond: imagesFondFinal,
     },
     mission: {
       titre: asString(
@@ -125,9 +134,27 @@ export function normaliserContenuAPropos(
         missionRaw.texte ?? root.missionTexte ?? root.mission,
         fallback.mission.texte
       ),
-      imageUrl:
-        asString(missionRaw.imageUrl ?? root.missionImage) ||
-        fallback.mission.imageUrl,
+      imageUrl: undefined,
+      images: (() => {
+        const raw =
+          missionRaw.images ?? root.missionImages ?? fallback.mission.images;
+        if (Array.isArray(raw) && raw.length > 0) {
+          return raw
+            .map((item): ImageFondAPropos | null => {
+              if (typeof item === "string") {
+                return estImageCms(item) ? { url: item } : null;
+              }
+              const o = asRecord(item);
+              if (!o?.url || !estImageCms(String(o.url))) return null;
+              return { url: String(o.url), alt: asString(o.alt) };
+            })
+            .filter((x): x is ImageFondAPropos => x != null);
+        }
+        const single = asString(
+          missionRaw.imageUrl ?? root.missionImage ?? fallback.mission.imageUrl
+        );
+        return estImageCms(single) ? [{ url: single }] : [];
+      })(),
     },
     vision: {
       titre: asString(

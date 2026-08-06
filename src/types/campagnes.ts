@@ -56,4 +56,5 @@ export interface CampagneAccueil {
   couleurAccent: string;
   icone: IdIconeCampagne;
   imageUrl?: string;
+  images?: { url: string; legende?: string }[];
 }

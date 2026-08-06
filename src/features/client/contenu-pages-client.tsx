@@ -46,15 +46,12 @@ function fallbackAPropos(): ContenuAProposNormalise {
       suiteSlogan: CONTENU_A_PROPOS.hero.suiteSlogan,
       descriptionCarte:
         "Centre de diagnostic et d'analyses médicales équipé pour répondre aux exigences les plus strictes en matière de fiabilité et d'accessibilité.",
-      imagesFond: CONTENU_A_PROPOS.hero.imagesFond.map((i) => ({
-        url: i.url,
-        alt: i.alt,
-      })),
+      imagesFond: [],
     },
     mission: {
       titre: CONTENU_A_PROPOS.mission.titre,
       texte: CONTENU_A_PROPOS.mission.texte,
-      imageUrl: "/images/a-propos/labo-3.jpg",
+      images: [],
     },
     vision: {
       titre: CONTENU_A_PROPOS.vision.titre,
@@ -422,17 +419,23 @@ export function ContenuPagesClient({
                       <ZoneImagesVitrine
                         label={t("client.pages.missionImage")}
                         dossier="galerie"
-                        max={1}
+                        max={8}
                         images={
-                          aPropos.mission.imageUrl
-                            ? [{ url: aPropos.mission.imageUrl }]
-                            : []
+                          (aPropos.mission.images?.length
+                            ? aPropos.mission.images
+                            : aPropos.mission.imageUrl
+                              ? [{ url: aPropos.mission.imageUrl }]
+                              : []) as ImageVitrineItem[]
                         }
                         onChange={(images) =>
                           setAPropos((p) => ({
                             ...p,
                             mission: {
                               ...p.mission,
+                              images: images.map((i) => ({
+                                url: i.url,
+                                alt: i.legende,
+                              })),
                               imageUrl: images[0]?.url,
                             },
                           }))

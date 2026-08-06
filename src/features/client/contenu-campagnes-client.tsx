@@ -7,6 +7,7 @@ import { Loader2, Megaphone, Plus, Trash2 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
 import { ImageVitrine } from "@/components/ui/image-vitrine";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
+import { versHexPourInputCouleur } from "@/lib/client/couleurs-campagne";
 import {
   MiseEnPageClient,
   type UtilisateurClient,
@@ -342,7 +343,7 @@ export function ContenuCampagnesClient({
                 <input
                   type="color"
                   className="h-10 w-full rounded-lg border border-gris-bordure"
-                  value={form.couleurFond}
+                  value={versHexPourInputCouleur(form.couleurFond, "#E8F4FC")}
                   onChange={(e) => majChamp("couleurFond", e.target.value)}
                 />
               </div>
@@ -353,7 +354,10 @@ export function ContenuCampagnesClient({
                 <input
                   type="color"
                   className="h-10 w-full rounded-lg border border-gris-bordure"
-                  value={form.couleurIllustration}
+                  value={versHexPourInputCouleur(
+                    form.couleurIllustration,
+                    "#0B6E99"
+                  )}
                   onChange={(e) => majChamp("couleurIllustration", e.target.value)}
                 />
               </div>
@@ -364,7 +368,7 @@ export function ContenuCampagnesClient({
                 <input
                   type="color"
                   className="h-10 w-full rounded-lg border border-gris-bordure"
-                  value={form.couleurAccent}
+                  value={versHexPourInputCouleur(form.couleurAccent, "#0B6E99")}
                   onChange={(e) => majChamp("couleurAccent", e.target.value)}
                 />
               </div>

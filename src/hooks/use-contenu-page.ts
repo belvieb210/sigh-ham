@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { CONTENU_A_PROPOS } from "@/constants/a-propos";
 import {
-  CAMPAGNES_PUBLICATIONS,
   CONTENU_CAMPAGNES,
 } from "@/constants/campagnes";
 import { CONTENU_CONTACT } from "@/constants/contact";
@@ -443,18 +442,10 @@ export function useCampagnesTraduits() {
   const { data: campagnesDb } = useCampagnes();
 
   return useMemo(() => {
-    const source =
-      campagnesDb && campagnesDb.length > 0
-        ? campagnesDb
-        : CAMPAGNES_PUBLICATIONS.filter((c) => c.publie);
+    const source = campagnesDb ?? [];
 
     return source.map((campagne) => {
-      const constMatch = CAMPAGNES_PUBLICATIONS.find(
-        (c) => c.slug === campagne.slug
-      );
-      const trad = constMatch
-        ? items[constMatch.id as keyof typeof items]
-        : undefined;
+      const trad = items[campagne.id as keyof typeof items];
       return {
         ...campagne,
         titre: trad?.titre ?? campagne.titre,
@@ -520,12 +511,13 @@ export function useContenuAPropos() {
         suiteSlogan: aPropos.hero.suiteSlogan,
         descriptionCarte:
           "Centre de diagnostic et d'analyses médicales équipé pour répondre aux exigences les plus strictes en matière de fiabilité et d'accessibilité.",
-        imagesFond: [...CONTENU_A_PROPOS.hero.imagesFond],
+        imagesFond: [],
       },
       mission: {
         titre: aPropos.mission.titre,
         texte: aPropos.mission.texte,
-        imageUrl: "/images/a-propos/labo-3.jpg",
+        imageUrl: undefined,
+        images: [],
       },
       vision: {
         titre: aPropos.vision.titre,

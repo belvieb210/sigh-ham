@@ -2,6 +2,25 @@
 
 Tous les scripts sont dans `/var/www/sigh-ham/deploy/`.
 
+## Sur le VPS — un seul fichier
+
+Après un push GitHub (ou depuis le PC avec `DEPLOIEMENT-VPS.bat`), sur le serveur :
+
+```bash
+cd /var/www/sigh-ham
+bash DEPLOIEMENT.sh
+```
+
+Équivalent :
+
+```bash
+bash /var/www/sigh-ham/deploy/deployer.sh
+```
+
+Cela fait : `git pull` → migrate → **build** → **restart** `sigh-web` / `sigh-socket`.
+
+---
+
 ## Depuis votre PC — un seul fichier
 
 1. **Une seule fois** : vérifiez le mot de passe dans `deploy/vps.local.env`  

@@ -80,6 +80,8 @@ export const receptionKg = {
     MEDECINS_EXTERNES: { label: "Nganga ya libanda", description: "Muntu ya maladi oyo nganga atindaki" },
     EGLISE: { label: "Église", description: "Ba examen prénuptial" },
     LABORATOIRE: { label: "Laboratoire", description: "Ba analyse mpe prélèvement" },
+    PHARMACIE: { label: "Pharmacie", description: "Kupesa ba médicament" },
+    HOSPITALISATION: { label: "Hospitalisation", description: "Kokota / ba lit" },
   },
   actions: {
     rechercherPatient: "Kuluka muntu ya maladi",

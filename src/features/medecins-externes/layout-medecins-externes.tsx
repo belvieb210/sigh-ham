@@ -115,9 +115,13 @@ function LiensNavigation({
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         {rendreSection(t("medecinsExternes.layout.sectionPrincipal"), principal)}
-        {rendreSection(t("medecinsExternes.layout.sectionClinique"), clinique)}
+        {clinique.length > 0
+          ? rendreSection(t("medecinsExternes.layout.sectionClinique"), clinique)
+          : null}
         {rendreSection(t("medecinsExternes.layout.sectionCommunication"), communication)}
-        {rendreSection(t("medecinsExternes.layout.sectionParametres"), parametres)}
+        {parametres.length > 0
+          ? rendreSection(t("medecinsExternes.layout.sectionParametres"), parametres)
+          : null}
       </nav>
 
       <div className="space-y-2 border-t border-gris-bordure p-3">

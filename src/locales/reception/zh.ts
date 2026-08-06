@@ -79,6 +79,8 @@ export const receptionZh = {
     MEDECINS_EXTERNES: { label: "外部医生", description: "外部医生转介患者" },
     EGLISE: { label: "教会", description: "婚前检查" },
     LABORATOIRE: { label: "实验室", description: "检验与采样" },
+    PHARMACIE: { label: "药房", description: "药品发放" },
+    HOSPITALISATION: { label: "住院", description: "入院 / 床位" },
   },
   actions: {
     rechercherPatient: "搜索患者",

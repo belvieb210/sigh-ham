@@ -1,4 +1,4 @@
-/** Translations EN — SIGH Reception module */
+﻿/** Translations EN — SIGH Reception module */
 
 import type { ReceptionFr } from "./fr";
 
@@ -78,6 +78,8 @@ export const receptionEn = {
     MEDECINS_EXTERNES: { label: "External doctor", description: "Patient referred by a doctor" },
     EGLISE: { label: "Church", description: "Premarital exams" },
     LABORATOIRE: { label: "Laboratory", description: "Tests and samples" },
+    PHARMACIE: { label: "Pharmacy", description: "Medication dispensing" },
+    HOSPITALISATION: { label: "Hospitalization", description: "Admission / beds" },
   },
   actions: {
     rechercherPatient: "Search patient",

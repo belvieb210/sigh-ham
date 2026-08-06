@@ -78,6 +78,8 @@ export const receptionHi = {
     MEDECINS_EXTERNES: { label: "बाहरी डॉक्टर", description: "डॉक्टर द्वारा भेजा गया रोगी" },
     EGLISE: { label: "चर्च", description: "विवाह पूर्व परीक्षण" },
     LABORATOIRE: { label: "प्रयोगशाला", description: "परीक्षण और नमूने" },
+    PHARMACIE: { label: "फार्मेसी", description: "दवा वितरण" },
+    HOSPITALISATION: { label: "अस्पताल में भर्ती", description: "प्रवेश / बिस्तर" },
   },
   actions: {
     rechercherPatient: "रोगी खोजें",

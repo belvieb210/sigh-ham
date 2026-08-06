@@ -37,12 +37,14 @@ function CorpsAccueil({ agentNom }: { agentNom: string }) {
         const res = await fetch(
           `${espace.prefixeApi}/patients/${encodeURIComponent(patient.id)}`
         );
-        const data = (await res.json()) as DonneesFormulairePatient & {
-          message?: string;
-        };
-        if (!res.ok) throw new Error(data.message ?? "Impossible de charger.");
-        setDonneesPrefill(data);
-        definirDepuisDonneesCompletes(data);
+        if (!res.ok) throw new Error("Patient introuvable");
+        const donnees = (await res.json()) as DonneesFormulairePatient;
+        definirDepuisDonneesCompletes(donnees);
+        setDonneesPrefill({
+          ...donnees,
+          typeVisite: "ancien",
+          dossierId: patient.dossierId ?? donnees.dossierId,
+        });
         refFormulaire.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       } catch {
         setPatientSelectionneId(null);
@@ -66,9 +68,13 @@ function CorpsAccueil({ agentNom }: { agentNom: string }) {
             message?: string;
           };
           if (!res.ok) return;
-          setDonneesPrefill(data);
-          setPatientSelectionneId(data.numeroPatient);
           definirDepuisDonneesCompletes(data);
+          setDonneesPrefill({
+            ...data,
+            typeVisite: "ancien",
+            dossierId: detail.dossierId ?? data.dossierId,
+          });
+          setPatientSelectionneId(data.numeroPatient);
         } catch {
           /* ignore */
         }

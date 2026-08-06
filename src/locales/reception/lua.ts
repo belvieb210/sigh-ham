@@ -78,6 +78,8 @@ export const receptionLua = {
     MEDECINS_EXTERNES: { label: "Nganga wa libanda", description: "Muntu wa maladi nganga watindile" },
     EGLISE: { label: "Église", description: "Ba examen prénuptial" },
     LABORATOIRE: { label: "Laboratoire", description: "Ba analyse ne prélèvement" },
+    PHARMACIE: { label: "Pharmacie", description: "Kupesa ba médicament" },
+    HOSPITALISATION: { label: "Hospitalisation", description: "Kokota / ba lit" },
   },
   actions: {
     rechercherPatient: "Kuluka muntu wa maladi",

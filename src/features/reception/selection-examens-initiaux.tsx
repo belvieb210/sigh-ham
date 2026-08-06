@@ -50,27 +50,32 @@ export function SelectionExamensInitiaux({
     [selection]
   );
 
-  const chargerExamens = useCallback(async (terme: string) => {
-    setChargement(true);
-    setErreur(null);
+  const chargerExamens = useCallback(
+    async (terme: string) => {
+      setChargement(true);
+      setErreur(null);
 
-    try {
-      const params = new URLSearchParams();
-      if (terme.trim()) params.set("q", terme.trim());
-      params.set("limite", "12");
+      try {
+        const params = new URLSearchParams();
+        if (terme.trim()) params.set("q", terme.trim());
+        params.set("limite", "12");
 
-      const res = await fetch(`${espace.prefixeApi}/examens?${params.toString()}`);
-      if (!res.ok) throw new Error(t("reception.examens.indisponible"));
+        const res = await fetch(
+          `${espace.prefixeApi}/examens?${params.toString()}`
+        );
+        if (!res.ok) throw new Error(t("reception.examens.indisponible"));
 
-      const data = (await res.json()) as { examens?: TypeExamenReception[] };
-      setResultats(data.examens ?? []);
-    } catch {
-      setErreur(t("reception.examens.chargement"));
-      setResultats([]);
-    } finally {
-      setChargement(false);
-    }
-  }, [t]);
+        const data = (await res.json()) as { examens?: TypeExamenReception[] };
+        setResultats(data.examens ?? []);
+      } catch {
+        setErreur(t("reception.examens.chargement"));
+        setResultats([]);
+      } finally {
+        setChargement(false);
+      }
+    },
+    [espace.prefixeApi, t]
+  );
 
   useEffect(() => {
     const delai = window.setTimeout(() => {

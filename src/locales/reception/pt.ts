@@ -78,6 +78,8 @@ export const receptionPt = {
     MEDECINS_EXTERNES: { label: "Médico externo", description: "Paciente referenciado por um médico" },
     EGLISE: { label: "Igreja", description: "Exames pré-nupciais" },
     LABORATOIRE: { label: "Laboratório", description: "Análises e amostras" },
+    PHARMACIE: { label: "Farmácia", description: "Dispensa de medicamentos" },
+    HOSPITALISATION: { label: "Internação", description: "Admissão / leitos" },
   },
   actions: {
     rechercherPatient: "Pesquisar paciente",

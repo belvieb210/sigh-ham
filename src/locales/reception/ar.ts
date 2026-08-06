@@ -78,6 +78,8 @@ export const receptionAr = {
     MEDECINS_EXTERNES: { label: "طبيب خارجي", description: "مريض محوّل من طبيب" },
     EGLISE: { label: "الكنيسة", description: "فحوصات ما قبل الزواج" },
     LABORATOIRE: { label: "المختبر", description: "التحاليل والعينات" },
+    PHARMACIE: { label: "الصيدلية", description: "صرف الأدوية" },
+    HOSPITALISATION: { label: "الاستشفاء", description: "القبول / الأسرة" },
   },
   actions: {
     rechercherPatient: "البحث عن مريض",

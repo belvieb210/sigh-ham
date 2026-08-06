@@ -8,6 +8,9 @@ import {
   Wallet,
   Church,
   BriefcaseMedical,
+  FlaskConical,
+  Pill,
+  BedDouble,
 } from "lucide-react";
 import { ORIENTATIONS_RAPIDES } from "@/constants/reception";
 import { cn } from "@/lib/utils";
@@ -16,9 +19,26 @@ const ICONES: Record<string, React.ComponentType<{ className?: string }>> = {
   INFIRMIERS: Stethoscope,
   MEDECINS: UserRound,
   CAISSE: Wallet,
+  LABORATOIRE: FlaskConical,
+  PHARMACIE: Pill,
+  HOSPITALISATION: BedDouble,
   MEDECINS_EXTERNES: BriefcaseMedical,
   EGLISE: Church,
 };
+
+function libelleOrientation(
+  t: (key: string, options?: { defaultValue?: string }) => string,
+  opt: (typeof ORIENTATIONS_RAPIDES)[number]
+) {
+  return {
+    label: t(`reception.orientations.${opt.value}.label`, {
+      defaultValue: opt.label,
+    }),
+    description: t(`reception.orientations.${opt.value}.description`, {
+      defaultValue: opt.description,
+    }),
+  };
+}
 
 interface PropsOrientationRapide {
   variante?: "liste" | "grille-mobile";
@@ -93,10 +113,10 @@ export function OrientationRapide({
                 <Icone className="h-5 w-5" />
               </span>
               <span className="text-xs font-semibold text-texte-principal">
-                {t(`reception.orientations.${opt.value}.label`)}
+                {libelleOrientation(t, opt).label}
               </span>
               <span className="text-[10px] leading-tight text-texte-secondaire">
-                {t(`reception.orientations.${opt.value}.description`)}
+                {libelleOrientation(t, opt).description}
               </span>
             </button>
           );
@@ -142,9 +162,9 @@ export function OrientationRapide({
             </span>
             <Icone className="h-4 w-4 shrink-0" />
             <span className="min-w-0 flex-1">
-              <span className="block">{t(`reception.orientations.${opt.value}.label`)}</span>
+              <span className="block">{libelleOrientation(t, opt).label}</span>
               <span className="block text-xs font-normal text-texte-secondaire">
-                {t(`reception.orientations.${opt.value}.description`)}
+                {libelleOrientation(t, opt).description}
               </span>
             </span>
           </button>

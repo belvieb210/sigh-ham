@@ -89,6 +89,14 @@ export const caisseEn = {
       label: "Pharmacy",
       description: "Medication dispensing",
     },
+    HOSPITALISATION: {
+      label: "Hospitalization",
+      description: "Admission / beds",
+    },
+    RECEPTION: {
+      label: "Reception",
+      description: "Back to front desk",
+    },
   },
   transferts: {
     titre: "Patients / Transfers",

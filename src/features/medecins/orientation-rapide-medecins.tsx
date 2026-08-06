@@ -110,10 +110,14 @@ export function OrientationRapideMedecins({
             <Icone className="h-4 w-4 shrink-0" />
             <span className="min-w-0 flex-1">
               <span className="block">
-                {t(`medecins.orientations.${opt.value}.label`)}
+                {t(`medecins.orientations.${opt.value}.label`, {
+                  defaultValue: opt.label,
+                })}
               </span>
               <span className="block text-xs font-normal text-texte-secondaire">
-                {t(`medecins.orientations.${opt.value}.description`)}
+                {t(`medecins.orientations.${opt.value}.description`, {
+                  defaultValue: opt.description,
+                })}
               </span>
             </span>
           </button>

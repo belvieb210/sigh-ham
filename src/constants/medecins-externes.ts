@@ -1,4 +1,4 @@
-/** Navigation — Médecins externes = réception + pages médicales */
+/** Navigation — Médecins externes = réception (sans pages cliniques / admin inutiles) */
 
 import {
   Home,
@@ -7,15 +7,10 @@ import {
   ArrowRightLeft,
   Search,
   History,
-  ClipboardList,
   FlaskConical,
-  Settings,
-  UserCog,
   UserCircle,
   MessageSquare,
   Bell,
-  Stethoscope,
-  Pill,
 } from "lucide-react";
 import { ORIENTATIONS_RAPIDES } from "@/constants/reception";
 import type { CodeSalle } from "@/generated/prisma/client";
@@ -25,7 +20,7 @@ export const BADGES_NAVIGATION_MEDECINS_EXTERNES = {
   notifications: 0,
 } as const;
 
-/** Même structure que la réception (principal) + section clinique médicale */
+/** Même structure que la réception (principal) — sans section clinique médicale */
 export const NAVIGATION_MEDECINS_EXTERNES = {
   principal: [
     { href: "/sigh/medecins-externes", id: "accueil", icone: Home, actif: true },
@@ -60,28 +55,8 @@ export const NAVIGATION_MEDECINS_EXTERNES = {
       icone: History,
     },
   ],
-  clinique: [
-    {
-      href: "/sigh/medecins-externes/consultation",
-      id: "consultation",
-      icone: Stethoscope,
-    },
-    {
-      href: "/sigh/medecins-externes/ordonnances",
-      id: "ordonnances",
-      icone: Pill,
-    },
-    {
-      href: "/sigh/medecins-externes/examens",
-      id: "examens",
-      icone: FlaskConical,
-    },
-    {
-      href: "/sigh/medecins-externes/historique-medical",
-      id: "historiqueMedical",
-      icone: ClipboardList,
-    },
-  ],
+  /** Section retirée volontairement (Consultation, Ordonnances, Examens, Historique médical). */
+  clinique: [] as const,
   communication: [
     {
       href: "/sigh/medecins-externes/messagerie",
@@ -103,26 +78,6 @@ export const NAVIGATION_MEDECINS_EXTERNES = {
       href: "/sigh/medecins-externes/profil",
       id: "profil",
       icone: UserCircle,
-    },
-    {
-      href: "/sigh/medecins-externes/motifs",
-      id: "motifsVisite",
-      icone: ClipboardList,
-    },
-    {
-      href: "/sigh/medecins-externes/examens-initiaux",
-      id: "examensInitiaux",
-      icone: FlaskConical,
-    },
-    {
-      href: "/sigh/medecins-externes/utilisateurs",
-      id: "utilisateurs",
-      icone: UserCog,
-    },
-    {
-      href: "/sigh/medecins-externes/parametres",
-      id: "parametres",
-      icone: Settings,
     },
   ],
 } as const;

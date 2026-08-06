@@ -1,9 +1,8 @@
 import "server-only";
 import type { PatientEnregistre } from "@/constants/reception";
-import {
-  estPatientTransfertNonConfirme,
-  type ListePatientsEnregistresResultat,
-  type StatsPatientsEnregistres,
+import type {
+  ListePatientsEnregistresResultat,
+  StatsPatientsEnregistres,
 } from "@/lib/reception/lister-patients-enregistres";
 import type {
   ListePatientsTransferesResultat,
@@ -89,9 +88,9 @@ export async function listerPatientsRecentsMedecinExterne(
     medecinExterneId,
     Math.max(limite * 6, 60)
   );
-  const patients = dedupliquerParPatient(dossiersVersPatients(dossiers)).filter(
-    estPatientTransfertNonConfirme
-  );
+  // ME crée un transfert ACCEPTE dès l'enregistrement local — on n'applique
+  // pas le filtre « non confirmés » de la réception (qui exclut ACCEPTE).
+  const patients = dedupliquerParPatient(dossiersVersPatients(dossiers));
   return patients.slice(0, limite);
 }
 

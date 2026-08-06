@@ -1171,10 +1171,14 @@ export const FormulaireEnregistrement = forwardRef<
                   />
                   <div>
                     <span className="block text-sm font-semibold text-texte-principal">
-                      {t(`reception.orientations.${opt.value}.label`)}
+                      {t(`reception.orientations.${opt.value}.label`, {
+                        defaultValue: opt.label,
+                      })}
                     </span>
                     <span className="text-xs text-texte-secondaire">
-                      {t(`reception.orientations.${opt.value}.description`)}
+                      {t(`reception.orientations.${opt.value}.description`, {
+                        defaultValue: opt.desc,
+                      })}
                     </span>
                   </div>
                 </label>

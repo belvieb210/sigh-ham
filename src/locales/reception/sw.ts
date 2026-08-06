@@ -80,6 +80,8 @@ export const receptionSw = {
     MEDECINS_EXTERNES: { label: "Daktari wa nje", description: "Mgonjwa aliyetumwa na daktari" },
     EGLISE: { label: "Kanisa", description: "Vipimo vya kabla ya ndoa" },
     LABORATOIRE: { label: "Maabara", description: "Uchunguzi na sampuli" },
+    PHARMACIE: { label: "Duka la dawa", description: "Utoaji wa dawa" },
+    HOSPITALISATION: { label: "Kulazwa hospitalini", description: "Uandikishaji / vitanda" },
   },
   actions: {
     rechercherPatient: "Tafuta mgonjwa",

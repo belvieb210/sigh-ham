@@ -1,4 +1,4 @@
-/** Traductions FR — module SIGH Réception */
+﻿/** Traductions FR — module SIGH Réception */
 
 export const receptionFr = {
   layout: {
@@ -77,6 +77,8 @@ export const receptionFr = {
     MEDECINS_EXTERNES: { label: "Médecin externe", description: "Patient référé par un médecin" },
     EGLISE: { label: "Église", description: "Examens prénuptiaux" },
     LABORATOIRE: { label: "Laboratoire", description: "Analyses et prélèvements" },
+    PHARMACIE: { label: "Pharmacie", description: "Délivrance des médicaments" },
+    HOSPITALISATION: { label: "Hospitalisation", description: "Admission / lits" },
   },
   actions: {
     rechercherPatient: "Rechercher patient",

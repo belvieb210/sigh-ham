@@ -80,6 +80,8 @@ export const receptionLn = {
     MEDECINS_EXTERNES: { label: "Monganga ya libanda", description: "Patient oyo monganga atindaki" },
     EGLISE: { label: "Église", description: "Ba examen prénuptial" },
     LABORATOIRE: { label: "Laboratoire", description: "Ba analyse mpe prélèvement" },
+    PHARMACIE: { label: "Pharmacie", description: "Kopesa ba médicament" },
+    HOSPITALISATION: { label: "Hospitalisation", description: "Kokota / ba lit" },
   },
   actions: {
     rechercherPatient: "Koluka patient",

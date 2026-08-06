@@ -89,6 +89,14 @@ export const caisseFr = {
       label: "Pharmacie",
       description: "Délivrance des médicaments",
     },
+    HOSPITALISATION: {
+      label: "Hospitalisation",
+      description: "Admission / lits",
+    },
+    RECEPTION: {
+      label: "Réception",
+      description: "Retour à l'accueil",
+    },
   },
   transferts: {
     titre: "Patients / Transferts",

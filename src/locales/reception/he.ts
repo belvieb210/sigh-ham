@@ -78,6 +78,8 @@ export const receptionHe = {
     MEDECINS_EXTERNES: { label: "רופא חיצוני", description: "מטופל שהופנה על ידי רופא" },
     EGLISE: { label: "כנסייה", description: "בדיקות טרום-נישואין" },
     LABORATOIRE: { label: "מעבדה", description: "בדיקות ודגימות" },
+    PHARMACIE: { label: "בית מרקחת", description: "ניפוק תרופות" },
+    HOSPITALISATION: { label: "אשפוז", description: "קבלה / מיטות" },
   },
   actions: {
     rechercherPatient: "חיפוש מטופל",

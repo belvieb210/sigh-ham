@@ -55,7 +55,7 @@ export function TableauPatientsRecents({
       console.error("[patients récents]", err);
     }
     setPatients([]);
-  }, []);
+  }, [espace.prefixeApi]);
 
   useEffect(() => {
     charger().finally(() => setChargement(false));

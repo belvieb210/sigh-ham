@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, Plus, Stethoscope, Trash2 } from "lucide-react";
+import { ImagePlus, Loader2, Plus, Stethoscope, Trash2 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
+import { ImageVitrine } from "@/components/ui/image-vitrine";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import {
   MiseEnPageClient,
@@ -11,6 +12,14 @@ import {
 } from "@/features/client/mise-en-page-client";
 import { televerserFichierClient } from "@/features/client/televerser-fichier-client";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
+
+const CATEGORIES = [
+  { value: "MEDECIN", label: "Médecin" },
+  { value: "PERSONNEL", label: "Personnel" },
+  { value: "RESPONSABLE_LABO", label: "Responsable labo" },
+  { value: "MEDECIN_EXTERNE", label: "Médecin externe" },
+  { value: "SERVICE_EGLISE", label: "Service Église" },
+] as const;
 
 interface MedecinVitrine {
   id: string;
@@ -20,17 +29,25 @@ interface MedecinVitrine {
   bio: string | null;
   photoUrl: string | null;
   horaires: string | null;
+  telephone: string | null;
+  email: string | null;
+  categorie: string;
   ordre: number;
   actif: boolean;
 }
 
-const FORM_VIDE: Omit<MedecinVitrine, "id"> = {
+type FormMedecin = Omit<MedecinVitrine, "id"> & { id?: string };
+
+const FORM_VIDE: FormMedecin = {
   nom: "",
   prenom: "",
   specialite: "",
   bio: "",
   photoUrl: null,
   horaires: "",
+  telephone: "",
+  email: "",
+  categorie: "MEDECIN",
   ordre: 0,
   actif: true,
 };
@@ -42,10 +59,11 @@ export function ContenuMedecinsClient({
 }) {
   const { t } = useTranslation();
   const [liste, setListe] = useState<MedecinVitrine[]>([]);
-  const [form, setForm] = useState<Omit<MedecinVitrine, "id"> & { id?: string }>(FORM_VIDE);
+  const [form, setForm] = useState<FormMedecin>(FORM_VIDE);
   const [modeForm, setModeForm] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  const [uploadEnCours, setUploadEnCours] = useState(false);
 
   const charger = useCallback(() => {
     fetch("/api/client/medecins-vitrine")
@@ -66,9 +84,9 @@ export function ContenuMedecinsClient({
     charger();
   }, [charger]);
 
-  const majChamp = <K extends keyof typeof form>(
+  const majChamp = <K extends keyof FormMedecin>(
     cle: K,
-    valeur: (typeof form)[K]
+    valeur: FormMedecin[K]
   ) => setForm((prev) => ({ ...prev, [cle]: valeur }));
 
   const enregistrer = async () => {
@@ -81,7 +99,13 @@ export function ContenuMedecinsClient({
       const res = await fetch(url, {
         method: form.id ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          bio: form.bio || null,
+          horaires: form.horaires || null,
+          telephone: form.telephone || null,
+          email: form.email || null,
+        }),
       });
       const data = (await res.json()) as { message?: string };
       if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
@@ -111,6 +135,21 @@ export function ContenuMedecinsClient({
       setEnCours(false);
     }
   };
+
+  const uploadPhoto = async (fichier: File) => {
+    setUploadEnCours(true);
+    try {
+      const url = await televerserFichierClient(fichier, "medecins");
+      majChamp("photoUrl", url);
+    } catch (e: unknown) {
+      setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
+    } finally {
+      setUploadEnCours(false);
+    }
+  };
+
+  const labelCategorie = (c: string) =>
+    CATEGORIES.find((x) => x.value === c)?.label ?? c;
 
   return (
     <MiseEnPageClient
@@ -173,6 +212,20 @@ export function ContenuMedecinsClient({
                 />
               </div>
               <div>
+                <label className={CLASSE_LABEL_RECEPTION}>Catégorie</label>
+                <select
+                  className={CLASSE_CHAMP_RECEPTION}
+                  value={form.categorie}
+                  onChange={(e) => majChamp("categorie", e.target.value)}
+                >
+                  {CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className={CLASSE_LABEL_RECEPTION}>
                   {t("client.medecins.specialite")}
                 </label>
@@ -183,6 +236,23 @@ export function ContenuMedecinsClient({
                 />
               </div>
               <div>
+                <label className={CLASSE_LABEL_RECEPTION}>Téléphone</label>
+                <input
+                  className={CLASSE_CHAMP_RECEPTION}
+                  value={form.telephone ?? ""}
+                  onChange={(e) => majChamp("telephone", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className={CLASSE_LABEL_RECEPTION}>Email</label>
+                <input
+                  type="email"
+                  className={CLASSE_CHAMP_RECEPTION}
+                  value={form.email ?? ""}
+                  onChange={(e) => majChamp("email", e.target.value)}
+                />
+              </div>
+              <div>
                 <label className={CLASSE_LABEL_RECEPTION}>
                   {t("client.medecins.horaires")}
                 </label>
@@ -190,17 +260,6 @@ export function ContenuMedecinsClient({
                   className={CLASSE_CHAMP_RECEPTION}
                   value={form.horaires ?? ""}
                   onChange={(e) => majChamp("horaires", e.target.value)}
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("client.medecins.bio")}
-                </label>
-                <textarea
-                  className={CLASSE_CHAMP_RECEPTION}
-                  rows={3}
-                  value={form.bio ?? ""}
-                  onChange={(e) => majChamp("bio", e.target.value)}
                 />
               </div>
               <div>
@@ -216,31 +275,66 @@ export function ContenuMedecinsClient({
               </div>
               <div className="sm:col-span-2">
                 <label className={CLASSE_LABEL_RECEPTION}>
+                  {t("client.medecins.bio")}
+                </label>
+                <textarea
+                  className={CLASSE_CHAMP_RECEPTION}
+                  rows={3}
+                  value={form.bio ?? ""}
+                  onChange={(e) => majChamp("bio", e.target.value)}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className={CLASSE_LABEL_RECEPTION}>
                   {t("client.medecins.photo")}
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) {
-                      void televerserFichierClient(f, "medecins")
-                        .then((url) => majChamp("photoUrl", url))
-                        .catch((err: unknown) =>
-                          setErreur(
-                            err instanceof Error
-                              ? err.message
-                              : t("client.common.erreur")
-                          )
-                        );
-                    }
-                  }}
-                />
-                {form.photoUrl ? (
-                  <p className="mt-1 truncate text-xs text-texte-secondaire">
-                    {form.photoUrl}
-                  </p>
-                ) : null}
+                <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-start">
+                  <div className="relative flex h-36 w-36 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-gris-bordure bg-gris-tres-clair">
+                    {form.photoUrl ? (
+                      <ImageVitrine
+                        src={form.photoUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="px-2 text-center text-xs text-texte-secondaire">
+                        Photo
+                      </span>
+                    )}
+                    {uploadEnCours ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                        <Loader2 className="h-6 w-6 animate-spin text-bleu-medical" />
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-bleu-medical px-3 py-2 text-sm font-semibold text-white hover:bg-bleu-medical-fonce">
+                      <ImagePlus className="h-4 w-4" />
+                      Choisir une photo
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        className="sr-only"
+                        disabled={uploadEnCours}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          e.target.value = "";
+                          if (f) void uploadPhoto(f);
+                        }}
+                      />
+                    </label>
+                    {form.photoUrl ? (
+                      <Bouton
+                        type="button"
+                        variante="contour"
+                        taille="petit"
+                        onClick={() => majChamp("photoUrl", null)}
+                      >
+                        Retirer
+                      </Bouton>
+                    ) : null}
+                  </div>
+                </div>
               </div>
               <div>
                 <label className="flex items-center gap-2 text-sm">
@@ -269,35 +363,52 @@ export function ContenuMedecinsClient({
           {liste.map((m) => (
             <div
               key={m.id}
-              className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm"
+              className="flex gap-3 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm"
             >
-              <p className="font-semibold text-texte-principal">
-                Dr {m.prenom} {m.nom}
-              </p>
-              <p className="text-sm text-texte-secondaire">{m.specialite}</p>
-              <div className="mt-3 flex gap-2">
-                <Bouton
-                  variante="contour"
-                  taille="petit"
-                  onClick={() => {
-                    setForm({
-                      ...m,
-                      bio: m.bio ?? "",
-                      horaires: m.horaires ?? "",
-                    });
-                    setModeForm(true);
-                  }}
-                >
-                  {t("client.common.modifier")}
-                </Bouton>
-                <Bouton
-                  variante="danger"
-                  taille="petit"
-                  onClick={() => void supprimer(m.id)}
-                  disabled={enCours}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Bouton>
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gris-tres-clair">
+                {m.photoUrl ? (
+                  <ImageVitrine
+                    src={m.photoUrl}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : null}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-texte-principal">
+                  {m.prenom} {m.nom}
+                </p>
+                <p className="text-sm text-texte-secondaire">{m.specialite}</p>
+                <p className="text-[11px] text-texte-secondaire">
+                  {labelCategorie(m.categorie ?? "MEDECIN")}
+                </p>
+                <div className="mt-2 flex gap-2">
+                  <Bouton
+                    variante="contour"
+                    taille="petit"
+                    onClick={() => {
+                      setForm({
+                        ...m,
+                        bio: m.bio ?? "",
+                        horaires: m.horaires ?? "",
+                        telephone: m.telephone ?? "",
+                        email: m.email ?? "",
+                        categorie: m.categorie || "MEDECIN",
+                      });
+                      setModeForm(true);
+                    }}
+                  >
+                    {t("client.common.modifier")}
+                  </Bouton>
+                  <Bouton
+                    variante="danger"
+                    taille="petit"
+                    onClick={() => void supprimer(m.id)}
+                    disabled={enCours}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Bouton>
+                </div>
               </div>
             </div>
           ))}

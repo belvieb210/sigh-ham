@@ -37,8 +37,10 @@ export interface CampagnePublication {
   couleurIllustration: string;
   couleurAccent: string;
   icone: IdIconeCampagne;
-  /** Image d'illustration optionnelle (public/images/) */
+  /** Image d'illustration optionnelle (public/images/ ou /uploads) */
   imageUrl?: string;
+  /** Galerie multi-photos (CMS) */
+  images?: { url: string; legende?: string }[];
   lieu?: string;
   datePublication: string;
 }

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -13,6 +12,8 @@ import {
 } from "lucide-react";
 import { CARTE_ICONES_CAMPAGNES } from "@/components/icones/icones-medicales";
 import { Bouton } from "@/components/ui/bouton";
+import { CarrouselImagesVitrine } from "@/components/ui/carrousel-images-vitrine";
+import { ImageVitrine } from "@/components/ui/image-vitrine";
 import { useCampagnesVedette } from "@/hooks/use-campagnes";
 import { useCampagnesTraduits } from "@/hooks/use-contenu-page";
 import {
@@ -167,9 +168,19 @@ export function SectionVedetteCampagnes() {
             >
               {/* Visuel */}
               <div className="relative min-h-[260px] lg:min-h-[420px]">
-                {campagne.imageUrl ? (
+                {campagne.images && campagne.images.length > 1 ? (
                   <>
-                    <Image
+                    <CarrouselImagesVitrine
+                      images={campagne.images}
+                      className="absolute inset-0"
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      showNav={false}
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0f172a]/80 via-[#0f172a]/20 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-[#0f172a]/30 lg:to-[#0f172a]/90" />
+                  </>
+                ) : campagne.imageUrl ? (
+                  <>
+                    <ImageVitrine
                       src={campagne.imageUrl}
                       alt=""
                       fill

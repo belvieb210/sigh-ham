@@ -15,6 +15,7 @@ export async function chargerCampagnesPubliques(options?: {
   try {
     const rows = await prisma.campagnePublique.findMany({
       where: seulementPubliees ? { publie: true } : undefined,
+      include: { images: { orderBy: { ordre: "asc" } } },
       orderBy: [{ datePublication: "desc" }, { createdAt: "desc" }],
     });
     if (rows.length > 0) {
@@ -32,7 +33,10 @@ export async function chargerCampagneParSlug(
   slug: string
 ): Promise<CampagnePublication | null> {
   try {
-    const row = await prisma.campagnePublique.findUnique({ where: { slug } });
+    const row = await prisma.campagnePublique.findUnique({
+      where: { slug },
+      include: { images: { orderBy: { ordre: "asc" } } },
+    });
     if (row?.publie) return campagneDbVersPublication(row);
     if (row && !row.publie) return null;
   } catch (error) {
@@ -88,36 +92,52 @@ export type ServiceVitrinePublic = {
   titre: string;
   description: string;
   imageUrl?: string;
+  images: { url: string; legende?: string }[];
   categorie: string;
   points: string[];
   badge?: string;
   href?: string;
   icone: string;
   ordre: number;
+  estPhare: boolean;
 };
 
 export async function chargerServicesVitrine(): Promise<ServiceVitrinePublic[]> {
   try {
     const rows = await prisma.serviceVitrine.findMany({
       where: { actif: true },
+      include: { images: { orderBy: { ordre: "asc" } } },
       orderBy: { ordre: "asc" },
     });
     if (rows.length > 0) {
-      return rows.map((s) => ({
-        id: s.id,
-        slug: s.slug,
-        titre: s.titre,
-        description: s.description,
-        imageUrl: s.imageUrl ?? undefined,
-        categorie: s.categorie,
-        points: Array.isArray(s.pointsJson)
-          ? (s.pointsJson as string[])
-          : [],
-        badge: s.badge ?? undefined,
-        href: s.href ?? undefined,
-        icone: s.icone,
-        ordre: s.ordre,
-      }));
+      return rows.map((s) => {
+        const images = s.images.map((i) => ({
+          url: i.url,
+          legende: i.legende ?? undefined,
+        }));
+        return {
+          id: s.id,
+          slug: s.slug,
+          titre: s.titre,
+          description: s.description,
+          imageUrl: images[0]?.url ?? s.imageUrl ?? undefined,
+          images:
+            images.length > 0
+              ? images
+              : s.imageUrl
+                ? [{ url: s.imageUrl }]
+                : [],
+          categorie: s.categorie,
+          points: Array.isArray(s.pointsJson)
+            ? (s.pointsJson as string[])
+            : [],
+          badge: s.badge ?? undefined,
+          href: s.href ?? undefined,
+          icone: s.icone,
+          ordre: s.ordre,
+          estPhare: s.estPhare,
+        };
+      });
     }
   } catch (error) {
     console.error("[contenu-public] services DB:", error);
@@ -128,14 +148,23 @@ export async function chargerServicesVitrine(): Promise<ServiceVitrinePublic[]> 
     titre: s.titre,
     description: s.description,
     imageUrl: "imageUrl" in s ? (s.imageUrl as string | undefined) : undefined,
+    images: [],
     categorie: s.categorie,
     points: [...s.points],
     badge: "badge" in s ? (s as { badge?: string }).badge : undefined,
     href: s.href,
     icone: s.icone,
     ordre: i,
+    estPhare: i === 0,
   }));
 }
+
+export type CategorieEquipeVitrine =
+  | "MEDECIN"
+  | "PERSONNEL"
+  | "RESPONSABLE_LABO"
+  | "MEDECIN_EXTERNE"
+  | "SERVICE_EGLISE";
 
 export type MedecinVitrinePublic = {
   id: string;
@@ -145,14 +174,26 @@ export type MedecinVitrinePublic = {
   bio?: string;
   photoUrl?: string;
   horaires?: string;
+  telephone?: string;
+  email?: string;
+  categorie: CategorieEquipeVitrine;
   ordre: number;
 };
 
-export async function chargerMedecinsVitrine(): Promise<MedecinVitrinePublic[]> {
+/** Équipe affichée sur À propos (hors SERVICE_EGLISE). */
+export async function chargerMedecinsVitrine(options?: {
+  inclureEglise?: boolean;
+}): Promise<MedecinVitrinePublic[]> {
+  const inclureEglise = options?.inclureEglise ?? false;
   try {
     const rows = await prisma.medecinVitrine.findMany({
-      where: { actif: true },
-      orderBy: { ordre: "asc" },
+      where: {
+        actif: true,
+        ...(inclureEglise
+          ? {}
+          : { NOT: { categorie: "SERVICE_EGLISE" } }),
+      },
+      orderBy: [{ ordre: "asc" }, { nom: "asc" }],
     });
     if (rows.length > 0) {
       return rows.map((m) => ({
@@ -163,6 +204,9 @@ export async function chargerMedecinsVitrine(): Promise<MedecinVitrinePublic[]> 
         bio: m.bio ?? undefined,
         photoUrl: m.photoUrl ?? undefined,
         horaires: m.horaires ?? undefined,
+        telephone: m.telephone ?? undefined,
+        email: m.email ?? undefined,
+        categorie: (m.categorie || "MEDECIN") as CategorieEquipeVitrine,
         ordre: m.ordre,
       }));
     }
@@ -177,6 +221,7 @@ export async function chargerMedecinsVitrine(): Promise<MedecinVitrinePublic[]> 
       nom: parts.slice(1).join(" ") || m.nom,
       specialite: m.fonction,
       photoUrl: m.photoUrl,
+      categorie: "MEDECIN" as const,
       ordre: i,
     };
   });

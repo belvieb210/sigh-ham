@@ -33,6 +33,25 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
         ...(body.horaires !== undefined
           ? { horaires: body.horaires ? String(body.horaires) : null }
           : {}),
+        ...(body.telephone !== undefined
+          ? { telephone: body.telephone ? String(body.telephone) : null }
+          : {}),
+        ...(body.email !== undefined
+          ? { email: body.email ? String(body.email) : null }
+          : {}),
+        ...(body.categorie != null
+          ? {
+              categorie: [
+                "MEDECIN",
+                "PERSONNEL",
+                "RESPONSABLE_LABO",
+                "MEDECIN_EXTERNE",
+                "SERVICE_EGLISE",
+              ].includes(String(body.categorie).toUpperCase())
+                ? String(body.categorie).toUpperCase()
+                : "MEDECIN",
+            }
+          : {}),
         ...(body.ordre != null ? { ordre: Number(body.ordre) } : {}),
         ...(body.actif != null ? { actif: Boolean(body.actif) } : {}),
       },

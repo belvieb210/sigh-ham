@@ -3,14 +3,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { ImagePlus, Loader2, Megaphone, Plus, Trash2 } from "lucide-react";
+import { Loader2, Megaphone, Plus, Trash2 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
+import { ImageVitrine } from "@/components/ui/image-vitrine";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import {
   MiseEnPageClient,
   type UtilisateurClient,
 } from "@/features/client/mise-en-page-client";
-import { televerserFichierClient } from "@/features/client/televerser-fichier-client";
+import {
+  ZoneImagesVitrine,
+  type ImageVitrineItem,
+} from "@/features/client/zone-images-vitrine";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 
 interface CampagneItem {
@@ -27,6 +31,7 @@ interface CampagneItem {
   publie: boolean;
   misEnAvant: boolean;
   imageUrl: string | null;
+  images?: ImageVitrineItem[];
   lieu: string | null;
   couleurFond: string;
   couleurIllustration: string;
@@ -34,7 +39,9 @@ interface CampagneItem {
   icone: string;
 }
 
-const FORM_VIDE: Omit<CampagneItem, "id"> = {
+type FormCampagne = Omit<CampagneItem, "id"> & { id?: string };
+
+const FORM_VIDE: FormCampagne = {
   slug: "",
   titre: "",
   extrait: "",
@@ -47,12 +54,19 @@ const FORM_VIDE: Omit<CampagneItem, "id"> = {
   publie: false,
   misEnAvant: false,
   imageUrl: null,
+  images: [],
   lieu: "",
   couleurFond: "#E8F4FC",
   couleurIllustration: "#0B6E99",
   couleurAccent: "#0B6E99",
   icone: "coeur",
 };
+
+function imagesDepuisItem(c: CampagneItem): ImageVitrineItem[] {
+  if (c.images?.length) return c.images;
+  if (c.imageUrl) return [{ url: c.imageUrl }];
+  return [];
+}
 
 export function ContenuCampagnesClient({
   utilisateur,
@@ -64,13 +78,10 @@ export function ContenuCampagnesClient({
   const editId = searchParams.get("id");
 
   const [liste, setListe] = useState<CampagneItem[]>([]);
-  const [form, setForm] = useState<Omit<CampagneItem, "id"> & { id?: string }>(
-    FORM_VIDE
-  );
+  const [form, setForm] = useState<FormCampagne>(FORM_VIDE);
   const [modeForm, setModeForm] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
-  const [uploadEnCours, setUploadEnCours] = useState(false);
 
   const charger = useCallback(() => {
     fetch("/api/client/campagnes")
@@ -100,6 +111,7 @@ export function ContenuCampagnesClient({
         dateDebut: item.dateDebut.slice(0, 10),
         dateFin: item.dateFin.slice(0, 10),
         lieu: item.lieu ?? "",
+        images: imagesDepuisItem(item),
       });
       setModeForm(true);
     }
@@ -130,10 +142,15 @@ export function ContenuCampagnesClient({
       const url = form.id
         ? `/api/client/campagnes/${form.id}`
         : "/api/client/campagnes";
+      const images = form.images ?? [];
       const res = await fetch(url, {
         method: form.id ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          images,
+          imageUrl: images[0]?.url ?? null,
+        }),
       });
       const data = (await res.json()) as { message?: string };
       if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
@@ -159,18 +176,6 @@ export function ContenuCampagnesClient({
       setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
     } finally {
       setEnCours(false);
-    }
-  };
-
-  const uploadImage = async (fichier: File) => {
-    setUploadEnCours(true);
-    try {
-      const url = await televerserFichierClient(fichier, "campagnes");
-      majChamp("imageUrl", url);
-    } catch (e: unknown) {
-      setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
-    } finally {
-      setUploadEnCours(false);
     }
   };
 
@@ -364,79 +369,19 @@ export function ContenuCampagnesClient({
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("client.campagnes.image")}
-                </label>
-                <p className="mb-2 text-xs text-texte-secondaire">
-                  {t("client.campagnes.imageAide")}
-                </p>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                  <div className="relative flex h-36 w-full max-w-[220px] items-center justify-center overflow-hidden rounded-xl border border-dashed border-gris-bordure bg-gris-tres-clair">
-                    {form.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={form.imageUrl}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="px-3 text-center text-xs text-texte-secondaire">
-                        {t("client.campagnes.imageVide")}
-                      </span>
-                    )}
-                    {uploadEnCours ? (
-                      <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-                        <Loader2 className="h-6 w-6 animate-spin text-bleu-medical" />
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <div className="flex flex-wrap gap-2">
-                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-bleu-medical px-3 py-2 text-sm font-semibold text-white hover:bg-bleu-medical-fonce">
-                        <ImagePlus className="h-4 w-4" />
-                        {form.imageUrl
-                          ? t("client.campagnes.remplacerImage")
-                          : t("client.campagnes.choisirImage")}
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp,image/gif"
-                          className="sr-only"
-                          disabled={uploadEnCours}
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            e.target.value = "";
-                            if (f) void uploadImage(f);
-                          }}
-                        />
-                      </label>
-                      {form.imageUrl ? (
-                        <Bouton
-                          type="button"
-                          variante="contour"
-                          taille="petit"
-                          disabled={uploadEnCours}
-                          onClick={() => majChamp("imageUrl", null)}
-                        >
-                          {t("client.campagnes.supprimerImage")}
-                        </Bouton>
-                      ) : null}
-                    </div>
-                    <input
-                      className={CLASSE_CHAMP_RECEPTION}
-                      value={form.imageUrl ?? ""}
-                      onChange={(e) =>
-                        majChamp(
-                          "imageUrl",
-                          e.target.value.trim() ? e.target.value.trim() : null
-                        )
-                      }
-                      placeholder={t("client.campagnes.imageUrlPlaceholder")}
-                    />
-                    <p className="text-[11px] text-texte-secondaire">
-                      {t("client.campagnes.imageFormats")}
-                    </p>
-                  </div>
-                </div>
+                <ZoneImagesVitrine
+                  label={t("client.campagnes.image")}
+                  dossier="campagnes"
+                  images={form.images ?? []}
+                  onChange={(images) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      images,
+                      imageUrl: images[0]?.url ?? null,
+                    }))
+                  }
+                  onErreur={setErreur}
+                />
               </div>
               <div className="flex flex-wrap gap-4 sm:col-span-2">
                 <label className="flex items-center gap-2 text-sm">
@@ -479,10 +424,9 @@ export function ContenuCampagnesClient({
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg border border-gris-bordure bg-gris-tres-clair">
-                  {c.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={c.imageUrl}
+                  {imagesDepuisItem(c)[0]?.url ? (
+                    <ImageVitrine
+                      src={imagesDepuisItem(c)[0].url}
                       alt=""
                       className="h-full w-full object-cover"
                     />
@@ -512,6 +456,7 @@ export function ContenuCampagnesClient({
                       dateDebut: c.dateDebut.slice(0, 10),
                       dateFin: c.dateFin.slice(0, 10),
                       lieu: c.lieu ?? "",
+                      images: imagesDepuisItem(c),
                     });
                     setModeForm(true);
                   }}

@@ -2,14 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Image as ImageIcon, Loader2, Plus, Trash2 } from "lucide-react";
+import { Image as ImageIcon, Plus, Trash2 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
+import { ImageVitrine } from "@/components/ui/image-vitrine";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import {
   MiseEnPageClient,
   type UtilisateurClient,
 } from "@/features/client/mise-en-page-client";
-import { televerserFichierClient } from "@/features/client/televerser-fichier-client";
+import {
+  ZoneImagesVitrine,
+  type ImageVitrineItem,
+} from "@/features/client/zone-images-vitrine";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 
 interface DiapoHero {
@@ -42,7 +46,6 @@ export function ContenuHeroClient({
   const [modeForm, setModeForm] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
-  const [uploadEnCours, setUploadEnCours] = useState(false);
 
   const charger = useCallback(() => {
     fetch("/api/client/hero")
@@ -105,18 +108,6 @@ export function ContenuHeroClient({
     }
   };
 
-  const uploadImage = async (fichier: File) => {
-    setUploadEnCours(true);
-    try {
-      const url = await televerserFichierClient(fichier, "hero");
-      majChamp("url", url);
-    } catch (e: unknown) {
-      setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
-    } finally {
-      setUploadEnCours(false);
-    }
-  };
-
   return (
     <MiseEnPageClient
       utilisateur={utilisateur}
@@ -158,28 +149,15 @@ export function ContenuHeroClient({
           <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("client.hero.image")}
-                </label>
-                <div className="flex flex-wrap items-center gap-3">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={uploadEnCours}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) void uploadImage(f);
-                    }}
-                  />
-                  {uploadEnCours ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-bleu-medical" />
-                  ) : null}
-                </div>
-                <input
-                  className={`${CLASSE_CHAMP_RECEPTION} mt-2`}
-                  value={form.url}
-                  onChange={(e) => majChamp("url", e.target.value)}
-                  placeholder="URL"
+                <ZoneImagesVitrine
+                  label={t("client.hero.image")}
+                  dossier="hero"
+                  max={1}
+                  images={form.url ? [{ url: form.url }] : []}
+                  onChange={(images: ImageVitrineItem[]) =>
+                    majChamp("url", images[0]?.url ?? "")
+                  }
+                  onErreur={setErreur}
                 />
               </div>
               <div>
@@ -252,8 +230,7 @@ export function ContenuHeroClient({
               className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm"
             >
               {d.url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <ImageVitrine
                   src={d.url}
                   alt={d.alt}
                   className="mb-3 h-32 w-full rounded-lg object-cover"

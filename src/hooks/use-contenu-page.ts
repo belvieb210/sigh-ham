@@ -199,11 +199,13 @@ export function useContenuServices() {
           titre: string;
           description: string;
           imageUrl?: string;
+          images?: { url: string; legende?: string }[];
           categorie: string;
           points: string[];
           badge?: string;
           href?: string;
           icone: string;
+          estPhare?: boolean;
         }[];
       };
       return data.services ?? null;
@@ -258,10 +260,24 @@ export function useContenuServices() {
               titre: trad?.titre ?? s.titre,
               description: trad?.description ?? s.description,
               points: trad?.points ?? s.points,
-              badge: s.badge ?? ("badge" in (base ?? {}) ? (base as { badge?: string }).badge : undefined),
+              badge:
+                s.badge ??
+                (s.estPhare
+                  ? "Service phare"
+                  : "badge" in (base ?? {})
+                    ? (base as { badge?: string }).badge
+                    : undefined),
+              estPhare: Boolean(s.estPhare),
+              images:
+                s.images && s.images.length > 0
+                  ? s.images
+                  : s.imageUrl
+                    ? [{ url: s.imageUrl }]
+                    : [],
               href: s.href ?? base?.href ?? `/services#${s.slug}`,
               imageUrl:
                 s.imageUrl ??
+                s.images?.[0]?.url ??
                 ("imageUrl" in (base ?? {})
                   ? (base as { imageUrl?: string }).imageUrl
                   : undefined),
@@ -468,7 +484,12 @@ export function useContenuAPropos() {
           nom: string;
           prenom: string;
           specialite: string;
+          bio?: string;
           photoUrl?: string;
+          telephone?: string;
+          email?: string;
+          horaires?: string;
+          categorie?: string;
         }[];
       };
       return data.medecins ?? null;
@@ -523,6 +544,11 @@ export function useContenuAPropos() {
                 nom: `${m.prenom} ${m.nom}`.trim(),
                 fonction: m.specialite,
                 photoUrl: m.photoUrl ?? "/images/equipe/personnel-1.png",
+                bio: m.bio,
+                telephone: m.telephone,
+                email: m.email,
+                horaires: m.horaires,
+                categorie: m.categorie ?? "MEDECIN",
               }))
             : CONTENU_A_PROPOS.equipe.membres.map((membre, index) => ({
                 id: membre.id,

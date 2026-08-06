@@ -16,6 +16,34 @@ const configurationSuivante: NextConfig = {
         protocol: "https",
         hostname: "api.qrserver.com",
       },
+      {
+        protocol: "https",
+        hostname: "hamlab5.duckdns.org",
+      },
+      {
+        protocol: "https",
+        hostname: "**.duckdns.org",
+      },
+      {
+        protocol: "https",
+        hostname: "**.minio.**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+      },
+      {
+        protocol: "http",
+        hostname: "185.202.236.210",
+      },
+      {
+        protocol: "https",
+        hostname: "185.202.236.210",
+      },
     ],
   },
 };

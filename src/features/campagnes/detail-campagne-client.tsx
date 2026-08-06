@@ -9,6 +9,8 @@ import type { StatutCampagne } from "@/types/campagnes";
 import { useCampagnesTraduits, useContenuCampagnes } from "@/hooks/use-contenu-page";
 import { CARTE_ICONES_CAMPAGNES } from "@/components/icones/icones-medicales";
 import { Bouton } from "@/components/ui/bouton";
+import { CarrouselImagesVitrine } from "@/components/ui/carrousel-images-vitrine";
+import { ImageVitrine } from "@/components/ui/image-vitrine";
 
 interface PropsDetailCampagne {
   slug: string;
@@ -40,6 +42,12 @@ export function DetailCampagneClient({ slug, statut }: PropsDetailCampagne) {
     campagne.categorie;
   const libelleStatut =
     grille.statuts[statut as keyof typeof grille.statuts] ?? statut;
+  const galerie =
+    campagne.images && campagne.images.length > 0
+      ? campagne.images
+      : campagne.imageUrl
+        ? [{ url: campagne.imageUrl }]
+        : [];
 
   return (
     <article className="pb-16">
@@ -56,13 +64,24 @@ export function DetailCampagneClient({ slug, statut }: PropsDetailCampagne) {
           </Link>
 
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-            {campagne.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={campagne.imageUrl}
-                alt=""
-                className="h-28 w-40 shrink-0 rounded-xl object-cover shadow-md sm:h-32 sm:w-48"
-              />
+            {galerie.length > 1 ? (
+              <div className="relative h-36 w-full max-w-md shrink-0 overflow-hidden rounded-xl shadow-md sm:h-40 sm:w-64">
+                <CarrouselImagesVitrine
+                  images={galerie}
+                  className="absolute inset-0"
+                  sizes="256px"
+                />
+              </div>
+            ) : galerie[0]?.url ? (
+              <div className="relative h-28 w-40 shrink-0 overflow-hidden rounded-xl shadow-md sm:h-32 sm:w-48">
+                <ImageVitrine
+                  src={galerie[0].url}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="192px"
+                />
+              </div>
             ) : (
               <div className={`${campagne.couleurAccent}`}>
                 <Icone />
@@ -84,6 +103,27 @@ export function DetailCampagneClient({ slug, statut }: PropsDetailCampagne) {
           </div>
         </div>
       </div>
+
+      {galerie.length > 1 ? (
+        <div className="conteneur-principal mt-8">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {galerie.map((img, i) => (
+              <div
+                key={`${img.url}-${i}`}
+                className="relative aspect-[16/10] overflow-hidden rounded-xl border border-gris-bordure"
+              >
+                <ImageVitrine
+                  src={img.url}
+                  alt={img.legende || campagne.titre}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, 33vw"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="conteneur-principal -mt-6">
         <div className="rounded-2xl border border-gris-bordure bg-white p-6 shadow-lg sm:p-8 lg:p-10">

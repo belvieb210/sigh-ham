@@ -3,8 +3,31 @@ import {
   obtenirSessionApiClient,
   reponseNonAutoriseClient,
 } from "@/lib/auth/garde-api-client";
+import {
+  campagneDbVersPublication,
+  synchroniserImagesCampagne,
+} from "@/lib/client/mapper-campagne";
 import { prisma } from "@/lib/prisma";
-import { campagneDbVersPublication } from "@/lib/client/mapper-campagne";
+
+function parserImages(body: Record<string, unknown>): { url: string; legende?: string }[] {
+  const raw = body.images;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => {
+      if (typeof item === "string") return { url: item };
+      if (item && typeof item === "object" && "url" in item) {
+        return {
+          url: String((item as { url: unknown }).url),
+          legende:
+            "legende" in item && (item as { legende?: unknown }).legende
+              ? String((item as { legende: unknown }).legende)
+              : undefined,
+        };
+      }
+      return null;
+    })
+    .filter((x): x is { url: string; legende?: string } => Boolean(x?.url));
+}
 
 function parserCorps(body: Record<string, unknown>) {
   const slug = String(body.slug ?? "").trim();
@@ -12,6 +35,9 @@ function parserCorps(body: Record<string, unknown>) {
   if (!slug || !titre) {
     return { erreur: "slug et titre requis." as const };
   }
+  const images = parserImages(body);
+  const imageUrl =
+    images[0]?.url ?? (body.imageUrl ? String(body.imageUrl) : null);
   return {
     data: {
       slug,
@@ -25,13 +51,11 @@ function parserCorps(body: Record<string, unknown>) {
       typePublication: String(body.typePublication ?? "campagne"),
       publie: Boolean(body.publie),
       misEnAvant: Boolean(body.misEnAvant),
-      imageUrl: body.imageUrl ? String(body.imageUrl) : null,
+      imageUrl,
       lieu: body.lieu ? String(body.lieu) : null,
-      couleurFond: String(body.couleurFond ?? "bg-bleu-medical-clair"),
-      couleurIllustration: String(
-        body.couleurIllustration ?? "from-bleu-medical/15 to-bleu-medical-clair"
-      ),
-      couleurAccent: String(body.couleurAccent ?? "text-bleu-medical"),
+      couleurFond: String(body.couleurFond ?? "#E8F4FC"),
+      couleurIllustration: String(body.couleurIllustration ?? "#0B6E99"),
+      couleurAccent: String(body.couleurAccent ?? "#0B6E99"),
       icone: String(body.icone ?? "coeur"),
       datePublication: body.datePublication
         ? new Date(String(body.datePublication))
@@ -39,8 +63,13 @@ function parserCorps(body: Record<string, unknown>) {
           ? new Date()
           : null,
     },
+    images,
   };
 }
+
+const includeImages = {
+  images: { orderBy: { ordre: "asc" as const } },
+};
 
 export async function GET() {
   const session = await obtenirSessionApiClient();
@@ -48,6 +77,7 @@ export async function GET() {
 
   try {
     const rows = await prisma.campagnePublique.findMany({
+      include: includeImages,
       orderBy: [{ updatedAt: "desc" }],
     });
     return NextResponse.json({
@@ -72,9 +102,17 @@ export async function POST(request: NextRequest) {
     if ("erreur" in parse) {
       return NextResponse.json({ message: parse.erreur }, { status: 400 });
     }
-    const row = await prisma.campagnePublique.create({ data: parse.data });
+    const row = await prisma.campagnePublique.create({
+      data: parse.data,
+      include: includeImages,
+    });
+    await synchroniserImagesCampagne(prisma, row.id, parse.images);
+    const fresh = await prisma.campagnePublique.findUnique({
+      where: { id: row.id },
+      include: includeImages,
+    });
     return NextResponse.json(
-      { campagne: campagneDbVersPublication(row) },
+      { campagne: campagneDbVersPublication(fresh!) },
       { status: 201 }
     );
   } catch (error) {

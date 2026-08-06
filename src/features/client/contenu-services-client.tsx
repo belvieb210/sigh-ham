@@ -9,7 +9,10 @@ import {
   MiseEnPageClient,
   type UtilisateurClient,
 } from "@/features/client/mise-en-page-client";
-import { televerserFichierClient } from "@/features/client/televerser-fichier-client";
+import {
+  ZoneImagesVitrine,
+  type ImageVitrineItem,
+} from "@/features/client/zone-images-vitrine";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 
 interface ServiceVitrine {
@@ -18,6 +21,7 @@ interface ServiceVitrine {
   titre: string;
   description: string;
   imageUrl: string | null;
+  images?: ImageVitrineItem[];
   categorie: string;
   pointsJson: unknown;
   badge: string | null;
@@ -25,13 +29,17 @@ interface ServiceVitrine {
   icone: string;
   ordre: number;
   actif: boolean;
+  estPhare?: boolean;
 }
 
-const FORM_VIDE: Omit<ServiceVitrine, "id"> = {
+type FormService = Omit<ServiceVitrine, "id"> & { id?: string };
+
+const FORM_VIDE: FormService = {
   slug: "",
   titre: "",
   description: "",
   imageUrl: null,
+  images: [],
   categorie: "diagnostic",
   pointsJson: [],
   badge: "",
@@ -39,7 +47,26 @@ const FORM_VIDE: Omit<ServiceVitrine, "id"> = {
   icone: "laboratoire",
   ordre: 0,
   actif: true,
+  estPhare: false,
 };
+
+function imagesDepuisService(s: ServiceVitrine): ImageVitrineItem[] {
+  if (s.images?.length) return s.images;
+  if (s.imageUrl) return [{ url: s.imageUrl }];
+  return [];
+}
+
+function pointsVersLignes(points: unknown): string {
+  if (!Array.isArray(points)) return "";
+  return points.map(String).join("\n");
+}
+
+function lignesVersPoints(texte: string): string[] {
+  return texte
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
 
 export function ContenuServicesClient({
   utilisateur,
@@ -48,8 +75,8 @@ export function ContenuServicesClient({
 }) {
   const { t } = useTranslation();
   const [liste, setListe] = useState<ServiceVitrine[]>([]);
-  const [form, setForm] = useState<Omit<ServiceVitrine, "id"> & { id?: string }>(FORM_VIDE);
-  const [pointsTexte, setPointsTexte] = useState("[]");
+  const [form, setForm] = useState<FormService>(FORM_VIDE);
+  const [pointsTexte, setPointsTexte] = useState("");
   const [modeForm, setModeForm] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -73,22 +100,26 @@ export function ContenuServicesClient({
     charger();
   }, [charger]);
 
-  const majChamp = <K extends keyof typeof form>(
+  const majChamp = <K extends keyof FormService>(
     cle: K,
-    valeur: (typeof form)[K]
+    valeur: FormService[K]
   ) => setForm((prev) => ({ ...prev, [cle]: valeur }));
 
   const enregistrer = async () => {
     setEnCours(true);
     setErreur(null);
     try {
-      let pointsJson: unknown = [];
-      try {
-        pointsJson = JSON.parse(pointsTexte);
-      } catch {
-        throw new Error(t("client.services.jsonInvalide"));
-      }
-      const payload = { ...form, pointsJson };
+      const images = form.images ?? [];
+      const points = lignesVersPoints(pointsTexte);
+      const payload = {
+        ...form,
+        points,
+        pointsJson: points,
+        images,
+        imageUrl: images[0]?.url ?? null,
+        badge: form.badge || null,
+        href: form.href || null,
+      };
       const url = form.id
         ? `/api/client/services-vitrine/${form.id}`
         : "/api/client/services-vitrine";
@@ -101,7 +132,7 @@ export function ContenuServicesClient({
       if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
       setModeForm(false);
       setForm(FORM_VIDE);
-      setPointsTexte("[]");
+      setPointsTexte("");
       charger();
     } catch (e: unknown) {
       setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
@@ -132,8 +163,10 @@ export function ContenuServicesClient({
       ...s,
       badge: s.badge ?? "",
       href: s.href ?? "",
+      images: imagesDepuisService(s),
+      estPhare: Boolean(s.estPhare),
     });
-    setPointsTexte(JSON.stringify(s.pointsJson ?? [], null, 2));
+    setPointsTexte(pointsVersLignes(s.pointsJson));
     setModeForm(true);
   };
 
@@ -166,7 +199,7 @@ export function ContenuServicesClient({
             taille="petit"
             onClick={() => {
               setForm(FORM_VIDE);
-              setPointsTexte("[]");
+              setPointsTexte("");
               setModeForm(true);
             }}
           >
@@ -261,45 +294,33 @@ export function ContenuServicesClient({
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("client.services.image")}
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) {
-                      void televerserFichierClient(f, "services")
-                        .then((url) => majChamp("imageUrl", url))
-                        .catch((err: unknown) =>
-                          setErreur(
-                            err instanceof Error
-                              ? err.message
-                              : t("client.common.erreur")
-                          )
-                        );
-                    }
-                  }}
+                <ZoneImagesVitrine
+                  label={t("client.services.image")}
+                  dossier="services"
+                  images={form.images ?? []}
+                  onChange={(images) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      images,
+                      imageUrl: images[0]?.url ?? null,
+                    }))
+                  }
+                  onErreur={setErreur}
                 />
-                {form.imageUrl ? (
-                  <p className="mt-1 truncate text-xs text-texte-secondaire">
-                    {form.imageUrl}
-                  </p>
-                ) : null}
               </div>
               <div className="sm:col-span-2">
                 <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("client.services.pointsJson")}
+                  Points clés (un par ligne)
                 </label>
                 <textarea
-                  className={`${CLASSE_CHAMP_RECEPTION} font-mono text-xs`}
+                  className={CLASSE_CHAMP_RECEPTION}
                   rows={4}
                   value={pointsTexte}
                   onChange={(e) => setPointsTexte(e.target.value)}
+                  placeholder={"Analyse sanguine\nRésultats rapides"}
                 />
               </div>
-              <div>
+              <div className="flex flex-wrap gap-4 sm:col-span-2">
                 <label className="flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
@@ -307,6 +328,14 @@ export function ContenuServicesClient({
                     onChange={(e) => majChamp("actif", e.target.checked)}
                   />
                   {t("client.services.actif")}
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(form.estPhare)}
+                    onChange={(e) => majChamp("estPhare", e.target.checked)}
+                  />
+                  Service phare (carrousel page Services)
                 </label>
               </div>
             </div>
@@ -332,6 +361,10 @@ export function ContenuServicesClient({
                 <p className="font-semibold text-texte-principal">{s.titre}</p>
                 <p className="text-xs text-texte-secondaire">
                   {s.slug} · {s.categorie}
+                  {s.estPhare ? " · Phare" : ""}
+                  {(s.images?.length ?? 0) > 0
+                    ? ` · ${s.images!.length} image(s)`
+                    : ""}
                 </p>
               </div>
               <div className="flex gap-2">

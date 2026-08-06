@@ -3,13 +3,60 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { SERVICES_MEDICAUX } from "@/constants/navigation";
 import { CARTE_ICONES_SERVICES } from "@/components/icones/icones-medicales";
 import { EnTeteSection } from "@/components/ui/en-tete-section";
 
+type ServiceAccueil = {
+  id: string;
+  titre: string;
+  description: string;
+  href: string;
+  icone: keyof typeof CARTE_ICONES_SERVICES;
+};
+
 export function SectionServices() {
   const { t } = useTranslation();
+  const { data: servicesDb } = useQuery({
+    queryKey: ["public", "services-vitrine", "accueil"],
+    queryFn: async () => {
+      const res = await fetch("/api/public/services-vitrine");
+      if (!res.ok) return null;
+      const data = (await res.json()) as {
+        services?: {
+          id: string;
+          slug: string;
+          titre: string;
+          description: string;
+          href?: string;
+          icone: string;
+        }[];
+      };
+      return data.services ?? null;
+    },
+    staleTime: 60_000,
+  });
+
+  const services: ServiceAccueil[] =
+    servicesDb && servicesDb.length > 0
+      ? servicesDb.slice(0, 6).map((s) => ({
+          id: s.slug,
+          titre: s.titre,
+          description: s.description,
+          href: s.href || `/services#${s.slug}`,
+          icone: (s.icone in CARTE_ICONES_SERVICES
+            ? s.icone
+            : "laboratoire") as keyof typeof CARTE_ICONES_SERVICES,
+        }))
+      : SERVICES_MEDICAUX.map((s) => ({
+          id: s.id,
+          titre: t(`accueil.services.${s.id}.titre`),
+          description: t(`accueil.services.${s.id}.description`),
+          href: s.href,
+          icone: s.icone,
+        }));
 
   return (
     <section
@@ -38,9 +85,8 @@ export function SectionServices() {
           classNameTitre="text-[#2d2a6e]"
         />
 
-        {/* Mobile : grille compacte 3×2 */}
         <div className="mt-6 grid grid-cols-3 gap-3 lg:hidden">
-          {SERVICES_MEDICAUX.map((service, index) => {
+          {services.map((service, index) => {
             const Icone = CARTE_ICONES_SERVICES[service.icone];
             return (
               <motion.div
@@ -58,7 +104,7 @@ export function SectionServices() {
                     <Icone className="h-5 w-5" />
                   </div>
                   <span className="text-[11px] font-semibold leading-tight text-texte-principal">
-                    {t(`accueil.services.${service.id}.titre`)}
+                    {service.titre}
                   </span>
                 </Link>
               </motion.div>
@@ -66,9 +112,8 @@ export function SectionServices() {
           })}
         </div>
 
-        {/* Desktop : cartes premium 3×2 */}
         <div className="mt-10 hidden gap-5 lg:grid lg:grid-cols-3 lg:gap-6">
-          {SERVICES_MEDICAUX.map((service, index) => {
+          {services.map((service, index) => {
             const Icone = CARTE_ICONES_SERVICES[service.icone];
             return (
               <motion.article
@@ -89,10 +134,10 @@ export function SectionServices() {
                 </div>
 
                 <h3 className="relative mb-2 text-[17px] font-bold text-[#2d2a6e]">
-                  {t(`accueil.services.${service.id}.titre`)}
+                  {service.titre}
                 </h3>
                 <p className="relative mb-5 flex-1 text-sm leading-relaxed text-texte-secondaire">
-                  {t(`accueil.services.${service.id}.description`)}
+                  {service.description}
                 </p>
                 <Link
                   href={service.href}

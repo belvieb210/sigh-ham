@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FileText, Loader2 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
@@ -19,6 +19,31 @@ interface PagePublique {
   publie: boolean;
 }
 
+type BlocAPropos = {
+  titrePage?: string;
+  intro?: string;
+  mission?: string;
+  vision?: string;
+  valeurs?: string;
+};
+
+function parserContenu(contenu: unknown): BlocAPropos {
+  if (!contenu || typeof contenu !== "object") return {};
+  const c = contenu as Record<string, unknown>;
+  return {
+    titrePage: typeof c.titrePage === "string" ? c.titrePage : undefined,
+    intro: typeof c.intro === "string" ? c.intro : undefined,
+    mission: typeof c.mission === "string" ? c.mission : undefined,
+    vision: typeof c.vision === "string" ? c.vision : undefined,
+    valeurs:
+      typeof c.valeurs === "string"
+        ? c.valeurs
+        : Array.isArray(c.valeurs)
+          ? (c.valeurs as string[]).join("\n")
+          : undefined,
+  };
+}
+
 export function ContenuPagesClient({
   utilisateur,
 }: {
@@ -29,9 +54,21 @@ export function ContenuPagesClient({
   const [selection, setSelection] = useState<PagePublique | null>(null);
   const [titre, setTitre] = useState("");
   const [contenuTexte, setContenuTexte] = useState("{}");
+  const [bloc, setBloc] = useState<BlocAPropos>({});
   const [publie, setPublie] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+
+  const estStructure = useMemo(
+    () =>
+      Boolean(
+        selection &&
+          (selection.cle === "a-propos" ||
+            selection.cle.startsWith("a-propos") ||
+            selection.cle === "accueil")
+      ),
+    [selection]
+  );
 
   const charger = useCallback(() => {
     fetch("/api/client/pages")
@@ -56,6 +93,7 @@ export function ContenuPagesClient({
     setSelection(page);
     setTitre(page.titre);
     setContenuTexte(JSON.stringify(page.contenu ?? {}, null, 2));
+    setBloc(parserContenu(page.contenu));
     setPublie(page.publie);
     setErreur(null);
   };
@@ -66,10 +104,28 @@ export function ContenuPagesClient({
     setErreur(null);
     try {
       let contenu: unknown;
-      try {
-        contenu = JSON.parse(contenuTexte);
-      } catch {
-        throw new Error(t("client.pages.jsonInvalide"));
+      if (
+        selection.cle === "a-propos" ||
+        selection.cle.startsWith("a-propos") ||
+        selection.cle === "accueil"
+      ) {
+        const valeurs = (bloc.valeurs ?? "")
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean);
+        contenu = {
+          titrePage: bloc.titrePage ?? "",
+          intro: bloc.intro ?? "",
+          mission: bloc.mission ?? "",
+          vision: bloc.vision ?? "",
+          valeurs,
+        };
+      } else {
+        try {
+          contenu = JSON.parse(contenuTexte);
+        } catch {
+          throw new Error(t("client.pages.jsonInvalide"));
+        }
       }
       const res = await fetch(`/api/client/pages/${selection.cle}`, {
         method: "PUT",
@@ -147,17 +203,82 @@ export function ContenuPagesClient({
                     onChange={(e) => setTitre(e.target.value)}
                   />
                 </div>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("client.pages.contenuJson")}
-                  </label>
-                  <textarea
-                    className={`${CLASSE_CHAMP_RECEPTION} font-mono text-xs`}
-                    rows={16}
-                    value={contenuTexte}
-                    onChange={(e) => setContenuTexte(e.target.value)}
-                  />
-                </div>
+
+                {estStructure ? (
+                  <>
+                    <div>
+                      <label className={CLASSE_LABEL_RECEPTION}>
+                        Titre page
+                      </label>
+                      <input
+                        className={CLASSE_CHAMP_RECEPTION}
+                        value={bloc.titrePage ?? ""}
+                        onChange={(e) =>
+                          setBloc((b) => ({ ...b, titrePage: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className={CLASSE_LABEL_RECEPTION}>Intro</label>
+                      <textarea
+                        className={CLASSE_CHAMP_RECEPTION}
+                        rows={3}
+                        value={bloc.intro ?? ""}
+                        onChange={(e) =>
+                          setBloc((b) => ({ ...b, intro: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className={CLASSE_LABEL_RECEPTION}>Mission</label>
+                      <textarea
+                        className={CLASSE_CHAMP_RECEPTION}
+                        rows={3}
+                        value={bloc.mission ?? ""}
+                        onChange={(e) =>
+                          setBloc((b) => ({ ...b, mission: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className={CLASSE_LABEL_RECEPTION}>Vision</label>
+                      <textarea
+                        className={CLASSE_CHAMP_RECEPTION}
+                        rows={3}
+                        value={bloc.vision ?? ""}
+                        onChange={(e) =>
+                          setBloc((b) => ({ ...b, vision: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className={CLASSE_LABEL_RECEPTION}>
+                        Valeurs (une par ligne)
+                      </label>
+                      <textarea
+                        className={CLASSE_CHAMP_RECEPTION}
+                        rows={4}
+                        value={bloc.valeurs ?? ""}
+                        onChange={(e) =>
+                          setBloc((b) => ({ ...b, valeurs: e.target.value }))
+                        }
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <label className={CLASSE_LABEL_RECEPTION}>
+                      {t("client.pages.contenuJson")}
+                    </label>
+                    <textarea
+                      className={`${CLASSE_CHAMP_RECEPTION} font-mono text-xs`}
+                      rows={16}
+                      value={contenuTexte}
+                      onChange={(e) => setContenuTexte(e.target.value)}
+                    />
+                  </div>
+                )}
+
                 <label className="flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"

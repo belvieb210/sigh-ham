@@ -1388,11 +1388,25 @@ model CampagnePublique {
   datePublication    DateTime? @map("date_publication")
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
+  images             CampagneImage[]
 
   @@index([publie, dateDebut, dateFin])
   @@index([typePublication, publie])
   @@index([misEnAvant, publie])
   @@map("campagnes_publiques")
+}
+
+model CampagneImage {
+  id         String           @id @default(cuid())
+  campagneId String           @map("campagne_id")
+  url        String
+  ordre      Int              @default(0)
+  legende    String?
+  createdAt  DateTime         @default(now()) @map("created_at")
+  campagne   CampagnePublique @relation(fields: [campagneId], references: [id], onDelete: Cascade)
+
+  @@index([campagneId, ordre])
+  @@map("campagne_images")
 }
 
 model DiapositiveHero {
@@ -1435,11 +1449,27 @@ model ServiceVitrine {
   icone       String   @default("laboratoire")
   ordre       Int      @default(0)
   actif       Boolean  @default(true)
+  estPhare    Boolean  @default(false) @map("est_phare")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
+  images      ServiceVitrineImage[]
 
   @@index([actif, ordre])
+  @@index([estPhare, actif])
   @@map("services_vitrine")
+}
+
+model ServiceVitrineImage {
+  id        String         @id @default(cuid())
+  serviceId String         @map("service_id")
+  url       String
+  ordre     Int            @default(0)
+  legende   String?
+  createdAt DateTime       @default(now()) @map("created_at")
+  service   ServiceVitrine @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId, ordre])
+  @@map("service_vitrine_images")
 }
 
 model MedecinVitrine {
@@ -1450,12 +1480,17 @@ model MedecinVitrine {
   bio         String?  @db.Text
   photoUrl    String?  @map("photo_url")
   horaires    String?
+  telephone   String?
+  email       String?
+  /// MEDECIN | PERSONNEL | RESPONSABLE_LABO | MEDECIN_EXTERNE | SERVICE_EGLISE
+  categorie   String   @default("MEDECIN")
   ordre       Int      @default(0)
   actif       Boolean  @default(true)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@index([actif, ordre])
+  @@index([categorie, actif, ordre])
   @@map("medecins_vitrine")
 }
 

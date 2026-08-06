@@ -3,11 +3,39 @@ import {
   obtenirSessionApiClient,
   reponseNonAutoriseClient,
 } from "@/lib/auth/garde-api-client";
+import {
+  campagneDbVersPublication,
+  synchroniserImagesCampagne,
+} from "@/lib/client/mapper-campagne";
 import { prisma } from "@/lib/prisma";
-import { campagneDbVersPublication } from "@/lib/client/mapper-campagne";
 
 interface Ctx {
   params: Promise<{ id: string }>;
+}
+
+const includeImages = {
+  images: { orderBy: { ordre: "asc" as const } },
+};
+
+function parserImages(body: Record<string, unknown>): { url: string; legende?: string }[] | null {
+  if (body.images === undefined) return null;
+  const raw = body.images;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => {
+      if (typeof item === "string") return { url: item };
+      if (item && typeof item === "object" && "url" in item) {
+        return {
+          url: String((item as { url: unknown }).url),
+          legende:
+            "legende" in item && (item as { legende?: unknown }).legende
+              ? String((item as { legende: unknown }).legende)
+              : undefined,
+        };
+      }
+      return null;
+    })
+    .filter((x): x is { url: string; legende?: string } => Boolean(x?.url));
 }
 
 export async function GET(_request: NextRequest, ctx: Ctx) {
@@ -16,7 +44,10 @@ export async function GET(_request: NextRequest, ctx: Ctx) {
   const { id } = await ctx.params;
 
   try {
-    const row = await prisma.campagnePublique.findUnique({ where: { id } });
+    const row = await prisma.campagnePublique.findUnique({
+      where: { id },
+      include: includeImages,
+    });
     if (!row) {
       return NextResponse.json({ message: "Introuvable." }, { status: 404 });
     }
@@ -34,6 +65,8 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
 
   try {
     const body = (await request.json()) as Record<string, unknown>;
+    const images = parserImages(body);
+    const imageUrlFromImages = images?.[0]?.url;
     const row = await prisma.campagnePublique.update({
       where: { id },
       data: {
@@ -60,9 +93,11 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
         ...(body.misEnAvant != null
           ? { misEnAvant: Boolean(body.misEnAvant) }
           : {}),
-        ...(body.imageUrl !== undefined
-          ? { imageUrl: body.imageUrl ? String(body.imageUrl) : null }
-          : {}),
+        ...(images
+          ? { imageUrl: imageUrlFromImages ?? null }
+          : body.imageUrl !== undefined
+            ? { imageUrl: body.imageUrl ? String(body.imageUrl) : null }
+            : {}),
         ...(body.lieu !== undefined
           ? { lieu: body.lieu ? String(body.lieu) : null }
           : {}),
@@ -84,8 +119,18 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
             }
           : {}),
       },
+      include: includeImages,
     });
-    return NextResponse.json({ campagne: campagneDbVersPublication(row) });
+    if (images) {
+      await synchroniserImagesCampagne(prisma, id, images);
+    }
+    const fresh = await prisma.campagnePublique.findUnique({
+      where: { id },
+      include: includeImages,
+    });
+    return NextResponse.json({
+      campagne: campagneDbVersPublication(fresh ?? row),
+    });
   } catch (error) {
     console.error("[PUT /api/client/campagnes/[id]]", error);
     return NextResponse.json(

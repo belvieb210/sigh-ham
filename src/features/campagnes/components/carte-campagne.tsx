@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
 import { CARTE_ICONES_CAMPAGNES } from "@/components/icones/icones-medicales";
 import { Bouton } from "@/components/ui/bouton";
+import { CarrouselImagesVitrine } from "@/components/ui/carrousel-images-vitrine";
+import { ImageVitrine } from "@/components/ui/image-vitrine";
 import {
   LIBELLES_CATEGORIE,
   LIBELLES_STATUT,
@@ -29,6 +30,12 @@ export function CarteCampagne({
 }: PropsCarteCampagne) {
   const Icone = CARTE_ICONES_CAMPAGNES[campagne.icone];
   const estLarge = variante === "large";
+  const galerie =
+    campagne.images && campagne.images.length > 0
+      ? campagne.images
+      : campagne.imageUrl
+        ? [{ url: campagne.imageUrl }]
+        : [];
 
   return (
     <article
@@ -51,10 +58,20 @@ export function CarteCampagne({
           estLarge ? "h-52 sm:h-60" : "h-40 sm:h-44"
         )}
       >
-        {campagne.imageUrl ? (
+        {galerie.length > 1 ? (
           <>
-            <Image
-              src={campagne.imageUrl}
+            <CarrouselImagesVitrine
+              images={galerie}
+              className="absolute inset-0"
+              sizes={estLarge ? "(max-width: 1024px) 100vw, 66vw" : "(max-width: 768px) 100vw, 33vw"}
+              showNav={false}
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+          </>
+        ) : galerie[0]?.url ? (
+          <>
+            <ImageVitrine
+              src={galerie[0].url}
               alt=""
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"

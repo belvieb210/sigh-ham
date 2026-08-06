@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Award,
@@ -11,6 +10,7 @@ import {
   Clock,
   FlaskConical,
 } from "lucide-react";
+import { ImageVitrine } from "@/components/ui/image-vitrine";
 import { useContenuServices } from "@/hooks/use-contenu-page";
 import { IMAGES_LABORATOIRE } from "@/constants/images";
 import { cn } from "@/lib/utils";
@@ -27,12 +27,41 @@ export function SectionVedetteServices() {
     valeur: VALEURS_CLES[index],
     libelle: item.libelle,
   }));
-  const servicePhare = services.find((s) => "badge" in s);
+
+  const servicePhare = useMemo(() => {
+    const avecPhare = services.find(
+      (s) => "estPhare" in s && Boolean((s as { estPhare?: boolean }).estPhare)
+    );
+    if (avecPhare) return avecPhare;
+    return services.find(
+      (s) => "badge" in s && Boolean((s as { badge?: string }).badge)
+    );
+  }, [services]);
+
   const [indexActif, setIndexActif] = useState(0);
   const [progression, setProgression] = useState(0);
   const refPause = useRef(false);
 
-  const images = IMAGES_LABORATOIRE;
+  const images = useMemo(() => {
+    const fromDb =
+      servicePhare &&
+      "images" in servicePhare &&
+      Array.isArray(
+        (servicePhare as { images?: { url: string; legende?: string }[] }).images
+      )
+        ? (servicePhare as { images: { url: string; legende?: string }[] }).images
+        : [];
+    if (fromDb.length > 0) {
+      return fromDb.map((img) => ({
+        url: img.url,
+        alt: img.legende || servicePhare?.titre || "Service phare",
+      }));
+    }
+    if (servicePhare && "imageUrl" in servicePhare && servicePhare.imageUrl) {
+      return [{ url: servicePhare.imageUrl as string, alt: servicePhare.titre }];
+    }
+    return IMAGES_LABORATOIRE.map((img) => ({ url: img.url, alt: img.alt }));
+  }, [servicePhare]);
 
   const allerA = useCallback(
     (index: number) => {
@@ -53,6 +82,7 @@ export function SectionVedetteServices() {
   }, [images.length]);
 
   useEffect(() => {
+    if (images.length < 2) return;
     const intervalle = setInterval(() => {
       if (!refPause.current) setIndexActif((i) => (i + 1) % images.length);
     }, INTERVALLE_CARROUSEL_MS);
@@ -61,14 +91,14 @@ export function SectionVedetteServices() {
 
   useEffect(() => {
     setProgression(0);
-    if (refPause.current) return;
+    if (refPause.current || images.length < 2) return;
     const pas = 50;
     const increment = (pas / INTERVALLE_CARROUSEL_MS) * 100;
     const timer = setInterval(() => {
       setProgression((p) => (p >= 100 ? 0 : p + increment));
     }, pas);
     return () => clearInterval(timer);
-  }, [indexActif]);
+  }, [indexActif, images.length]);
 
   const pauseTemporaire = () => {
     refPause.current = true;
@@ -77,9 +107,13 @@ export function SectionVedetteServices() {
     }, DELAI_REPRISE_MS);
   };
 
-  if (!servicePhare) return null;
+  if (!servicePhare || images.length === 0) return null;
 
-  const imageCourante = images[indexActif];
+  const imageCourante = images[indexActif] ?? images[0];
+  const badge =
+    "badge" in servicePhare && servicePhare.badge
+      ? String(servicePhare.badge)
+      : vedette.badge;
 
   return (
     <section
@@ -102,7 +136,7 @@ export function SectionVedetteServices() {
               Service phare
             </h2>
             <p className="mt-2 max-w-lg text-sm text-white/60">
-              Le laboratoire d&apos;analyses — cœur de notre mission diagnostique à Kinshasa.
+              {servicePhare.description}
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-sm">
@@ -123,12 +157,11 @@ export function SectionVedetteServices() {
           className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02] shadow-2xl ring-1 ring-white/5"
         >
           <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
-            {/* Carrousel */}
             <div
               role="group"
               className="relative min-h-[320px] sm:min-h-[400px] lg:min-h-[480px]"
               aria-roledescription="carousel"
-              aria-label="Visite du laboratoire HAM"
+              aria-label="Galerie service phare"
               onMouseEnter={() => {
                 refPause.current = true;
               }}
@@ -145,7 +178,7 @@ export function SectionVedetteServices() {
                   transition={{ duration: 1, ease: "easeInOut" }}
                   className="absolute inset-0"
                 >
-                  <Image
+                  <ImageVitrine
                     src={imageCourante.url}
                     alt={imageCourante.alt}
                     fill
@@ -160,84 +193,85 @@ export function SectionVedetteServices() {
 
               <div className="absolute left-4 top-4 z-10 sm:left-5 sm:top-5">
                 <span className="rounded-full bg-[#7a1f4e] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg">
-                  {"badge" in servicePhare ? servicePhare.badge : vedette.badge}
+                  {badge}
                 </span>
               </div>
 
-              {/* Navigation */}
-              <div className="absolute right-4 top-4 z-10 flex gap-2 sm:right-5 sm:top-5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    pauseTemporaire();
-                    precedent();
-                  }}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/30 text-white backdrop-blur-md transition-colors hover:bg-black/50"
-                  aria-label="Photo précédente"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    pauseTemporaire();
-                    suivant();
-                  }}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/30 text-white backdrop-blur-md transition-colors hover:bg-black/50"
-                  aria-label="Photo suivante"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
+              {images.length > 1 ? (
+                <div className="absolute right-4 top-4 z-10 flex gap-2 sm:right-5 sm:top-5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      pauseTemporaire();
+                      precedent();
+                    }}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/30 text-white backdrop-blur-md transition-colors hover:bg-black/50"
+                    aria-label="Photo précédente"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      pauseTemporaire();
+                      suivant();
+                    }}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/30 text-white backdrop-blur-md transition-colors hover:bg-black/50"
+                    aria-label="Photo suivante"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : null}
 
-              {/* Légende + miniatures */}
               <div className="absolute bottom-[52px] left-4 right-4 z-10 flex flex-col gap-3 sm:left-5 sm:right-5 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-sm rounded-2xl border border-white/15 bg-black/40 p-4 backdrop-blur-md">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-[#7dd3fc]">
-                    Visite du laboratoire
+                    Visite
                   </p>
                   <p className="mt-1 text-sm font-semibold leading-snug text-white">
                     {imageCourante.alt}
                   </p>
                 </div>
 
-                <div className="hidden shrink-0 gap-2 lg:flex">
-                  {images.map((img, index) => (
-                    <button
-                      key={img.url}
-                      type="button"
-                      aria-label={`Afficher : ${img.alt}`}
-                      aria-current={index === indexActif ? "true" : undefined}
-                      onClick={() => {
-                        pauseTemporaire();
-                        allerA(index);
-                      }}
-                      className={cn(
-                        "relative h-14 w-20 overflow-hidden rounded-lg border-2 transition-all",
-                        index === indexActif
-                          ? "border-[#7dd3fc] shadow-lg shadow-[#7dd3fc]/20"
-                          : "border-white/20 opacity-70 hover:opacity-100"
-                      )}
-                    >
-                      <Image
-                        src={img.url}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        sizes="80px"
-                      />
-                    </button>
-                  ))}
-                </div>
+                {images.length > 1 ? (
+                  <div className="hidden shrink-0 gap-2 lg:flex">
+                    {images.map((img, index) => (
+                      <button
+                        key={`${img.url}-${index}`}
+                        type="button"
+                        aria-label={`Afficher : ${img.alt}`}
+                        aria-current={index === indexActif ? "true" : undefined}
+                        onClick={() => {
+                          pauseTemporaire();
+                          allerA(index);
+                        }}
+                        className={cn(
+                          "relative h-14 w-20 overflow-hidden rounded-lg border-2 transition-all",
+                          index === indexActif
+                            ? "border-[#7dd3fc] shadow-lg shadow-[#7dd3fc]/20"
+                            : "border-white/20 opacity-70 hover:opacity-100"
+                        )}
+                      >
+                        <ImageVitrine
+                          src={img.url}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="80px"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
-              {/* Progression */}
               <div className="absolute bottom-0 left-0 right-0 z-10">
                 <div className="flex items-center justify-between px-5 py-3">
                   <div className="flex gap-1.5 sm:hidden">
                     {images.map((img, index) => (
                       <button
-                        key={img.url}
+                        key={`${img.url}-dot-${index}`}
                         type="button"
                         aria-label={`Photo ${index + 1}`}
                         onClick={() => {
@@ -267,7 +301,6 @@ export function SectionVedetteServices() {
               </div>
             </div>
 
-            {/* Contenu */}
             <div className="flex flex-col justify-center border-t border-white/10 bg-gradient-to-br from-[#0f172a] to-[#1a2744] p-7 sm:p-10 lg:border-l lg:border-t-0 lg:p-12">
               <p className="text-xs font-semibold uppercase tracking-wider text-[#7dd3fc]">
                 Diagnostic · Laboratoire
@@ -291,7 +324,6 @@ export function SectionVedetteServices() {
                 ))}
               </ul>
 
-              {/* Chiffres clés — remplace le bouton */}
               <div className="mt-8 grid grid-cols-3 gap-2 sm:gap-3">
                 {chiffresCles.map(({ icone: Icone, valeur, libelle }) => (
                   <div

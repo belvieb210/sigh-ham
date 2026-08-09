@@ -8,6 +8,7 @@ import {
 } from "@/lib/caisse/facturation-pharmacie";
 import { reorienterPatientDepuisCaisse } from "@/lib/caisse/reorienter-patient-caisse";
 import { creerTokenRecuFacture } from "@/lib/caisse/token-recu-public";
+import { evaluerEtatFacturationDual } from "@/lib/caisse/etat-facturation-dual";
 import type {
   DestinationApresEncaissement,
   DossierFacturationCaisse,
@@ -273,8 +274,14 @@ export async function obtenirDossierFacturation(
     : factureExamens;
 
   let statutAttente: DossierFacturationCaisse["statutAttente"] = "HORS_FILE";
-  if (factureActive.statut === "PAYEE") statutAttente = "PAYE";
-  else if (fileAttente) statutAttente = "EN_ATTENTE_PAIEMENT";
+  const facturationDual = evaluerEtatFacturationDual({
+    nombreExamens: dossier.examensLaboratoire.length,
+    aDesMedicaments: pharmacie.aDesMedicaments,
+    statutFactureExamens: factureExamens.statut,
+    statutFacturePharmacie: pharmacie.facture?.statut ?? null,
+    enFile: Boolean(fileAttente),
+  });
+  statutAttente = facturationDual.statutAttente;
 
   const remiseProposee = decimalVersNombre(
     dossier.enregistrementsReception[0]?.remise ?? 0
@@ -311,6 +318,7 @@ export async function obtenirDossierFacturation(
     },
     pharmacie,
     facture: factureActive,
+    facturationDual,
   };
 }
 

@@ -88,7 +88,9 @@ export async function listerPatientsEnregistresMedecinExterne(
   const dossiers = limite
     ? await chargerDossiersAccueilMedecinExterne(medecinExterneId, limite * 4)
     : await chargerDossiersAccueilMedecinExterne(medecinExterneId);
-  const patients = dedupliquerParPatient(dossiersVersPatients(dossiers));
+  const patients = dedupliquerParPatient(dossiersVersPatients(dossiers)).filter(
+    estPatientRecentMedecinExterne
+  );
   const stats = calculerStatsEnregistres(dossiers);
 
   return {

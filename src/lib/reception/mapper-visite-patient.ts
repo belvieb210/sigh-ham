@@ -66,6 +66,13 @@ function mapperStatutTransfert(statut: StatutTransfert): {
   }
 }
 
+function estTransfertIntraSalle(
+  transfert: DossierVisite["transferts"][number] | undefined
+): boolean {
+  if (!transfert) return false;
+  return transfert.salleOrigineId === transfert.salleDestinationId;
+}
+
 function determinerStatutVisite(
   statutPassage: string | undefined,
   statutTransfert: StatutTransfert | undefined,
@@ -317,26 +324,30 @@ export function mapperDossierVisite(dossier: DossierVisite): PatientEnregistre {
   const enregistrement = dossier.enregistrementsReception[0];
   const passage = dossier.passages[0];
   const transfertActuel = dossier.transferts[0];
+  const transfertAffichage =
+    transfertActuel && !estTransfertIntraSalle(transfertActuel)
+      ? transfertActuel
+      : undefined;
   const fileAttente = passage?.fileAttente;
-  const enRecuperation = estEnRecuperation(transfertActuel);
+  const enRecuperation = estEnRecuperation(transfertAffichage);
 
   let orientation = "Non orienté";
-  if (transfertActuel && transfertActuel.statut !== "REFUSE") {
-    orientation = raccourcirNomSalle(transfertActuel.salleDestination.nom);
-  } else if (transfertActuel?.statut === "REFUSE" && enRecuperation) {
-    orientation = raccourcirNomSalle(transfertActuel.salleDestination.nom);
+  if (transfertAffichage && transfertAffichage.statut !== "REFUSE") {
+    orientation = raccourcirNomSalle(transfertAffichage.salleDestination.nom);
+  } else if (transfertAffichage?.statut === "REFUSE" && enRecuperation) {
+    orientation = raccourcirNomSalle(transfertAffichage.salleDestination.nom);
   } else if (fileAttente && !fileAttente.serviLe) {
     orientation = raccourcirNomSalle(fileAttente.salle.nom);
   }
 
   const { statut, statutCouleur } = determinerStatutVisite(
     passage?.statut,
-    transfertActuel?.statut,
+    transfertAffichage?.statut,
     enRecuperation
   );
 
   const motif =
-    transfertActuel?.motif ??
+    transfertAffichage?.motif ??
     dossier.motifOuverture ??
     (enregistrement
       ? LIBELLES_TYPE_VISITE[enregistrement.typeVisite] ?? enregistrement.typeVisite
@@ -355,10 +366,10 @@ export function mapperDossierVisite(dossier: DossierVisite): PatientEnregistre {
     statutCouleur,
     heure: formaterHeure(dateActiviteVisite(dossier)),
     dateActivite: dateActiviteVisite(dossier).toISOString(),
-    transfertId: transfertActuel?.id,
-    statutTransfert: transfertActuel?.statut,
+    transfertId: transfertAffichage?.id,
+    statutTransfert: transfertAffichage?.statut,
     enRecuperation,
-    codeSalleDestination: transfertActuel?.salleDestination?.code,
+    codeSalleDestination: transfertAffichage?.salleDestination?.code,
   };
 }
 

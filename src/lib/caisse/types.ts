@@ -1,4 +1,5 @@
 import type { ModePaiement, StatutFacture } from "@/generated/prisma/client";
+import type { EtatFacturationDual } from "@/lib/caisse/etat-facturation-dual";
 
 export type ModeFactureCaisse =
   | "CASH"
@@ -37,6 +38,10 @@ export interface PatientFileCaisse {
   /** Salle / service d'origine du transfert */
   provenance: string;
   medecinResponsable: string | null;
+  aDesMedicaments: boolean;
+  factureExamensPayee: boolean;
+  facturePharmaciePayee: boolean;
+  facturationComplete: boolean;
 }
 
 export type TypeFactureCaisseUi = "NORMALE" | "PHARMACIE";
@@ -113,6 +118,8 @@ export interface DossierFacturationCaisse {
   /** Facturation pharmacie (médicaments ordonnés) */
   pharmacie: SectionFacturationPharmacie;
   facture: FactureCaisseDetail;
+  /** État global examens + pharmacie */
+  facturationDual: EtatFacturationDual;
 }
 
 export interface StatsCaisseJour {

@@ -142,16 +142,19 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           throw new Error(data.erreur ?? t("caisse.facturation.erreurEncaissement"));
         }
         setDossier(data.dossier);
-        setTypeFactureUi(data.dossier.facture.isPharmacie ? "PHARMACIE" : "NORMALE");
-        if (data.dossier.facture.isPharmacie) {
+        const dual = data.dossier.facturationDual;
+        const typeInitial =
+          dual.typeFactureRecommande ??
+          (data.dossier.facture.isPharmacie ? "PHARMACIE" : "NORMALE");
+        setTypeFactureUi(typeInitial);
+        if (typeInitial === "PHARMACIE") {
           setTransfererApres(true);
           setFactureId(data.dossier.pharmacie.facture?.id ?? factureId);
         } else if (!factureId) {
           setFactureId(data.dossier.examens.facture.id);
         }
-        const ctx = data.dossier.facture.isPharmacie
-          ? data.dossier.pharmacie
-          : data.dossier.examens;
+        const ctx =
+          typeInitial === "PHARMACIE" ? data.dossier.pharmacie : data.dossier.examens;
         const lignesCharge = ctx.facture?.lignes ?? ctx.lignes;
         setDevise(
           (ctx.facture?.devise ?? data.dossier.facture.devise) === "CDF" ? "CDF" : "USD"
@@ -232,6 +235,12 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
       setErreur(t("caisse.facturation.aucunMedicament"));
       return;
     }
+    if (type === "NORMALE" && dossier?.facturationDual.factureNormaleVerrouillee) {
+      return;
+    }
+    if (type === "PHARMACIE" && dossier?.facturationDual.facturePharmacieVerrouillee) {
+      return;
+    }
     setErreur(null);
     setTypeFactureUi(type);
     if (type === "PHARMACIE") {
@@ -283,14 +292,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     [dossier]
   );
 
-  /** File caisse : à facturer, émises, ou avances (solde restant) — hors payées intégralement */
+  /** File caisse : patients avec facturation examens et/ou pharmacie incomplète */
   const fileSansFacture = useMemo(
-    () =>
-      file.filter((p) => {
-        if (!p.factureOuverte || !p.statutFacture) return true;
-        if (p.statutFacture === "PAYEE") return false;
-        return true;
-      }),
+    () => file.filter((p) => !p.facturationComplete),
     [file]
   );
 
@@ -680,16 +684,35 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
       await chargerFile();
       window.scrollTo({ top: 0, behavior: "smooth" });
 
-      // Facture payée : quitter le formulaire pour éviter l'état Solde figé
-      if (data.dossier.facture.statut === "PAYEE") {
+      const dual = data.dossier.facturationDual;
+
+      if (dual.facturationComplete) {
         setModeFacture("CASH");
         window.setTimeout(() => {
           router.push("/sigh/caisse/factures");
         }, 800);
-      } else {
-        window.setTimeout(() => {
-          router.push("/sigh/caisse/factures");
-        }, 1200);
+        return;
+      }
+
+      if (dual.typeFactureRecommande) {
+        setTypeFactureUi(dual.typeFactureRecommande);
+        setFactureId(null);
+        if (dual.typeFactureRecommande === "PHARMACIE") {
+          setTransfererApres(true);
+        }
+        setMessage(
+          dual.factureNormaleVerrouillee
+            ? t("caisse.facturation.examensPayesRestePharmacie")
+            : t("caisse.facturation.pharmaciePayeeResteExamens")
+        );
+        if (dossierId) {
+          await chargerDossier(dossierId);
+        }
+        return;
+      }
+
+      if (data.dossier.facture.statut === "PAYEE") {
+        setModeFacture("CASH");
       }
     } catch (e) {
       setErreur(e instanceof Error ? e.message : t("caisse.facturation.erreurEncaissement"));
@@ -1047,11 +1070,19 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                       {dossier.prenom} {dossier.nom}
                     </h2>
                     <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
-                      {dossier.statutAttente === "EN_ATTENTE_PAIEMENT"
-                        ? t("caisse.facturation.enAttentePaiement")
-                        : dossier.statutAttente === "PAYE"
-                          ? t("caisse.facturation.paye")
-                          : t("caisse.facturation.horsFile")}
+                      {dossier.facturationDual.facturationComplete
+                        ? t("caisse.facturation.paye")
+                        : dossier.facturationDual.factureNormaleVerrouillee &&
+                            dossier.pharmacie.aDesMedicaments &&
+                            !dossier.facturationDual.facturePharmacieVerrouillee
+                          ? t("caisse.facturation.examensPayesRestePharmacie")
+                          : dossier.facturationDual.facturePharmacieVerrouillee &&
+                              dossier.examens.lignes.length > 0 &&
+                              !dossier.facturationDual.factureNormaleVerrouillee
+                            ? t("caisse.facturation.pharmaciePayeeResteExamens")
+                            : dossier.statutAttente === "EN_ATTENTE_PAIEMENT"
+                              ? t("caisse.facturation.enAttentePaiement")
+                              : t("caisse.facturation.horsFile")}
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-texte-secondaire">
@@ -1460,10 +1491,15 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                     {TYPES_FACTURE_CAISSE_UI.map((type) => {
                       const selectionne = typeFactureUi === type.id;
                       const Icone = type.id === "NORMALE" ? FlaskConical : Pill;
+                      const verrouille =
+                        type.id === "NORMALE"
+                          ? dossier?.facturationDual.factureNormaleVerrouillee
+                          : dossier?.facturationDual.facturePharmacieVerrouillee;
                       const desactive =
-                        type.id === "PHARMACIE" &&
-                        dossier != null &&
-                        !dossier.pharmacie.aDesMedicaments;
+                        verrouille ||
+                        (type.id === "PHARMACIE" &&
+                          dossier != null &&
+                          !dossier.pharmacie.aDesMedicaments);
                       return (
                         <button
                           key={type.id}
@@ -1471,14 +1507,21 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                           onClick={() => basculerTypeFacture(type.id)}
                           disabled={desactive}
                           className={cn(
-                            "flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border p-3 text-center text-xs font-medium leading-tight transition-colors active:scale-[0.98]",
+                            "relative flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border p-3 text-center text-xs font-medium leading-tight transition-colors active:scale-[0.98]",
                             selectionne
                               ? "border-bleu-medical bg-bleu-medical-clair text-texte-principal ring-2 ring-bleu-medical/20"
                               : desactive
-                                ? "cursor-not-allowed border-gris-bordure/70 bg-gris-tres-clair/60 opacity-55"
+                                ? verrouille
+                                  ? "cursor-not-allowed border-emerald-200 bg-emerald-50/80 opacity-90"
+                                  : "cursor-not-allowed border-gris-bordure/70 bg-gris-tres-clair/60 opacity-55"
                                 : "border-gris-bordure bg-[#f8fafc] text-texte-principal hover:border-bleu-medical hover:bg-bleu-medical-clair"
                           )}
                         >
+                          {verrouille && (
+                            <span className="absolute right-2 top-2 rounded-full bg-emerald-600 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
+                              {t("caisse.facturation.typeFactureVerrouille")}
+                            </span>
+                          )}
                           <Icone
                             className="h-6 w-6 shrink-0 text-bleu-medical"
                             strokeWidth={1.75}

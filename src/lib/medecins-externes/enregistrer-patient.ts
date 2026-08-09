@@ -11,7 +11,6 @@ import type { DonneesEnregistrementPatient } from "@/lib/reception/types";
 /**
  * Enregistre un patient pour un médecin externe :
  * Patient.medecinExterneId + dossier + passage + file MEDECINS_EXTERNES
- * + transfert auto-accepté pour la visibilité file.
  */
 export async function enregistrerPatientMedecinExterne(
   agentId: string,
@@ -86,20 +85,6 @@ export async function enregistrerPatientMedecinExterne(
         passageId: passage.id,
         salleId: salle.id,
         numeroOrdre: (maxOrdre._max.numeroOrdre ?? 0) + 1,
-      },
-    });
-
-    await tx.transfert.create({
-      data: {
-        dossierId: dossier.id,
-        passageId: passage.id,
-        salleOrigineId: salle.id,
-        salleDestinationId: salle.id,
-        statut: "ACCEPTE",
-        motif: "Enregistrement local médecin externe",
-        emetteurId: agentId,
-        recepteurId: agentId,
-        accepteLe: new Date(),
       },
     });
 

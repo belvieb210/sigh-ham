@@ -2,6 +2,10 @@ import "server-only";
 import type { StatutFacture } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { listerPatientsFileAttenteSalle } from "@/lib/transferts/visibilite-salle";
+import {
+  estNumeroFacturePharmacie,
+  evaluerEtatFacturationDual,
+} from "@/lib/caisse/etat-facturation-dual";
 import type { PatientFileCaisse, StatsCaisseJour } from "@/lib/caisse/types";
 
 function decimalVersNombre(valeur: { toNumber?: () => number } | number | string): number {
@@ -58,43 +62,79 @@ async function reintegrerPatientsCaisseNonConfirmes() {
   });
 }
 
+interface FacturesDossier {
+  examens: {
+    statut: StatutFacture;
+    montantTotal: number;
+    montantPaye: number;
+    modeFacture: string | null;
+  } | null;
+  pharmacie: {
+    statut: StatutFacture;
+    montantTotal: number;
+    montantPaye: number;
+    modeFacture: string | null;
+  } | null;
+}
+
 export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse[]> {
   await reintegrerPatientsCaisseNonConfirmes();
 
   const files = await listerPatientsFileAttenteSalle("CAISSE");
 
   const dossierIds = files.map((f) => f.passage.dossier.id);
-  const factures = await prisma.facture.findMany({
-    where: {
-      dossierId: { in: dossierIds },
-      statut: { in: ["BROUILLON", "EMISE", "PARTIELLEMENT_PAYEE", "PAYEE"] },
-    },
-    include: {
-      paiements: { orderBy: { payeLe: "desc" }, take: 1 },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  if (dossierIds.length === 0) return [];
 
-  const factureParDossier = new Map<
-    string,
-    {
-      statut: StatutFacture;
-      montantTotal: number;
-      montantPaye: number;
-      modeFacture: string | null;
-    }
-  >();
+  const [factures, ordonnancesAvecMed] = await Promise.all([
+    prisma.facture.findMany({
+      where: {
+        dossierId: { in: dossierIds },
+        statut: { in: ["BROUILLON", "EMISE", "PARTIELLEMENT_PAYEE", "PAYEE"] },
+      },
+      include: {
+        paiements: { orderBy: { payeLe: "desc" }, take: 1 },
+        ventePharmacie: { select: { id: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.ordonnance.findMany({
+      where: {
+        dossierId: { in: dossierIds },
+        statut: { in: ["EN_ATTENTE", "PARTIELLEMENT_DELIVREE"] },
+        lignes: { some: {} },
+      },
+      select: { dossierId: true },
+      distinct: ["dossierId"],
+    }),
+  ]);
+
+  const dossiersAvecMedicaments = new Set(ordonnancesAvecMed.map((o) => o.dossierId));
+
+  const facturesParDossier = new Map<string, FacturesDossier>();
   for (const f of factures) {
-    if (factureParDossier.has(f.dossierId)) continue;
-    factureParDossier.set(f.dossierId, {
+    const courant = facturesParDossier.get(f.dossierId) ?? {
+      examens: null,
+      pharmacie: null,
+    };
+    const estPh =
+      Boolean(f.ventePharmacie) || estNumeroFacturePharmacie(f.numeroFacture);
+    const resume = {
       statut: f.statut,
       montantTotal: decimalVersNombre(f.montantTotal),
       montantPaye: decimalVersNombre(f.montantPaye),
       modeFacture: extraireModeFacture(f.paiements[0]?.reference),
-    });
+    };
+    if (estPh) {
+      if (!courant.pharmacie) courant.pharmacie = resume;
+    } else if (!courant.examens) {
+      courant.examens = resume;
+    }
+    facturesParDossier.set(f.dossierId, courant);
   }
 
-  return files.map((file) => {
+  const resultats: PatientFileCaisse[] = [];
+
+  for (const file of files) {
     const dossier = file.passage.dossier;
     const patient = dossier.patient;
     const transfert = file.passage.transferts[0];
@@ -109,11 +149,32 @@ export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse
       transfert?.salleOrigine?.nom?.trim() ||
       transfert?.salleOrigine?.code ||
       "—";
-    const fac = factureParDossier.get(dossier.id) ?? null;
-    const montantFacture = fac?.montantTotal ?? 0;
-    const montantPaye = fac?.montantPaye ?? 0;
 
-    return {
+    const facs = facturesParDossier.get(dossier.id) ?? {
+      examens: null,
+      pharmacie: null,
+    };
+    const aDesMedicaments = dossiersAvecMedicaments.has(dossier.id);
+
+    const etat = evaluerEtatFacturationDual({
+      nombreExamens: examens.length,
+      aDesMedicaments,
+      statutFactureExamens: facs.examens?.statut ?? null,
+      statutFacturePharmacie: facs.pharmacie?.statut ?? null,
+      enFile: true,
+    });
+
+    if (etat.facturationComplete) continue;
+
+    const facActive =
+      !etat.factureExamensPayee && etat.aDesExamens
+        ? facs.examens
+        : facs.pharmacie ?? facs.examens;
+
+    const montantFacture = facActive?.montantTotal ?? montantEstime;
+    const montantPaye = facActive?.montantPaye ?? 0;
+
+    resultats.push({
       fileAttenteId: file.id,
       passageId: file.passageId,
       transfertId: transfert?.id ?? "",
@@ -129,17 +190,27 @@ export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse
       arriveeLe: file.arriveLe.toISOString(),
       numeroOrdre: file.numeroOrdre,
       nombreExamens: examens.length,
-      montantEstime: fac ? Math.max(0, montantFacture - montantPaye) || montantFacture : montantEstime,
-      factureOuverte: Boolean(fac),
-      statutFacture: fac?.statut ?? null,
+      montantEstime: facActive
+        ? Math.max(0, montantFacture - montantPaye) || montantFacture
+        : montantEstime,
+      factureOuverte: Boolean(facActive),
+      statutFacture: facActive?.statut ?? null,
       montantFacture,
       montantPaye,
-      resteAPayer: fac ? Math.max(0, montantFacture - montantPaye) : montantEstime,
-      modeFacture: fac?.modeFacture ?? null,
+      resteAPayer: facActive
+        ? Math.max(0, montantFacture - montantPaye)
+        : montantEstime,
+      modeFacture: facActive?.modeFacture ?? null,
       provenance,
       medecinResponsable: medecin,
-    };
-  });
+      aDesMedicaments,
+      factureExamensPayee: etat.factureExamensPayee,
+      facturePharmaciePayee: etat.facturePharmaciePayee,
+      facturationComplete: etat.facturationComplete,
+    });
+  }
+
+  return resultats;
 }
 
 export async function obtenirStatsCaisseJour(): Promise<StatsCaisseJour> {

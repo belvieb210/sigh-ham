@@ -100,6 +100,7 @@ export function ordonnanceVersDonneesPdf(
     detailsPrescription?: Record<string, unknown> | null;
     constantesVitales?: ConstanteVitaleResume | null;
     signesVitauxConsultation?: FormulaireCliniqueMedecins["signesVitaux"] | null;
+    examens?: { libelle: string; code?: string | null }[];
     branding?: BrandingPdfLabo | null;
   }
 ): DonneesOrdonnancePdf {
@@ -126,6 +127,7 @@ export function ordonnanceVersDonneesPdf(
       dureeJours: l.dureeJours,
     })),
     imagerie,
+    examens: extras?.examens ?? [],
     signesVitaux: fusionnerSignesVitaux(
       extras?.signesVitauxConsultation,
       extras?.constantesVitales

@@ -37,6 +37,7 @@ export async function POST(req: Request) {
       notes?: string | null;
       detailsPrescription?: Record<string, unknown> | null;
       orienterVersPharmacie?: boolean;
+      orienterVersCaisse?: boolean;
       typeExamenIds?: string[];
       lignes?: {
         medicamentId: string;
@@ -78,6 +79,7 @@ export async function POST(req: Request) {
 
     let ordonnance = null;
     let transfertPharmacie = undefined;
+    let transfertCaisse: { ok: boolean; message?: string } | undefined;
     if (
       lignes.some((l) => l.medicamentId?.trim()) ||
       body.detailsPrescription
@@ -87,14 +89,37 @@ export async function POST(req: Request) {
         notes: body.notes,
         detailsPrescription: body.detailsPrescription,
         lignes,
-        orienterVersPharmacie: body.orienterVersPharmacie,
+        orienterVersPharmacie:
+          body.orienterVersCaisse === true ? false : body.orienterVersPharmacie,
       });
       ordonnance = resultat.ordonnance;
       transfertPharmacie = resultat.transfertPharmacie;
     }
 
+    const orienterCaisse =
+      body.orienterVersCaisse === true ||
+      (body.orienterVersCaisse !== false &&
+        (typeExamenIds.length > 0 ||
+          lignes.some((l) => l.medicamentId?.trim())));
+    if (orienterCaisse) {
+      try {
+        const { reorienterPatientDepuisMedecins } = await import(
+          "@/lib/medecins/reorienter-patient-medecins"
+        );
+        await reorienterPatientDepuisMedecins(session.utilisateur.id, body.dossierId, [
+          "CAISSE",
+        ]);
+        transfertCaisse = { ok: true };
+      } catch (e) {
+        transfertCaisse = {
+          ok: false,
+          message: e instanceof Error ? e.message : "Orientation caisse impossible.",
+        };
+      }
+    }
+
     return NextResponse.json(
-      { ordonnance, examens, transfertPharmacie },
+      { ordonnance, examens, transfertPharmacie, transfertCaisse },
       { status: 201 }
     );
   } catch (e) {

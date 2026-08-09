@@ -2,6 +2,10 @@ import "server-only";
 import type { ModePaiement, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { genererNumeroFacture } from "@/lib/caisse/numeros";
+import {
+  obtenirSectionPharmacieDossier,
+  preparerFacturePharmacieDossier,
+} from "@/lib/caisse/facturation-pharmacie";
 import { reorienterPatientDepuisCaisse } from "@/lib/caisse/reorienter-patient-caisse";
 import { creerTokenRecuFacture } from "@/lib/caisse/token-recu-public";
 import type {
@@ -56,8 +60,85 @@ function formaterCaissier(prenom: string, nom: string) {
   return `${prenom} ${nom}`.trim();
 }
 
+function estFacturePharmacie(
+  facture: { ventePharmacie?: unknown; numeroFacture?: string } | null | undefined
+) {
+  return Boolean(
+    facture?.ventePharmacie || facture?.numeroFacture?.startsWith("FAC-PH-")
+  );
+}
+
+function construireDetailFacture(
+  facture: {
+    id: string;
+    numeroFacture: string;
+    statut: DossierFacturationCaisse["facture"]["statut"];
+    montantTotal: { toNumber?: () => number } | number | string;
+    montantPaye: { toNumber?: () => number } | number | string;
+    devise: string;
+    ventePharmacie?: unknown;
+    lignes: {
+      id: string;
+      libelle: string;
+      quantite: number;
+      prixUnitaire: { toNumber?: () => number } | number | string;
+      montant: { toNumber?: () => number } | number | string;
+    }[];
+    paiements: {
+      id: string;
+      montant: { toNumber?: () => number } | number | string;
+      mode: ModePaiement;
+      reference: string | null;
+      payeLe: Date;
+      caissier: { prenom: string; nom: string };
+    }[];
+  } | null,
+  lignesFallback: DossierFacturationCaisse["facture"]["lignes"],
+  historiquePaiements: DossierFacturationCaisse["facture"]["historiquePaiements"]
+): DossierFacturationCaisse["facture"] {
+  const lignesFacture =
+    facture?.lignes.map((l) => ({
+      id: l.id,
+      libelle: l.libelle,
+      quantite: l.quantite,
+      prixUnitaire: decimalVersNombre(l.prixUnitaire),
+      montant: decimalVersNombre(l.montant),
+      source: "FACTURE" as const,
+    })) ?? [];
+
+  const lignes = lignesFacture.length > 0 ? lignesFacture : lignesFallback;
+  const montantTotal =
+    facture != null
+      ? decimalVersNombre(facture.montantTotal)
+      : lignes.reduce((acc, l) => acc + l.montant, 0);
+
+  const paiementsFacture = facture?.paiements ?? [];
+  const aUneAvanceExplicite = paiementsFacture.some((p) =>
+    p.reference?.split("|").some((part) => part === "modeFacture=AVANCE")
+  );
+  const aUneAvance =
+    facture != null &&
+    facture.statut !== "PAYEE" &&
+    facture.statut !== "ANNULEE" &&
+    (aUneAvanceExplicite || facture.statut === "PARTIELLEMENT_PAYEE");
+
+  return {
+    id: facture?.id ?? null,
+    numeroFacture: facture?.numeroFacture ?? null,
+    statut: facture?.statut ?? null,
+    montantTotal,
+    montantPaye: facture ? decimalVersNombre(facture.montantPaye) : 0,
+    devise: facture?.devise ?? "USD",
+    lignes,
+    historiquePaiements,
+    aUneAvance,
+    isPharmacie: estFacturePharmacie(facture),
+  };
+}
+
 export async function obtenirDossierFacturation(
-  dossierId: string
+  dossierId: string,
+  factureId?: string
 ): Promise<DossierFacturationCaisse | null> {
   const dossier = await prisma.dossierPatient.findUnique({
     where: { id: dossierId },
@@ -76,6 +157,7 @@ export async function obtenirDossierFacturation(
             orderBy: { payeLe: "desc" },
             include: { caissier: { select: { prenom: true, nom: true } } },
           },
+          ventePharmacie: true,
         },
       },
       passages: {
@@ -113,12 +195,27 @@ export async function obtenirDossierFacturation(
       ? passage.fileAttente
       : null;
   const transfert = passage?.transferts[0] ?? null;
-  const facture =
-    dossier.factures.find((f) => f.statut !== "ANNULEE" && f.statut !== "PAYEE") ??
-    dossier.factures[0] ??
+
+  const factureParam = factureId
+    ? dossier.factures.find((f) => f.id === factureId)
+    : null;
+
+  const facturesExamens = dossier.factures.filter((f) => !estFacturePharmacie(f));
+  const factureExamensBrute =
+    (factureParam && !estFacturePharmacie(factureParam) ? factureParam : null) ??
+    facturesExamens.find((f) => f.statut !== "ANNULEE" && f.statut !== "PAYEE") ??
+    facturesExamens[0] ??
     null;
 
-  const lignesExamens = dossier.examensLaboratoire.map((ex) => ({
+  const facturePharmacieBrute =
+    factureParam && estFacturePharmacie(factureParam) ? factureParam : null;
+
+  const pharmacie = await obtenirSectionPharmacieDossier(
+    dossierId,
+    facturePharmacieBrute?.id
+  );
+
+  const lignesExamensPrescrits = dossier.examensLaboratoire.map((ex) => ({
     id: ex.id,
     libelle: ex.typeExamen.libelle,
     quantite: 1,
@@ -126,26 +223,6 @@ export async function obtenirDossierFacturation(
     montant: decimalVersNombre(ex.typeExamen.prix),
     source: "EXAMEN" as const,
   }));
-
-  const lignesFacture =
-    facture?.lignes.map((l) => ({
-      id: l.id,
-      libelle: l.libelle,
-      quantite: l.quantite,
-      prixUnitaire: decimalVersNombre(l.prixUnitaire),
-      montant: decimalVersNombre(l.montant),
-      source: "FACTURE" as const,
-    })) ?? [];
-
-  const lignes = lignesFacture.length > 0 ? lignesFacture : lignesExamens;
-  const montantTotal =
-    facture != null
-      ? decimalVersNombre(facture.montantTotal)
-      : lignes.reduce((acc, l) => acc + l.montant, 0);
-
-  let statutAttente: DossierFacturationCaisse["statutAttente"] = "HORS_FILE";
-  if (facture?.statut === "PAYEE") statutAttente = "PAYE";
-  else if (fileAttente) statutAttente = "EN_ATTENTE_PAIEMENT";
 
   const historiquePaiements = dossier.factures.flatMap((f) =>
     f.paiements.map((p) => {
@@ -171,16 +248,33 @@ export async function obtenirDossierFacturation(
     })
   );
 
-  const paiementsFactureOuverte = facture?.paiements ?? [];
-  const aUneAvanceExplicite = paiementsFactureOuverte.some((p) =>
-    p.reference?.split("|").some((part) => part === "modeFacture=AVANCE")
+  const factureExamens = construireDetailFacture(
+    factureExamensBrute,
+    lignesExamensPrescrits,
+    historiquePaiements.filter((p) =>
+      factureExamensBrute
+        ? p.numeroRecu === factureExamensBrute.numeroFacture.replace(/^FAC-/, "REC-")
+        : true
+    )
   );
-  /** Avance ouverte seulement si la facture n'est pas encore PAYEE */
-  const aUneAvance =
-    facture != null &&
-    facture.statut !== "PAYEE" &&
-    facture.statut !== "ANNULEE" &&
-    (aUneAvanceExplicite || facture.statut === "PARTIELLEMENT_PAYEE");
+
+  const factureActive = facturePharmacieBrute
+    ? pharmacie.facture ??
+      construireDetailFacture(
+        facturePharmacieBrute,
+        pharmacie.lignes,
+        historiquePaiements.filter((p) =>
+          facturePharmacieBrute
+            ? p.numeroRecu ===
+              facturePharmacieBrute.numeroFacture.replace(/^FAC-/, "REC-")
+            : false
+        )
+      )
+    : factureExamens;
+
+  let statutAttente: DossierFacturationCaisse["statutAttente"] = "HORS_FILE";
+  if (factureActive.statut === "PAYEE") statutAttente = "PAYE";
+  else if (fileAttente) statutAttente = "EN_ATTENTE_PAIEMENT";
 
   const remiseProposee = decimalVersNombre(
     dossier.enregistrementsReception[0]?.remise ?? 0
@@ -208,25 +302,36 @@ export async function obtenirDossierFacturation(
       : null,
     remiseProposee,
     idsTypesExamen: dossier.examensLaboratoire.map((ex) => ex.typeExamenId),
-    facture: {
-      id: facture?.id ?? null,
-      numeroFacture: facture?.numeroFacture ?? null,
-      statut: facture?.statut ?? null,
-      montantTotal,
-      montantPaye: facture ? decimalVersNombre(facture.montantPaye) : 0,
-      devise: facture?.devise ?? "USD",
-      lignes,
-      historiquePaiements,
-      aUneAvance,
+    examens: {
+      lignes: factureExamens.lignes.filter(
+        (l) => l.montant > 0 && l.libelle !== "Frais divers"
+      ),
+      facture: factureExamens,
+      idsTypesExamen: dossier.examensLaboratoire.map((ex) => ex.typeExamenId),
     },
+    pharmacie,
+    facture: factureActive,
   };
 }
 
 export async function preparerFactureDossier(
   dossierId: string,
-  options?: { devise?: string }
+  options?: { devise?: string; factureId?: string; typeFacture?: "NORMALE" | "PHARMACIE" },
+  caissierId?: string
 ) {
-  const detail = await obtenirDossierFacturation(dossierId);
+  if (options?.typeFacture === "PHARMACIE") {
+    if (!caissierId) throw new Error("Caissier requis pour la facture pharmacie.");
+    const section = await preparerFacturePharmacieDossier(dossierId, caissierId, {
+      factureId: options.factureId,
+      devise: options.devise,
+    });
+    return obtenirDossierFacturation(dossierId, section.facture?.id ?? undefined);
+  }
+
+  const detail = await obtenirDossierFacturation(
+    dossierId,
+    options?.factureId?.trim() || undefined
+  );
   if (!detail) throw new Error("Dossier introuvable.");
 
   if (detail.facture.id && detail.facture.statut !== "ANNULEE") {
@@ -237,13 +342,13 @@ export async function preparerFactureDossier(
           where: { id: detail.facture.id },
           data: { devise },
         });
-        return obtenirDossierFacturation(dossierId);
+        return obtenirDossierFacturation(dossierId, detail.facture.id);
       }
     }
     return detail;
   }
 
-  const lignesPositives = detail.facture.lignes.filter((l) => l.montant > 0);
+  const lignesPositives = detail.examens.facture.lignes.filter((l) => l.montant > 0);
   if (lignesPositives.length === 0) {
     throw new Error("Aucune prestation facturable pour ce dossier.");
   }
@@ -449,6 +554,8 @@ export async function retirerLigneFacturationCaisse(
 
 export interface DonneesEncaissement {
   dossierId: string;
+  factureId?: string;
+  typeFacture?: "NORMALE" | "PHARMACIE";
   montant: number;
   modePaiement: ModePaiement;
   modeFacture: ModeFactureCaisse;
@@ -468,22 +575,46 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
     throw new Error("Le montant du paiement est invalide.");
   }
 
-  const detail = await preparerFactureDossier(donnees.dossierId, {
-    devise: donnees.devise,
-  });
-  if (!detail?.facture.id) {
+  const detail = await preparerFactureDossier(
+    donnees.dossierId,
+    {
+      devise: donnees.devise,
+      factureId: donnees.factureId,
+      typeFacture: donnees.typeFacture,
+    },
+    caissierId
+  );
+  if (!detail) {
+    throw new Error("Dossier introuvable.");
+  }
+
+  const factureIdEffectif =
+    donnees.typeFacture === "PHARMACIE"
+      ? detail.pharmacie.facture?.id ?? detail.facture.id
+      : detail.examens.facture.id ?? detail.facture.id;
+
+  if (!factureIdEffectif) {
     throw new Error("Impossible d'enregistrer la facture.");
   }
 
-  const factureId = detail.facture.id;
-  const remiseDeja = detail.facture.lignes
+  // Recharger avec la bonne facture active
+  const detailFacture = await obtenirDossierFacturation(
+    donnees.dossierId,
+    factureIdEffectif
+  );
+  if (!detailFacture?.facture.id) {
+    throw new Error("Impossible d'enregistrer la facture.");
+  }
+
+  const factureId = detailFacture.facture.id;
+  const remiseDeja = detailFacture.facture.lignes
     .filter((l) => l.montant < 0)
     .reduce((acc, l) => acc + Math.abs(l.montant), 0);
-  const fraisDeja = detail.facture.lignes
+  const fraisDeja = detailFacture.facture.lignes
     .filter((l) => l.libelle === "Frais divers")
     .reduce((acc, l) => acc + l.montant, 0);
 
-  const totalLignesPositives = detail.facture.lignes
+  const totalLignesPositives = detailFacture.facture.lignes
     .filter((l) => l.montant > 0)
     .reduce((acc, l) => acc + l.montant, 0);
 
@@ -493,7 +624,7 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
     0,
     totalLignesPositives + fraisAAjouter - remise
   );
-  const dejaPaye = detail.facture.montantPaye;
+  const dejaPaye = detailFacture.facture.montantPaye;
   const reste = Math.max(0, totalDu - dejaPaye);
 
   /** Avance déjà couverte (remise / lignes) : clôturer sans nouveau paiement. */
@@ -504,7 +635,7 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
     throw new Error("Le montant du paiement doit être supérieur à zéro.");
   }
 
-  const aUneAvance = detail.facture.aUneAvance;
+  const aUneAvance = detailFacture.facture.aUneAvance;
 
   if (donnees.modeFacture === "SOLDE" && !aUneAvance) {
     throw new Error(
@@ -680,7 +811,10 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
     }
   }
 
-  const dossierMisAJour = await obtenirDossierFacturation(donnees.dossierId);
+  const dossierMisAJour = await obtenirDossierFacturation(
+    donnees.dossierId,
+    factureId
+  );
 
   return {
     ...resultat,
@@ -696,6 +830,7 @@ export async function listerFacturesDuJour(): Promise<FactureResumeJour[]> {
     include: {
       lignes: { orderBy: { id: "asc" } },
       paiements: { orderBy: { payeLe: "desc" }, take: 1 },
+      ventePharmacie: true,
       dossier: {
         include: {
           patient: true,
@@ -748,6 +883,7 @@ export async function listerFacturesDuJour(): Promise<FactureResumeJour[]> {
       tokenRecu: creerTokenRecuFacture(f.id),
       approuvee: Boolean(f.approuveeLe),
       approuveeLe: f.approuveeLe?.toISOString() ?? null,
+      isPharmacie: Boolean(f.ventePharmacie) || f.numeroFacture.startsWith("FAC-PH-"),
     };
   });
 }

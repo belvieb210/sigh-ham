@@ -271,6 +271,7 @@ export async function chargerDossiersVisiteMedecinExterne(
                 transferts: {
                   some: {
                     salleOrigine: { code: "MEDECINS_EXTERNES" },
+                    salleDestination: { code: { not: "MEDECINS_EXTERNES" } },
                     statut: { notIn: ["ANNULE", "REFUSE"] },
                   },
                 },
@@ -279,6 +280,7 @@ export async function chargerDossiersVisiteMedecinExterne(
                 transferts: {
                   some: {
                     salleOrigine: { code: "MEDECINS_EXTERNES" },
+                    salleDestination: { code: { not: "MEDECINS_EXTERNES" } },
                     statut: "REFUSE",
                     recuperation: { statut: "EN_RECUPERATION" },
                   },

@@ -30,14 +30,25 @@ export async function POST(request: Request) {
   }
 
   try {
-    const corps = (await request.json()) as { dossierId?: string; devise?: string };
+    const corps = (await request.json()) as {
+      dossierId?: string;
+      factureId?: string;
+      devise?: string;
+      typeFacture?: "NORMALE" | "PHARMACIE";
+    };
     if (!corps.dossierId?.trim()) {
       return NextResponse.json({ erreur: "dossierId requis." }, { status: 400 });
     }
 
-    const dossier = await preparerFactureDossier(corps.dossierId.trim(), {
-      devise: corps.devise,
-    });
+    const dossier = await preparerFactureDossier(
+      corps.dossierId.trim(),
+      {
+        factureId: corps.factureId?.trim() || undefined,
+        devise: corps.devise,
+        typeFacture: corps.typeFacture,
+      },
+      session.utilisateur.id
+    );
     if (!dossier) {
       return NextResponse.json({ erreur: "Dossier introuvable." }, { status: 404 });
     }

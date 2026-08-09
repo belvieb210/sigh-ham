@@ -61,6 +61,21 @@ export interface FactureCaisseDetail {
   historiquePaiements: HistoriquePaiementCaisse[];
   /** True si une facture d'avance a déjà été encaissée pour ces examens */
   aUneAvance: boolean;
+  /** True si cette facture provient d'une vente pharmacie */
+  isPharmacie: boolean;
+}
+
+export interface SectionFacturationPharmacie {
+  aDesMedicaments: boolean;
+  ordonnanceId: string | null;
+  lignes: LigneFacturable[];
+  facture: FactureCaisseDetail | null;
+}
+
+export interface SectionFacturationExamens {
+  lignes: LigneFacturable[];
+  facture: FactureCaisseDetail;
+  idsTypesExamen: string[];
 }
 
 export interface HistoriquePaiementCaisse {
@@ -93,6 +108,10 @@ export interface DossierFacturationCaisse {
   remiseProposee: number;
   /** Types d'examen déjà prescrits (non annulés) — pour éviter les doublons à l'ajout */
   idsTypesExamen: string[];
+  /** Facturation examens (laboratoire) */
+  examens: SectionFacturationExamens;
+  /** Facturation pharmacie (médicaments ordonnés) */
+  pharmacie: SectionFacturationPharmacie;
   facture: FactureCaisseDetail;
 }
 
@@ -233,6 +252,8 @@ export interface FactureResumeJour {
   /** Facture validée en caisse — autorise les codes-barres tubes */
   approuvee: boolean;
   approuveeLe: string | null;
+  /** Facture liée à une vente pharmacie */
+  isPharmacie: boolean;
 }
 
 /** Étiquette tube labo (code-barres) */

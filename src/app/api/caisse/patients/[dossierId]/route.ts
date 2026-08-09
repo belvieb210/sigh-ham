@@ -3,7 +3,7 @@ import { obtenirSessionApiCaisse } from "@/lib/auth/garde-api-caisse";
 import { obtenirDossierFacturation } from "@/lib/caisse/facturation";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ dossierId: string }> }
 ) {
   const session = await obtenirSessionApiCaisse();
@@ -12,9 +12,10 @@ export async function GET(
   }
 
   const { dossierId } = await params;
+  const factureId = new URL(request.url).searchParams.get("facture") ?? undefined;
 
   try {
-    const dossier = await obtenirDossierFacturation(dossierId);
+    const dossier = await obtenirDossierFacturation(dossierId, factureId);
     if (!dossier) {
       return NextResponse.json({ erreur: "Dossier introuvable." }, { status: 404 });
     }

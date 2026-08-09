@@ -197,12 +197,15 @@ export function ContenuNotesMedecins({ utilisateur }: Props) {
     setPdfEnCours(ordonnanceId);
     setErreur(null);
     try {
-      const [resO, resC] = await Promise.all([
+      const [resO, resC, resEx] = await Promise.all([
         fetch(
           `/api/medecins/ordonnances?dossierId=${encodeURIComponent(dossierId)}`
         ),
         fetch(
           `/api/medecins/consultations?dossierId=${encodeURIComponent(dossierId)}`
+        ),
+        fetch(
+          `/api/medecins/examens?dossierId=${encodeURIComponent(dossierId)}`
         ),
       ]);
       const data = (await resO.json()) as { ordonnances?: OrdonnanceMedecins[] };
@@ -210,6 +213,9 @@ export function ContenuNotesMedecins({ utilisateur }: Props) {
         historique?: ConsultationDetailMedecins[];
         consultation?: ConsultationDetailMedecins | null;
         constantesVitales?: ConstanteVitaleResume | null;
+      };
+      const dataEx = (await resEx.json()) as {
+        examens?: { typeExamen: { libelle: string; code?: string | null } }[];
       };
       const o = data.ordonnances?.find((x) => x.id === ordonnanceId);
       if (!o) throw new Error("Ordonnance introuvable.");
@@ -222,6 +228,12 @@ export function ContenuNotesMedecins({ utilisateur }: Props) {
           sexe: ref?.patient.sexe,
           constantesVitales: dataC.constantesVitales,
           signesVitauxConsultation: ref?.formulaireClinique?.signesVitaux,
+          examens: (dataEx.examens ?? [])
+            .filter((ex) => ex.typeExamen)
+            .map((ex) => ({
+              libelle: ex.typeExamen.libelle,
+              code: ex.typeExamen.code,
+            })),
         })
       );
       if (!ok) throw new Error("PDF ordonnance impossible.");

@@ -36,6 +36,8 @@ export interface DonneesOrdonnancePdf {
     but?: string;
     conduiteATenir?: string;
   } | null;
+  /** Examens de laboratoire prescrits (catalogue) */
+  examens?: { libelle: string; code?: string | null }[];
   signesVitaux?: SignesVitauxPdf | null;
   branding?: BrandingPdfLabo | null;
 }
@@ -216,6 +218,18 @@ export function DocumentOrdonnancePdf({
             ))}
           </View>
         )}
+
+        {donnees.examens && donnees.examens.length > 0 ? (
+          <View>
+            <Text style={styles.sectionTitre}>Examens de laboratoire prescrits</Text>
+            {donnees.examens.map((ex, i) => (
+              <Text key={`${ex.libelle}-${i}`} style={styles.ligne}>
+                • {ex.libelle}
+                {ex.code ? ` (${ex.code})` : ""}
+              </Text>
+            ))}
+          </View>
+        ) : null}
 
         {donnees.imagerie &&
         (donnees.imagerie.categories?.length ||

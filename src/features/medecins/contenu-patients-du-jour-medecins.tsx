@@ -161,12 +161,15 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
     setPdfEnCours(`o-${p.dossierId}`);
     setErreur(null);
     try {
-      const [resO, resC] = await Promise.all([
+      const [resO, resC, resEx] = await Promise.all([
         fetch(
           `/api/medecins/ordonnances?dossierId=${encodeURIComponent(p.dossierId)}`
         ),
         fetch(
           `/api/medecins/consultations?dossierId=${encodeURIComponent(p.dossierId)}`
+        ),
+        fetch(
+          `/api/medecins/examens?dossierId=${encodeURIComponent(p.dossierId)}`
         ),
       ]);
       const data = (await resO.json()) as {
@@ -177,6 +180,9 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
         historique?: ConsultationDetailMedecins[];
         consultation?: ConsultationDetailMedecins | null;
         constantesVitales?: ConstanteVitaleResume | null;
+      };
+      const dataEx = (await resEx.json()) as {
+        examens?: { typeExamen: { libelle: string; code?: string | null } }[];
       };
       if (!resO.ok) throw new Error(data.erreur ?? "Ordonnance introuvable.");
       const o = data.ordonnances?.[0];
@@ -189,6 +195,12 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
           sexe: ref?.patient.sexe,
           constantesVitales: dataC.constantesVitales,
           signesVitauxConsultation: ref?.formulaireClinique?.signesVitaux,
+          examens: (dataEx.examens ?? [])
+            .filter((ex) => ex.typeExamen)
+            .map((ex) => ({
+              libelle: ex.typeExamen.libelle,
+              code: ex.typeExamen.code,
+            })),
         })
       );
       if (!ok) throw new Error("Génération PDF impossible.");

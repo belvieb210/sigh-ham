@@ -40,6 +40,7 @@ import {
   initiales,
 } from "@/features/caisse/utils-format";
 import { RechercheAjoutExamenCaisse } from "@/features/caisse/recherche-ajout-examen-caisse";
+import { imprimerFacturePharmacieCaisse } from "@/lib/caisse/imprimer-facture-pharmacie";
 import { ChampDateNaissance } from "@/features/reception/champ-date-naissance";
 import { cn } from "@/lib/utils";
 import type {
@@ -70,9 +71,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const router = useRouter();
   const searchParams = useSearchParams();
   const dossierInitial = searchParams.get("dossier");
+  const factureInitial = searchParams.get("facture");
 
   const [file, setFile] = useState<PatientFileCaisse[]>([]);
   const [dossierId, setDossierId] = useState<string | null>(dossierInitial);
+  const [factureId, setFactureId] = useState<string | null>(factureInitial);
   const [dossier, setDossier] = useState<DossierFacturationCaisse | null>(null);
   const [chargementFile, setChargementFile] = useState(true);
   const [chargementDossier, setChargementDossier] = useState(false);
@@ -129,7 +132,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
       setRechercheExamenOuverte(false);
       setMontantAvance(0);
       try {
-        const res = await fetch(`/api/caisse/patients/${id}`);
+        const url = `/api/caisse/patients/${id}${factureId ? `?facture=${encodeURIComponent(factureId)}` : ""}`;
+        const res = await fetch(url);
         const data = (await res.json()) as {
           dossier?: DossierFacturationCaisse;
           erreur?: string;
@@ -138,22 +142,36 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           throw new Error(data.erreur ?? t("caisse.facturation.erreurEncaissement"));
         }
         setDossier(data.dossier);
-        setDevise(data.dossier.facture.devise === "CDF" ? "CDF" : "USD");
-        setNumeroRecu(
-          data.dossier.facture.numeroFacture?.replace(/^FAC-/, "REC-") ??
-            `REC-${new Date().getFullYear()}-…`
+        setTypeFactureUi(data.dossier.facture.isPharmacie ? "PHARMACIE" : "NORMALE");
+        if (data.dossier.facture.isPharmacie) {
+          setTransfererApres(true);
+          setFactureId(data.dossier.pharmacie.facture?.id ?? factureId);
+        } else if (!factureId) {
+          setFactureId(data.dossier.examens.facture.id);
+        }
+        const ctx = data.dossier.facture.isPharmacie
+          ? data.dossier.pharmacie
+          : data.dossier.examens;
+        const lignesCharge = ctx.facture?.lignes ?? ctx.lignes;
+        setDevise(
+          (ctx.facture?.devise ?? data.dossier.facture.devise) === "CDF" ? "CDF" : "USD"
         );
-        const lignes = data.dossier.facture.lignes;
-        const totalExamensCharge = lignes
+        setNumeroRecu(
+          (ctx.facture?.numeroFacture ?? data.dossier.facture.numeroFacture)?.replace(
+            /^FAC-/,
+            "REC-"
+          ) ?? `REC-${new Date().getFullYear()}-…`
+        );
+        const totalExamensCharge = lignesCharge
           .filter((l) => l.montant > 0 && l.libelle !== "Frais divers")
           .reduce((a, l) => a + l.montant, 0);
-        const remiseDeja = lignes
+        const remiseDeja = lignesCharge
           .filter((l) => l.montant < 0)
           .reduce((a, l) => a + Math.abs(l.montant), 0);
-        const fraisDeja = lignes
+        const fraisDeja = lignesCharge
           .filter((l) => l.libelle === "Frais divers")
           .reduce((a, l) => a + l.montant, 0);
-        const dejaPayeCharge = data.dossier.facture.montantPaye;
+        const dejaPayeCharge = ctx.facture?.montantPaye ?? data.dossier.facture.montantPaye;
         const remiseInitiale = Math.min(
           Math.max(0, data.dossier.remiseProposee || 0, remiseDeja),
           totalExamensCharge
@@ -167,7 +185,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         setFraisDivers(arrondirMontantCaisse(fraisDeja));
         setMontantAvance(0);
         // Avance déjà encaissée → mode Solde + montant = reste (après remise)
-        if (data.dossier.facture.aUneAvance) {
+        if (data.dossier.facture.isPharmacie ? false : data.dossier.examens.facture.aUneAvance) {
           setModeFacture("SOLDE");
         } else {
           setModeFacture("CASH");
@@ -182,7 +200,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         setChargementDossier(false);
       }
     },
-    [t]
+    [t, factureId]
   );
 
   useEffect(() => {
@@ -191,38 +209,76 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
 
   useEffect(() => {
     if (dossierId) void chargerDossier(dossierId);
-  }, [dossierId, chargerDossier]);
+  }, [dossierId, factureId, chargerDossier]);
+
+  useEffect(() => {
+    setDossierId(dossierInitial);
+    setFactureId(factureInitial);
+  }, [dossierInitial, factureInitial]);
 
   useEffect(() => {
     if (!dossierId && file.length > 0) {
-      setDossierId(file[0].dossierId);
-      router.replace(`/sigh/caisse/facturation?dossier=${file[0].dossierId}`);
+      const firstDossier = file[0].dossierId;
+      setDossierId(firstDossier);
+      router.replace(`/sigh/caisse/facturation?dossier=${firstDossier}`);
     }
   }, [dossierId, file, router]);
 
+  const modePharmacie = typeFactureUi === "PHARMACIE";
+
+  const basculerTypeFacture = (type: TypeFactureCaisseUi) => {
+    if (type === "PHARMACIE" && dossier && !dossier.pharmacie.aDesMedicaments) {
+      setMessage(null);
+      setErreur(t("caisse.facturation.aucunMedicament"));
+      return;
+    }
+    setErreur(null);
+    setTypeFactureUi(type);
+    if (type === "PHARMACIE") {
+      const idPh = dossier?.pharmacie.facture?.id ?? null;
+      setFactureId(idPh);
+    } else {
+      const idEx = dossier?.examens.facture.id ?? null;
+      setFactureId(idEx);
+    }
+  };
+
   const lignesVisibles = useMemo(() => {
     if (!dossier) return [];
-    return dossier.facture.lignes.filter(
-      (l) => l.montant > 0 && l.libelle !== "Frais divers"
-    );
-  }, [dossier]);
+    const lignes = modePharmacie ? dossier.pharmacie.lignes : dossier.examens.lignes;
+    return lignes.filter((l) => l.montant > 0 && l.libelle !== "Frais divers");
+  }, [dossier, modePharmacie]);
+
+  const factureContextuelle = useMemo(() => {
+    if (!dossier) return null;
+    if (modePharmacie) {
+      return (
+        dossier.pharmacie.facture ?? {
+          ...dossier.facture,
+          lignes: dossier.pharmacie.lignes,
+          isPharmacie: true,
+        }
+      );
+    }
+    return dossier.examens.facture;
+  }, [dossier, modePharmacie]);
 
   const remiseDejaSurFacture = useMemo(() => {
-    if (!dossier) return 0;
-    return dossier.facture.lignes
+    if (!factureContextuelle) return 0;
+    return factureContextuelle.lignes
       .filter((l) => l.montant < 0)
       .reduce((acc, l) => acc + Math.abs(l.montant), 0);
-  }, [dossier]);
+  }, [factureContextuelle]);
 
   const idsTypesExamenPresents = useMemo(
-    () => new Set(dossier?.idsTypesExamen ?? []),
+    () => new Set(dossier?.examens.idsTypesExamen ?? dossier?.idsTypesExamen ?? []),
     [dossier]
   );
 
   const libellesExamensPresents = useMemo(
     () =>
       new Set(
-        (dossier?.facture.lignes ?? []).map((l) => l.libelle.trim().toLowerCase())
+        (dossier?.examens.lignes ?? []).map((l) => l.libelle.trim().toLowerCase())
       ),
     [dossier]
   );
@@ -448,11 +504,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   );
   const sousTotal = Math.max(0, totalExamens - (remise || 0));
   const totalAPayer = sousTotal + (fraisDivers || 0);
-  const dejaPaye = dossier?.facture.montantPaye ?? 0;
+  const dejaPaye = factureContextuelle?.montantPaye ?? 0;
   const resteAPayer = Math.max(0, totalAPayer - dejaPaye);
-  const factureCloturee = dossier?.facture.statut === "PAYEE";
+  const factureCloturee = factureContextuelle?.statut === "PAYEE";
   const soldeObligatoire =
-    Boolean(dossier?.facture.aUneAvance) && !factureCloturee;
+    Boolean(factureContextuelle?.aUneAvance) && !factureCloturee && !modePharmacie;
   /** Avance déjà couverte (reste 0) : permettre de clôturer sans nouveau paiement */
   const peutCloturerSoldeAZero =
     soldeObligatoire && modeFacture === "SOLDE" && resteAPayer <= 0.01;
@@ -487,6 +543,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
 
   const selectionnerPatientFile = (patient: PatientFileCaisse) => {
     setDossierId(patient.dossierId);
+    setFactureId(null);
+    setTypeFactureUi("NORMALE");
     router.replace(`/sigh/caisse/facturation?dossier=${patient.dossierId}`);
   };
 
@@ -497,6 +555,18 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const regenererRecu = () => {
     const stamp = Date.now().toString().slice(-6);
     setNumeroRecu(`REC-${new Date().getFullYear()}-${stamp}`);
+  };
+
+  const imprimerDocument = async () => {
+    if (modePharmacie && dossier) {
+      const ok = await imprimerFacturePharmacieCaisse(dossier, {
+        remise,
+        agentNom: `${utilisateur.prenom} ${utilisateur.nom}`.trim(),
+      });
+      if (!ok) window.print();
+      return;
+    }
+    window.print();
   };
 
   const encaisser = async () => {
@@ -540,18 +610,28 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
       const prep = await fetch("/api/caisse/factures", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dossierId, devise }),
+        body: JSON.stringify({
+          dossierId,
+          factureId,
+          devise,
+          typeFacture: typeFactureUi,
+        }),
       });
       const prepData = (await prep.json()) as {
         dossier?: DossierFacturationCaisse;
         erreur?: string;
       };
-      if (!prep.ok || !prepData.dossier?.facture.id) {
+      if (!prep.ok || !prepData.dossier) {
         throw new Error(
           prepData.erreur ?? t("caisse.facturation.erreurEnregistrementFacture")
         );
       }
       setDossier(prepData.dossier);
+      const factureEncaisseId =
+        typeFactureUi === "PHARMACIE"
+          ? prepData.dossier.pharmacie.facture?.id
+          : prepData.dossier.examens.facture.id;
+      if (factureEncaisseId) setFactureId(factureEncaisseId);
 
       // 2) Encaisser le paiement sur la facture enregistrée
       const res = await fetch("/api/caisse/factures/encaisser", {
@@ -559,6 +639,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dossierId,
+          factureId: factureEncaisseId ?? factureId,
+          typeFacture: typeFactureUi,
           montant: clotureSoldeSansPaiement ? 0 : montantAEncaisser,
           modePaiement: modePrisma,
           modeFacture,
@@ -623,7 +705,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
       </h3>
       <div className="space-y-2.5 text-sm">
         <div className="flex justify-between gap-3">
-          <span className="text-texte-secondaire">{t("caisse.facturation.totalExamens")}</span>
+          <span className="text-texte-secondaire">
+            {modePharmacie
+              ? t("caisse.facturation.totalMedicaments")
+              : t("caisse.facturation.totalExamens")}
+          </span>
           <span className="font-medium">{formaterMontantCaisse(totalExamens, devise)}</span>
         </div>
         {modeFacture === "AVANCE" && (
@@ -1031,16 +1117,20 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                   ongletMobile !== "examens" && "hidden lg:block"
                 )}
               >
-                {/* Examens prescrits */}
+                {/* Lignes facturables (examens ou médicaments) */}
                 <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
                   <div className="border-b border-gris-bordure px-4 py-3">
                     <h3 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-                      {t("caisse.facturation.examensPrescrits")}
+                      {modePharmacie
+                        ? t("caisse.facturation.medicamentsPrescrits")
+                        : t("caisse.facturation.examensPrescrits")}
                     </h3>
                   </div>
                   {lignesVisibles.length === 0 ? (
                     <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
-                      {t("caisse.facturation.aucuneLigne")}
+                      {modePharmacie
+                        ? t("caisse.facturation.aucunMedicament")
+                        : t("caisse.facturation.aucuneLigne")}
                     </p>
                   ) : (
                     <>
@@ -1049,7 +1139,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                           <thead className="bg-gris-tres-clair/80 text-[11px] uppercase tracking-wider text-texte-secondaire">
                             <tr>
                               <th className="px-3 py-2.5">{t("caisse.facturation.numero")}</th>
-                              <th className="px-3 py-2.5">{t("caisse.facturation.examen")}</th>
+                              <th className="px-3 py-2.5">
+                                {modePharmacie
+                                  ? t("caisse.facturation.medicament")
+                                  : t("caisse.facturation.examen")}
+                              </th>
                               <th className="px-3 py-2.5 text-right">
                                 {t("caisse.facturation.prixUnit")}
                               </th>
@@ -1071,19 +1165,21 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                                   {formaterMontantCaisse(l.montant, devise)}
                                 </td>
                                 <td className="px-3 py-2.5 text-right">
-                                  <button
-                                    type="button"
-                                    aria-label={t("caisse.facturation.supprimerLigne")}
-                                    disabled={suppressionLigneId === l.id || enCours}
-                                    onClick={() => void retirerExamen(l)}
-                                    className="rounded p-1.5 text-red-500 hover:bg-red-50 disabled:opacity-50"
-                                  >
-                                    {suppressionLigneId === l.id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="h-4 w-4" />
-                                    )}
-                                  </button>
+                                  {!modePharmacie && (
+                                    <button
+                                      type="button"
+                                      aria-label={t("caisse.facturation.supprimerLigne")}
+                                      disabled={suppressionLigneId === l.id || enCours}
+                                      onClick={() => void retirerExamen(l)}
+                                      className="rounded p-1.5 text-red-500 hover:bg-red-50 disabled:opacity-50"
+                                    >
+                                      {suppressionLigneId === l.id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                  )}
                                 </td>
                               </tr>
                             ))}
@@ -1109,7 +1205,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                               <button
                                 type="button"
                                 aria-label={t("caisse.facturation.supprimerLigne")}
-                                disabled={suppressionLigneId === l.id || enCours}
+                                disabled={suppressionLigneId === l.id || enCours || modePharmacie}
                                 onClick={() => void retirerExamen(l)}
                                 className="rounded p-1 text-red-500 disabled:opacity-50"
                               >
@@ -1125,33 +1221,43 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                       </ul>
                     </>
                   )}
-                  <div className="relative border-t border-gris-bordure">
-                    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-                      <button
-                        type="button"
-                        onClick={() => setRechercheExamenOuverte((o) => !o)}
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-bleu-medical hover:underline"
-                        aria-expanded={rechercheExamenOuverte}
-                      >
-                        <Plus className="h-4 w-4" />
-                        {rechercheExamenOuverte
-                          ? t("caisse.facturation.fermerRechercheExamen")
-                          : t("caisse.facturation.ajouterExamen")}
-                      </button>
+                  {!modePharmacie && (
+                    <div className="relative border-t border-gris-bordure">
+                      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => setRechercheExamenOuverte((o) => !o)}
+                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-bleu-medical hover:underline"
+                          aria-expanded={rechercheExamenOuverte}
+                        >
+                          <Plus className="h-4 w-4" />
+                          {rechercheExamenOuverte
+                            ? t("caisse.facturation.fermerRechercheExamen")
+                            : t("caisse.facturation.ajouterExamen")}
+                        </button>
+                        <p className="text-sm font-bold text-bleu-medical">
+                          {t("caisse.facturation.totalExamens")}{" "}
+                          {formaterMontantCaisse(totalExamens, devise)}
+                        </p>
+                      </div>
+                      <RechercheAjoutExamenCaisse
+                        ouverte={rechercheExamenOuverte}
+                        onFermer={() => setRechercheExamenOuverte(false)}
+                        idsDejaPresents={idsTypesExamenPresents}
+                        libellesDejaPresents={libellesExamensPresents}
+                        onAjouter={ajouterExamenAuDossier}
+                        enCours={ajoutExamenEnCours}
+                      />
+                    </div>
+                  )}
+                  {modePharmacie && lignesVisibles.length > 0 && (
+                    <div className="border-t border-gris-bordure px-4 py-3 text-right">
                       <p className="text-sm font-bold text-bleu-medical">
-                        {t("caisse.facturation.totalExamens")}{" "}
+                        {t("caisse.facturation.totalMedicaments")}{" "}
                         {formaterMontantCaisse(totalExamens, devise)}
                       </p>
                     </div>
-                    <RechercheAjoutExamenCaisse
-                      ouverte={rechercheExamenOuverte}
-                      onFermer={() => setRechercheExamenOuverte(false)}
-                      idsDejaPresents={idsTypesExamenPresents}
-                      libellesDejaPresents={libellesExamensPresents}
-                      onAjouter={ajouterExamenAuDossier}
-                      enCours={ajoutExamenEnCours}
-                    />
-                  </div>
+                  )}
                 </section>
 
                 {/* Mode de facture — 6 cartes */}
@@ -1347,6 +1453,53 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                 {resumePanel}
 
                 <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
+                  <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
+                    {t("caisse.facturation.typeFacture")}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {TYPES_FACTURE_CAISSE_UI.map((type) => {
+                      const selectionne = typeFactureUi === type.id;
+                      const Icone = type.id === "NORMALE" ? FlaskConical : Pill;
+                      const desactive =
+                        type.id === "PHARMACIE" &&
+                        dossier != null &&
+                        !dossier.pharmacie.aDesMedicaments;
+                      return (
+                        <button
+                          key={type.id}
+                          type="button"
+                          onClick={() => basculerTypeFacture(type.id)}
+                          disabled={desactive}
+                          className={cn(
+                            "flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border p-3 text-center text-xs font-medium leading-tight transition-colors active:scale-[0.98]",
+                            selectionne
+                              ? "border-bleu-medical bg-bleu-medical-clair text-texte-principal ring-2 ring-bleu-medical/20"
+                              : desactive
+                                ? "cursor-not-allowed border-gris-bordure/70 bg-gris-tres-clair/60 opacity-55"
+                                : "border-gris-bordure bg-[#f8fafc] text-texte-principal hover:border-bleu-medical hover:bg-bleu-medical-clair"
+                          )}
+                        >
+                          <Icone
+                            className="h-6 w-6 shrink-0 text-bleu-medical"
+                            strokeWidth={1.75}
+                          />
+                          <span>
+                            {type.id === "NORMALE"
+                              ? t("caisse.facturation.factureNormale")
+                              : t("caisse.facturation.facturePharmacie")}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {dossier && !dossier.pharmacie.aDesMedicaments && (
+                    <p className="mt-2 text-xs text-texte-secondaire">
+                      {t("caisse.facturation.aucunMedicament")}
+                    </p>
+                  )}
+                </section>
+
+                <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
                   <label className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
@@ -1358,37 +1511,6 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                       {t("caisse.facturation.transfererApres")}
                     </span>
                   </label>
-                  {transfererApres && (
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      {TYPES_FACTURE_CAISSE_UI.map((type) => {
-                        const selectionne = typeFactureUi === type.id;
-                        const Icone = type.id === "NORMALE" ? FlaskConical : Pill;
-                        return (
-                          <button
-                            key={type.id}
-                            type="button"
-                            onClick={() => setTypeFactureUi(type.id)}
-                            className={cn(
-                              "flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border p-3 text-center text-xs font-medium leading-tight transition-colors active:scale-[0.98]",
-                              selectionne
-                                ? "border-bleu-medical bg-bleu-medical-clair text-texte-principal ring-2 ring-bleu-medical/20"
-                                : "border-gris-bordure bg-[#f8fafc] text-texte-principal hover:border-bleu-medical hover:bg-bleu-medical-clair"
-                            )}
-                          >
-                            <Icone
-                              className="h-6 w-6 shrink-0 text-bleu-medical"
-                              strokeWidth={1.75}
-                            />
-                            <span>
-                              {type.id === "NORMALE"
-                                ? t("caisse.facturation.factureNormale")
-                                : t("caisse.facturation.facturePharmacie")}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
                 </section>
               </div>
             </div>
@@ -1421,11 +1543,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               >
                 {t("caisse.facturation.annuler")}
               </Bouton>
-              <Bouton type="button" variante="contour" onClick={() => window.print()}>
+              <Bouton type="button" variante="contour" onClick={() => void imprimerDocument()}>
                 <Printer className="h-4 w-4" />
                 {t("caisse.facturation.imprimerProforma")}
               </Bouton>
-              <Bouton type="button" variante="contour" onClick={() => window.print()}>
+              <Bouton type="button" variante="contour" onClick={() => void imprimerDocument()}>
                 <Printer className="h-4 w-4" />
                 {t("caisse.facturation.imprimerFacture")}
               </Bouton>

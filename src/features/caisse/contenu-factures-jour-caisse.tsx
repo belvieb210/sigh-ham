@@ -397,11 +397,15 @@ export function ContenuFacturesJourCaisse({
                                 <Printer className="h-3.5 w-3.5" />
                               </button>
                               <Link
-                                href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
+                                href={`/sigh/caisse/facturation?dossier=${f.dossierId}&facture=${f.id}`}
                                 onClick={(e) => e.stopPropagation()}
                                 className="inline-flex rounded-lg border border-bleu-medical px-2.5 py-1 text-xs font-semibold text-bleu-medical"
                               >
-                                {t("caisse.factures.ouvrirFacturation")}
+                                {t(
+                                  f.isPharmacie
+                                    ? "caisse.factures.ouvrirFacturationPharmacie"
+                                    : "caisse.factures.ouvrirFacturation"
+                                )}
                               </Link>
                             </div>
                           </div>
@@ -521,11 +525,15 @@ export function ContenuFacturesJourCaisse({
                                 {menuOuvertId === f.id && (
                                   <div className="absolute right-0 top-10 z-20 min-w-[200px] overflow-hidden rounded-lg border border-gris-bordure bg-white py-1 shadow-lg">
                                     <Link
-                                      href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
+                                      href={`/sigh/caisse/facturation?dossier=${f.dossierId}&facture=${f.id}`}
                                       className="block px-3 py-2 text-sm text-texte-principal hover:bg-gris-tres-clair"
                                       onClick={() => setMenuOuvertId(null)}
                                     >
-                                      {t("caisse.factures.ouvrirFacturation")}
+                                      {t(
+                                  f.isPharmacie
+                                    ? "caisse.factures.ouvrirFacturationPharmacie"
+                                    : "caisse.factures.ouvrirFacturation"
+                                )}
                                     </Link>
                                     {!f.approuvee ? (
                                       <button
@@ -748,10 +756,14 @@ export function ContenuFacturesJourCaisse({
                         {t("caisse.factures.imprimer")}
                       </button>
                       <Link
-                        href={`/sigh/caisse/facturation?dossier=${factureSelectionnee.dossierId}`}
+                        href={`/sigh/caisse/facturation?dossier=${factureSelectionnee.dossierId}&facture=${factureSelectionnee.id}`}
                         className="inline-flex w-full items-center justify-center rounded-lg bg-bleu-medical px-4 py-2.5 text-sm font-semibold text-white hover:bg-bleu-medical-fonce"
                       >
-                        {t("caisse.factures.ouvrirFacturation")}
+                        {t(
+                          factureSelectionnee.isPharmacie
+                            ? "caisse.factures.ouvrirFacturationPharmacie"
+                            : "caisse.factures.ouvrirFacturation"
+                        )}
                       </Link>
                     </div>
                   </section>

@@ -18,6 +18,23 @@ import {
   type DossierVisite,
 } from "@/lib/reception/mapper-visite-patient";
 
+/** Masque les patients dont le transfert sortant (hors salle ME) est confirmé. */
+export function estPatientRecentMedecinExterne(patient: PatientEnregistre): boolean {
+  const dest = patient.codeSalleDestination;
+  const statut = patient.statutTransfert;
+  if (
+    dest &&
+    dest !== "MEDECINS_EXTERNES" &&
+    (statut === "ACCEPTE" || statut === "TERMINE")
+  ) {
+    return false;
+  }
+  if (statut === "REFUSE" && !patient.enRecuperation) {
+    return false;
+  }
+  return true;
+}
+
 function calculerStatsEnregistres(dossiers: DossierVisite[]): StatsPatientsEnregistres {
   const debutJour = new Date();
   debutJour.setHours(0, 0, 0, 0);
@@ -88,9 +105,9 @@ export async function listerPatientsRecentsMedecinExterne(
     medecinExterneId,
     Math.max(limite * 6, 60)
   );
-  // ME crée un transfert ACCEPTE dès l'enregistrement local — on n'applique
-  // pas le filtre « non confirmés » de la réception (qui exclut ACCEPTE).
-  const patients = dedupliquerParPatient(dossiersVersPatients(dossiers));
+  const patients = dedupliquerParPatient(dossiersVersPatients(dossiers)).filter(
+    estPatientRecentMedecinExterne
+  );
   return patients.slice(0, limite);
 }
 

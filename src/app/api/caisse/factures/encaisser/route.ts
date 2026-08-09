@@ -39,6 +39,8 @@ export async function POST(request: Request) {
   try {
     const corps = (await request.json()) as {
       dossierId?: string;
+      factureId?: string;
+      typeFacture?: "NORMALE" | "PHARMACIE";
       montant?: number;
       modePaiement?: string;
       modeFacture?: string;
@@ -79,6 +81,8 @@ export async function POST(request: Request) {
 
     const resultat = await encaisserFacture(session.utilisateur.id, {
       dossierId: corps.dossierId.trim(),
+      factureId: corps.factureId?.trim() || undefined,
+      typeFacture: corps.typeFacture,
       montant,
       modePaiement: corps.modePaiement as ModePaiement,
       modeFacture,

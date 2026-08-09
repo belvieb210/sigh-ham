@@ -20,6 +20,53 @@ function normaliserDestinations(codes: string[]): CodeSalle[] {
   return uniques as CodeSalle[];
 }
 
+async function trouverPassagePourOrientationReception(
+  dossierId: string,
+  salleOrigineId: string
+) {
+  const include = {
+    fileAttente: { include: { salle: true } },
+  } as const;
+
+  const avecTransfertEnAttente = await prisma.passage.findFirst({
+    where: {
+      dossierId,
+      statut: { not: "ANNULE" },
+      transferts: {
+        some: {
+          salleOrigineId,
+          statut: "EN_ATTENTE",
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    include,
+  });
+  if (avecTransfertEnAttente) return avecTransfertEnAttente;
+
+  const enFileReception = await prisma.passage.findFirst({
+    where: {
+      dossierId,
+      statut: { not: "ANNULE" },
+      fileAttente: {
+        is: { serviLe: null, salle: { code: "RECEPTION" } },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    include,
+  });
+  if (enFileReception) return enFileReception;
+
+  return prisma.passage.findFirst({
+    where: {
+      dossierId,
+      statut: { not: "ANNULE" },
+    },
+    orderBy: { createdAt: "desc" },
+    include,
+  });
+}
+
 /**
  * Synchronise orientations rapides réception (1 ou plusieurs salles).
  */
@@ -37,29 +84,10 @@ export async function reorienterPatientDepuisReception(
   });
   if (!salleOrigine) throw new Error("Salle introuvable.");
 
-  const passage = await prisma.passage.findFirst({
-    where: {
-      dossierId,
-      statut: { not: "ANNULE" },
-      OR: [
-        {
-          fileAttente: {
-            is: { serviLe: null, salle: { code: "RECEPTION" } },
-          },
-        },
-        {
-          transferts: {
-            some: {
-              salleOrigineId: salleOrigine.id,
-              statut: "EN_ATTENTE",
-            },
-          },
-        },
-      ],
-    },
-    orderBy: { createdAt: "desc" },
-    include: { fileAttente: true },
-  });
+  const passage = await trouverPassagePourOrientationReception(
+    dossierId,
+    salleOrigine.id
+  );
 
   if (!passage) {
     throw new Error("Patient introuvable pour orientation depuis la réception.");

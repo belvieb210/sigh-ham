@@ -69,46 +69,84 @@ export async function POST(request: NextRequest) {
       }
 
       let dossierId = corps.dossierId?.trim() || "";
+      const numeroPatient = corps.numeroPatient?.trim() || "";
 
-      if (!dossierId) {
-        const donnees = parserDonneesTransfertManuel({
-          ...body,
-          orientation: orientations[0],
-        });
+      const appliquerReorientation = async (idDossier: string) => {
+        const { reorienterPatientDepuisReception } = await import(
+          "@/lib/reception/reorienter-patient-reception"
+        );
+        return reorienterPatientDepuisReception(
+          session.utilisateur.id,
+          idDossier,
+          orientations
+        );
+      };
+
+      if (dossierId) {
+        try {
+          const resultat = await appliquerReorientation(dossierId);
+          return NextResponse.json({
+            message: `Transfert(s) vers ${resultat.salleDestination}. Confirmez via le menu ⋮.`,
+            ...resultat,
+          });
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Transfert impossible.";
+          if (
+            !message.includes("Patient introuvable pour orientation") ||
+            !numeroPatient
+          ) {
+            throw error;
+          }
+        }
+      }
+
+      if (!numeroPatient) {
+        const donnees = parserDonneesTransfertManuel(body);
         const erreur = validerDonneesTransfertManuel(donnees);
         if (erreur) {
           return NextResponse.json({ message: erreur }, { status: 400 });
         }
-
-        const cree = await transfererPatientManuel(session.utilisateur.id, {
-          numeroPatient: donnees.numeroPatient!,
-          dossierId: donnees.dossierId,
-          orientation: orientations[0]!,
-        });
-        dossierId = cree.dossierId;
-
-        if (orientations.length === 1) {
-          return NextResponse.json({
-            message: cree.transfertMisAJour
-              ? `Destination du transfert mise à jour vers ${cree.salleDestination}. Confirmez-le dans la liste des transferts.`
-              : `Transfert manuel effectué vers ${cree.salleDestination}. Confirmez-le dans la liste des transferts.`,
-            ...cree,
-          });
-        }
       }
 
-      const { reorienterPatientDepuisReception } = await import(
-        "@/lib/reception/reorienter-patient-reception"
-      );
-      const resultat = await reorienterPatientDepuisReception(
-        session.utilisateur.id,
-        dossierId,
-        orientations
-      );
+      const donneesManuel = parserDonneesTransfertManuel({
+        ...body,
+        orientation: orientations[0],
+        numeroPatient: numeroPatient || undefined,
+        dossierId: dossierId || undefined,
+      });
+      const erreurManuel = validerDonneesTransfertManuel(donneesManuel);
+      if (erreurManuel) {
+        return NextResponse.json({ message: erreurManuel }, { status: 400 });
+      }
 
+      const cree = await transfererPatientManuel(session.utilisateur.id, {
+        numeroPatient: donneesManuel.numeroPatient!,
+        dossierId: donneesManuel.dossierId,
+        orientation: orientations[0]!,
+      });
+      dossierId = cree.dossierId;
+
+      if (orientations.length === 1 && !cree.transfertMisAJour) {
+        return NextResponse.json({
+          message: `Transfert manuel effectué vers ${cree.salleDestination}. Confirmez-le dans la liste des transferts.`,
+          ...cree,
+        });
+      }
+
+      if (orientations.length === 1 && cree.transfertMisAJour) {
+        return NextResponse.json({
+          message: `Destination du transfert mise à jour vers ${cree.salleDestination}. Confirmez-le dans la liste des transferts.`,
+          ...cree,
+        });
+      }
+
+      const resultat = await appliquerReorientation(dossierId);
       return NextResponse.json({
         message: `Transfert(s) vers ${resultat.salleDestination}. Confirmez via le menu ⋮.`,
         ...resultat,
+        numeroPatient: cree.numeroPatient,
+        dossierId,
       });
     }
 

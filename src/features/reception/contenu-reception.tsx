@@ -18,6 +18,7 @@ import type { PatientEnregistre } from "@/constants/reception";
 import {
   type DetailPatientRechercheSelectionne,
 } from "@/constants/reception";
+import { useSelectionTransfertOptionnel } from "@/features/reception/contexte-selection-transfert";
 
 interface PropsContenuReception {
   utilisateur: UtilisateurReception;
@@ -30,23 +31,29 @@ function CorpsAccueilReception({ agentNom }: { agentNom: string }) {
   const [patientSelectionneId, setPatientSelectionneId] = useState<string | null>(null);
   const [chargementSelection, setChargementSelection] = useState(false);
   const { definirDepuisDonneesCompletes } = useResumePatient();
+  const selection = useSelectionTransfertOptionnel();
 
   const selectionnerPatient = useCallback(async (patient: PatientEnregistre) => {
     if (chargementSelection) return;
 
     setChargementSelection(true);
     setPatientSelectionneId(patient.id);
+    void selection?.selectionnerPourPanneau(patient);
 
     try {
       const res = await fetch(`${espace.prefixeApi}/patients/${encodeURIComponent(patient.id)}`);
       if (!res.ok) throw new Error("Patient introuvable");
 
       const donnees = (await res.json()) as DonneesFormulairePatient;
-      definirDepuisDonneesCompletes(donnees);
+      const dossierId = patient.dossierId ?? donnees.dossierId;
+      definirDepuisDonneesCompletes({
+        ...donnees,
+        dossierId,
+      });
       setDonneesPrefill({
         ...donnees,
         typeVisite: "ancien",
-        dossierId: patient.dossierId ?? donnees.dossierId,
+        dossierId,
       });
 
       refFormulaire.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -55,7 +62,7 @@ function CorpsAccueilReception({ agentNom }: { agentNom: string }) {
     } finally {
       setChargementSelection(false);
     }
-  }, [chargementSelection, definirDepuisDonneesCompletes]);
+  }, [chargementSelection, definirDepuisDonneesCompletes, espace.prefixeApi, selection]);
 
   useEffect(() => {
     const onRecherchePatient = async (event: Event) => {
@@ -72,10 +79,15 @@ function CorpsAccueilReception({ agentNom }: { agentNom: string }) {
         if (!res.ok) throw new Error("Patient introuvable");
 
         const donnees = (await res.json()) as DonneesFormulairePatient;
+        const dossierId = detail.dossierId ?? donnees.dossierId;
+        definirDepuisDonneesCompletes({
+          ...donnees,
+          dossierId,
+        });
         setDonneesPrefill({
           ...donnees,
           typeVisite: "ancien",
-          dossierId: detail.dossierId ?? donnees.dossierId,
+          dossierId,
         });
 
         refFormulaire.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -89,7 +101,7 @@ function CorpsAccueilReception({ agentNom }: { agentNom: string }) {
     window.addEventListener(espace.evenementPatientRecherche, onRecherchePatient);
     return () =>
       window.removeEventListener(espace.evenementPatientRecherche, onRecherchePatient);
-  }, [chargementSelection]);
+  }, [chargementSelection, definirDepuisDonneesCompletes, espace.evenementPatientRecherche, espace.prefixeApi]);
 
   return (
     <div className="mx-auto w-full max-w-[1100px] space-y-4 lg:space-y-5">

@@ -271,7 +271,15 @@ async function trouverDossierReutilisable(
     });
 
     if (!dossier) return null;
-    if (dossier.transferts.length > 0) {
+
+    const transfertBloquant = await tx.transfert.findFirst({
+      where: {
+        dossierId: dossier.id,
+        statut: { in: ["ACCEPTE", "EN_TRAITEMENT", "TERMINE"] },
+      },
+      select: { id: true },
+    });
+    if (transfertBloquant) {
       throw new Error(
         "Ce transfert est déjà confirmé : l'orientation rapide ne peut plus être appliquée."
       );

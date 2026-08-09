@@ -13,6 +13,8 @@ import {
 import { FournisseurResumePatient } from "@/features/reception/contexte-resume-patient";
 import { FournisseurOrientationRapide } from "@/features/reception/contexte-orientation-rapide";
 import { FournisseurSelectionTransfert } from "@/features/reception/contexte-selection-transfert";
+import { FournisseurOrientationMedecinsExternes } from "@/features/medecins-externes/contexte-orientation-medecins-externes";
+import { FournisseurSelectionMedecinsExternes } from "@/features/medecins-externes/contexte-selection-medecins-externes";
 import { ToastNotificationGlobale } from "@/features/notifications/composants/toast-notification-globale";
 import { GestionnaireAlertesNotifications } from "@/features/notifications/composants/gestionnaire-alertes-notifications";
 import { FournisseurNotifications } from "@/features/notifications/fournisseur-notifications";
@@ -26,6 +28,8 @@ interface PropsMiseEnPageMedecinsExternes {
   sousTitre: string;
   panneauDroit?: ReactNode;
   activerSelectionTransfert?: boolean;
+  /** Page patients ME : providers orientation/sélection dédiés */
+  activerSelectionPatients?: boolean;
   children: ReactNode;
 }
 
@@ -35,6 +39,7 @@ export function MiseEnPageMedecinsExternes({
   sousTitre,
   panneauDroit,
   activerSelectionTransfert = false,
+  activerSelectionPatients = false,
   children,
 }: PropsMiseEnPageMedecinsExternes) {
   const [menuOuvert, setMenuOuvert] = useState(false);
@@ -78,13 +83,19 @@ export function MiseEnPageMedecinsExternes({
     <FournisseurEspaceApi espace={ESPACE_API_MEDECINS_EXTERNES}>
       <FournisseurNotifications>
         <FournisseurResumePatient>
-          <FournisseurOrientationRapide>
-            {activerSelectionTransfert ? (
-              <FournisseurSelectionTransfert>{contenu}</FournisseurSelectionTransfert>
-            ) : (
-              contenu
-            )}
-          </FournisseurOrientationRapide>
+          {activerSelectionPatients ? (
+            <FournisseurOrientationMedecinsExternes>
+              <FournisseurSelectionMedecinsExternes>{contenu}</FournisseurSelectionMedecinsExternes>
+            </FournisseurOrientationMedecinsExternes>
+          ) : (
+            <FournisseurOrientationRapide>
+              {activerSelectionTransfert ? (
+                <FournisseurSelectionTransfert>{contenu}</FournisseurSelectionTransfert>
+              ) : (
+                contenu
+              )}
+            </FournisseurOrientationRapide>
+          )}
         </FournisseurResumePatient>
       </FournisseurNotifications>
     </FournisseurEspaceApi>

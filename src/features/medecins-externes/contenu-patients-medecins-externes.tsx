@@ -321,7 +321,7 @@ export function ContenuPatientsMedecinsExternes({ utilisateur }: PropsContenuPat
       titre={t("medecinsExternes.patients.titre")}
       sousTitre={t("medecinsExternes.patients.sousTitre")}
       panneauDroit={<PanneauDroitMedecinsExternes />}
-      activerSelectionTransfert
+      activerSelectionPatients
     >
       <div className="mx-auto w-full max-w-[1200px] space-y-4 lg:space-y-5">
         <div>

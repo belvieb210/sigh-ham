@@ -127,6 +127,7 @@ export async function synchroniserTransfertsEnAttente(params: {
 
   const transfertIds: string[] = [];
   let crees = 0;
+  const destinationsCreees: { code: CodeSalle; nom: string; transfertId: string }[] = [];
 
   for (const dest of params.destinations) {
     const existant = parSalle.get(dest.salleId);
@@ -146,6 +147,7 @@ export async function synchroniserTransfertsEnAttente(params: {
       },
     });
     transfertIds.push(cree.id);
+    destinationsCreees.push({ code: dest.code, nom: dest.nom, transfertId: cree.id });
     crees += 1;
   }
 
@@ -158,10 +160,33 @@ export async function synchroniserTransfertsEnAttente(params: {
     },
   });
 
+  if (destinationsCreees.length > 0) {
+    const dossier = await prisma.dossierPatient.findUnique({
+      where: { id: params.dossierId },
+      include: { patient: true },
+    });
+    if (dossier) {
+      const { evenementDemandeTransfert } = await import(
+        "@/lib/notifications/evenements-metier"
+      );
+      for (const dest of destinationsCreees) {
+        void evenementDemandeTransfert({
+          patientId: dossier.patientId,
+          nom: dossier.patient.nom,
+          prenom: dossier.patient.prenom,
+          numeroPatient: dossier.patient.numeroPatient,
+          salleDestination: dest.code,
+          transfertId: dest.transfertId,
+        });
+      }
+    }
+  }
+
   return {
     transfertIds,
     salles: params.destinations.map((d) => ({ code: d.code, nom: d.nom })),
     crees,
     supprimes: aSupprimer.length,
+    destinationsCreees,
   };
 }

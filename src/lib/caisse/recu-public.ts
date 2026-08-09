@@ -33,6 +33,7 @@ export interface DetailRecuPublic {
     code: string | null;
     statut: string;
   }>;
+  isPharmacie: boolean;
 }
 
 function decimalVersNombre(valeur: { toNumber?: () => number } | number | string): number {
@@ -125,5 +126,6 @@ export async function chargerRecuPublicParToken(
       montant: decimalVersNombre(l.montant),
     })),
     examens,
+    isPharmacie: facture.numeroFacture.startsWith("FAC-PH-"),
   };
 }

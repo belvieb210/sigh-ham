@@ -615,9 +615,30 @@ export async function transfererPatientAccueil(
       numeroPatient,
       numeroEnregistrement,
       salleDestination: salleDestination.nom,
+      codeSalleDestination: salleDestination.code,
       examensPrescrits,
     };
   });
+
+  if (resultat.transfertId && resultat.codeSalleDestination && !resultat.transfertMisAJour) {
+    const patient = await prisma.patient.findUnique({
+      where: { id: resultat.patientId },
+      select: { nom: true, prenom: true, numeroPatient: true },
+    });
+    if (patient) {
+      const { evenementDemandeTransfert } = await import(
+        "@/lib/notifications/evenements-metier"
+      );
+      void evenementDemandeTransfert({
+        patientId: resultat.patientId,
+        nom: patient.nom,
+        prenom: patient.prenom,
+        numeroPatient: patient.numeroPatient,
+        salleDestination: resultat.codeSalleDestination,
+        transfertId: resultat.transfertId,
+      });
+    }
+  }
 
   return resultat;
 }

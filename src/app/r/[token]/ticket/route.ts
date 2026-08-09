@@ -26,10 +26,12 @@ export async function GET(request: Request, context: ContexteRoute) {
     });
   }
 
-  // Toujours l'URL publique (jamais localhost derrière le proxy Apache)
   const origin = obtenirOriginePublique(request);
   const urlRecu = `${origin}${cheminRecuPublic(token)}`;
-  const html = await construireHtmlTicketThermique(detail, urlRecu);
+  const html = await construireHtmlTicketThermique(detail, urlRecu, {
+    sansQrCode: detail.isPharmacie,
+    titreRecu: detail.isPharmacie ? "FACTURE PHARMACIE" : undefined,
+  });
 
   return new NextResponse(html, {
     status: 200,

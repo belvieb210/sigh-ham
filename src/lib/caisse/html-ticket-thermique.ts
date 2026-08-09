@@ -37,9 +37,17 @@ function formaterDateHeure(iso: string | null): string {
   return `${date} ${heure}`;
 }
 
+export interface OptionsTicketThermique {
+  /** Ticket pharmacie : pas de QR code. */
+  sansQrCode?: boolean;
+  /** Titre centré sous les étoiles (défaut : RECU DE CAISSE). */
+  titreRecu?: string;
+}
+
 export async function construireHtmlTicketThermique(
   detail: DetailRecuPublic,
-  urlRecu: string
+  urlRecu: string,
+  options?: OptionsTicketThermique
 ): Promise<string> {
   const L = INFOS_LEGALES_TICKET;
   const devise = detail.devise || "USD";
@@ -63,7 +71,7 @@ export async function construireHtmlTicketThermique(
     centrerLigne(L.sloganLigne2),
     "",
     SEPARATEUR_ETOILES,
-    centrerLigne("RECU DE CAISSE"),
+    centrerLigne(options?.titreRecu ?? "RECU DE CAISSE"),
     SEPARATEUR_ETOILES,
     "",
     `Receipt #: ${detail.numeroFacture}`,
@@ -102,17 +110,18 @@ export async function construireHtmlTicketThermique(
   ];
 
   let qrDataUrl = "";
-  try {
-    // URL courte + correction L + marge : QR aéré (modules plus grands)
-    qrDataUrl = await QRCode.toDataURL(urlRecu, {
-      type: "image/png",
-      width: 220,
-      margin: 3,
-      errorCorrectionLevel: "L",
-      color: { dark: "#000000", light: "#ffffff" },
-    });
-  } catch {
-    qrDataUrl = "";
+  if (!options?.sansQrCode) {
+    try {
+      qrDataUrl = await QRCode.toDataURL(urlRecu, {
+        type: "image/png",
+        width: 220,
+        margin: 3,
+        errorCorrectionLevel: "L",
+        color: { dark: "#000000", light: "#ffffff" },
+      });
+    } catch {
+      qrDataUrl = "";
+    }
   }
 
   const hautHtml = haut.map(echapperHtml).join("\n");

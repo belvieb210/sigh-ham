@@ -1,3 +1,5 @@
+import type { CodeSalle } from "@/generated/prisma/client";
+
 export interface TypeExamenReception {
   id: string;
   code: string;
@@ -98,6 +100,7 @@ export interface ResultatTransfertAccueil {
   numeroPatient: string;
   numeroEnregistrement: string;
   salleDestination: string;
+  codeSalleDestination?: CodeSalle;
   examensPrescrits: number;
   /** Transfert EN_ATTENTE existant mis à jour (transfert manuel) */
   transfertMisAJour?: boolean;

@@ -23,6 +23,24 @@ function lienCentreDepuisChemin(pathname: string): string {
   if (pathname.startsWith("/sigh/reception")) {
     return "/sigh/reception/notifications";
   }
+  if (pathname.startsWith("/sigh/medecins-externes")) {
+    return "/sigh/medecins-externes/notifications";
+  }
+  if (pathname.startsWith("/sigh/medecins")) {
+    return "/sigh/medecins/notifications";
+  }
+  if (pathname.startsWith("/sigh/infirmiers")) {
+    return "/sigh/infirmiers/notifications";
+  }
+  if (pathname.startsWith("/sigh/pharmacie")) {
+    return "/sigh/pharmacie/notifications";
+  }
+  if (pathname.startsWith("/sigh/eglise")) {
+    return "/sigh/eglise/notifications";
+  }
+  if (pathname.startsWith("/sigh/admin")) {
+    return "/sigh/admin/notifications";
+  }
   return "/sigh/notifications";
 }
 

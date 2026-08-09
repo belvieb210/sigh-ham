@@ -60,6 +60,36 @@ export async function POST(request: NextRequest) {
     const opts = OPTIONS_ME(medecinExterneId);
     const body = await request.json();
 
+    const corpsReorientation = body as {
+      dossierId?: string;
+      orientations?: string[];
+      orientation?: string;
+    };
+    const orientationsDirectes = [
+      ...new Set(
+        (corpsReorientation.orientations?.filter(Boolean) ??
+          (corpsReorientation.orientation?.trim()
+            ? [corpsReorientation.orientation.trim()]
+            : [])) as string[]
+      ),
+    ];
+    const dossierIdDirect = corpsReorientation.dossierId?.trim() || "";
+
+    if (dossierIdDirect && orientationsDirectes.length > 0 && !(
+      body as { transfertManuel?: boolean }
+    ).transfertManuel) {
+      const resultat = await reorienterPatientDepuisMedecinsExternes(
+        session.utilisateur.id,
+        medecinExterneId,
+        dossierIdDirect,
+        orientationsDirectes
+      );
+      return NextResponse.json({
+        message: `Transfert(s) vers ${resultat.salleDestination}. Confirmez via le menu ⋮.`,
+        ...resultat,
+      });
+    }
+
     if (
       body &&
       typeof body === "object" &&

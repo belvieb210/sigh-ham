@@ -32,6 +32,51 @@ function normaliserDestinations(orientations: string[]): CodeSalle[] {
   return codes;
 }
 
+async function trouverPassagePourOrientationMedecinsExternes(
+  dossierId: string,
+  salleOrigineId: string
+) {
+  const include = { fileAttente: { include: { salle: true } } } as const;
+
+  const avecTransfertEnAttente = await prisma.passage.findFirst({
+    where: {
+      dossierId,
+      statut: { not: "ANNULE" },
+      transferts: {
+        some: {
+          salleOrigineId,
+          statut: "EN_ATTENTE",
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    include,
+  });
+  if (avecTransfertEnAttente) return avecTransfertEnAttente;
+
+  const enFileMe = await prisma.passage.findFirst({
+    where: {
+      dossierId,
+      statut: { not: "ANNULE" },
+      fileAttente: {
+        is: { serviLe: null, salle: { code: "MEDECINS_EXTERNES" } },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    include,
+  });
+  if (enFileMe) return enFileMe;
+
+  return prisma.passage.findFirst({
+    where: {
+      dossierId,
+      statut: { not: "ANNULE" },
+    },
+    orderBy: { createdAt: "desc" },
+    include,
+  });
+}
+
 export async function reorienterPatientDepuisMedecinsExternes(
   agentId: string,
   medecinExterneId: string,
@@ -49,24 +94,14 @@ export async function reorienterPatientDepuisMedecinsExternes(
   });
   if (!salleOrigine) throw new Error("Salle introuvable.");
 
-  const passage = await prisma.passage.findFirst({
-    where: {
-      dossierId,
-      statut: { not: "ANNULE" },
-      fileAttente: {
-        is: {
-          serviLe: null,
-          salle: { code: "MEDECINS_EXTERNES" },
-        },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-    include: { fileAttente: true },
-  });
+  const passage = await trouverPassagePourOrientationMedecinsExternes(
+    dossierId,
+    salleOrigine.id
+  );
 
-  if (!passage?.fileAttente) {
+  if (!passage) {
     throw new Error(
-      "Patient introuvable dans la file d'attente médecins externes."
+      "Patient introuvable pour orientation depuis les médecins externes."
     );
   }
 

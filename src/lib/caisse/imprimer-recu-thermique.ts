@@ -29,6 +29,13 @@ export function urlTicketThermiqueFacture(facture: FactureResumeJour): string {
 }
 
 /**
+ * Ouvre le ticket thermique pharmacie (sans QR) dans un nouvel onglet.
+ */
+export function ouvrirTicketPharmacieFacture(facture: FactureResumeJour): boolean {
+  return imprimerRecuCaisseThermique(facture);
+}
+
+/**
  * Ouvre le ticket dans un seul onglet.
  * Ne pas utiliser l'option `noopener` de window.open : elle renvoie null
  * et déclenchait à tort une 2ᵉ navigation (2 onglets).

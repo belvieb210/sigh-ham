@@ -1592,7 +1592,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                     ? t("caisse.facturation.factureDejaCloturee")
                     : peutCloturerSoldeAZero
                       ? t("caisse.facturation.cloturerFacture")
-                      : t("caisse.facturation.validerEncaisser")}
+                      : modePharmacie
+                        ? t("caisse.facturation.encaisserPharmacie")
+                        : t("caisse.facturation.validerEncaisser")}
                 </Bouton>
               </div>
             </div>
@@ -1648,6 +1650,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                     t("caisse.facturation.factureDejaCloturee")
                   ) : peutCloturerSoldeAZero ? (
                     t("caisse.facturation.cloturerFacture")
+                  ) : modePharmacie ? (
+                    t("caisse.facturation.encaisserPharmacie")
                   ) : (
                     t("caisse.facturation.encaisserPaiement")
                   )}

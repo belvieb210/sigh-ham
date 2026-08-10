@@ -2,9 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, Search, Users } from "lucide-react";
+import { Loader2, SlidersHorizontal, Users } from "lucide-react";
+import { BoutonsOutilsListe } from "@/components/ui/boutons-outils-liste";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import { EVENEMENT_INFIRMIERS_PATIENTS_MODIFIES } from "@/constants/infirmiers";
+import {
+  compterFiltresActifs,
+  FILTRES_FACTURATION_VIDES,
+  FormulaireFiltresFacturationCaisse,
+  type FiltresFacturationCaisse,
+} from "@/features/caisse/formulaire-filtres-facturation-caisse";
 import {
   MiseEnPageInfirmiers,
   type UtilisateurInfirmiers,
@@ -22,19 +29,45 @@ interface PropsContenuPatientsInfirmiers {
   utilisateur: UtilisateurInfirmiers;
 }
 
+function patientCorrespondFiltres(
+  p: PatientFileInfirmiers,
+  f: FiltresFacturationCaisse
+): boolean {
+  const nom = f.nom.trim().toLowerCase();
+  const prenom = f.prenom.trim().toLowerCase();
+  const tel = f.telephone.trim().toLowerCase();
+  const enreg = f.numeroEnreg.trim().toLowerCase();
+  const idEntite = f.idEntite.trim().toLowerCase();
+  if (nom && !`${p.nom} ${p.nomComplet}`.toLowerCase().includes(nom)) return false;
+  if (prenom && !`${p.prenom} ${p.nomComplet}`.toLowerCase().includes(prenom))
+    return false;
+  if (tel && !(p.telephone || "").toLowerCase().includes(tel)) return false;
+  if (
+    enreg &&
+    !(p.numeroDossier || "").toLowerCase().includes(enreg) &&
+    !(p.numeroPatient || "").toLowerCase().includes(enreg)
+  ) {
+    return false;
+  }
+  if (
+    idEntite &&
+    !(p.numeroPatient || "").toLowerCase().includes(idEntite) &&
+    !(p.dossierId || "").toLowerCase().includes(idEntite)
+  ) {
+    return false;
+  }
+  return true;
+}
+
 function ListePatientsInterne({
   patients,
   chargement,
   erreur,
-  recherche,
-  setRecherche,
   onRafraichir,
 }: {
   patients: PatientFileInfirmiers[];
   chargement: boolean;
   erreur: string | null;
-  recherche: string;
-  setRecherche: (v: string) => void;
   onRafraichir: () => void;
 }) {
   const { t } = useTranslation();
@@ -47,16 +80,22 @@ function ListePatientsInterne({
     synchroniserSelection,
   } = useSelectionInfirmiers();
 
-  const filtrés = useMemo(() => {
-    const q = recherche.trim().toLowerCase();
-    if (!q) return patients;
-    return patients.filter((p) =>
-      [p.nomComplet, p.telephone, p.numeroDossier, p.numeroPatient, p.motif]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
-    );
-  }, [patients, recherche]);
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillonFiltres, setBrouillonFiltres] = useState<FiltresFacturationCaisse>(
+    FILTRES_FACTURATION_VIDES
+  );
+  const [filtresAppliques, setFiltresAppliques] = useState<FiltresFacturationCaisse>(
+    FILTRES_FACTURATION_VIDES
+  );
+
+  const filtrés = useMemo(
+    () => patients.filter((p) => patientCorrespondFiltres(p, filtresAppliques)),
+    [patients, filtresAppliques]
+  );
+
+  const nbFiltresActifs = compterFiltresActifs(filtresAppliques, {
+    ignorerNumeroFacture: true,
+  });
 
   useEffect(() => {
     synchroniserSelection(patients);
@@ -78,17 +117,84 @@ function ListePatientsInterne({
               : t("infirmiers.patients.sousTitreListe", { count: filtrés.length })}
           </p>
         </div>
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
-          <input
-            type="search"
-            value={recherche}
-            onChange={(e) => setRecherche(e.target.value)}
-            placeholder={t("infirmiers.patients.recherche")}
-            className="w-full rounded-xl border border-gris-bordure bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-bleu-medical focus:ring-2 focus:ring-bleu-medical/20"
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setFiltresOuverts((o) => !o)}
+            aria-expanded={filtresOuverts}
+            aria-label={
+              filtresOuverts
+                ? t("caisse.facturation.fermerFiltres")
+                : t("caisse.facturation.ouvrirFiltres")
+            }
+            className={cn(
+              "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+              filtresOuverts
+                ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
+            )}
+          >
+            <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
+            <span
+              className={cn(
+                "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
+                nbFiltresActifs > 0 ? "bg-red-500" : "bg-slate-400"
+              )}
+            >
+              {nbFiltresActifs}
+            </span>
+          </button>
+          <BoutonsOutilsListe
+            toutSelectionne={tousCoches}
+            onSelectionnerTout={() =>
+              definirCoches(
+                filtrés.map((p) => p.dossierId),
+                !tousCoches
+              )
+            }
+            onExporter={() => {
+              const ids =
+                dossiersCoches.length > 0
+                  ? dossiersCoches
+                  : filtrés.map((p) => p.dossierId);
+              const lignes = patients.filter((p) => ids.includes(p.dossierId));
+              const csv = [
+                "numero;nom;prenom;telephone;motif;statut;heure",
+                ...lignes.map(
+                  (p) =>
+                    `${p.numeroPatient};${p.nom};${p.prenom};${p.telephone};${p.motif};${p.statut};${p.heure}`
+                ),
+              ].join("\n");
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "patients-infirmiers.csv";
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            labelSelectionnerTout={t("infirmiers.patients.selectionnerTout")}
+            labelExporter={t("caisse.transferts.exporterSelection")}
           />
         </div>
       </div>
+
+      {filtresOuverts ? (
+        <FormulaireFiltresFacturationCaisse
+          valeurs={brouillonFiltres}
+          onChange={setBrouillonFiltres}
+          onRechercher={() => {
+            setFiltresAppliques(brouillonFiltres);
+            setFiltresOuverts(false);
+          }}
+          onReinitialiser={() => {
+            setBrouillonFiltres(FILTRES_FACTURATION_VIDES);
+            setFiltresAppliques(FILTRES_FACTURATION_VIDES);
+          }}
+          idPrefix="filtre-patients-infirmiers"
+          masquerNumeroFacture
+        />
+      ) : null}
 
       {chargement ? (
         <div className="flex items-center gap-2 py-10 text-sm text-texte-secondaire">
@@ -280,7 +386,6 @@ export function ContenuPatientsInfirmiers({ utilisateur }: PropsContenuPatientsI
   const [patients, setPatients] = useState<PatientFileInfirmiers[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [recherche, setRecherche] = useState("");
 
   const charger = useCallback(async () => {
     setChargement(true);
@@ -343,8 +448,6 @@ export function ContenuPatientsInfirmiers({ utilisateur }: PropsContenuPatientsI
           patients={patients}
           chargement={chargement}
           erreur={erreur}
-          recherche={recherche}
-          setRecherche={setRecherche}
           onRafraichir={charger}
         />
         <SectionsMobileInfirmiersPatients />

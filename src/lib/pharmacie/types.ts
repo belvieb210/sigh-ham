@@ -30,12 +30,49 @@ export interface PatientFilePharmacie {
 export interface StatsPharmacieJour {
   patientsEnFile: number;
   ordonnancesEnAttente: number;
+  ordonnancesRecuesJour: number;
   ventesDuJour: number;
   chiffreAffairesJour: number;
+  ventesEnAttentePaiement: number;
+  paiementsValidesJour: number;
   stockFaible: number;
   lotsExpirantBientot: number;
+  lotsExpires: number;
   arriveesFileIso: string[];
   dateReference: string;
+}
+
+export interface OrdonnanceDashboardPharmacie {
+  id: string;
+  reference: string;
+  nomComplet: string;
+  sexeAge: string;
+  heure: string;
+  statut: string;
+  dossierId: string;
+}
+
+export interface AlertePharmacieDashboard {
+  id: string;
+  type: "stock_faible" | "critique" | "expiration" | "perime" | "info";
+  message: string;
+  libelle: string;
+}
+
+export interface TopMedicamentPharmacie {
+  nom: string;
+  quantite: number;
+}
+
+export interface ApercuDashboardPharmacie {
+  stats: StatsPharmacieJour;
+  ordonnancesRecentes: OrdonnanceDashboardPharmacie[];
+  ordonnancesEnAttente: OrdonnanceInbox[];
+  ventesEnAttente: VenteResume[];
+  ventesPayees: VenteResume[];
+  topMedicaments: TopMedicamentPharmacie[];
+  alertes: AlertePharmacieDashboard[];
+  chiffreAffairesJour: number;
 }
 
 export interface MedicamentResume {

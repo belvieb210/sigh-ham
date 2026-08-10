@@ -156,12 +156,17 @@ export async function obtenirStatsPharmacie(): Promise<StatsPharmacieJour> {
 
   const [
     ordonnancesEnAttente,
+    ordonnancesRecuesJour,
     ventesDuJour,
     ventesPayees,
+    ventesTransmises,
+    ventesPayeesJour,
     lotsFaibles,
     lotsExpirant,
+    lotsExpires,
   ] = await Promise.all([
     prisma.ordonnance.count({ where: { statut: "EN_ATTENTE" } }),
+    prisma.ordonnance.count({ where: { prescritLe: { gte: debut } } }),
     prisma.ventePharmacie.count({ where: { creeLe: { gte: debut } } }),
     prisma.ventePharmacie.findMany({
       where: {
@@ -170,6 +175,10 @@ export async function obtenirStatsPharmacie(): Promise<StatsPharmacieJour> {
       },
       select: { montantTotal: true },
     }),
+    prisma.ventePharmacie.count({ where: { statut: "TRANSMISE" } }),
+    prisma.ventePharmacie.count({
+      where: { statut: "PAYEE", payeeLe: { gte: debut } },
+    }),
     prisma.lotMedicament.groupBy({
       by: ["medicamentId"],
       _sum: { quantite: true },
@@ -177,7 +186,13 @@ export async function obtenirStatsPharmacie(): Promise<StatsPharmacieJour> {
     prisma.lotMedicament.count({
       where: {
         quantite: { gt: 0 },
-        expirationLe: { lte: dans30j },
+        expirationLe: { lte: dans30j, gte: debut },
+      },
+    }),
+    prisma.lotMedicament.count({
+      where: {
+        quantite: { gt: 0 },
+        expirationLe: { lt: debut },
       },
     }),
   ]);
@@ -202,10 +217,14 @@ export async function obtenirStatsPharmacie(): Promise<StatsPharmacieJour> {
   return {
     patientsEnFile: patients.length,
     ordonnancesEnAttente,
+    ordonnancesRecuesJour,
     ventesDuJour,
     chiffreAffairesJour,
+    ventesEnAttentePaiement: ventesTransmises,
+    paiementsValidesJour: ventesPayeesJour,
     stockFaible,
     lotsExpirantBientot: lotsExpirant,
+    lotsExpires,
     arriveesFileIso: patients.map((p) => p.arriveeLe),
     dateReference: new Date().toISOString(),
   };

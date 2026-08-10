@@ -91,7 +91,7 @@ export function ContenuAccueilPharmacie({
         label: t("pharmacie.dashboard.ordonnancesRecues"),
         valeur: stats?.ordonnancesRecuesJour ?? 0,
         sousTitre: t("pharmacie.dashboard.aujourdhui"),
-        href: "/sigh/pharmacie/ordonnances",
+        href: "/sigh/pharmacie/vente",
         icone: ClipboardList,
         couleurIcone: "bg-violet-100 text-violet-700",
       },
@@ -131,7 +131,7 @@ export function ContenuAccueilPharmacie({
         label: t("pharmacie.dashboard.stockFaible"),
         valeur: stats?.stockFaible ?? 0,
         sousTitre: t("pharmacie.dashboard.medicaments"),
-        href: "/sigh/pharmacie/stock",
+        href: "/sigh/pharmacie/vente",
         icone: Package,
         couleurIcone: "bg-red-100 text-red-700",
       },
@@ -139,7 +139,7 @@ export function ContenuAccueilPharmacie({
         label: t("pharmacie.dashboard.perimes"),
         valeur: stats?.lotsExpires ?? 0,
         sousTitre: t("pharmacie.dashboard.medicaments"),
-        href: "/sigh/pharmacie/peremptions",
+        href: "/sigh/pharmacie/vente",
         icone: AlertTriangle,
         couleurIcone: "bg-red-100 text-red-600",
       },
@@ -155,8 +155,8 @@ export function ContenuAccueilPharmacie({
       style: "border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100",
     },
     {
-      href: "/sigh/pharmacie/ordonnances",
-      label: t("pharmacie.dashboard.actionNouvelleOrdonnance"),
+      href: "/sigh/pharmacie/nouveau-client",
+      label: t("pharmacie.dashboard.actionNouveauClient"),
       icone: ClipboardList,
       style: "border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100",
     },
@@ -179,19 +179,19 @@ export function ContenuAccueilPharmacie({
       style: "border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100",
     },
     {
-      href: "/sigh/pharmacie/stock",
+      href: "/sigh/pharmacie/vente",
       label: t("pharmacie.dashboard.actionNouveauMedicament"),
       icone: Package,
       style: "border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100",
     },
     {
-      href: "/sigh/pharmacie/achats",
+      href: "/sigh/pharmacie/vente",
       label: t("pharmacie.dashboard.actionAchatStock"),
       icone: Banknote,
       style: "border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100",
     },
     {
-      href: "/sigh/pharmacie/stock",
+      href: "/sigh/pharmacie/historique",
       label: t("pharmacie.dashboard.actionInventaire"),
       icone: FileText,
       style: "border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
@@ -256,7 +256,7 @@ export function ContenuAccueilPharmacie({
                     {t("pharmacie.dashboard.ordonnancesRecuesTitre")}
                   </h2>
                   <Link
-                    href="/sigh/pharmacie/ordonnances"
+                    href="/sigh/pharmacie/vente"
                     className="text-xs font-medium text-bleu-medical hover:underline"
                   >
                     {t("pharmacie.dashboard.voirTout")}
@@ -271,7 +271,7 @@ export function ContenuAccueilPharmacie({
                     {apercu!.ordonnancesRecentes.map((o) => (
                       <li key={o.id}>
                         <Link
-                          href={`/sigh/pharmacie/ordonnances?dossier=${encodeURIComponent(o.dossierId)}`}
+                          href={`/sigh/pharmacie/vente?dossier=${encodeURIComponent(o.dossierId)}`}
                           className="flex items-center gap-3 py-2.5 hover:bg-gris-tres-clair/50"
                         >
                           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">
@@ -402,7 +402,7 @@ export function ContenuAccueilPharmacie({
                     {t("pharmacie.dashboard.alertesTitre")}
                   </h2>
                   <Link
-                    href="/sigh/pharmacie/stock"
+                    href="/sigh/pharmacie/vente"
                     className="text-xs font-medium text-bleu-medical hover:underline"
                   >
                     {t("pharmacie.dashboard.voirTout")}

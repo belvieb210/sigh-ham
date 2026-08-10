@@ -28,8 +28,8 @@ export function NavigationBassePharmacie({ onMenu }: PropsNavigationBassePharmac
             (item.id === "accueil" && pathname === "/sigh/pharmacie") ||
             (item.id === "patients" && pathname.startsWith("/sigh/pharmacie/patients")) ||
             (item.id === "vente" && pathname.startsWith("/sigh/pharmacie/vente")) ||
-            (item.id === "ordonnances" &&
-              pathname.startsWith("/sigh/pharmacie/ordonnances"));
+            (item.id === "nouveauClient" &&
+              pathname.startsWith("/sigh/pharmacie/nouveau-client"));
           const Icone = item.icone;
           const estFab = "fab" in item && item.fab;
 

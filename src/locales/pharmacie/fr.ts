@@ -91,6 +91,7 @@ export const pharmacieFr = {
     actionNouveauMedicament: "Nouveau médicament",
     actionAchatStock: "Achat de stock",
     actionInventaire: "Inventaire",
+    actionNouveauClient: "Nouveau client",
     chargement: "Chargement…",
     erreur: "Impossible de charger le tableau de bord",
   },
@@ -258,6 +259,8 @@ export const pharmacieFr = {
     listeTitre: "Clients enregistrés ({{count}})",
     listeVide: "Aucun client enregistré pour le moment.",
     ouvrirVente: "Ouvrir vente",
+    panneauResume: "Résumé du client",
+    selectionnerListe: "Sélectionnez un client dans la liste.",
   },
   stock: {
     titre: "Stock",

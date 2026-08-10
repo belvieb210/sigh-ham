@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { ClipboardList, Pill } from "lucide-react";
+import { Pill } from "lucide-react";
 import { OrientationRapidePharmacie } from "@/features/pharmacie/orientation-rapide-pharmacie";
 import { useOrientationPharmacie } from "@/features/pharmacie/contexte-orientation-pharmacie";
 import { useSelectionPharmacieOptionnel } from "@/features/pharmacie/contexte-selection-pharmacie";
@@ -115,7 +115,7 @@ function ResumeEtOrientation() {
         <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
           {t("pharmacie.panneau.actionsRapides")}
         </h2>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <Link
             href={
               selection?.resume.dossierId
@@ -126,13 +126,6 @@ function ResumeEtOrientation() {
           >
             <Pill className="h-6 w-6 text-bleu-medical" strokeWidth={1.75} />
             {t("pharmacie.panneau.actionVente")}
-          </Link>
-          <Link
-            href="/sigh/pharmacie/ordonnances"
-            className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-gris-bordure bg-[#f8fafc] p-3 text-center text-xs font-medium text-texte-principal hover:border-bleu-medical hover:bg-bleu-medical-clair"
-          >
-            <ClipboardList className="h-6 w-6 text-bleu-medical" strokeWidth={1.75} />
-            {t("pharmacie.panneau.actionOrdonnances")}
           </Link>
         </div>
       </section>

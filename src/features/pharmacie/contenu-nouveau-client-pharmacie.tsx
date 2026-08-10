@@ -16,6 +16,10 @@ import {
   FormulaireFiltresClientsPharmacie,
   type FiltresClientsPharmacie,
 } from "@/features/pharmacie/formulaire-filtres-clients-pharmacie";
+import {
+  PanneauDroitNouveauClientPharmacie,
+  SectionsMobileNouveauClientPharmacie,
+} from "@/features/pharmacie/panneau-droit-nouveau-client-pharmacie";
 import type { ClientEnregistrePharmacie } from "@/lib/pharmacie/lister-clients-enregistres-pharmacie";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import { cn } from "@/lib/utils";
@@ -52,6 +56,8 @@ export function ContenuNouveauClientPharmacie({
   const [filtresAppliques, setFiltresAppliques] = useState<FiltresClientsPharmacie>(
     FILTRES_CLIENTS_PHARMACIE_VIDES
   );
+  const [clientSelectionne, setClientSelectionne] =
+    useState<ClientEnregistrePharmacie | null>(null);
 
   const chargerListe = useCallback(async () => {
     setChargementListe(true);
@@ -127,6 +133,7 @@ export function ContenuNouveauClientPharmacie({
       utilisateur={utilisateur}
       titre={t("pharmacie.nouveauClient.titre")}
       sousTitre={t("pharmacie.nouveauClient.sousTitre")}
+      panneauDroit={<PanneauDroitNouveauClientPharmacie client={clientSelectionne} />}
     >
       <div className="mx-auto w-full max-w-[1200px] space-y-5">
         <div className="flex items-center gap-2">
@@ -346,7 +353,12 @@ export function ContenuNouveauClientPharmacie({
                     {clientsFiltres.map((c, index) => (
                       <tr
                         key={c.dossierId}
-                        className="border-t border-gris-bordure/70 hover:bg-slate-50"
+                        onClick={() => setClientSelectionne(c)}
+                        className={cn(
+                          "cursor-pointer border-t border-gris-bordure/70 hover:bg-slate-50",
+                          clientSelectionne?.dossierId === c.dossierId &&
+                            "bg-bleu-medical-clair/30"
+                        )}
                       >
                         <td className="px-4 py-3 tabular-nums text-texte-secondaire">
                           {index + 1}
@@ -363,7 +375,7 @@ export function ContenuNouveauClientPharmacie({
                         <td className="px-4 py-3 tabular-nums text-texte-secondaire">
                           {c.heure}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                           <Link
                             href={`/sigh/pharmacie/vente?dossier=${encodeURIComponent(c.dossierId)}`}
                             className="rounded-lg border border-bleu-medical/30 px-3 py-1.5 text-xs font-semibold text-bleu-medical hover:bg-bleu-medical-clair/40"
@@ -379,6 +391,8 @@ export function ContenuNouveauClientPharmacie({
             )}
           </section>
         </div>
+
+        <SectionsMobileNouveauClientPharmacie client={clientSelectionne} />
       </div>
     </MiseEnPagePharmacie>
   );

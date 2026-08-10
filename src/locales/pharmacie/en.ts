@@ -91,6 +91,7 @@ export const pharmacieEn = {
     actionNouveauMedicament: "New medicine",
     actionAchatStock: "Stock purchase",
     actionInventaire: "Inventory",
+    actionNouveauClient: "New client",
     chargement: "Loading…",
     erreur: "Unable to load dashboard",
   },
@@ -257,6 +258,8 @@ export const pharmacieEn = {
     listeTitre: "Registered clients ({{count}})",
     listeVide: "No registered clients yet.",
     ouvrirVente: "Open sale",
+    panneauResume: "Client summary",
+    selectionnerListe: "Select a client from the list.",
   },
   stock: {
     titre: "Stock",

@@ -3,6 +3,7 @@ import { obtenirSessionApiMedecinsExternes } from "@/lib/auth/garde-api-medecins
 import { exigerMedecinExterneId } from "@/lib/medecins-externes/assurer-fiche";
 import { listerPatientsTransferesMedecinExterne } from "@/lib/medecins-externes/lister-patients-reception-like";
 import { reorienterPatientDepuisMedecinsExternes } from "@/lib/medecins-externes/reorienter-patient";
+import { confirmerTransfertMedecinsExternes } from "@/lib/medecins-externes/gestion-transfert";
 import { nettoyerFilesAttenteNonConfirmees } from "@/lib/transferts/visibilite-salle";
 import {
   parserDonneesTransfert,
@@ -175,6 +176,20 @@ export async function POST(request: NextRequest) {
       donnees as DonneesTransfertAccueil,
       opts
     );
+
+    if (resultat.transfertId) {
+      const confirme = await confirmerTransfertMedecinsExternes(
+        session.utilisateur.id,
+        medecinExterneId,
+        resultat.transfertId
+      );
+      return NextResponse.json({
+        message: `Patient transféré vers ${confirme.salleDestination}.`,
+        ...resultat,
+        ...confirme,
+        confirme: true,
+      });
+    }
 
     return NextResponse.json({
       message: `Patient transféré vers ${resultat.salleDestination}.`,

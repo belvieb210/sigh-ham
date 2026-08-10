@@ -99,13 +99,33 @@ function includeDernierTransfertDepuis(codeOrigine: CodeSalle) {
       statut: { not: "ANNULE" as const },
     },
     orderBy: { emisLe: "desc" as const },
-    take: 1,
+    take: 8,
     include: {
       salleDestination: true,
       salleOrigine: true,
       recuperation: true,
     },
   };
+}
+
+function choisirTransfertAffichage(
+  transferts: DossierVisite["transferts"]
+): DossierVisite["transferts"][number] | undefined {
+  const sortants = transferts.filter((t) => !estTransfertIntraSalle(t));
+  if (sortants.length === 0) return undefined;
+
+  const enAttente = sortants.find((t) => t.statut === "EN_ATTENTE");
+  if (enAttente) return enAttente;
+
+  const enRecup = sortants.find(
+    (t) =>
+      t.statut === "REFUSE" &&
+      (t as { recuperation?: { statut: string } }).recuperation?.statut ===
+        "EN_RECUPERATION"
+  );
+  if (enRecup) return enRecup;
+
+  return sortants[0];
 }
 
 const includeDernierTransfertReception = includeDernierTransfertDepuis("RECEPTION");
@@ -303,7 +323,7 @@ export async function chargerDossiersVisiteMedecinExterne(
 }
 
 export function dateActiviteVisite(dossier: DossierVisite): Date {
-  const transfert = dossier.transferts[0];
+  const transfert = choisirTransfertAffichage(dossier.transferts) ?? dossier.transferts[0];
   const enregistrement = dossier.enregistrementsReception[0];
   const dates = [dossier.ouvertLe, enregistrement?.enregistreLe, transfert?.emisLe].filter(
     Boolean
@@ -323,11 +343,7 @@ export function mapperDossierVisite(dossier: DossierVisite): PatientEnregistre {
   const { patient } = dossier;
   const enregistrement = dossier.enregistrementsReception[0];
   const passage = dossier.passages[0];
-  const transfertActuel = dossier.transferts[0];
-  const transfertAffichage =
-    transfertActuel && !estTransfertIntraSalle(transfertActuel)
-      ? transfertActuel
-      : undefined;
+  const transfertAffichage = choisirTransfertAffichage(dossier.transferts);
   const fileAttente = passage?.fileAttente;
   const enRecuperation = estEnRecuperation(transfertAffichage);
 

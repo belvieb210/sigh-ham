@@ -344,6 +344,33 @@ async function prescrireExamensInitiaux(
   return nouveaux.length;
 }
 
+async function assurerFileAttenteSalleOrigine(
+  tx: Prisma.TransactionClient,
+  passageId: string,
+  salleOrigineId: string,
+  codeOrigine: CodeSalle
+) {
+  if (codeOrigine !== "MEDECINS_EXTERNES") return;
+
+  const existante = await tx.fileAttente.findUnique({
+    where: { passageId },
+  });
+  if (existante) return;
+
+  const ordreMax = await tx.fileAttente.aggregate({
+    where: { salleId: salleOrigineId, serviLe: null },
+    _max: { numeroOrdre: true },
+  });
+
+  await tx.fileAttente.create({
+    data: {
+      passageId,
+      salleId: salleOrigineId,
+      numeroOrdre: (ordreMax._max.numeroOrdre ?? 0) + 1,
+    },
+  });
+}
+
 function donneesEnregistrementDepuisTransfert(
   donnees: DonneesTransfertAccueil,
   manuel: boolean
@@ -607,6 +634,8 @@ export async function transfererPatientAccueil(
         emetteurId: agentId,
       },
     });
+
+    await assurerFileAttenteSalleOrigine(tx, passageId, salleOrigine.id, codeOrigine);
 
     return {
       transfertId: transfert.id,

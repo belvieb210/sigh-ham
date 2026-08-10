@@ -261,13 +261,19 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const factureContextuelle = useMemo(() => {
     if (!dossier) return null;
     if (modePharmacie) {
-      return (
-        dossier.pharmacie.facture ?? {
-          ...dossier.facture,
-          lignes: dossier.pharmacie.lignes,
-          isPharmacie: true,
-        }
-      );
+      if (dossier.pharmacie.facture) return dossier.pharmacie.facture;
+      return {
+        id: null,
+        numeroFacture: null,
+        statut: null,
+        montantTotal: dossier.pharmacie.lignes.reduce((acc, l) => acc + l.montant, 0),
+        montantPaye: 0,
+        devise: dossier.facture.devise,
+        lignes: dossier.pharmacie.lignes,
+        historiquePaiements: [],
+        aUneAvance: false,
+        isPharmacie: true,
+      };
     }
     return dossier.examens.facture;
   }, [dossier, modePharmacie]);
@@ -510,7 +516,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   const totalAPayer = sousTotal + (fraisDivers || 0);
   const dejaPaye = factureContextuelle?.montantPaye ?? 0;
   const resteAPayer = Math.max(0, totalAPayer - dejaPaye);
-  const factureCloturee = factureContextuelle?.statut === "PAYEE";
+  const factureCloturee = modePharmacie
+    ? Boolean(dossier?.facturationDual.facturePharmacieVerrouillee)
+    : Boolean(dossier?.facturationDual.factureNormaleVerrouillee);
   const soldeObligatoire =
     Boolean(factureContextuelle?.aUneAvance) && !factureCloturee && !modePharmacie;
   /** Avance déjà couverte (reste 0) : permettre de clôturer sans nouveau paiement */

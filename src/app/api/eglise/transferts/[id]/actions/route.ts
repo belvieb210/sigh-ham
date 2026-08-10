@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { obtenirSessionApiEglise } from "@/lib/auth/garde-api-eglise";
 import {
-  confirmerTransfertReception,
-  recupererTransfertReception,
-  rejeterTransfertReception,
-} from "@/lib/reception/gestion-transfert-reception";
+  confirmerTransfertEglise,
+  recupererTransfertEglise,
+  rejeterTransfertEglise,
+} from "@/lib/eglise/gestion-transfert";
 
 type ActionTransfert = "confirmer" | "rejeter" | "recuperer";
 
@@ -31,30 +31,24 @@ export async function POST(
     let resultat;
     switch (action) {
       case "confirmer":
-        resultat = await confirmerTransfertReception(
-          session.utilisateur.id,
-          transfertId
-        );
+        resultat = await confirmerTransfertEglise(session.utilisateur.id, transfertId);
         break;
       case "rejeter":
-        resultat = await rejeterTransfertReception(
+        resultat = await rejeterTransfertEglise(
           session.utilisateur.id,
           transfertId,
           body.motifRejet
         );
         break;
       case "recuperer":
-        resultat = await recupererTransfertReception(
-          session.utilisateur.id,
-          transfertId
-        );
+        resultat = await recupererTransfertEglise(session.utilisateur.id, transfertId);
         break;
     }
 
     return NextResponse.json({
       message:
         action === "confirmer"
-          ? "Transfert confirmé."
+          ? "Transfert confirmé — patient visible en destination."
           : action === "rejeter"
             ? "Transfert rejeté."
             : "Transfert récupéré.",

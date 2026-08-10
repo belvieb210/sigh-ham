@@ -26,7 +26,7 @@ interface Props {
   utilisateur: UtilisateurCaisse;
 }
 
-const PAR_PAGE = 5;
+const PAR_PAGE = 15;
 
 function isoDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

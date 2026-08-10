@@ -376,7 +376,7 @@ export const receptionFr = {
         analyses: "Analyses de laboratoire",
         urgence: "Urgence",
         rdv: "Rendez-vous programmé",
-        prenuptial: "Examen prénuptial",
+        prenuptial: "Examens prénuptiaux",
         autre: "Autre",
       },
       assurances: {

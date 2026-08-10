@@ -17,6 +17,7 @@ import {
 import { ResumePatientMobile } from "@/features/reception/resume-patient-mobile";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import { useEspaceApi } from "@/features/reception/contexte-espace-api";
+import { useSelectionTransfertOptionnel } from "@/features/reception/contexte-selection-transfert";
 import type { PatientEnregistre } from "@/constants/reception";
 import type { DetailPatientRechercheSelectionne } from "@/constants/reception";
 
@@ -27,12 +28,14 @@ function CorpsAccueil({ agentNom }: { agentNom: string }) {
   const [patientSelectionneId, setPatientSelectionneId] = useState<string | null>(null);
   const [chargementSelection, setChargementSelection] = useState(false);
   const { definirDepuisDonneesCompletes } = useResumePatient();
+  const selection = useSelectionTransfertOptionnel();
 
   const selectionnerPatient = useCallback(
     async (patient: PatientEnregistre) => {
       if (chargementSelection) return;
       setChargementSelection(true);
       setPatientSelectionneId(patient.id);
+      void selection?.selectionnerPourPanneau(patient);
       try {
         const res = await fetch(
           `${espace.prefixeApi}/patients/${encodeURIComponent(patient.id)}`
@@ -50,7 +53,7 @@ function CorpsAccueil({ agentNom }: { agentNom: string }) {
         setChargementSelection(false);
       }
     },
-    [chargementSelection, definirDepuisDonneesCompletes, espace.prefixeApi]
+    [chargementSelection, definirDepuisDonneesCompletes, espace.prefixeApi, selection]
   );
 
   useEffect(() => {

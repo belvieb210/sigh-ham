@@ -18,11 +18,20 @@ const OPTIONS_EGLISE = {
   salleOrigine: "EGLISE" as const,
 };
 
+function extraireOrientations(body: unknown): string[] {
+  if (!body || typeof body !== "object") return [];
+  const b = body as { orientations?: string[]; orientation?: string };
+  return [
+    ...new Set(
+      (b.orientations?.filter(Boolean) ??
+        (b.orientation?.trim() ? [b.orientation.trim()] : [])) as string[]
+    ),
+  ];
+}
+
 function extrairePrenuptial(body: Record<string, unknown>) {
   return {
     paroisse: String(body.paroisse ?? "").trim() || undefined,
-    dateMariage: String(body.dateMariage ?? "").trim() || undefined,
-    conjointNom: String(body.conjointNom ?? "").trim() || undefined,
   };
 }
 
@@ -59,6 +68,32 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as Record<string, unknown>;
     const prenuptial = extrairePrenuptial(body);
+
+    const corpsReorientation = body as { dossierId?: string };
+    const orientationsDirectes = extraireOrientations(body);
+    const dossierIdDirect = corpsReorientation.dossierId?.trim() || "";
+
+    if (
+      dossierIdDirect &&
+      orientationsDirectes.length > 0 &&
+      !body.transfertManuel &&
+      !body.transfertWizard
+    ) {
+      const resultat = await reorienterPatientDepuisEglise(
+        session.utilisateur.id,
+        dossierIdDirect,
+        orientationsDirectes
+      );
+      await assurerDossierPrenuptial(
+        dossierIdDirect,
+        session.utilisateur.id,
+        prenuptial
+      );
+      return NextResponse.json({
+        message: `Transfert vers ${resultat.salleDestination}. Confirmez via le menu ⋮.`,
+        ...resultat,
+      });
+    }
 
     if (body.transfertManuel) {
       const corps = body as {
@@ -114,8 +149,8 @@ export async function POST(request: NextRequest) {
         if (orientations.length === 1) {
           return NextResponse.json({
             message: cree.transfertMisAJour
-              ? `Destination mise à jour vers ${cree.salleDestination}.`
-              : `Transfert vers ${cree.salleDestination}. Confirmez dans la liste.`,
+              ? `Destination mise à jour vers ${cree.salleDestination}. Confirmez via le menu ⋮.`
+              : `Transfert vers ${cree.salleDestination}. Confirmez via le menu ⋮.`,
             ...cree,
           });
         }
@@ -172,7 +207,7 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json({
-      message: `Patient transféré vers ${resultat.salleDestination} (examens prénuptiaux associés).`,
+      message: `Patient orienté vers ${resultat.salleDestination}. Confirmez le transfert via le menu ⋮.`,
       ...resultat,
     });
   } catch (error) {

@@ -10,6 +10,10 @@ const NOTES_PAR_ORIGINE: Partial<Record<CodeSalle, { normal: string; estimation:
     normal: "Prescrit chez le médecin externe — examens initiaux",
     estimation: "Prescrit chez le médecin externe — estimation",
   },
+  EGLISE: {
+    normal: "Prescrit au service Église — examens initiaux",
+    estimation: "Prescrit au service Église — estimation",
+  },
 };
 
 function noteExamen(salleOrigine: CodeSalle, estEstimation: boolean): string {

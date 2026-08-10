@@ -25,7 +25,7 @@ async function chargerTransfertAvecExamens(transfertId: string) {
 }
 
 function estModifiable(transfert: Awaited<ReturnType<typeof chargerTransfertAvecExamens>>) {
-  const originesAutorisees = new Set(["RECEPTION", "MEDECINS_EXTERNES"]);
+  const originesAutorisees = new Set(["RECEPTION", "MEDECINS_EXTERNES", "EGLISE"]);
   return (
     originesAutorisees.has(transfert.salleOrigine.code) &&
     transfert.statut === "EN_ATTENTE" &&
@@ -101,7 +101,9 @@ export async function modifierExamensTransfert(
     const noteModification =
       transfert.salleOrigine.code === "MEDECINS_EXTERNES"
         ? "Prescrit chez le médecin externe — examens modifiés"
-        : "Prescrit à la réception — examens modifiés";
+        : transfert.salleOrigine.code === "EGLISE"
+          ? "Prescrit au service Église — examens modifiés"
+          : "Prescrit à la réception — examens modifiés";
 
     for (const typeId of idsUniques) {
       const existants = parType.get(typeId) ?? [];

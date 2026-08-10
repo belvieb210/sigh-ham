@@ -49,6 +49,10 @@ export const egliseFr = {
     titre: "Service Église",
     sousTitre: "Enregistrement prénuptial et suivi des dossiers",
   },
+  formulaire: {
+    nomEglise: "Nom de l'église",
+    placeholderNomEglise: "Nom de l'église ou de la paroisse",
+  },
   messagerie: {
     titre: "Messagerie",
     description: "Échanges avec les autres services",

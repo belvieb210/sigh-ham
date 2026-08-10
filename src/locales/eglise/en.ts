@@ -49,6 +49,10 @@ export const egliseEn = {
     titre: "Church service",
     sousTitre: "Premarital registration and file follow-up",
   },
+  formulaire: {
+    nomEglise: "Church name",
+    placeholderNomEglise: "Church or parish name",
+  },
   messagerie: {
     titre: "Messaging",
     description: "Exchange with other services",

@@ -178,8 +178,6 @@ export const FormulaireEnregistrement = forwardRef<
     espace.orientationDefaut ?? "INFIRMIERS"
   );
   const [paroisse, setParoisse] = useState("");
-  const [dateMariage, setDateMariage] = useState("");
-  const [conjointNom, setConjointNom] = useState("");
 
   const motifEstAutre = motifPrincipal === "autre";
   const champsEglise = Boolean(espace.afficherChampsEglise);
@@ -320,8 +318,6 @@ export const FormulaireEnregistrement = forwardRef<
     setModeEstimation(false);
     setOrientation(espace.orientationDefaut ?? "INFIRMIERS");
     setParoisse("");
-    setDateMariage("");
-    setConjointNom("");
     if (!estComplet) {
       setNumeroEnregistrement("20260101001");
       majDateHeureActuelles();
@@ -362,8 +358,6 @@ export const FormulaireEnregistrement = forwardRef<
       if (photoPatient) formData.append("photo", photoPatient);
       if (champsEglise) {
         formData.append("paroisse", paroisse);
-        formData.append("dateMariage", dateMariage);
-        formData.append("conjointNom", conjointNom);
       }
 
       const url =
@@ -450,9 +444,7 @@ export const FormulaireEnregistrement = forwardRef<
           medecinResponsable: medecinResponsable.trim(),
           estEstimation: modeEstimation,
           remise: Math.max(0, Number(remise) || 0),
-          ...(champsEglise
-            ? { paroisse, dateMariage, conjointNom }
-            : {}),
+          ...(champsEglise ? { paroisse } : {}),
         }),
       });
 
@@ -1083,37 +1075,20 @@ export const FormulaireEnregistrement = forwardRef<
                 />
               </div>
               {champsEglise && (
-                <>
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>Paroisse</label>
-                    <input
-                      type="text"
-                      value={paroisse}
-                      onChange={(e) => setParoisse(e.target.value)}
-                      placeholder="Nom de la paroisse"
-                      className={CLASSE_CHAMP_RECEPTION}
-                    />
-                  </div>
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>Date du mariage</label>
-                    <input
-                      type="date"
-                      value={dateMariage}
-                      onChange={(e) => setDateMariage(e.target.value)}
-                      className={CLASSE_CHAMP_RECEPTION}
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className={CLASSE_LABEL_RECEPTION}>Nom du conjoint</label>
-                    <input
-                      type="text"
-                      value={conjointNom}
-                      onChange={(e) => setConjointNom(e.target.value)}
-                      placeholder="Nom complet du conjoint"
-                      className={CLASSE_CHAMP_RECEPTION}
-                    />
-                  </div>
-                </>
+                <div className="sm:col-span-2">
+                  <label className={CLASSE_LABEL_RECEPTION}>
+                    {t("eglise.formulaire.nomEglise", { defaultValue: "Nom de l'église" })}
+                  </label>
+                  <input
+                    type="text"
+                    value={paroisse}
+                    onChange={(e) => setParoisse(e.target.value)}
+                    placeholder={t("eglise.formulaire.placeholderNomEglise", {
+                      defaultValue: "Nom de l'église ou de la paroisse",
+                    })}
+                    className={CLASSE_CHAMP_RECEPTION}
+                  />
+                </div>
               )}
             </div>
           </div>

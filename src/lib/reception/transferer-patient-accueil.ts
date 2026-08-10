@@ -307,7 +307,7 @@ async function assurerFileAttenteSalleOrigine(
   salleOrigineId: string,
   codeOrigine: CodeSalle
 ) {
-  if (codeOrigine !== "MEDECINS_EXTERNES") return;
+  if (codeOrigine !== "MEDECINS_EXTERNES" && codeOrigine !== "EGLISE") return;
 
   const existante = await tx.fileAttente.findUnique({
     where: { passageId },

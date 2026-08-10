@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { uploaderFichier } from "@/lib/stockage/fichiers";
+import { parserPoidsKg } from "@/lib/infirmiers/poids-utils";
 
 export interface LigneTraitementInput {
   effectueLe?: string | null;
@@ -279,11 +280,11 @@ export function normaliserDonneesFicheTraitement(
   const fichiersBruts = Array.isArray(corps.fichiers) ? corps.fichiers : [];
 
   const poidsRaw = corps.poidsKg;
-  let poidsKg: number | null = null;
-  if (poidsRaw != null && poidsRaw !== "") {
-    const n = Number(poidsRaw);
-    poidsKg = Number.isFinite(n) ? n : null;
+  const poidsParse = parserPoidsKg(poidsRaw);
+  if (!poidsParse.ok) {
+    throw new Error(poidsParse.message);
   }
+  const poidsKg = poidsParse.poidsKg;
 
   return {
     medecinPrescripteur:

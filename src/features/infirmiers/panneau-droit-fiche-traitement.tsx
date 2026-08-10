@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   AlertTriangle,
@@ -161,18 +162,21 @@ function ActionsRapidesTraitement() {
   const { t } = useTranslation();
   const ctx = useFicheTraitementInfirmiersOptionnel();
   const fiche = ctx?.ficheActive;
+  const [joursProlongation, setJoursProlongation] = useState("3");
 
   async function action(type: "cloturer" | "prolonger") {
     if (!ctx || !fiche) return;
     ctx.definirActionEnCours(true);
     ctx.definirMessagePanneau(null);
     try {
+      const jours =
+        type === "prolonger" ? Math.max(1, Number.parseInt(joursProlongation, 10) || 3) : undefined;
       const res = await fetch(`/api/infirmiers/fiches-traitement/${fiche.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: type,
-          jours: type === "prolonger" ? 3 : undefined,
+          jours,
         }),
       });
       const data = (await res.json()) as { message?: string; fiche?: typeof fiche };
@@ -192,6 +196,8 @@ function ActionsRapidesTraitement() {
       ctx.definirActionEnCours(false);
     }
   }
+
+  const alerte = fiche ? calculerAlerteFinTraitement(fiche.finEffectiveLe) : null;
 
   return (
     <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
@@ -217,9 +223,25 @@ function ActionsRapidesTraitement() {
               {formaterDateAffichage(fiche.debutTraitementLe)} →{" "}
               {formaterDateAffichage(fiche.finEffectiveLe)}
             </p>
+            {alerte && fiche.statut === "EN_COURS" ? (
+              <p className="mt-1 font-medium text-texte-principal">
+                {alerte.joursRestants >= 0
+                  ? t("infirmiers.ficheTraitement.panneau.joursRestants", {
+                      jours: alerte.joursRestants,
+                    })
+                  : t("infirmiers.ficheTraitement.panneau.joursDepasses", {
+                      jours: Math.abs(alerte.joursRestants),
+                    })}
+              </p>
+            ) : null}
             <p className="mt-0.5 text-texte-secondaire">
               {t("infirmiers.ficheTraitement.panneau.statut")} : {fiche.statut}
             </p>
+            {fiche.poidsKg != null ? (
+              <p className="mt-0.5 text-texte-secondaire">
+                {t("infirmiers.ficheTraitement.champs.poids")} : {fiche.poidsKg} kg
+              </p>
+            ) : null}
           </div>
 
           <div className="grid grid-cols-1 gap-2">
@@ -238,19 +260,30 @@ function ActionsRapidesTraitement() {
                   )}
                   {t("infirmiers.ficheTraitement.actions.cloturer")}
                 </button>
-                <button
-                  type="button"
-                  disabled={ctx?.actionEnCours}
-                  onClick={() => void action("prolonger")}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-gris-bordure bg-white px-3 py-2.5 text-xs font-medium hover:bg-gris-tres-clair disabled:opacity-50"
-                >
-                  {ctx?.actionEnCours ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <CalendarPlus className="h-4 w-4 text-bleu-medical" />
-                  )}
-                  {t("infirmiers.ficheTraitement.actions.prolonger")}
-                </button>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={90}
+                    value={joursProlongation}
+                    onChange={(e) => setJoursProlongation(e.target.value)}
+                    className="h-10 w-16 rounded-lg border border-gris-bordure px-2 text-xs"
+                    aria-label={t("infirmiers.ficheTraitement.panneau.joursProlonger")}
+                  />
+                  <button
+                    type="button"
+                    disabled={ctx?.actionEnCours}
+                    onClick={() => void action("prolonger")}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-gris-bordure bg-white px-3 py-2.5 text-xs font-medium hover:bg-gris-tres-clair disabled:opacity-50"
+                  >
+                    {ctx?.actionEnCours ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CalendarPlus className="h-4 w-4 text-bleu-medical" />
+                    )}
+                    {t("infirmiers.ficheTraitement.actions.prolongerPersonnalise")}
+                  </button>
+                </div>
               </>
             ) : null}
 

@@ -8,6 +8,7 @@ import {
   CLASSE_LABEL_RECEPTION,
 } from "@/constants/reception";
 import {
+  calculerAlerteFinTraitement,
   datetimeLocalVersIso,
   isoVersDatetimeLocal,
 } from "@/lib/infirmiers/fiche-traitement-utils";
@@ -119,6 +120,9 @@ export function FormulaireFicheTraitement({
 }: Props) {
   const { t } = useTranslation();
   const inputFichierRef = useRef<HTMLInputElement>(null);
+  const alerteFin = formulaire.finTraitementLe
+    ? calculerAlerteFinTraitement(datetimeLocalVersIso(formulaire.finTraitementLe))
+    : null;
 
   function ajouterLigne() {
     onChange({
@@ -213,6 +217,9 @@ export function FormulaireFicheTraitement({
             inputMode="decimal"
             value={identite.poidsKg}
             onChange={(e) => onChangeIdentite("poidsKg", e.target.value)}
+            max={999.99}
+            step={0.01}
+            placeholder="kg"
             className={CLASSE_CHAMP_RECEPTION}
             disabled={desactive}
           />
@@ -259,6 +266,32 @@ export function FormulaireFicheTraitement({
             className={CLASSE_CHAMP_RECEPTION}
             disabled={desactive}
           />
+          {alerteFin && alerteFin.niveau !== "ok" ? (
+            <p
+              className={cn(
+                "mt-1 text-xs",
+                alerteFin.niveau === "depasse"
+                  ? "text-red-600"
+                  : "text-amber-700"
+              )}
+            >
+              {alerteFin.niveau === "depasse"
+                ? t("infirmiers.ficheTraitement.panneau.joursDepasses", {
+                    jours: Math.abs(alerteFin.joursRestants),
+                  })
+                : alerteFin.niveau === "aujourdhui"
+                  ? t("infirmiers.ficheTraitement.alerte.aujourdhui")
+                  : t("infirmiers.ficheTraitement.panneau.joursRestants", {
+                      jours: alerteFin.joursRestants,
+                    })}
+            </p>
+          ) : alerteFin ? (
+            <p className="mt-1 text-xs text-texte-secondaire">
+              {t("infirmiers.ficheTraitement.panneau.joursRestants", {
+                jours: alerteFin.joursRestants,
+              })}
+            </p>
+          ) : null}
         </div>
       </div>
 

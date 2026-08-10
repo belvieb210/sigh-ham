@@ -163,7 +163,7 @@ export function CorpsConsultationInfirmiers() {
   const chargerPatients = useCallback(async () => {
     setChargementListe(true);
     try {
-      const res = await fetch("/api/infirmiers/patients");
+      const res = await fetch("/api/infirmiers/patients?contexte=consultation");
       const data = (await res.json()) as {
         patients?: PatientFileInfirmiers[];
         erreur?: string;

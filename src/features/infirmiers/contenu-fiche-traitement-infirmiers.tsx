@@ -34,6 +34,7 @@ import {
   SectionsMobileFicheTraitementInfirmiers,
 } from "@/features/infirmiers/panneau-droit-fiche-traitement";
 import { isoVersDatetimeLocal } from "@/lib/infirmiers/fiche-traitement-utils";
+import { sexePourSelectFormulaire } from "@/features/medecins/formulaire-consultation-clinique";
 import type { FicheTraitementResume } from "@/lib/infirmiers/types-fiche-traitement";
 import {
   FORMULAIRE_FICHE_TRAITEMENT_VIDE,
@@ -268,7 +269,7 @@ export function CorpsFicheTraitementInfirmiers() {
     setIdentite({
       nom: `${patientSelectionne.nom.toUpperCase()} ${patientSelectionne.prenom}`,
       age: patientSelectionne.age != null ? String(patientSelectionne.age) : "",
-      sexe: patientSelectionne.sexe ?? "",
+      sexe: sexePourSelectFormulaire(patientSelectionne.sexe),
       poidsKg: "",
       numeroRecu: patientSelectionne.numeroDossier ?? "",
       lectureSeuleNom: true,
@@ -278,7 +279,15 @@ export function CorpsFicheTraitementInfirmiers() {
     (async () => {
       setErreur(null);
       try {
-        const fiches = await rafraichirFichesDossier(dossierId);
+        const [fiches, resDetail] = await Promise.all([
+          rafraichirFichesDossier(dossierId),
+          fetch(`/api/infirmiers/patients/${encodeURIComponent(dossierId)}`),
+        ]);
+        const dataDetail = (await resDetail.json()) as {
+          patient?: { derniereConstante?: { poidsKg?: number | null } | null };
+        };
+        const poidsConstantes = dataDetail.patient?.derniereConstante?.poidsKg;
+
         if (annule) return;
 
         const enCoursFiche = fiches.find((f) => f.statut === "EN_COURS") ?? null;
@@ -287,13 +296,24 @@ export function CorpsFicheTraitementInfirmiers() {
           setFormulaire(formulaireDepuisFiche(enCoursFiche));
           setIdentite((prev) => ({
             ...prev,
-            poidsKg: enCoursFiche.poidsKg != null ? String(enCoursFiche.poidsKg) : prev.poidsKg,
-            sexe: enCoursFiche.sexe ?? prev.sexe,
+            poidsKg:
+              enCoursFiche.poidsKg != null
+                ? String(enCoursFiche.poidsKg)
+                : poidsConstantes != null
+                  ? String(poidsConstantes)
+                  : prev.poidsKg,
+            sexe: sexePourSelectFormulaire(enCoursFiche.sexe) || prev.sexe,
             numeroRecu: enCoursFiche.numeroRecu ?? prev.numeroRecu,
           }));
         } else {
           definirFicheActive(null);
           reinitialiserFormulaireNouveau();
+          if (poidsConstantes != null) {
+            setIdentite((prev) => ({
+              ...prev,
+              poidsKg: String(poidsConstantes),
+            }));
+          }
         }
         setFichiersEnAttente([]);
       } catch (e) {

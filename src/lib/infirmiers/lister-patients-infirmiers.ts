@@ -5,8 +5,10 @@ import { listerPatientsFileAttenteSalle } from "@/lib/transferts/visibilite-sall
 import type {
   ConstanteVitaleResume,
   DetailPatientInfirmiers,
+  HistoriqueCompletDossierInfirmiers,
   HistoriqueConstanteInfirmiers,
   PatientFileInfirmiers,
+  PatientHistoriqueInfirmiers,
   StatsInfirmiersJour,
 } from "@/lib/infirmiers/types";
 
@@ -117,6 +119,35 @@ function debutJourLocal(d = new Date()) {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
   return x;
+}
+
+const STATUTS_TRANSFERT_CONFIRME = ["ACCEPTE", "EN_TRAITEMENT", "TERMINE"] as const;
+
+/** Patients en file sans ceux dont la consultation est enregistrée et le transfert confirmé. */
+export async function listerPatientsConsultationInfirmiers(): Promise<
+  PatientFileInfirmiers[]
+> {
+  const all = await listerPatientsInfirmiers();
+  if (all.length === 0) return [];
+
+  const dossierIds = all.map((p) => p.dossierId);
+  const transfertsConfirmes = await prisma.transfert.findMany({
+    where: {
+      dossierId: { in: dossierIds },
+      salleOrigine: { code: "INFIRMIERS" },
+      statut: { in: [...STATUTS_TRANSFERT_CONFIRME] },
+    },
+    select: { dossierId: true },
+  });
+  const dossiersTransfertConfirme = new Set(
+    transfertsConfirmes.map((t) => t.dossierId)
+  );
+
+  return all.filter((p) => {
+    if (!p.hasConstantesAujourdhui) return true;
+    if (!dossiersTransfertConfirme.has(p.dossierId)) return true;
+    return false;
+  });
 }
 
 export async function listerPatientsInfirmiers(): Promise<PatientFileInfirmiers[]> {
@@ -328,4 +359,106 @@ export async function listerHistoriqueConstantes(
     numeroPatient: r.dossier.patient.numeroPatient,
     nomComplet: `${r.dossier.patient.prenom} ${r.dossier.patient.nom}`.trim(),
   }));
+}
+
+/** Patients ayant au moins une consultation infirmière enregistrée. */
+export async function listerPatientsHistoriqueInfirmiers(): Promise<
+  PatientHistoriqueInfirmiers[]
+> {
+  const rows = await prisma.constantesVitales.findMany({
+    orderBy: { mesureLe: "desc" },
+    include: {
+      infirmier: { select: { prenom: true, nom: true } },
+      dossier: {
+        include: {
+          patient: {
+            select: {
+              prenom: true,
+              nom: true,
+              numeroPatient: true,
+              telephone: true,
+              dateNaissance: true,
+              sexe: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const parDossier = new Map<
+    string,
+    {
+      patient: (typeof rows)[0]["dossier"]["patient"];
+      numeroDossier: string;
+      constantes: ConstanteVitaleResume[];
+    }
+  >();
+
+  for (const r of rows) {
+    const existant = parDossier.get(r.dossierId);
+    const constante = mapperConstante(r);
+    if (existant) {
+      existant.constantes.push(constante);
+    } else {
+      parDossier.set(r.dossierId, {
+        patient: r.dossier.patient,
+        numeroDossier: r.dossier.numeroDossier,
+        constantes: [constante],
+      });
+    }
+  }
+
+  return [...parDossier.entries()].map(([dossierId, data]) => {
+    const p = data.patient;
+    const derniere = data.constantes[0] ?? null;
+    return {
+      dossierId,
+      numeroDossier: data.numeroDossier,
+      numeroPatient: p.numeroPatient,
+      nomComplet: `${p.prenom} ${p.nom}`.trim(),
+      prenom: p.prenom,
+      nom: p.nom,
+      telephone: p.telephone ?? "—",
+      age: calculerAge(p.dateNaissance?.toISOString() ?? null),
+      sexe: p.sexe ?? null,
+      derniereMesureLe: derniere?.mesureLe ?? new Date().toISOString(),
+      nbConsultations: data.constantes.length,
+      derniereConstante: derniere,
+    };
+  });
+}
+
+export async function obtenirHistoriqueCompletDossierInfirmiers(
+  dossierId: string
+): Promise<HistoriqueCompletDossierInfirmiers | null> {
+  const dossier = await prisma.dossierPatient.findUnique({
+    where: { id: dossierId },
+    include: { patient: true },
+  });
+  if (!dossier) return null;
+
+  const [constantes, nbFiches] = await Promise.all([
+    prisma.constantesVitales.findMany({
+      where: { dossierId },
+      include: { infirmier: { select: { prenom: true, nom: true } } },
+      orderBy: { mesureLe: "desc" },
+    }),
+    prisma.ficheTraitement.count({ where: { dossierId } }),
+  ]);
+
+  const patient = dossier.patient;
+  return {
+    dossierId,
+    numeroDossier: dossier.numeroDossier,
+    numeroPatient: patient.numeroPatient,
+    nomComplet: `${patient.prenom} ${patient.nom}`.trim(),
+    prenom: patient.prenom,
+    nom: patient.nom,
+    telephone: patient.telephone ?? "—",
+    age: calculerAge(patient.dateNaissance?.toISOString() ?? null),
+    sexe: patient.sexe ?? null,
+    constantes: constantes.map(mapperConstante),
+    nbFichesTraitement: nbFiches,
+  };
 }

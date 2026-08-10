@@ -64,3 +64,32 @@ export interface HistoriqueConstanteInfirmiers extends ConstanteVitaleResume {
   numeroPatient: string;
   nomComplet: string;
 }
+
+export interface PatientHistoriqueInfirmiers {
+  dossierId: string;
+  numeroDossier: string;
+  numeroPatient: string;
+  nomComplet: string;
+  prenom: string;
+  nom: string;
+  telephone: string;
+  age: number | null;
+  sexe: string | null;
+  derniereMesureLe: string;
+  nbConsultations: number;
+  derniereConstante: ConstanteVitaleResume | null;
+}
+
+export interface HistoriqueCompletDossierInfirmiers {
+  dossierId: string;
+  numeroDossier: string;
+  numeroPatient: string;
+  nomComplet: string;
+  prenom: string;
+  nom: string;
+  telephone: string;
+  age: number | null;
+  sexe: string | null;
+  constantes: ConstanteVitaleResume[];
+  nbFichesTraitement: number;
+}

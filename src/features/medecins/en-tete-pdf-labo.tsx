@@ -1,7 +1,6 @@
 import { Image, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { INFORMATIONS_HOPITAL } from "@/constants/navigation";
 import { INFOS_LEGALES_TICKET } from "@/constants/ticket-thermique";
-import { cheminsAssetsPdfServeur } from "@/lib/pdf/assets-pdf-serveur";
 
 export type BrandingPdfLabo = {
   nom: string;
@@ -142,10 +141,7 @@ export function EnTetePdfLabo({
   const b = branding ?? BRANDING_PDF_FALLBACK;
   const L = INFOS_LEGALES_TICKET;
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const logoSrc =
-    origin.length > 0
-      ? `${origin}/images/logo-ham-laboratoire.png`
-      : cheminsAssetsPdfServeur().logo;
+  const logoSrc = `${origin}/images/logo-ham-laboratoire.png`;
   /** Tél. / email : ticket légal (comme estimation) + fallback branding */
   const telephone = L.telephones || b.telephone;
   const email = L.email || b.email;

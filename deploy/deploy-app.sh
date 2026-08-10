@@ -61,7 +61,11 @@ if ! run_as_sigh 'npm ci || { echo "⚠️  package-lock désynchronisé — npm
     services_running=false
   fi
   echo "⚠️  Réinstallation propre de node_modules"
-  rm -rf "${APP_DIR}/node_modules"
+  if [[ -d "${APP_DIR}/node_modules" ]]; then
+    mv "${APP_DIR}/node_modules" "${APP_DIR}/node_modules.old.$$" 2>/dev/null || true
+    rm -rf "${APP_DIR}/node_modules.old.$$" &
+  fi
+  rm -rf "${APP_DIR}/node_modules" 2>/dev/null || true
   if [[ "${EUID:-0}" -eq 0 ]]; then
     chown -R sigh:sigh "${APP_DIR}"
   fi

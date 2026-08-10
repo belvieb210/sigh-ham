@@ -273,13 +273,17 @@ async function trouverDossierReutilisable(
 
     if (!dossier) return null;
 
-    const transfertBloquant = await tx.transfert.findFirst({
+    /** Ignore les transferts intra-salle (ex. file EGLISE) — seul un sortant confirmé bloque. */
+    const transfertsConfirmes = await tx.transfert.findMany({
       where: {
         dossierId: dossier.id,
         statut: { in: ["ACCEPTE", "EN_TRAITEMENT", "TERMINE"] },
       },
-      select: { id: true },
+      select: { id: true, salleOrigineId: true, salleDestinationId: true },
     });
+    const transfertBloquant = transfertsConfirmes.find(
+      (t) => t.salleOrigineId !== t.salleDestinationId
+    );
     if (transfertBloquant) {
       throw new Error(
         "Ce transfert est déjà confirmé : l'orientation rapide ne peut plus être appliquée."

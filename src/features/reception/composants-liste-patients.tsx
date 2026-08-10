@@ -191,6 +191,13 @@ export function BadgeStatut({ patient }: { patient: PatientEnregistre }) {
 
 export type VarianteActionsPatient = "defaut" | "transferts";
 
+/** Menu ⋮ : uniquement si un transfert sortant existe et peut être géré */
+export function patientAActionsTransfert(patient: PatientEnregistre): boolean {
+  if (!patient.transfertId) return false;
+  if (patient.enRecuperation && patient.statutTransfert === "REFUSE") return true;
+  return patient.statutTransfert === "EN_ATTENTE";
+}
+
 /** Après confirmation, modifier / supprimer / menu ⋮ ne s'affichent plus */
 export function patientTransfereConfirme(patient: PatientEnregistre): boolean {
   if (patient.statut === "Transféré") return true;
@@ -519,7 +526,7 @@ export function ActionsPatient({
         >
           <Eye className="h-4 w-4" />
         </button>
-        {!transfere && (
+        {!transfere && patientAActionsTransfert(patient) && (
           <MenuActionsTransfert patient={patient} onRafraichir={onRafraichirTransferts} />
         )}
       </div>
@@ -558,7 +565,7 @@ export function ActionsPatient({
       {!transfere && (
         <>
           <ActionsGestionPatient patient={patient} onApresSuppression={onRafraichirTransferts} />
-          {patient.transfertId && onRafraichirTransferts && (
+          {patient.transfertId && onRafraichirTransferts && patientAActionsTransfert(patient) && (
             <MenuActionsTransfert patient={patient} onRafraichir={onRafraichirTransferts} />
           )}
         </>

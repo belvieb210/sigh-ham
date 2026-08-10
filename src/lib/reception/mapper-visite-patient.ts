@@ -92,12 +92,18 @@ function determinerStatutVisite(
 
 import type { CodeSalle } from "@/generated/prisma/client";
 
+/** Transfert sortant depuis une salle (exclut les boucles intra-salle EGLISE→EGLISE). */
+function filtreTransfertSortantDepuis(codeOrigine: CodeSalle) {
+  return {
+    salleOrigine: { code: codeOrigine },
+    NOT: { salleDestination: { code: codeOrigine } },
+    statut: { not: "ANNULE" as const },
+  };
+}
+
 function includeDernierTransfertDepuis(codeOrigine: CodeSalle) {
   return {
-    where: {
-      salleOrigine: { code: codeOrigine },
-      statut: { not: "ANNULE" as const },
-    },
+    where: filtreTransfertSortantDepuis(codeOrigine),
     orderBy: { emisLe: "desc" as const },
     take: 8,
     include: {
@@ -258,6 +264,7 @@ export async function chargerDossiersVisiteEglise(options?: {
                     transferts: {
                       some: {
                         salleOrigine: { code: "EGLISE" },
+                        salleDestination: { code: { not: "EGLISE" } },
                         statut: { notIn: ["ANNULE", "REFUSE"] },
                       },
                     },
@@ -266,6 +273,7 @@ export async function chargerDossiersVisiteEglise(options?: {
                     transferts: {
                       some: {
                         salleOrigine: { code: "EGLISE" },
+                        salleDestination: { code: { not: "EGLISE" } },
                         statut: "REFUSE",
                         recuperation: { statut: "EN_RECUPERATION" },
                       },

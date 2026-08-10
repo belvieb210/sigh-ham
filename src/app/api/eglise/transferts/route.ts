@@ -52,8 +52,9 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error("[GET /api/eglise/transferts]", error);
+    const detail = error instanceof Error ? error.message : "Erreur inconnue";
     return NextResponse.json(
-      { message: "Impossible de charger les patients transférés." },
+      { message: "Impossible de charger les patients transférés.", detail },
       { status: 500 }
     );
   }

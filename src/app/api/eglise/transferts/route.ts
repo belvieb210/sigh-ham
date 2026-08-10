@@ -206,6 +206,23 @@ export async function POST(request: NextRequest) {
       prenuptial
     );
 
+    try {
+      const { creerEstimationDepuisDossier } = await import(
+        "@/lib/eglise/estimations-convention"
+      );
+      await creerEstimationDepuisDossier(
+        session.utilisateur.id,
+        resultat.dossierId,
+        {
+          transfertId: resultat.transfertId,
+          nomConvention: prenuptial.paroisse,
+          remiseUsd: donnees.remise,
+        }
+      );
+    } catch {
+      /* estimation optionnelle si pas d'examens */
+    }
+
     return NextResponse.json({
       message: `Patient orienté vers ${resultat.salleDestination}. Confirmez le transfert via le menu ⋮.`,
       ...resultat,

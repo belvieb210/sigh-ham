@@ -40,7 +40,7 @@ async function enregistrerPatientEglise(
       data: {
         dossierId: dossier.id,
         statut: "EN_ATTENTE",
-        motif: "Enregistrement service Église",
+        motif: "Enregistrement service conventionné",
       },
     });
     passageId = passage.id;
@@ -63,20 +63,6 @@ async function enregistrerPatientEglise(
       },
     });
   }
-
-  await prisma.transfert.create({
-    data: {
-      dossierId: dossier.id,
-      passageId,
-      salleOrigineId: salle.id,
-      salleDestinationId: salle.id,
-      statut: "ACCEPTE",
-      motif: "Enregistrement local service Église",
-      emetteurId: agentId,
-      recepteurId: agentId,
-      accepteLe: new Date(),
-    },
-  });
 
   await assurerDossierPrenuptial(dossier.id, agentId, prenuptial);
 

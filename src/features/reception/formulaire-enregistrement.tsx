@@ -1077,15 +1077,13 @@ export const FormulaireEnregistrement = forwardRef<
               {champsEglise && (
                 <div className="sm:col-span-2">
                   <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("eglise.formulaire.nomEglise", { defaultValue: "Nom de l'église" })}
+                    {t("eglise.formulaire.nomEglise")}
                   </label>
                   <input
                     type="text"
                     value={paroisse}
                     onChange={(e) => setParoisse(e.target.value)}
-                    placeholder={t("eglise.formulaire.placeholderNomEglise", {
-                      defaultValue: "Nom de l'église ou de la paroisse",
-                    })}
+                    placeholder={t("eglise.formulaire.placeholderNomEglise")}
                     className={CLASSE_CHAMP_RECEPTION}
                   />
                 </div>

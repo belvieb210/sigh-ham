@@ -9,6 +9,7 @@ import {
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 import { ListePatientsEnregistres } from "@/features/reception/liste-patients-enregistres";
 import { ListePatientsTransferes } from "@/features/reception/liste-patients-transferes";
+import { PanneauDroitConvention, SectionsMobileConvention } from "@/features/eglise/panneau-droit-convention";
 import {
   PanneauDroitReception,
   SectionsMobileReception,
@@ -57,7 +58,7 @@ function CorpsTransferes() {
       />
       <div className="space-y-4 lg:space-y-5">
         <ListePatientsTransferes />
-        <SectionsMobileReception variante="transferts" />
+        <SectionsMobileConvention />
       </div>
     </div>
   );
@@ -98,7 +99,7 @@ export function ContenuPatientsTransferesEglise({
         utilisateur={utilisateur}
         titre={t("reception.pages.transferts.titre")}
         sousTitre={t("eglise.layout.sousTitre")}
-        panneauDroit={<PanneauDroitReception variante="transferts" />}
+        panneauDroit={<PanneauDroitConvention />}
         activerSelectionTransfert
       >
         <CorpsTransferes />

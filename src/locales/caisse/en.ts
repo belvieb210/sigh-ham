@@ -44,6 +44,7 @@ export const caisseEn = {
     rapportJournalier: "Daily report",
     rapportMensuel: "Monthly report",
     statistiques: "Statistics",
+    voirEstimations: "View estimates",
     messagerie: "Messaging",
     notifications: "Notifications",
     modesPaiement: "Payment methods",

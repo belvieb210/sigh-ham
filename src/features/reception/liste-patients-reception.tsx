@@ -19,7 +19,7 @@ import {
 } from "@/features/reception/formulaire-filtres-recents-reception";
 import { cn } from "@/lib/utils";
 
-const PATIENTS_PAR_PAGE = 5;
+const PATIENTS_PAR_PAGE = 15;
 
 export interface CarteStatPatient {
   /** Identifiant stable pour la logique (indépendant de la langue) */

@@ -39,6 +39,7 @@ export const NAVIGATION_EGLISE = {
     { href: "/sigh/eglise/historique", id: "historique", icone: History },
   ],
   eglise: [
+    { href: "/sigh/eglise/estimations", id: "estimations", icone: ClipboardList },
     { href: "/sigh/eglise/rapports", id: "rapports", icone: FileText },
     { href: "/sigh/eglise/certificats", id: "certificats", icone: Award },
   ],

@@ -1,17 +1,17 @@
-/** Traductions FR — Service Église */
+/** Traductions FR — Service Conventionné */
 
 export const egliseFr = {
   layout: {
-    titre: "Service Église",
-    sousTitre: "Examens prénuptiaux, orientation et certificats",
-    sectionPrincipal: "Service Église",
+    titre: "Service Conventionné",
+    sousTitre: "Examens prénuptiaux, estimations et certificats",
+    sectionPrincipal: "Service Conventionné",
     sectionEglise: "Dossiers prénuptiaux",
     sectionCommunication: "Communication",
     sectionParametres: "Paramètres",
     deconnecter: "Se déconnecter",
     ouvrirMenu: "Ouvrir le menu",
     fermerMenu: "Fermer le menu",
-    navigationMobile: "Navigation service Église",
+    navigationMobile: "Navigation service conventionné",
     rechercher: "Rechercher un patient…",
     raccourciRecherche: "Ctrl + K",
   },
@@ -25,6 +25,7 @@ export const egliseFr = {
     historique: "Historique",
     rapports: "Rapports PDF",
     certificats: "Certificats",
+    estimations: "Estimations",
     messagerie: "Messagerie",
     notifications: "Notifications",
     profil: "Mon profil",
@@ -43,15 +44,37 @@ export const egliseFr = {
   common: {
     erreur: "Une erreur est survenue",
     chargement: "Chargement…",
-    salle: "Service Église",
+    salle: "Service Conventionné",
   },
   dashboard: {
-    titre: "Service Église",
+    titre: "Service Conventionné",
     sousTitre: "Enregistrement prénuptial et suivi des dossiers",
   },
   formulaire: {
-    nomEglise: "Nom de l'église",
-    placeholderNomEglise: "Nom de l'église ou de la paroisse",
+    nomEglise: "Nom de la convention",
+    placeholderNomEglise: "Nom de la convention ou de l'organisme",
+  },
+  estimations: {
+    titre: "Estimations",
+    description: "Montants estimés et honoraires conventionnés (5 %)",
+    fil: "Estimations",
+    vide: "Aucune estimation aujourd'hui",
+    totalJour: "Total estimé du jour",
+    honorairesJour: "Honoraires du jour (5 %)",
+    patient: "Patient",
+    montant: "Montant patient",
+    honoraire: "Honoraire",
+    telecharger: "Télécharger PDF",
+    envoyerCaisse: "Transmettre à la caisse",
+    voirPdf: "Voir l'estimation",
+  },
+  panneau: {
+    syntheseEstimation: "Synthèse estimation",
+    honorairesDus: "Honoraires dus (5 %)",
+    totalEstime: "Total estimé patient",
+    selectionMultiple: "{{count}} patient(s) sélectionné(s)",
+    aucuneEstimation: "Sélectionnez un patient pour voir son estimation.",
+    genererEstimation: "Générer l'estimation",
   },
   messagerie: {
     titre: "Messagerie",
@@ -59,7 +82,7 @@ export const egliseFr = {
   },
   notifications: {
     titre: "Notifications",
-    description: "Alertes et informations du service Église",
+    description: "Alertes et informations du service conventionné",
   },
   rapports: {
     titre: "Rapports PDF",

@@ -1,17 +1,17 @@
-/** Traductions EN — Church service */
+/** Traductions EN — Convention service */
 
 export const egliseEn = {
   layout: {
-    titre: "Church service",
-    sousTitre: "Premarital exams, routing and certificates",
-    sectionPrincipal: "Church service",
+    titre: "Convention service",
+    sousTitre: "Premarital exams, estimates and certificates",
+    sectionPrincipal: "Convention service",
     sectionEglise: "Premarital files",
     sectionCommunication: "Communication",
     sectionParametres: "Settings",
     deconnecter: "Sign out",
     ouvrirMenu: "Open menu",
     fermerMenu: "Close menu",
-    navigationMobile: "Church service navigation",
+    navigationMobile: "Convention service navigation",
     rechercher: "Search for a patient…",
     raccourciRecherche: "Ctrl + K",
   },
@@ -25,6 +25,7 @@ export const egliseEn = {
     historique: "History",
     rapports: "PDF reports",
     certificats: "Certificates",
+    estimations: "Estimates",
     messagerie: "Messaging",
     notifications: "Notifications",
     profil: "My profile",
@@ -43,15 +44,37 @@ export const egliseEn = {
   common: {
     erreur: "An error occurred",
     chargement: "Loading…",
-    salle: "Church service",
+    salle: "Convention service",
   },
   dashboard: {
-    titre: "Church service",
+    titre: "Convention service",
     sousTitre: "Premarital registration and file follow-up",
   },
   formulaire: {
-    nomEglise: "Church name",
-    placeholderNomEglise: "Church or parish name",
+    nomEglise: "Convention name",
+    placeholderNomEglise: "Convention or organization name",
+  },
+  estimations: {
+    titre: "Estimates",
+    description: "Estimated amounts and convention fees (5%)",
+    fil: "Estimates",
+    vide: "No estimates today",
+    totalJour: "Today's estimated total",
+    honorairesJour: "Today's fees (5%)",
+    patient: "Patient",
+    montant: "Patient amount",
+    honoraire: "Fee",
+    telecharger: "Download PDF",
+    envoyerCaisse: "Send to cashier",
+    voirPdf: "View estimate",
+  },
+  panneau: {
+    syntheseEstimation: "Estimate summary",
+    honorairesDus: "Fees due (5%)",
+    totalEstime: "Estimated patient total",
+    selectionMultiple: "{{count}} patient(s) selected",
+    aucuneEstimation: "Select a patient to view their estimate.",
+    genererEstimation: "Generate estimate",
   },
   messagerie: {
     titre: "Messaging",
@@ -59,7 +82,7 @@ export const egliseEn = {
   },
   notifications: {
     titre: "Notifications",
-    description: "Alerts and information for the church service",
+    description: "Alerts and information for the convention service",
   },
   rapports: {
     titre: "PDF reports",

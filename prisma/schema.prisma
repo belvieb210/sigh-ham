@@ -265,6 +265,13 @@ enum StatutExamenPrenuptial {
   ANNULE
 }
 
+enum StatutEstimationConvention {
+  EMIS
+  ENVOYEE_CAISSE
+  TRAITE
+  ANNULE
+}
+
 // ─── RBAC & Salles ──────────────────────────────────────────────────────────
 
 model Salle {
@@ -362,6 +369,7 @@ model Utilisateur {
   messagesLus              MessageLu[]
   presence                 PresenceUtilisateur?
   reactions                ReactionMessage[]
+  estimationsConventionEmises EstimationConvention[] @relation("EstimationConventionEmetteur")
   mentionsRecues           MentionMessage[]        @relation("MentionDestinataire")
   messagesMasques          MessageMasque[]
   notifications            Notification[]
@@ -448,6 +456,7 @@ model DossierPatient {
   recuperationsTransfert   TransfertRecuperation[]
   conversations            Conversation[]
   ventesPharmacie          VentePharmacie[]
+  estimationsConvention    EstimationConvention[]
 
   @@map("dossiers_patients")
 }
@@ -497,6 +506,7 @@ model Transfert {
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
   recuperation TransfertRecuperation?
+  estimationConvention EstimationConvention?
 
   @@index([salleDestinationId, statut])
   @@index([dossierId])
@@ -1030,6 +1040,45 @@ model ExamenPrenuptial {
   termineLe     DateTime?              @map("termine_le")
 
   @@map("examens_prenuptiaux")
+}
+
+model EstimationConvention {
+  id                 String                     @id @default(cuid())
+  dossierId          String                     @map("dossier_id")
+  dossier            DossierPatient             @relation(fields: [dossierId], references: [id])
+  transfertId        String?                    @unique @map("transfert_id")
+  transfert          Transfert?                 @relation(fields: [transfertId], references: [id])
+  emetteurId         String                     @map("emetteur_id")
+  emetteur           Utilisateur                @relation("EstimationConventionEmetteur", fields: [emetteurId], references: [id])
+  nomConvention      String?                    @map("nom_convention")
+  medecinResponsable String                     @map("medecin_responsable")
+  sousTotalUsd       Decimal                    @map("sous_total_usd") @db.Decimal(12, 2)
+  remiseUsd          Decimal                    @default(0) @map("remise_usd") @db.Decimal(12, 2)
+  honorairePct       Decimal                    @default(5) @map("honoraire_pct") @db.Decimal(5, 2)
+  honoraireUsd       Decimal                    @map("honoraire_usd") @db.Decimal(12, 2)
+  totalPatientUsd    Decimal                    @map("total_patient_usd") @db.Decimal(12, 2)
+  pdfUrl             String?                    @map("pdf_url")
+  statut             StatutEstimationConvention @default(EMIS)
+  emisLe             DateTime                   @default(now()) @map("emis_le")
+  envoyeCaisseLe     DateTime?                  @map("envoye_caisse_le")
+  lignes             EstimationConventionLigne[]
+
+  @@index([dossierId])
+  @@index([emisLe])
+  @@index([statut])
+  @@map("estimations_convention")
+}
+
+model EstimationConventionLigne {
+  id           String               @id @default(cuid())
+  estimationId String               @map("estimation_id")
+  estimation   EstimationConvention @relation(fields: [estimationId], references: [id], onDelete: Cascade)
+  typeExamenId String?              @map("type_examen_id")
+  code         String
+  libelle      String
+  prixUnitaire Decimal              @map("prix_unitaire") @db.Decimal(12, 2)
+
+  @@map("estimation_convention_lignes")
 }
 
 // ─── Médecins externes (patients isolés) ──────────────────────────────────────

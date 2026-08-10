@@ -19,6 +19,7 @@ import {
   ArrowRightLeft,
   FlaskConical,
   Printer,
+  ClipboardList,
 } from "lucide-react";
 
 export const NAVIGATION_CAISSE = {
@@ -37,6 +38,7 @@ export const NAVIGATION_CAISSE = {
     { href: "/sigh/caisse/rapports", id: "rapportJournalier", icone: BarChart3 },
     { href: "/sigh/caisse/rapports/mensuel", id: "rapportMensuel", icone: CalendarDays },
     { href: "/sigh/caisse/rapports/statistiques", id: "statistiques", icone: PieChart },
+    { href: "/sigh/caisse/estimations", id: "voirEstimations", icone: ClipboardList },
   ],
   communication: [
     { href: "/sigh/caisse/messagerie", id: "messagerie", icone: MessageSquare },

@@ -61,11 +61,18 @@ if ! run_as_sigh 'npm ci || { echo "⚠️  package-lock désynchronisé — npm
     services_running=false
   fi
   echo "⚠️  Réinstallation propre de node_modules"
+  if command -v systemctl >/dev/null 2>&1 && [[ "${EUID:-0}" -eq 0 ]]; then
+    systemctl stop sigh-web sigh-socket 2>/dev/null || true
+  fi
   if [[ -d "${APP_DIR}/node_modules" ]]; then
-    mv "${APP_DIR}/node_modules" "${APP_DIR}/node_modules.old.$$" 2>/dev/null || true
-    rm -rf "${APP_DIR}/node_modules.old.$$" &
+    trash="${APP_DIR}/node_modules.trash.$$"
+    mv "${APP_DIR}/node_modules" "${trash}" 2>/dev/null || true
+    if [[ -d "${trash}" ]]; then
+      nohup rm -rf "${trash}" >/dev/null 2>&1 &
+    fi
   fi
   rm -rf "${APP_DIR}/node_modules" 2>/dev/null || true
+  mkdir -p "${APP_DIR}/node_modules"
   if [[ "${EUID:-0}" -eq 0 ]]; then
     chown -R sigh:sigh "${APP_DIR}"
   fi

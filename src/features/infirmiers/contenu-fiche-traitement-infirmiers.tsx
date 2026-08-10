@@ -202,7 +202,7 @@ export function CorpsFicheTraitementInfirmiers() {
     setChargementListe(true);
     try {
       const [resPatients, resFiches] = await Promise.all([
-        fetch("/api/infirmiers/patients"),
+        fetch("/api/infirmiers/patients?contexte=fiche-traitement"),
         fetch("/api/infirmiers/fiches-traitement"),
       ]);
       const dataPatients = (await resPatients.json()) as {

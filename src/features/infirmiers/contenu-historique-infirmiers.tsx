@@ -2,8 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { History, Loader2 } from "lucide-react";
+import { History, Loader2, Share2, SlidersHorizontal } from "lucide-react";
 import { PaginationListe } from "@/components/ui/pagination-liste";
+import {
+  compterFiltresActifs,
+  FILTRES_FACTURATION_VIDES,
+  FormulaireFiltresFacturationCaisse,
+  type FiltresFacturationCaisse,
+} from "@/features/caisse/formulaire-filtres-facturation-caisse";
 import {
   MiseEnPageInfirmiers,
   type UtilisateurInfirmiers,
@@ -35,6 +41,36 @@ function formaterMesure(iso: string) {
   }
 }
 
+function patientHistoriqueCorrespondFiltres(
+  p: PatientHistoriqueInfirmiers,
+  f: FiltresFacturationCaisse
+): boolean {
+  const nom = f.nom.trim().toLowerCase();
+  const prenom = f.prenom.trim().toLowerCase();
+  const tel = f.telephone.trim().toLowerCase();
+  const enreg = f.numeroEnreg.trim().toLowerCase();
+  const idEntite = f.idEntite.trim().toLowerCase();
+  if (nom && !`${p.nom} ${p.nomComplet}`.toLowerCase().includes(nom)) return false;
+  if (prenom && !`${p.prenom} ${p.nomComplet}`.toLowerCase().includes(prenom))
+    return false;
+  if (tel && !(p.telephone || "").toLowerCase().includes(tel)) return false;
+  if (
+    enreg &&
+    !(p.numeroDossier || "").toLowerCase().includes(enreg) &&
+    !(p.numeroPatient || "").toLowerCase().includes(enreg)
+  ) {
+    return false;
+  }
+  if (
+    idEntite &&
+    !(p.numeroPatient || "").toLowerCase().includes(idEntite) &&
+    !(p.dossierId || "").toLowerCase().includes(idEntite)
+  ) {
+    return false;
+  }
+  return true;
+}
+
 export function ContenuHistoriqueInfirmiers({ utilisateur }: Props) {
   const { t } = useTranslation();
   const [patients, setPatients] = useState<PatientHistoriqueInfirmiers[]>([]);
@@ -46,7 +82,13 @@ export function ContenuHistoriqueInfirmiers({ utilisateur }: Props) {
   const [chargement, setChargement] = useState(true);
   const [chargementDetail, setChargementDetail] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [recherche, setRecherche] = useState("");
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillonFiltres, setBrouillonFiltres] = useState<FiltresFacturationCaisse>(
+    FILTRES_FACTURATION_VIDES
+  );
+  const [filtresAppliques, setFiltresAppliques] = useState<FiltresFacturationCaisse>(
+    FILTRES_FACTURATION_VIDES
+  );
   const [pageListe, setPageListe] = useState(1);
 
   const chargerPatients = useCallback(async () => {
@@ -105,16 +147,10 @@ export function ContenuHistoriqueInfirmiers({ utilisateur }: Props) {
     };
   }, [patientSelectionne]);
 
-  const filtrés = useMemo(() => {
-    const q = recherche.trim().toLowerCase();
-    if (!q) return patients;
-    return patients.filter(
-      (p) =>
-        p.nomComplet.toLowerCase().includes(q) ||
-        p.numeroDossier.toLowerCase().includes(q) ||
-        p.numeroPatient.toLowerCase().includes(q)
-    );
-  }, [patients, recherche]);
+  const filtrés = useMemo(
+    () => patients.filter((p) => patientHistoriqueCorrespondFiltres(p, filtresAppliques)),
+    [patients, filtresAppliques]
+  );
 
   const PAR_PAGE = 8;
   const totalPages = Math.max(1, Math.ceil(filtrés.length / PAR_PAGE));
@@ -124,7 +160,11 @@ export function ContenuHistoriqueInfirmiers({ utilisateur }: Props) {
 
   useEffect(() => {
     setPageListe(1);
-  }, [recherche]);
+  }, [filtresAppliques]);
+
+  const nbFiltresActifs = compterFiltresActifs(filtresAppliques, {
+    ignorerNumeroFacture: true,
+  });
 
   const panneauProps = {
     patient: patientSelectionne,
@@ -140,21 +180,89 @@ export function ContenuHistoriqueInfirmiers({ utilisateur }: Props) {
       panneauDroit={<PanneauDroitHistoriqueInfirmiers {...panneauProps} />}
     >
       <div className="mx-auto w-full max-w-[1200px] space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-bleu-medical" />
-            <h2 className="text-lg font-bold text-texte-principal">
-              {t("infirmiers.historique.listeTitre")}
-            </h2>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <History className="h-5 w-5 text-bleu-medical" />
+              <h2 className="text-xl font-bold text-texte-principal">
+                {t("infirmiers.historique.listeTitre")}
+              </h2>
+            </div>
+            <p className="mt-1 text-sm text-texte-secondaire">
+              {t("infirmiers.historique.listeDescription")}
+            </p>
           </div>
-          <input
-            type="search"
-            value={recherche}
-            onChange={(e) => setRecherche(e.target.value)}
-            placeholder={t("infirmiers.historique.recherche")}
-            className="h-10 w-full max-w-xs rounded-lg border border-gris-bordure bg-white px-3 text-sm"
-          />
+
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setFiltresOuverts((o) => !o)}
+              aria-expanded={filtresOuverts}
+              aria-label={
+                filtresOuverts
+                  ? t("caisse.facturation.fermerFiltres")
+                  : t("caisse.facturation.ouvrirFiltres")
+              }
+              className={cn(
+                "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+                filtresOuverts
+                  ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                  : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
+              )}
+            >
+              <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
+              <span
+                className={cn(
+                  "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
+                  nbFiltresActifs > 0 ? "bg-red-500" : "bg-slate-400"
+                )}
+              >
+                {nbFiltresActifs}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const csv = [
+                  "numero;nom;prenom;telephone;consultations;derniere_mesure",
+                  ...filtrés.map(
+                    (p) =>
+                      `${p.numeroPatient};${p.nom};${p.prenom};${p.telephone};${p.nbConsultations};${p.derniereMesureLe}`
+                  ),
+                ].join("\n");
+                const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "historique-infirmiers.csv";
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              aria-label={t("caisse.transferts.exporterSelection")}
+              title={t("caisse.transferts.exporterSelection")}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gris-bordure bg-white text-texte-principal transition-colors hover:bg-gris-tres-clair"
+            >
+              <Share2 className="h-5 w-5" strokeWidth={2} />
+            </button>
+          </div>
         </div>
+
+        {filtresOuverts ? (
+          <FormulaireFiltresFacturationCaisse
+            valeurs={brouillonFiltres}
+            onChange={setBrouillonFiltres}
+            onRechercher={() => {
+              setFiltresAppliques(brouillonFiltres);
+              setFiltresOuverts(false);
+            }}
+            onReinitialiser={() => {
+              setBrouillonFiltres(FILTRES_FACTURATION_VIDES);
+              setFiltresAppliques(FILTRES_FACTURATION_VIDES);
+            }}
+            idPrefix="filtre-historique-infirmiers"
+            masquerNumeroFacture
+          />
+        ) : null}
 
         {chargement ? (
           <div className="flex items-center gap-2 text-sm text-texte-secondaire">

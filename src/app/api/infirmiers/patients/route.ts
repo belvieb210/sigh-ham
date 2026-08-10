@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { obtenirSessionApiInfirmiers } from "@/lib/auth/garde-api-infirmiers";
 import {
   listerPatientsConsultationInfirmiers,
+  listerPatientsFicheTraitementInfirmiers,
   listerPatientsInfirmiers,
 } from "@/lib/infirmiers/lister-patients-infirmiers";
 
@@ -17,7 +18,9 @@ export async function GET(req: Request) {
     const patients =
       contexte === "consultation"
         ? await listerPatientsConsultationInfirmiers()
-        : await listerPatientsInfirmiers();
+        : contexte === "fiche-traitement"
+          ? await listerPatientsFicheTraitementInfirmiers()
+          : await listerPatientsInfirmiers();
     return NextResponse.json({ patients });
   } catch (e) {
     console.error("[api/infirmiers/patients]", e);

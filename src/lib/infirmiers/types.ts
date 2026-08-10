@@ -32,9 +32,27 @@ export interface StatsInfirmiersJour {
   patientsEnFile: number;
   constantesAujourdhui: number;
   transfertsSortantsAujourdhui: number;
+  fichesTraitementActives: number;
+  patientsConsultationEnAttente: number;
   arriveesFileIso: string[];
   dateReference: string;
 }
+
+export type ActiviteRecenteInfirmiers = {
+  id: string;
+  type: "CONSTANTES" | "TRANSFERT" | "FICHE_TRAITEMENT";
+  libelle: string;
+  patient: string;
+  heure: string;
+  iso: string;
+};
+
+export type ApercuDashboardInfirmiers = {
+  stats: StatsInfirmiersJour;
+  file: PatientFileInfirmiers[];
+  patientEnCours: DetailPatientInfirmiers | null;
+  activites: ActiviteRecenteInfirmiers[];
+};
 
 export interface ConstanteVitaleResume {
   id: string;

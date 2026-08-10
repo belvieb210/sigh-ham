@@ -10,6 +10,7 @@ import type {
   PatientFileInfirmiers,
   PatientHistoriqueInfirmiers,
   StatsInfirmiersJour,
+  ApercuDashboardInfirmiers,
 } from "@/lib/infirmiers/types";
 
 const COULEURS_ORIENTATION: Record<string, string> = {
@@ -131,6 +132,19 @@ export async function listerPatientsConsultationInfirmiers(): Promise<
   if (all.length === 0) return [];
 
   const dossierIds = all.map((p) => p.dossierId);
+  const dossiersTransfertConfirme = await dossiersTransfertConfirmeInfirmiers(dossierIds);
+
+  return all.filter((p) => {
+    if (!p.hasConstantesAujourdhui) return true;
+    if (!dossiersTransfertConfirme.has(p.dossierId)) return true;
+    return false;
+  });
+}
+
+async function dossiersTransfertConfirmeInfirmiers(
+  dossierIds: string[]
+): Promise<Set<string>> {
+  if (dossierIds.length === 0) return new Set();
   const transfertsConfirmes = await prisma.transfert.findMany({
     where: {
       dossierId: { in: dossierIds },
@@ -139,15 +153,19 @@ export async function listerPatientsConsultationInfirmiers(): Promise<
     },
     select: { dossierId: true },
   });
-  const dossiersTransfertConfirme = new Set(
-    transfertsConfirmes.map((t) => t.dossierId)
-  );
+  return new Set(transfertsConfirmes.map((t) => t.dossierId));
+}
 
-  return all.filter((p) => {
-    if (!p.hasConstantesAujourdhui) return true;
-    if (!dossiersTransfertConfirme.has(p.dossierId)) return true;
-    return false;
-  });
+/** Patients dont le transfert sortant depuis Infirmiers est confirmé (fiche traitement). */
+export async function listerPatientsFicheTraitementInfirmiers(): Promise<
+  PatientFileInfirmiers[]
+> {
+  const all = await listerPatientsInfirmiers();
+  if (all.length === 0) return [];
+  const dossiersTransfertConfirme = await dossiersTransfertConfirmeInfirmiers(
+    all.map((p) => p.dossierId)
+  );
+  return all.filter((p) => dossiersTransfertConfirme.has(p.dossierId));
 }
 
 export async function listerPatientsInfirmiers(): Promise<PatientFileInfirmiers[]> {
@@ -317,7 +335,11 @@ export async function obtenirDetailPatientInfirmiers(
 
 export async function obtenirStatsInfirmiers(): Promise<StatsInfirmiersJour> {
   const debut = debutJourLocal();
-  const patients = await listerPatientsInfirmiers();
+  const [patients, patientsConsultation, fichesActives] = await Promise.all([
+    listerPatientsInfirmiers(),
+    listerPatientsConsultationInfirmiers(),
+    prisma.ficheTraitement.count({ where: { statut: "EN_COURS" } }),
+  ]);
 
   const [constantesAujourdhui, transfertsSortantsAujourdhui] = await Promise.all([
     prisma.constantesVitales.count({ where: { mesureLe: { gte: debut } } }),
@@ -325,6 +347,7 @@ export async function obtenirStatsInfirmiers(): Promise<StatsInfirmiersJour> {
       where: {
         salleOrigine: { code: "INFIRMIERS" },
         emisLe: { gte: debut },
+        statut: { in: [...STATUTS_TRANSFERT_CONFIRME] },
       },
     }),
   ]);
@@ -333,8 +356,87 @@ export async function obtenirStatsInfirmiers(): Promise<StatsInfirmiersJour> {
     patientsEnFile: patients.length,
     constantesAujourdhui,
     transfertsSortantsAujourdhui,
+    fichesTraitementActives: fichesActives,
+    patientsConsultationEnAttente: patientsConsultation.length,
     arriveesFileIso: patients.map((p) => p.arriveeLe),
     dateReference: new Date().toISOString(),
+  };
+}
+
+export async function obtenirApercuDashboardInfirmiers(): Promise<ApercuDashboardInfirmiers> {
+  const debut = debutJourLocal();
+  const [stats, file] = await Promise.all([
+    obtenirStatsInfirmiers(),
+    listerPatientsConsultationInfirmiers(),
+  ]);
+
+  const cible = file.find((p) => p.hasConstantesAujourdhui) ?? file[0] ?? null;
+  const patientEnCours = cible
+    ? await obtenirDetailPatientInfirmiers(cible.dossierId)
+    : null;
+
+  const [constantes, transferts, fiches] = await Promise.all([
+    prisma.constantesVitales.findMany({
+      where: { mesureLe: { gte: debut } },
+      include: {
+        dossier: { include: { patient: true } },
+        infirmier: { select: { prenom: true, nom: true } },
+      },
+      orderBy: { mesureLe: "desc" },
+      take: 8,
+    }),
+    prisma.transfert.findMany({
+      where: {
+        salleOrigine: { code: "INFIRMIERS" },
+        emisLe: { gte: debut },
+      },
+      include: { dossier: { include: { patient: true } } },
+      orderBy: { emisLe: "desc" },
+      take: 8,
+    }),
+    prisma.ficheTraitement.findMany({
+      where: { createdAt: { gte: debut } },
+      include: { dossier: { include: { patient: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    }),
+  ]);
+
+  type Act = import("@/lib/infirmiers/types").ActiviteRecenteInfirmiers;
+  const activites: Act[] = [
+    ...constantes.map((c) => ({
+      id: `cv-${c.id}`,
+      type: "CONSTANTES" as const,
+      libelle: "Constantes enregistrées",
+      patient: `${c.dossier.patient.prenom} ${c.dossier.patient.nom}`.trim(),
+      heure: formaterHeure(c.mesureLe.toISOString()),
+      iso: c.mesureLe.toISOString(),
+    })),
+    ...transferts.map((t) => ({
+      id: `tr-${t.id}`,
+      type: "TRANSFERT" as const,
+      libelle: `Transfert ${t.statut === "EN_ATTENTE" ? "émis" : "confirmé"}`,
+      patient: `${t.dossier.patient.prenom} ${t.dossier.patient.nom}`.trim(),
+      heure: formaterHeure(t.emisLe.toISOString()),
+      iso: t.emisLe.toISOString(),
+    })),
+    ...fiches.map((f) => ({
+      id: `ft-${f.id}`,
+      type: "FICHE_TRAITEMENT" as const,
+      libelle: "Fiche de traitement",
+      patient: `${f.dossier.patient.prenom} ${f.dossier.patient.nom}`.trim(),
+      heure: formaterHeure(f.createdAt.toISOString()),
+      iso: f.createdAt.toISOString(),
+    })),
+  ]
+    .sort((a, b) => b.iso.localeCompare(a.iso))
+    .slice(0, 10);
+
+  return {
+    stats,
+    file: file.slice(0, 8),
+    patientEnCours,
+    activites,
   };
 }
 

@@ -36,7 +36,10 @@ export function evaluerEtatFacturationDual(params: {
   const facturePharmaciePayee =
     !aDesMedicaments || factureEstPayee(params.statutFacturePharmacie);
 
-  const facturationComplete = factureExamensPayee && facturePharmaciePayee;
+  const facturationComplete =
+    (aDesExamens || aDesMedicaments) &&
+    factureExamensPayee &&
+    facturePharmaciePayee;
 
   const factureNormaleVerrouillee =
     aDesExamens && factureEstPayee(params.statutFactureExamens);

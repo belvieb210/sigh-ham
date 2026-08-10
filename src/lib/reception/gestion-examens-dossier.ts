@@ -25,8 +25,9 @@ async function chargerTransfertAvecExamens(transfertId: string) {
 }
 
 function estModifiable(transfert: Awaited<ReturnType<typeof chargerTransfertAvecExamens>>) {
+  const originesAutorisees = new Set(["RECEPTION", "MEDECINS_EXTERNES"]);
   return (
-    transfert.salleOrigine.code === "RECEPTION" &&
+    originesAutorisees.has(transfert.salleOrigine.code) &&
     transfert.statut === "EN_ATTENTE" &&
     transfert.recuperation?.statut !== "EN_RECUPERATION"
   );
@@ -97,6 +98,11 @@ export async function modifierExamensTransfert(
       }
     }
 
+    const noteModification =
+      transfert.salleOrigine.code === "MEDECINS_EXTERNES"
+        ? "Prescrit chez le médecin externe — examens modifiés"
+        : "Prescrit à la réception — examens modifiés";
+
     for (const typeId of idsUniques) {
       const existants = parType.get(typeId) ?? [];
       const actif = existants.find((e) => e.statut !== "ANNULE");
@@ -109,7 +115,7 @@ export async function modifierExamensTransfert(
           data: {
             statut: "PRESCRIT",
             prescripteurId: agentId,
-            notes: "Prescrit à la réception — examens modifiés",
+            notes: noteModification,
           },
         });
       } else {
@@ -119,7 +125,7 @@ export async function modifierExamensTransfert(
             typeExamenId: typeId,
             prescripteurId: agentId,
             statut: "PRESCRIT",
-            notes: "Prescrit à la réception — examens modifiés",
+            notes: noteModification,
           },
         });
       }

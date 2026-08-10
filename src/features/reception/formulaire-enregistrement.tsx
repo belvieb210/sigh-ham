@@ -438,6 +438,7 @@ export const FormulaireEnregistrement = forwardRef<
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formulaire,
+          transfertWizard: true,
           sexe,
           numeroPatient: numeroPatientActif ?? undefined,
           dossierId: dossierIdActif ?? undefined,

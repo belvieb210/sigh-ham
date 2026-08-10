@@ -9,6 +9,7 @@ import {
   parserDonneesEnregistrement,
   validerDonneesEnregistrement,
 } from "@/lib/reception/enregistrer-patient";
+import { prescrireExamensInitiaux } from "@/lib/reception/prescrire-examens-initiaux";
 import type {
   DonneesEnregistrementPatient,
   DonneesTransfertAccueil,
@@ -300,50 +301,6 @@ async function trouverDossierReutilisable(
   });
 }
 
-async function prescrireExamensInitiaux(
-  tx: Prisma.TransactionClient,
-  dossierId: string,
-  agentId: string,
-  idsExamens: string[],
-  estEstimation: boolean
-) {
-  if (idsExamens.length === 0) return 0;
-
-  const typesExamens = await tx.typeExamen.findMany({
-    where: { id: { in: idsExamens }, actif: true },
-    select: { id: true },
-  });
-
-  if (typesExamens.length !== idsExamens.length) {
-    throw new Error("Un ou plusieurs examens sélectionnés sont invalides.");
-  }
-
-  const noteExamen = estEstimation
-    ? "Prescrit à la réception — estimation"
-    : "Prescrit à la réception — examens initiaux";
-
-  const dejaPrescrits = await tx.examenLaboratoire.findMany({
-    where: { dossierId, typeExamenId: { in: idsExamens } },
-    select: { typeExamenId: true },
-  });
-  const idsDejaPrescrits = new Set(dejaPrescrits.map((e) => e.typeExamenId));
-  const nouveaux = typesExamens.filter((type) => !idsDejaPrescrits.has(type.id));
-
-  if (nouveaux.length > 0) {
-    await tx.examenLaboratoire.createMany({
-      data: nouveaux.map((type) => ({
-        dossierId,
-        typeExamenId: type.id,
-        prescripteurId: agentId,
-        statut: "PRESCRIT" as const,
-        notes: noteExamen,
-      })),
-    });
-  }
-
-  return nouveaux.length;
-}
-
 async function assurerFileAttenteSalleOrigine(
   tx: Prisma.TransactionClient,
   passageId: string,
@@ -619,7 +576,8 @@ export async function transfererPatientAccueil(
       dossierId,
       agentId,
       idsExamensEffectifs,
-      donnees.estEstimation ?? false
+      donnees.estEstimation ?? false,
+      codeOrigine
     );
 
     const transfert = await tx.transfert.create({

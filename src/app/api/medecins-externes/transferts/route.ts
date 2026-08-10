@@ -83,7 +83,8 @@ export async function POST(request: NextRequest) {
     if (
       dossierIdDirect &&
       orientationsDirectes.length > 0 &&
-      !(body as { transfertManuel?: boolean }).transfertManuel
+      !(body as { transfertManuel?: boolean }).transfertManuel &&
+      !(body as { transfertWizard?: boolean }).transfertWizard
     ) {
       const resultat = await reorienterPatientDepuisMedecinsExternes(
         session.utilisateur.id,

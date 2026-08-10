@@ -2,6 +2,7 @@ import "server-only";
 import type { PatientEnregistre } from "@/constants/reception";
 import {
   chargerDossiersAccueil,
+  chargerDossiersAccueilRecents,
   dateActiviteVisite,
   dedupliquerParPatient,
   dossiersVersPatients,
@@ -67,7 +68,7 @@ export async function listerPatientsEnregistres(
  * Une fois confirmé (ACCEPTE), ils disparaissent de cette liste.
  */
 export async function listerPatientsRecents(limite = 40): Promise<PatientEnregistre[]> {
-  const dossiers = await chargerDossiersAccueil(Math.max(limite * 6, 60));
+  const dossiers = await chargerDossiersAccueilRecents(Math.max(limite * 6, 60));
   const patients = dedupliquerParPatient(dossiersVersPatients(dossiers)).filter(
     estPatientTransfertNonConfirme
   );

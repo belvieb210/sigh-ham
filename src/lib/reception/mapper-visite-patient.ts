@@ -205,6 +205,38 @@ export async function chargerDossiersAccueil(limite?: number) {
   });
 }
 
+/**
+ * Accueil réception — patients encore sous responsabilité de la réception.
+ * Exclut médecins externes, conventionnés et dossiers déjà orientés depuis une autre salle.
+ */
+export async function chargerDossiersAccueilRecents(limite?: number) {
+  return prisma.dossierPatient.findMany({
+    take: limite,
+    where: {
+      enregistrementsReception: { some: {} },
+      patient: { medecinExterneId: null },
+      examensPrenuptiaux: { none: {} },
+      NOT: {
+        OR: [
+          { motifOuverture: { contains: "médecin externe", mode: "insensitive" } },
+          { motifOuverture: { contains: "conventionné", mode: "insensitive" } },
+          { motifOuverture: { contains: "église", mode: "insensitive" } },
+          {
+            transferts: {
+              some: {
+                salleOrigine: { code: { in: ["MEDECINS_EXTERNES", "EGLISE"] } },
+                statut: { notIn: ["ANNULE", "REFUSE"] },
+              },
+            },
+          },
+        ],
+      },
+    },
+    include: includeVisiteAccueil,
+    orderBy: { ouvertLe: "desc" },
+  });
+}
+
 /** Dossiers enregistrés par un médecin externe (isolation medecinExterneId). */
 export async function chargerDossiersAccueilMedecinExterne(
   medecinExterneId: string,

@@ -3,7 +3,7 @@ import { obtenirSessionApiMedecinsExternes } from "@/lib/auth/garde-api-medecins
 import { exigerMedecinExterneId } from "@/lib/medecins-externes/assurer-fiche";
 import { listerPatientsTransferesMedecinExterne } from "@/lib/medecins-externes/lister-patients-reception-like";
 import { reorienterPatientDepuisMedecinsExternes } from "@/lib/medecins-externes/reorienter-patient";
-import { confirmerTransfertMedecinsExternes } from "@/lib/medecins-externes/gestion-transfert";
+import { finaliserTransfertMedecinsExternes } from "@/lib/medecins-externes/gestion-transfert";
 import { nettoyerFilesAttenteNonConfirmees } from "@/lib/transferts/visibilite-salle";
 import {
   parserDonneesTransfert,
@@ -76,19 +76,23 @@ export async function POST(request: NextRequest) {
     ];
     const dossierIdDirect = corpsReorientation.dossierId?.trim() || "";
 
-    if (dossierIdDirect && orientationsDirectes.length > 0 && !(
-      body as { transfertManuel?: boolean }
-    ).transfertManuel) {
+    if (
+      dossierIdDirect &&
+      orientationsDirectes.length > 0 &&
+      !(body as { transfertManuel?: boolean }).transfertManuel
+    ) {
       const resultat = await reorienterPatientDepuisMedecinsExternes(
         session.utilisateur.id,
         medecinExterneId,
         dossierIdDirect,
         orientationsDirectes
       );
-      return NextResponse.json({
-        message: `Transfert(s) vers ${resultat.salleDestination}. Confirmez via le menu ⋮.`,
-        ...resultat,
-      });
+      const finalise = await finaliserTransfertMedecinsExternes(
+        session.utilisateur.id,
+        medecinExterneId,
+        resultat
+      );
+      return NextResponse.json(finalise);
     }
 
     if (
@@ -142,12 +146,12 @@ export async function POST(request: NextRequest) {
         dossierId = cree.dossierId;
 
         if (orientations.length === 1) {
-          return NextResponse.json({
-            message: cree.transfertMisAJour
-              ? `Destination du transfert mise à jour vers ${cree.salleDestination}. Confirmez-le dans la liste des transferts.`
-              : `Transfert manuel effectué vers ${cree.salleDestination}. Confirmez-le dans la liste des transferts.`,
-            ...cree,
-          });
+          const finalise = await finaliserTransfertMedecinsExternes(
+            session.utilisateur.id,
+            medecinExterneId,
+            cree
+          );
+          return NextResponse.json(finalise);
         }
       }
 
@@ -158,10 +162,12 @@ export async function POST(request: NextRequest) {
         orientations
       );
 
-      return NextResponse.json({
-        message: `Transfert(s) vers ${resultat.salleDestination}. Confirmez via le menu ⋮.`,
-        ...resultat,
-      });
+      const finalise = await finaliserTransfertMedecinsExternes(
+        session.utilisateur.id,
+        medecinExterneId,
+        resultat
+      );
+      return NextResponse.json(finalise);
     }
 
     const donnees = parserDonneesTransfert(body);
@@ -177,24 +183,12 @@ export async function POST(request: NextRequest) {
       opts
     );
 
-    if (resultat.transfertId) {
-      const confirme = await confirmerTransfertMedecinsExternes(
-        session.utilisateur.id,
-        medecinExterneId,
-        resultat.transfertId
-      );
-      return NextResponse.json({
-        message: `Patient transféré vers ${confirme.salleDestination}.`,
-        ...resultat,
-        ...confirme,
-        confirme: true,
-      });
-    }
-
-    return NextResponse.json({
-      message: `Patient transféré vers ${resultat.salleDestination}.`,
-      ...resultat,
-    });
+    const finalise = await finaliserTransfertMedecinsExternes(
+      session.utilisateur.id,
+      medecinExterneId,
+      resultat
+    );
+    return NextResponse.json(finalise);
   } catch (error) {
     console.error("[POST /api/medecins-externes/transferts]", error);
     const message =

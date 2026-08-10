@@ -200,6 +200,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
               transfertId?: string;
               codeSalle?: string;
               codesSalle?: string[];
+              confirme?: boolean;
             };
             if (!res.ok) throw new Error(data.message ?? "Transfert rapide impossible.");
             return data;
@@ -225,6 +226,8 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
                 salleDestination?: string;
                 codesSalle?: string[];
                 transfertId?: string;
+                confirme?: boolean;
+                message?: string;
               }>
             | undefined
         )?.value;
@@ -236,6 +239,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
         const orientationCouleur = couleurOrientation(
           libelleOrientation(codesFinal[0] ?? codes[0]!)
         );
+        const transfertConfirme = Boolean(premierOk?.confirme);
 
         if (
           patientSelectionne &&
@@ -246,12 +250,14 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
               ? {
                   ...courant,
                   transfertId: premierOk?.transfertId ?? courant.transfertId,
-                  statutTransfert: "EN_ATTENTE",
+                  statutTransfert: transfertConfirme ? "ACCEPTE" : "EN_ATTENTE",
                   codeSalleDestination: codesFinal[0] ?? courant.codeSalleDestination,
                   orientation: orientationAffichee,
                   orientationCouleur,
-                  statut: "À confirmer",
-                  statutCouleur: "bg-orange-100 text-orange-800",
+                  statut: transfertConfirme ? "Transféré" : "À confirmer",
+                  statutCouleur: transfertConfirme
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-orange-100 text-orange-800",
                   motif: courant.motif === "—" ? "Transfert manuel" : courant.motif,
                 }
               : courant
@@ -261,11 +267,16 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
         definirOrientations(codesFinal);
         setPatientsCoches([]);
         setMessagePanneau(
-          echecs > 0
-            ? `${ok} patient(s) orienté(s) (${echecs} échec(s)) — confirmez dans la liste.`
-            : cibles.length > 1
-              ? `${ok} patients orientés vers ${orientationAffichee} — confirmez via ⋮.`
-              : `Transfert(s) vers ${orientationAffichee} créé(s) — confirmez dans la liste.`
+          premierOk?.message ??
+            (echecs > 0
+              ? `${ok} patient(s) orienté(s) (${echecs} échec(s))${transfertConfirme ? "." : " — confirmez dans la liste."}`
+              : cibles.length > 1
+                ? transfertConfirme
+                  ? `${ok} patients transférés vers ${orientationAffichee}.`
+                  : `${ok} patients orientés vers ${orientationAffichee} — confirmez via ⋮.`
+                : transfertConfirme
+                  ? `Patient transféré vers ${orientationAffichee}.`
+                  : `Transfert(s) vers ${orientationAffichee} créé(s) — confirmez dans la liste.`)
         );
         window.dispatchEvent(new CustomEvent(espace.evenementPatientsModifies));
       } catch (error) {

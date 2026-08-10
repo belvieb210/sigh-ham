@@ -46,7 +46,11 @@ export async function POST(
         id
       );
     }
-    return NextResponse.json({ message: "OK", ...resultat });
+    return NextResponse.json({
+      message: "Transfert confirmé — patient visible dans la salle de destination.",
+      confirme: body.action === "confirmer",
+      ...resultat,
+    });
   } catch (e) {
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Action impossible." },

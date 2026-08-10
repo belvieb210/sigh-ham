@@ -83,6 +83,7 @@ export async function listerPatientsFileAttenteSalle(codeSalle: CodeSalle) {
 export async function nettoyerFilesAttenteNonConfirmees(): Promise<number> {
   const candidates = await prisma.fileAttente.findMany({
     where: {
+      serviLe: null,
       passage: {
         transferts: {
           some: { statut: "EN_ATTENTE" },
@@ -92,6 +93,7 @@ export async function nettoyerFilesAttenteNonConfirmees(): Promise<number> {
     select: {
       id: true,
       salleId: true,
+      passageId: true,
       passage: {
         select: {
           transferts: {
@@ -103,10 +105,27 @@ export async function nettoyerFilesAttenteNonConfirmees(): Promise<number> {
     },
   });
 
+  const passageIds = [...new Set(candidates.map((f) => f.passageId))];
+  const transfertsConfirmes =
+    passageIds.length === 0
+      ? []
+      : await prisma.transfert.findMany({
+          where: {
+            passageId: { in: passageIds },
+            statut: { in: STATUTS_TRANSFERT_VISIBLES_SALLE },
+          },
+          select: { passageId: true, salleDestinationId: true },
+        });
+
+  const dejaVisibles = new Set(
+    transfertsConfirmes.map((t) => `${t.passageId}:${t.salleDestinationId}`)
+  );
+
   const ids = candidates
     .filter((f) =>
       f.passage.transferts.some((t) => t.salleDestinationId === f.salleId)
     )
+    .filter((f) => !dejaVisibles.has(`${f.passageId}:${f.salleId}`))
     .map((f) => f.id);
 
   if (ids.length === 0) return 0;

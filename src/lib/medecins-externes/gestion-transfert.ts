@@ -59,26 +59,11 @@ export async function confirmerTransfertMedecinsExternes(
     orderBy: { emisLe: "asc" },
   });
   const aConfirmer = freres.length > 0 ? freres : [transfert];
-  const { inscrirePassagesDansSalles } = await import(
+  const { inscrirePassagesDansSalles, assurerFileAttenteDestination } = await import(
     "@/lib/transferts/multi-destinations"
   );
 
   const resultat = await prisma.$transaction(async (tx) => {
-    const fileLocale = await tx.fileAttente.findFirst({
-      where: {
-        passageId: transfert.passageId!,
-        serviLe: null,
-        salle: { code: "MEDECINS_EXTERNES" },
-      },
-    });
-
-    if (fileLocale) {
-      await tx.fileAttente.update({
-        where: { id: fileLocale.id },
-        data: { serviLe: new Date() },
-      });
-    }
-
     const transfertEntrant = await tx.transfert.findFirst({
       where: {
         passageId: transfert.passageId!,
@@ -119,6 +104,25 @@ export async function confirmerTransfertMedecinsExternes(
           passageId: inscription.passageId,
         },
       });
+      await assurerFileAttenteDestination(
+        tx,
+        inscription.passageId,
+        t.salleDestinationId
+      );
+    }
+
+    const fileMeRestante = await tx.fileAttente.findFirst({
+      where: {
+        passageId: transfert.passageId!,
+        serviLe: null,
+        salle: { code: "MEDECINS_EXTERNES" },
+      },
+    });
+    if (fileMeRestante) {
+      await tx.fileAttente.update({
+        where: { id: fileMeRestante.id },
+        data: { serviLe: new Date() },
+      });
     }
 
     await tx.dossierPatient.update({
@@ -151,6 +155,69 @@ export async function confirmerTransfertMedecinsExternes(
   }
 
   return resultat;
+}
+
+/**
+ * Confirme immédiatement un transfert ME sortant pour inscrire le patient
+ * dans la file de la salle destination (visible caisse, labo, etc.).
+ */
+export async function confirmerOrientationMedecinsExternes(
+  agentId: string,
+  medecinExterneId: string,
+  transfertId: string | null | undefined
+) {
+  if (!transfertId) return null;
+
+  const transfert = await prisma.transfert.findUnique({
+    where: { id: transfertId },
+    select: { statut: true },
+  });
+
+  if (!transfert || transfert.statut !== "EN_ATTENTE") {
+    return null;
+  }
+
+  return confirmerTransfertMedecinsExternes(agentId, medecinExterneId, transfertId);
+}
+
+export interface ResultatTransfertMedecinsExternes {
+  transfertId?: string | null;
+  transfertIds?: string[];
+  salleDestination?: string;
+  numeroPatient?: string;
+  message?: string;
+  confirme?: boolean;
+}
+
+/** Crée le transfert puis le confirme pour affichage immédiat en destination. */
+export async function finaliserTransfertMedecinsExternes(
+  agentId: string,
+  medecinExterneId: string,
+  resultat: ResultatTransfertMedecinsExternes
+) {
+  const transfertId = resultat.transfertIds?.[0] ?? resultat.transfertId ?? null;
+  const confirme = await confirmerOrientationMedecinsExternes(
+    agentId,
+    medecinExterneId,
+    transfertId
+  );
+
+  if (confirme) {
+    return {
+      ...resultat,
+      ...confirme,
+      confirme: true,
+      message: `Patient transféré vers ${confirme.salleDestination}.`,
+    };
+  }
+
+  return {
+    ...resultat,
+    message:
+      resultat.salleDestination != null
+        ? `Patient transféré vers ${resultat.salleDestination}.`
+        : "Transfert effectué.",
+  };
 }
 
 export async function rejeterTransfertMedecinsExternes(

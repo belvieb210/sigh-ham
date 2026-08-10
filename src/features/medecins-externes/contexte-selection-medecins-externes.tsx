@@ -193,10 +193,10 @@ export function FournisseurSelectionMedecinsExternes({ children }: { children: R
 
         setMessagePanneau(
           echecs > 0
-            ? `${ok} patient(s) orienté(s) vers ${label} (${echecs} échec(s)). Confirmez via ⋮.`
+            ? `${ok} patient(s) transféré(s) vers ${label} (${echecs} échec(s)).`
             : cibles.length > 1
-              ? `${ok} patients orientés vers ${label} — confirmez via le menu ⋮.`
-              : `Transfert vers ${label} créé — confirmez via le menu ⋮.`
+              ? `${ok} patients transférés vers ${label}.`
+              : `Patient transféré vers ${label}.`
         );
 
         if (patientSelectionne && cibles.includes(patientSelectionne.dossierId)) {
@@ -209,9 +209,9 @@ export function FournisseurSelectionMedecinsExternes({ children }: { children: R
                   codesSalleDestination: codesFinal,
                   transfertSortantId:
                     premierOk?.transfertId ?? courant.transfertSortantId,
-                  statutTransfertSortant: "EN_ATTENTE",
-                  statut: "À confirmer",
-                  statutCouleur: "bg-orange-100 text-orange-800",
+                  statutTransfertSortant: "ACCEPTE",
+                  statut: "Transféré",
+                  statutCouleur: "bg-emerald-100 text-emerald-700",
                 }
               : courant
           );

@@ -93,6 +93,44 @@ export async function inscrirePassagesDansSalles(
   return resultats;
 }
 
+/** Garantit une file d'attente active dans la salle destination pour ce passage. */
+export async function assurerFileAttenteDestination(
+  tx: Prisma.TransactionClient,
+  passageId: string,
+  salleDestinationId: string
+) {
+  const existante = await tx.fileAttente.findUnique({
+    where: { passageId },
+  });
+
+  if (existante) {
+    if (existante.salleId === salleDestinationId && existante.serviLe === null) {
+      return existante;
+    }
+    return tx.fileAttente.update({
+      where: { passageId },
+      data: {
+        salleId: salleDestinationId,
+        serviLe: null,
+        arriveLe: new Date(),
+      },
+    });
+  }
+
+  const ordreMax = await tx.fileAttente.aggregate({
+    where: { salleId: salleDestinationId, serviLe: null },
+    _max: { numeroOrdre: true },
+  });
+
+  return tx.fileAttente.create({
+    data: {
+      salleId: salleDestinationId,
+      passageId,
+      numeroOrdre: (ordreMax._max.numeroOrdre ?? 0) + 1,
+    },
+  });
+}
+
 /**
  * Synchronise les transferts EN_ATTENTE sortants : crée les manquants, supprime les désélectionnés.
  */

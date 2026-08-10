@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { obtenirSessionApiCaisse } from "@/lib/auth/garde-api-caisse";
+import { obtenirSessionApiMedecinsExternes } from "@/lib/auth/garde-api-medecins-externes";
+import { exigerMedecinExterneId } from "@/lib/medecins-externes/assurer-fiche";
 import {
-  approuverEstimationHonoraires,
-  obtenirEstimationConvention,
-} from "@/lib/eglise/estimations-convention";
+  envoyerEstimationMedecinExterneVersCaisse,
+  obtenirEstimationMedecinExterne,
+} from "@/lib/medecins-externes/estimations-medecin-externe";
 
 async function lirePdfDepuisUrl(url: string): Promise<Buffer> {
   if (url.startsWith("/")) {
@@ -22,17 +23,14 @@ export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const session = await obtenirSessionApiCaisse();
+  const session = await obtenirSessionApiMedecinsExternes();
   if (!session) {
     return NextResponse.json({ message: "Non autorisé." }, { status: 401 });
   }
 
   try {
     const { id } = await context.params;
-    const estimation = await obtenirEstimationConvention(id);
-    if (estimation.statut !== "ENVOYEE_CAISSE" && estimation.statut !== "TRAITE") {
-      return NextResponse.json({ message: "Estimation non disponible." }, { status: 403 });
-    }
+    const estimation = await obtenirEstimationMedecinExterne(id);
     if (!estimation.pdfUrl) {
       return NextResponse.json({ message: "PDF introuvable." }, { status: 404 });
     }
@@ -45,7 +43,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("[GET /api/caisse/estimations/[id]]", error);
+    console.error("[GET /api/medecins-externes/estimations/[id]]", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "PDF indisponible." },
       { status: 404 }
@@ -57,28 +55,33 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const session = await obtenirSessionApiCaisse();
+  const session = await obtenirSessionApiMedecinsExternes();
   if (!session) {
     return NextResponse.json({ message: "Non autorisé." }, { status: 401 });
   }
 
   try {
+    const medecinExterneId = exigerMedecinExterneId(
+      session.utilisateur.medecinExterneId
+    );
     const { id } = await context.params;
     const body = (await request.json()) as { action?: string };
-    if (body.action !== "approuver-honoraires") {
+    if (body.action !== "envoyer-caisse") {
       return NextResponse.json({ message: "Action invalide." }, { status: 400 });
     }
 
-    const estimation = await approuverEstimationHonoraires(
+    const estimation = await envoyerEstimationMedecinExterneVersCaisse(
       session.utilisateur.id,
+      medecinExterneId,
       id
     );
     return NextResponse.json({
-      message: "Paiement des honoraires approuvé.",
+      message:
+        "Estimation transmise à la caisse. Confirmez le transfert via le menu ⋮.",
       estimation,
     });
   } catch (error) {
-    console.error("[POST /api/caisse/estimations/[id]]", error);
+    console.error("[POST /api/medecins-externes/estimations/[id]]", error);
     return NextResponse.json(
       {
         message:

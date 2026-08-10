@@ -265,6 +265,11 @@ enum StatutExamenPrenuptial {
   ANNULE
 }
 
+enum TypeEstimationHonoraires {
+  CONVENTION_EGLISE
+  MEDECIN_EXTERNE
+}
+
 enum StatutEstimationConvention {
   EMIS
   ENVOYEE_CAISSE
@@ -370,6 +375,7 @@ model Utilisateur {
   presence                 PresenceUtilisateur?
   reactions                ReactionMessage[]
   estimationsConventionEmises EstimationConvention[] @relation("EstimationConventionEmetteur")
+  estimationsConventionTraitees EstimationConvention[] @relation("EstimationConventionTraitePar")
   mentionsRecues           MentionMessage[]        @relation("MentionDestinataire")
   messagesMasques          MessageMasque[]
   notifications            Notification[]
@@ -1050,6 +1056,9 @@ model EstimationConvention {
   transfert          Transfert?                 @relation(fields: [transfertId], references: [id])
   emetteurId         String                     @map("emetteur_id")
   emetteur           Utilisateur                @relation("EstimationConventionEmetteur", fields: [emetteurId], references: [id])
+  typeEstimation     TypeEstimationHonoraires   @default(CONVENTION_EGLISE) @map("type_estimation")
+  medecinExterneId   String?                    @map("medecin_externe_id")
+  medecinExterne     MedecinExterne?            @relation(fields: [medecinExterneId], references: [id])
   nomConvention      String?                    @map("nom_convention")
   medecinResponsable String                     @map("medecin_responsable")
   sousTotalUsd       Decimal                    @map("sous_total_usd") @db.Decimal(12, 2)
@@ -1061,11 +1070,16 @@ model EstimationConvention {
   statut             StatutEstimationConvention @default(EMIS)
   emisLe             DateTime                   @default(now()) @map("emis_le")
   envoyeCaisseLe     DateTime?                  @map("envoye_caisse_le")
+  traiteLe           DateTime?                  @map("traite_le")
+  traiteParId        String?                    @map("traite_par_id")
+  traitePar          Utilisateur?               @relation("EstimationConventionTraitePar", fields: [traiteParId], references: [id])
   lignes             EstimationConventionLigne[]
 
   @@index([dossierId])
   @@index([emisLe])
   @@index([statut])
+  @@index([typeEstimation])
+  @@index([medecinExterneId])
   @@map("estimations_convention")
 }
 
@@ -1096,6 +1110,7 @@ model MedecinExterne {
 
   utilisateur Utilisateur?
   patients    Patient[]
+  estimations EstimationConvention[]
 
   @@map("medecins_externes")
 }

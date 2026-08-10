@@ -172,6 +172,23 @@ export async function POST(request: NextRequest) {
       opts
     );
 
+    try {
+      const { creerEstimationMedecinExterneDepuisDossier } = await import(
+        "@/lib/medecins-externes/estimations-medecin-externe"
+      );
+      await creerEstimationMedecinExterneDepuisDossier(
+        session.utilisateur.id,
+        medecinExterneId,
+        resultat.dossierId,
+        {
+          transfertId: resultat.transfertId,
+          remiseUsd: donnees.remise,
+        }
+      );
+    } catch {
+      /* estimation optionnelle si pas d'examens */
+    }
+
     return NextResponse.json({
       message: `Patient orienté vers ${resultat.salleDestination}. Confirmez le transfert via le menu ⋮.`,
       ...resultat,

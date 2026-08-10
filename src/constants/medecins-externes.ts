@@ -7,6 +7,7 @@ import {
   ArrowRightLeft,
   Search,
   History,
+  ClipboardList,
   FlaskConical,
   UserCircle,
   MessageSquare,
@@ -53,6 +54,11 @@ export const NAVIGATION_MEDECINS_EXTERNES = {
       href: "/sigh/medecins-externes/historique",
       id: "historique",
       icone: History,
+    },
+    {
+      href: "/sigh/medecins-externes/estimations",
+      id: "estimations",
+      icone: ClipboardList,
     },
   ],
   /** Section retirée volontairement (Consultation, Ordonnances, Examens, Historique médical). */

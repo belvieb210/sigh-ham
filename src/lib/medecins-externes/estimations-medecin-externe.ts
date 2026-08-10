@@ -7,9 +7,16 @@ import {
   genererPdfEstimationConvention,
   type DonneesEstimationConventionPdf,
 } from "@/lib/eglise/generer-estimation-convention-pdf";
-import { reorienterPatientDepuisEglise } from "@/lib/eglise/reorienter-patient";
+import { reorienterPatientDepuisMedecinsExternes } from "@/lib/medecins-externes/reorienter-patient";
+import {
+  calculerMontantsEstimation,
+  type LigneEstimationInput,
+  mapperEstimation,
+  type EstimationMapperSource,
+} from "@/lib/eglise/estimations-convention";
 
-const HONORAIRE_PCT_DEFAUT = 5;
+export const HONORAIRE_PCT_MEDECIN_EXTERNE = 20;
+const TYPE_ESTIMATION: TypeEstimationHonoraires = "MEDECIN_EXTERNE";
 
 function decimalVersNombre(v: { toNumber?: () => number } | number | string): number {
   if (typeof v === "number") return v;
@@ -18,87 +25,11 @@ function decimalVersNombre(v: { toNumber?: () => number } | number | string): nu
   return Number(v) || 0;
 }
 
-export function calculerMontantsEstimation(
-  sousTotalUsd: number,
-  remiseUsd: number,
-  honorairePct = HONORAIRE_PCT_DEFAUT
-) {
-  const remise = Math.max(0, remiseUsd);
-  const totalPatientUsd = Math.max(0, sousTotalUsd - remise);
-  const honoraireUsd =
-    Math.round(totalPatientUsd * (honorairePct / 100) * 100) / 100;
-  return { totalPatientUsd, honoraireUsd, honorairePct };
-}
-
-export interface LigneEstimationInput {
-  typeExamenId?: string;
-  code: string;
-  libelle: string;
-  prixUnitaire: number;
-}
-
-type EstimationAvecRelations = NonNullable<
-  Awaited<ReturnType<typeof prisma.estimationConvention.findFirst>>
-> & {
-  lignes: { code: string; libelle: string; prixUnitaire: unknown }[];
-  dossier: {
-    numeroDossier: string;
-    patient: { numeroPatient: string; prenom: string; nom: string };
-  };
-  emetteur: { prenom: string; nom: string };
-  medecinExterne?: { prenom: string; nom: string } | null;
-  traitePar?: { prenom: string; nom: string } | null;
-};
-
-export type EstimationMapperSource = EstimationAvecRelations;
-
-export function mapperEstimation(e: EstimationMapperSource) {
-  const typeEstimation = e.typeEstimation as TypeEstimationHonoraires;
-  const libelleSource =
-    typeEstimation === "MEDECIN_EXTERNE"
-      ? e.medecinExterne
-        ? `${e.medecinExterne.prenom} ${e.medecinExterne.nom}`.trim()
-        : e.nomConvention
-      : e.nomConvention;
-
-  return {
-    id: e.id,
-    dossierId: e.dossierId,
-    transfertId: e.transfertId,
-    typeEstimation,
-    numeroDossier: e.dossier.numeroDossier,
-    numeroPatient: e.dossier.patient.numeroPatient,
-    nomComplet: `${e.dossier.patient.prenom} ${e.dossier.patient.nom}`.trim(),
-    nomConvention: e.nomConvention,
-    libelleSource: libelleSource ?? null,
-    medecinResponsable: e.medecinResponsable,
-    sousTotalUsd: decimalVersNombre(e.sousTotalUsd),
-    remiseUsd: decimalVersNombre(e.remiseUsd),
-    honorairePct: decimalVersNombre(e.honorairePct),
-    honoraireUsd: decimalVersNombre(e.honoraireUsd),
-    totalPatientUsd: decimalVersNombre(e.totalPatientUsd),
-    pdfUrl: e.pdfUrl,
-    statut: e.statut,
-    emisLe: e.emisLe.toISOString(),
-    envoyeCaisseLe: e.envoyeCaisseLe?.toISOString() ?? null,
-    traiteLe: e.traiteLe?.toISOString() ?? null,
-    traiteParNom: e.traitePar
-      ? `${e.traitePar.prenom} ${e.traitePar.nom}`.trim()
-      : null,
-    emetteurNom: `${e.emetteur.prenom} ${e.emetteur.nom}`.trim(),
-    lignes: e.lignes.map((l) => ({
-      code: l.code,
-      libelle: l.libelle,
-      prixUnitaire: decimalVersNombre(l.prixUnitaire as Parameters<typeof decimalVersNombre>[0]),
-    })),
-  };
-}
-
-export async function creerEstimationConvention(params: {
+export async function creerEstimationMedecinExterne(params: {
   agentId: string;
+  medecinExterneId: string;
   dossierId: string;
   transfertId?: string | null;
-  nomConvention?: string | null;
   medecinResponsable: string;
   remiseUsd?: number;
   lignes: LigneEstimationInput[];
@@ -107,6 +38,11 @@ export async function creerEstimationConvention(params: {
   if (params.lignes.length === 0) {
     throw new Error("Au moins un examen est requis pour l'estimation.");
   }
+
+  const medecin = await prisma.medecinExterne.findUnique({
+    where: { id: params.medecinExterneId },
+  });
+  if (!medecin) throw new Error("Médecin externe introuvable.");
 
   const dossier = await prisma.dossierPatient.findUnique({
     where: { id: params.dossierId },
@@ -123,20 +59,22 @@ export async function creerEstimationConvention(params: {
   const remiseUsd = Math.max(0, params.remiseUsd ?? 0);
   const { totalPatientUsd, honoraireUsd, honorairePct } = calculerMontantsEstimation(
     sousTotalUsd,
-    remiseUsd
+    remiseUsd,
+    HONORAIRE_PCT_MEDECIN_EXTERNE
   );
 
   const patientNom = [dossier.patient.prenom, dossier.patient.nom]
     .filter(Boolean)
     .join(" ");
+  const nomMedecin = [medecin.prenom, medecin.nom].filter(Boolean).join(" ");
 
   const donneesPdf: DonneesEstimationConventionPdf = {
     hopital: INFORMATIONS_HOPITAL.nomComplet ?? INFORMATIONS_HOPITAL.nomCourt,
-    service: "Service Conventionné",
+    service: "Médecins externes",
     numeroDossier: dossier.numeroDossier,
     patient: patientNom,
     telephone: dossier.patient.telephone,
-    nomConvention: params.nomConvention,
+    nomConvention: nomMedecin,
     medecinResponsable: params.medecinResponsable,
     agentNom: agent ? `${agent.prenom} ${agent.nom}`.trim() : "—",
     dateEmission: new Date().toLocaleString("fr-FR"),
@@ -157,9 +95,9 @@ export async function creerEstimationConvention(params: {
 
   const upload = await uploaderFichier(
     buffer,
-    `estimation-${dossier.numeroDossier}-${Date.now()}.pdf`,
+    `estimation-me-${dossier.numeroDossier}-${Date.now()}.pdf`,
     "application/pdf",
-    { sousDossier: "estimations-convention" }
+    { sousDossier: "estimations-medecins-externes" }
   );
 
   const estimation = await prisma.estimationConvention.create({
@@ -167,8 +105,9 @@ export async function creerEstimationConvention(params: {
       dossierId: params.dossierId,
       transfertId: params.transfertId ?? null,
       emetteurId: params.agentId,
-      typeEstimation: "CONVENTION_EGLISE",
-      nomConvention: params.nomConvention?.trim() || null,
+      typeEstimation: TYPE_ESTIMATION,
+      medecinExterneId: params.medecinExterneId,
+      nomConvention: nomMedecin,
       medecinResponsable: params.medecinResponsable.trim(),
       sousTotalUsd,
       remiseUsd,
@@ -198,19 +137,19 @@ export async function creerEstimationConvention(params: {
   return mapperEstimation(estimation as EstimationMapperSource);
 }
 
-export async function listerEstimationsConvention(options?: {
-  emetteurId?: string;
+export async function listerEstimationsMedecinExterne(options: {
+  medecinExterneId: string;
   jour?: Date;
 }) {
-  const debut = options?.jour ? new Date(options.jour) : new Date();
+  const debut = options.jour ? new Date(options.jour) : new Date();
   debut.setHours(0, 0, 0, 0);
   const fin = new Date(debut);
   fin.setHours(23, 59, 59, 999);
 
   const estimations = await prisma.estimationConvention.findMany({
     where: {
-      typeEstimation: "CONVENTION_EGLISE",
-      ...(options?.emetteurId ? { emetteurId: options.emetteurId } : {}),
+      typeEstimation: TYPE_ESTIMATION,
+      medecinExterneId: options.medecinExterneId,
       emisLe: { gte: debut, lte: fin },
       statut: { not: "ANNULE" },
     },
@@ -237,11 +176,15 @@ export async function listerEstimationsConvention(options?: {
   return { estimations: items, totauxJour: totaux };
 }
 
-export async function obtenirEstimationActiveParDossier(dossierId: string) {
+export async function obtenirEstimationActiveMedecinExterneParDossier(
+  dossierId: string,
+  medecinExterneId: string
+) {
   const e = await prisma.estimationConvention.findFirst({
     where: {
       dossierId,
-      typeEstimation: "CONVENTION_EGLISE",
+      typeEstimation: TYPE_ESTIMATION,
+      medecinExterneId,
       statut: { not: "ANNULE" },
     },
     orderBy: { emisLe: "desc" },
@@ -257,23 +200,7 @@ export async function obtenirEstimationActiveParDossier(dossierId: string) {
   return mapperEstimation(e as EstimationMapperSource);
 }
 
-export async function listerEstimationsPourCaisse() {
-  const estimations = await prisma.estimationConvention.findMany({
-    where: { statut: { in: ["ENVOYEE_CAISSE", "TRAITE"] } },
-    include: {
-      lignes: true,
-      dossier: { include: { patient: true } },
-      emetteur: { select: { prenom: true, nom: true, telephone: true } },
-      medecinExterne: { select: { prenom: true, nom: true } },
-      traitePar: { select: { prenom: true, nom: true } },
-    },
-    orderBy: { envoyeCaisseLe: "desc" },
-  });
-
-  return estimations.map((e) => mapperEstimation(e as EstimationMapperSource));
-}
-
-export async function obtenirEstimationConvention(id: string) {
+export async function obtenirEstimationMedecinExterne(id: string) {
   const e = await prisma.estimationConvention.findUnique({
     where: { id },
     include: {
@@ -284,16 +211,27 @@ export async function obtenirEstimationConvention(id: string) {
       traitePar: { select: { prenom: true, nom: true } },
     },
   });
-  if (!e) throw new Error("Estimation introuvable.");
+  if (!e || e.typeEstimation !== TYPE_ESTIMATION) {
+    throw new Error("Estimation introuvable.");
+  }
   return mapperEstimation(e as EstimationMapperSource);
 }
 
-export async function envoyerEstimationVersCaisse(agentId: string, estimationId: string) {
+export async function envoyerEstimationMedecinExterneVersCaisse(
+  agentId: string,
+  medecinExterneId: string,
+  estimationId: string
+) {
   const estimation = await prisma.estimationConvention.findUnique({
     where: { id: estimationId },
     include: { dossier: true },
   });
-  if (!estimation) throw new Error("Estimation introuvable.");
+  if (!estimation || estimation.typeEstimation !== TYPE_ESTIMATION) {
+    throw new Error("Estimation introuvable.");
+  }
+  if (estimation.medecinExterneId !== medecinExterneId) {
+    throw new Error("Estimation non autorisée.");
+  }
   if (estimation.statut === "TRAITE") {
     throw new Error("Cette estimation est déjà traitée.");
   }
@@ -301,12 +239,14 @@ export async function envoyerEstimationVersCaisse(agentId: string, estimationId:
   let transfertId = estimation.transfertId;
 
   if (!transfertId) {
-    const resultat = await reorienterPatientDepuisEglise(
+    const resultat = await reorienterPatientDepuisMedecinsExternes(
       agentId,
+      medecinExterneId,
       estimation.dossierId,
       ["CAISSE"]
     );
-    transfertId = resultat.transfertIds[0] ?? resultat.destinationsCreees[0]?.transfertId ?? null;
+    transfertId =
+      resultat.transfertIds[0] ?? resultat.transfertId ?? null;
   }
 
   const miseAJour = await prisma.estimationConvention.update({
@@ -328,43 +268,12 @@ export async function envoyerEstimationVersCaisse(agentId: string, estimationId:
   return mapperEstimation(miseAJour as EstimationMapperSource);
 }
 
-export async function approuverEstimationHonoraires(
-  utilisateurCaisseId: string,
-  estimationId: string
-) {
-  const estimation = await prisma.estimationConvention.findUnique({
-    where: { id: estimationId },
-  });
-  if (!estimation) throw new Error("Estimation introuvable.");
-  if (estimation.statut !== "ENVOYEE_CAISSE") {
-    throw new Error("Seules les estimations envoyées à la caisse peuvent être approuvées.");
-  }
-
-  const miseAJour = await prisma.estimationConvention.update({
-    where: { id: estimationId },
-    data: {
-      statut: "TRAITE",
-      traiteLe: new Date(),
-      traiteParId: utilisateurCaisseId,
-    },
-    include: {
-      lignes: true,
-      dossier: { include: { patient: true } },
-      emetteur: { select: { prenom: true, nom: true } },
-      medecinExterne: { select: { prenom: true, nom: true } },
-      traitePar: { select: { prenom: true, nom: true } },
-    },
-  });
-
-  return mapperEstimation(miseAJour as EstimationMapperSource);
-}
-
-export async function creerEstimationDepuisDossier(
+export async function creerEstimationMedecinExterneDepuisDossier(
   agentId: string,
+  medecinExterneId: string,
   dossierId: string,
   options?: {
     transfertId?: string;
-    nomConvention?: string;
     remiseUsd?: number;
   }
 ) {
@@ -379,7 +288,6 @@ export async function creerEstimationDepuisDossier(
         orderBy: { enregistreLe: "desc" },
         take: 1,
       },
-      examensPrenuptiaux: { orderBy: { planifieLe: "desc" }, take: 1 },
     },
   });
   if (!dossier) throw new Error("Dossier introuvable.");
@@ -396,25 +304,37 @@ export async function creerEstimationDepuisDossier(
   }
 
   const enreg = dossier.enregistrementsReception[0];
-  return creerEstimationConvention({
+  return creerEstimationMedecinExterne({
     agentId,
+    medecinExterneId,
     dossierId,
     transfertId: options?.transfertId,
-    nomConvention:
-      options?.nomConvention ?? dossier.examensPrenuptiaux[0]?.paroisse ?? null,
     medecinResponsable: enreg?.medecinResponsable?.trim() || "—",
     remiseUsd: options?.remiseUsd ?? decimalVersNombre(enreg?.remise ?? 0),
     lignes,
   });
 }
 
-export async function attacherPdfUploadEstimation(
+export async function attacherPdfUploadEstimationMedecinExterne(
   estimationId: string,
+  medecinExterneId: string,
   buffer: Buffer,
   nomFichier: string
 ) {
+  const estimation = await prisma.estimationConvention.findUnique({
+    where: { id: estimationId },
+    select: { typeEstimation: true, medecinExterneId: true },
+  });
+  if (
+    !estimation ||
+    estimation.typeEstimation !== TYPE_ESTIMATION ||
+    estimation.medecinExterneId !== medecinExterneId
+  ) {
+    throw new Error("Estimation introuvable.");
+  }
+
   const upload = await uploaderFichier(buffer, nomFichier, "application/pdf", {
-    sousDossier: "estimations-convention",
+    sousDossier: "estimations-medecins-externes",
   });
   await prisma.estimationConvention.update({
     where: { id: estimationId },

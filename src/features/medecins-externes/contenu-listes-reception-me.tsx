@@ -10,6 +10,10 @@ import { EnTetePageReception } from "@/features/reception/en-tete-page-reception
 import { ListePatientsEnregistres } from "@/features/reception/liste-patients-enregistres";
 import { ListePatientsTransferes } from "@/features/reception/liste-patients-transferes";
 import {
+  PanneauDroitEstimationMedecinExterne,
+  SectionsMobileEstimationMedecinExterne,
+} from "@/features/medecins-externes/panneau-droit-estimation-me";
+import {
   PanneauDroitReception,
   SectionsMobileReception,
 } from "@/features/reception/panneau-droit-reception";
@@ -57,7 +61,7 @@ function CorpsTransferes() {
       />
       <div className="space-y-4 lg:space-y-5">
         <ListePatientsTransferes />
-        <SectionsMobileReception variante="transferts" />
+        <SectionsMobileEstimationMedecinExterne />
       </div>
     </div>
   );
@@ -98,7 +102,7 @@ export function ContenuPatientsTransferesMedecinsExternes({
         utilisateur={utilisateur}
         titre={t("reception.pages.transferts.titre")}
         sousTitre={t("medecinsExternes.layout.sousTitre")}
-        panneauDroit={<PanneauDroitReception variante="transferts" />}
+        panneauDroit={<PanneauDroitEstimationMedecinExterne />}
         activerSelectionTransfert
       >
         <CorpsTransferes />

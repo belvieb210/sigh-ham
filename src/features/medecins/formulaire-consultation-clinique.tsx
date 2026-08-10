@@ -399,6 +399,16 @@ export function FormulaireConsultationClinique({
   );
 }
 
+/** Convertit le sexe patient (MASCULIN/FEMININ) vers les valeurs du select (M/F). */
+export function sexePourSelectFormulaire(
+  sexe: string | null | undefined
+): string {
+  if (!sexe) return "";
+  if (sexe === "MASCULIN" || sexe === "M") return "M";
+  if (sexe === "FEMININ" || sexe === "F") return "F";
+  return "";
+}
+
 export function signesDepuisConstantes(
   c: ConstanteVitaleResume | null
 ): FormulaireCliniqueMedecins["signesVitaux"] {

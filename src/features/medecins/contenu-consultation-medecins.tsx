@@ -30,6 +30,7 @@ import {
   FORMULAIRE_VIDE,
   FormulaireConsultationClinique,
   formulaireDepuisConstantes,
+  sexePourSelectFormulaire,
   signesDepuisConstantes,
   synthetiserChampsTexte,
 } from "@/features/medecins/formulaire-consultation-clinique";
@@ -184,24 +185,30 @@ export function CorpsConsultation({ utilisateur }: Props) {
       const c = opts?.consultation ?? null;
       const patient = opts?.patient;
       const constantesLocal = opts?.constantes ?? null;
+      const depuisInfirmier = formulaireDepuisConstantes(constantesLocal);
       if (c) {
         setConsultation(c);
         setMotif(c.motif);
         setFormulaire({
           ...FORMULAIRE_VIDE,
+          ...depuisInfirmier,
           ...(c.formulaireClinique ?? {}),
           signesVitaux: {
             ...signesDepuisConstantes(constantesLocal),
+            ...(depuisInfirmier.signesVitaux ?? {}),
             ...(c.formulaireClinique?.signesVitaux ?? {}),
           },
-          drRef: c.formulaireClinique?.drRef || opts?.medecinNom || c.medecin,
+          drRef:
+            c.formulaireClinique?.drRef ||
+            depuisInfirmier.drRef ||
+            opts?.medecinNom ||
+            c.medecin,
         });
         setDateConsult(c.debutLe.slice(0, 10));
         return;
       }
       setConsultation(null);
       setMotif(patient?.motif && patient.motif !== "—" ? patient.motif : "");
-      const depuisInfirmier = formulaireDepuisConstantes(constantesLocal);
       setFormulaire({
         ...FORMULAIRE_VIDE,
         ...depuisInfirmier,
@@ -418,7 +425,7 @@ export function CorpsConsultation({ utilisateur }: Props) {
       ? `${patientSelectionne.nom.toUpperCase()} ${patientSelectionne.prenom}`
       : "",
     age: patientSelectionne?.age != null ? String(patientSelectionne.age) : "",
-    sexe: patientSelectionne?.sexe ?? "",
+    sexe: sexePourSelectFormulaire(patientSelectionne?.sexe),
     date: dateConsult,
     telPat:
       patientSelectionne?.telephone === "—"

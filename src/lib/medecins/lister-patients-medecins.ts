@@ -268,6 +268,8 @@ export async function obtenirDetailPatientMedecins(
         glycemie: decimalOuNull(constantes.glycemie),
         observations: constantes.observations,
         mesureLe: constantes.mesureLe.toISOString(),
+        formulaireClinique:
+          constantes.formulaireClinique as ConstanteVitaleResume["formulaireClinique"],
       }
     : null;
 

@@ -29,6 +29,7 @@ import {
   FORMULAIRE_VIDE,
   FormulaireConsultationClinique,
   formulaireDepuisConstantes,
+  sexePourSelectFormulaire,
   signesDepuisConstantes,
 } from "@/features/medecins/formulaire-consultation-clinique";
 import type {
@@ -326,7 +327,7 @@ export function CorpsConsultationInfirmiers() {
       ? `${patientSelectionne.nom.toUpperCase()} ${patientSelectionne.prenom}`
       : "",
     age: patientSelectionne?.age != null ? String(patientSelectionne.age) : "",
-    sexe: patientSelectionne?.sexe ?? "",
+    sexe: sexePourSelectFormulaire(patientSelectionne?.sexe),
     date: dateConsult,
     telPat:
       patientSelectionne?.telephone === "—"

@@ -40,6 +40,7 @@ export const ESPACE_API_MEDECINS_EXTERNES: EspaceApiReceptionLike = {
   evenementPatientsModifies: "sigh:medecins-externes-patients-modifies",
   evenementPatientRecherche: "sigh:medecins-externes-patient-recherche-selectionne",
   evenementFocusRecherche: "sigh:medecins-externes-focus-recherche",
+  orientationDefaut: "CAISSE",
 };
 
 export const ESPACE_API_EGLISE: EspaceApiReceptionLike = {

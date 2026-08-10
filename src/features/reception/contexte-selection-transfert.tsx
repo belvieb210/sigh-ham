@@ -14,6 +14,7 @@ import {
   COULEURS_ORIENTATION_LISTE,
   ORIENTATIONS_RAPIDES,
 } from "@/constants/reception";
+import { filtrerOrientationsMedecinsExternes } from "@/constants/medecins-externes";
 import { useOrientationRapide } from "@/features/reception/contexte-orientation-rapide";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import type { DonneesFormulairePatient } from "@/lib/reception/types";
@@ -146,9 +147,16 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
 
   const changerOrientationsTransfert = useCallback(
     async (codesSalle: string[]) => {
-      const codes = [...new Set(codesSalle.filter(Boolean))];
+      const brutes = [...new Set(codesSalle.filter(Boolean))];
+      const codes = espace.prefixeApi.includes("medecins-externes")
+        ? filtrerOrientationsMedecinsExternes(brutes)
+        : brutes;
       if (codes.length === 0) {
-        setMessagePanneau("Sélectionnez au moins une destination.");
+        setMessagePanneau(
+          espace.prefixeApi.includes("medecins-externes")
+            ? "La destination autorisée est la Caisse."
+            : "Sélectionnez au moins une destination."
+        );
         return;
       }
 
@@ -269,14 +277,10 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
         setMessagePanneau(
           premierOk?.message ??
             (echecs > 0
-              ? `${ok} patient(s) orienté(s) (${echecs} échec(s))${transfertConfirme ? "." : " — confirmez dans la liste."}`
+              ? `${ok} patient(s) orienté(s) (${echecs} échec(s)) — confirmez dans la liste.`
               : cibles.length > 1
-                ? transfertConfirme
-                  ? `${ok} patients transférés vers ${orientationAffichee}.`
-                  : `${ok} patients orientés vers ${orientationAffichee} — confirmez via ⋮.`
-                : transfertConfirme
-                  ? `Patient transféré vers ${orientationAffichee}.`
-                  : `Transfert(s) vers ${orientationAffichee} créé(s) — confirmez dans la liste.`)
+                ? `${ok} patients orientés vers ${orientationAffichee} — confirmez via ⋮.`
+                : `Transfert vers ${orientationAffichee} créé — confirmez via le menu ⋮.`)
         );
         window.dispatchEvent(new CustomEvent(espace.evenementPatientsModifies));
       } catch (error) {
@@ -294,6 +298,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       peutModifierOrientation,
       peutCreerTransfertRapide,
       definirOrientations,
+      espace.prefixeApi,
     ]
   );
 

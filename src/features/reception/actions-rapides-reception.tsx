@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useEspaceApi } from "@/features/reception/contexte-espace-api";
+import { filtrerOrientationsMedecinsExternes } from "@/constants/medecins-externes";
 import {
   Search,
   Printer,
@@ -61,11 +62,14 @@ export function ActionsRapidesReception({
       return;
     }
 
-    const codes = [
+    const brutes = [
       ...new Set(
         (orientations.length > 0 ? orientations : [orientation]).filter(Boolean)
       ),
     ];
+    const codes = espace.prefixeApi.includes("medecins-externes")
+      ? filtrerOrientationsMedecinsExternes(brutes)
+      : brutes;
     if (codes.length === 0) {
       setErreur(t("reception.actions.destinationRequise"));
       setMessage(null);

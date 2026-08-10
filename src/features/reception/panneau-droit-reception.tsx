@@ -7,6 +7,8 @@ import { AffichageResumePatient } from "@/features/reception/affichage-resume-pa
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import { useOrientationRapide } from "@/features/reception/contexte-orientation-rapide";
 import { useSelectionTransfertOptionnel } from "@/features/reception/contexte-selection-transfert";
+import { useEspaceApi } from "@/features/reception/contexte-espace-api";
+import { ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES } from "@/constants/medecins-externes";
 import { cn } from "@/lib/utils";
 
 interface PropsPanneauDroit {
@@ -116,6 +118,8 @@ function BlocOrientation({
   variante: "defaut" | "transferts";
 }) {
   const { t } = useTranslation();
+  const espace = useEspaceApi();
+  const estMedecinsExternes = espace.prefixeApi.includes("medecins-externes");
   const {
     orientation,
     orientations,
@@ -132,6 +136,12 @@ function BlocOrientation({
       </h2>
       {variante === "transferts" && selection ? (
         <MessageAideOrientation selection={selection} />
+      ) : estMedecinsExternes ? (
+        <p className="mb-2 text-xs text-texte-secondaire">
+          {t("medecinsExternes.panneau.aideOrientationCaisse", {
+            defaultValue: "Transfert vers la Caisse uniquement.",
+          })}
+        </p>
       ) : (
         <p className="mb-2 text-xs text-texte-secondaire">
           {t("reception.panneau.aideOrientationMultiAccueil")}
@@ -143,8 +153,9 @@ function BlocOrientation({
         orientations={orientations}
         onOrientationChange={onOrientationChange}
         onOrientationsChange={onOrientationsChange}
-        multiple
+        multiple={!estMedecinsExternes}
         desactive={desactiveOrientation}
+        options={estMedecinsExternes ? ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES : undefined}
       />
       {selection?.messagePanneau && (
         <MessageResultatOrientation message={selection.messagePanneau} />

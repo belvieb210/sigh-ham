@@ -1,6 +1,9 @@
 import "server-only";
 import type { CodeSalle } from "@/generated/prisma/client";
-import { CODES_ORIENTATION_MEDECINS_EXTERNES } from "@/constants/medecins-externes";
+import {
+  CODES_ORIENTATION_MEDECINS_EXTERNES,
+  filtrerOrientationsMedecinsExternes,
+} from "@/constants/medecins-externes";
 import { prisma } from "@/lib/prisma";
 import { synchroniserTransfertsEnAttente } from "@/lib/transferts/multi-destinations";
 import { assertDossierDuMedecinExterne } from "@/lib/medecins-externes/assurer-fiche";
@@ -10,19 +13,12 @@ const ORIENTATIONS_AUTORISEES = new Set<string>(
 );
 
 function normaliserDestinations(orientations: string[]): CodeSalle[] {
-  const codes = [
-    ...new Set(
-      orientations.map((o) => {
-        const code = o.trim() as CodeSalle;
-        if (!ORIENTATIONS_AUTORISEES.has(code)) {
-          throw new Error("Salle de destination invalide.");
-        }
-        return code;
-      })
-    ),
-  ];
+  const codes = filtrerOrientationsMedecinsExternes(orientations);
   if (codes.length === 0) {
     throw new Error("Sélectionnez au moins une destination.");
+  }
+  if (codes.some((c) => !ORIENTATIONS_AUTORISEES.has(c))) {
+    throw new Error("Salle de destination invalide.");
   }
   if (codes.includes("MEDECINS_EXTERNES")) {
     throw new Error(

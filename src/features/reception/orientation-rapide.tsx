@@ -15,6 +15,8 @@ import {
 import { ORIENTATIONS_RAPIDES } from "@/constants/reception";
 import { cn } from "@/lib/utils";
 
+type OptionOrientation = (typeof ORIENTATIONS_RAPIDES)[number];
+
 const ICONES: Record<string, React.ComponentType<{ className?: string }>> = {
   INFIRMIERS: Stethoscope,
   MEDECINS: UserRound,
@@ -48,6 +50,8 @@ interface PropsOrientationRapide {
   onOrientationsChange?: (values: string[]) => void;
   multiple?: boolean;
   desactive?: boolean;
+  /** Sous-ensemble de destinations (ex. Caisse seule pour médecins externes) */
+  options?: readonly OptionOrientation[];
 }
 
 export function OrientationRapide({
@@ -58,11 +62,15 @@ export function OrientationRapide({
   onOrientationsChange,
   multiple = true,
   desactive = false,
+  options: optionsProp,
 }: PropsOrientationRapide) {
   const { t } = useTranslation();
-  const [orientationInterne, setOrientationInterne] = useState("INFIRMIERS");
+  const optionsListe = optionsProp ?? ORIENTATIONS_RAPIDES;
+  const [orientationInterne, setOrientationInterne] = useState<string>(
+    () => optionsListe[0]?.value ?? "INFIRMIERS"
+  );
   const [orientationsInternes, setOrientationsInternes] = useState<string[]>([
-    "INFIRMIERS",
+    optionsListe[0]?.value ?? "INFIRMIERS",
   ]);
   const orientations = orientationsControlees ?? orientationsInternes;
   const orientation = orientationControlee ?? orientationInterne;
@@ -85,7 +93,7 @@ export function OrientationRapide({
   if (variante === "grille-mobile") {
     return (
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-        {ORIENTATIONS_RAPIDES.map((opt) => {
+        {optionsListe.map((opt) => {
           const Icone = ICONES[opt.value] ?? Stethoscope;
           const selectionne = multiple
             ? orientations.includes(opt.value)
@@ -127,7 +135,7 @@ export function OrientationRapide({
 
   return (
     <div className="space-y-2">
-      {ORIENTATIONS_RAPIDES.map((opt) => {
+      {optionsListe.map((opt) => {
         const Icone = ICONES[opt.value] ?? Stethoscope;
         const selectionne = multiple
           ? orientations.includes(opt.value)

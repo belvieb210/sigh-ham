@@ -64,6 +64,21 @@ export async function confirmerTransfertMedecinsExternes(
   );
 
   const resultat = await prisma.$transaction(async (tx) => {
+    const fileMe = await tx.fileAttente.findFirst({
+      where: {
+        passageId: transfert.passageId!,
+        serviLe: null,
+        salle: { code: "MEDECINS_EXTERNES" },
+      },
+    });
+
+    if (fileMe) {
+      await tx.fileAttente.update({
+        where: { id: fileMe.id },
+        data: { serviLe: new Date() },
+      });
+    }
+
     const transfertEntrant = await tx.transfert.findFirst({
       where: {
         passageId: transfert.passageId!,

@@ -97,11 +97,26 @@ export const NAVIGATION_BASSE_MEDECINS_EXTERNES = [
   },
 ] as const;
 
-/** Identique à la réception (mêmes destinations / libellés / couleurs) */
-export const ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES = ORIENTATIONS_RAPIDES;
+/** Médecins externes : transfert uniquement vers la Caisse */
+export const ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES = ORIENTATIONS_RAPIDES.filter(
+  (o) => o.value === "CAISSE"
+);
 
-export const CODES_ORIENTATION_MEDECINS_EXTERNES: CodeSalle[] =
-  ORIENTATIONS_RAPIDES.map((o) => o.value as CodeSalle);
+export const CODES_ORIENTATION_MEDECINS_EXTERNES: CodeSalle[] = ["CAISSE"];
+
+export function filtrerOrientationsMedecinsExternes(
+  orientations: string[]
+): CodeSalle[] {
+  const codes = [
+    ...new Set(
+      orientations
+        .map((o) => o.trim())
+        .filter((o) => o === "CAISSE") as CodeSalle[]
+    ),
+  ];
+  if (codes.length === 0) return ["CAISSE"];
+  return codes;
+}
 
 export const EVENEMENT_MEDECINS_EXTERNES_MODIFIE =
   "sigh:medecins-externes-patients-modifies";

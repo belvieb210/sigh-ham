@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { EVENEMENT_MEDECINS_EXTERNES_PATIENTS_MODIFIES, ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES } from "@/constants/medecins-externes";
+import { EVENEMENT_MEDECINS_EXTERNES_PATIENTS_MODIFIES, filtrerOrientationsMedecinsExternes, ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES } from "@/constants/medecins-externes";
 import { useOrientationMedecinsExternes } from "@/features/medecins-externes/contexte-orientation-medecins-externes";
 import type { PatientFileMedecinsExternes } from "@/lib/medecins-externes/types";
 
@@ -115,9 +115,11 @@ export function FournisseurSelectionMedecinsExternes({ children }: { children: R
 
   const demanderOrientations = useCallback(
     async (codesSalle: string[]) => {
-      const codes = codesSalle.filter((c) => c !== "MEDECINS_EXTERNES");
+      const codes = filtrerOrientationsMedecinsExternes(
+        codesSalle.filter((c) => c !== "MEDECINS_EXTERNES")
+      );
       if (codes.length === 0) {
-        setMessagePanneau("Sélectionnez au moins une destination.");
+        setMessagePanneau("La destination autorisée est la Caisse.");
         return;
       }
 
@@ -193,10 +195,10 @@ export function FournisseurSelectionMedecinsExternes({ children }: { children: R
 
         setMessagePanneau(
           echecs > 0
-            ? `${ok} patient(s) transféré(s) vers ${label} (${echecs} échec(s)).`
+            ? `${ok} patient(s) orienté(s) vers ${label} (${echecs} échec(s)). Confirmez via ⋮.`
             : cibles.length > 1
-              ? `${ok} patients transférés vers ${label}.`
-              : `Patient transféré vers ${label}.`
+              ? `${ok} patients orientés vers ${label} — confirmez via le menu ⋮.`
+              : `Transfert vers ${label} créé — confirmez via le menu ⋮.`
         );
 
         if (patientSelectionne && cibles.includes(patientSelectionne.dossierId)) {
@@ -209,9 +211,9 @@ export function FournisseurSelectionMedecinsExternes({ children }: { children: R
                   codesSalleDestination: codesFinal,
                   transfertSortantId:
                     premierOk?.transfertId ?? courant.transfertSortantId,
-                  statutTransfertSortant: "ACCEPTE",
-                  statut: "Transféré",
-                  statutCouleur: "bg-emerald-100 text-emerald-700",
+                  statutTransfertSortant: "EN_ATTENTE",
+                  statut: "À confirmer",
+                  statutCouleur: "bg-orange-100 text-orange-800",
                 }
               : courant
           );

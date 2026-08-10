@@ -21,6 +21,7 @@ import {
   GROUPES_SANGUINS,
   ORIENTATIONS_RECEPTION,
 } from "@/constants/reception";
+import { ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES } from "@/constants/medecins-externes";
 import { useTraductionsReception } from "@/hooks/use-traductions-reception";
 import { ZonePhotoPatient } from "@/features/reception/zone-photo-patient";
 import { SelectionExamensInitiaux } from "@/features/reception/selection-examens-initiaux";
@@ -182,6 +183,14 @@ export const FormulaireEnregistrement = forwardRef<
 
   const motifEstAutre = motifPrincipal === "autre";
   const champsEglise = Boolean(espace.afficherChampsEglise);
+  const estMedecinsExternes = espace.prefixeApi.includes("medecins-externes");
+  const orientationsWizard = estMedecinsExternes
+    ? ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES.map((o) => ({
+        value: o.value,
+        label: o.label,
+        desc: o.description,
+      }))
+    : ORIENTATIONS_RECEPTION;
 
   const majFormulaire = useCallback(
     (champ: keyof EtatFormulairePatient, valeur: string) => {
@@ -1151,7 +1160,7 @@ export const FormulaireEnregistrement = forwardRef<
               {t("reception.formulaire.sections.orientationHint")}
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {ORIENTATIONS_RECEPTION.map((opt) => (
+              {orientationsWizard.map((opt) => (
                 <label
                   key={opt.value}
                   className={cn(

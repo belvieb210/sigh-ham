@@ -88,7 +88,7 @@ export function MiseEnPageMedecinsExternes({
               <FournisseurSelectionMedecinsExternes>{contenu}</FournisseurSelectionMedecinsExternes>
             </FournisseurOrientationMedecinsExternes>
           ) : (
-            <FournisseurOrientationRapide>
+            <FournisseurOrientationRapide initial={["CAISSE"]}>
               {activerSelectionTransfert ? (
                 <FournisseurSelectionTransfert>{contenu}</FournisseurSelectionTransfert>
               ) : (

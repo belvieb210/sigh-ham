@@ -363,9 +363,14 @@ const styles = StyleSheet.create({
 
 interface PropsDocumentDevisEstimation {
   donnees: DonneesDevisEstimation;
+  /** Chemins absolus (serveur) ou URLs (client) pour logo et signature */
+  urlsAssets?: { logo: string; signature: string };
 }
 
-export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimation) {
+export function DocumentDevisEstimation({
+  donnees,
+  urlsAssets,
+}: PropsDocumentDevisEstimation) {
   const L = INFOS_LEGALES_TICKET;
   const medicaments = donnees.medicaments ?? [];
   const sousTotalExamens = donnees.examens.reduce((t, e) => t + e.prix, 0);
@@ -382,8 +387,10 @@ export function DocumentDevisEstimation({ donnees }: PropsDocumentDevisEstimatio
   const tel = donnees.telephonePatient?.trim() || "—";
   const agent = donnees.agentNom?.trim() || "—";
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const logoSrc = `${origin}/images/logo-ham-laboratoire.png`;
-  const signatureSrc = `${origin}/images/signature-ham.png`;
+  const logoSrc =
+    urlsAssets?.logo ?? `${origin}/images/logo-ham-laboratoire.png`;
+  const signatureSrc =
+    urlsAssets?.signature ?? `${origin}/images/signature-ham.png`;
 
   return (
     <Document

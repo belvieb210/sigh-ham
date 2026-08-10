@@ -278,6 +278,10 @@ export const pharmacieEn = {
     statutPayee: "Paid",
     statutDelivree: "Dispensed",
     dejaDelivree: "Medicines already dispensed to the client.",
+    apercuFacture: "Pharmacy invoice",
+    ouvrirFacture: "Open",
+    chargementFacture: "Loading invoice…",
+    erreurFacture: "Unable to display the invoice in the panel.",
   },
   stock: {
     titre: "Stock",

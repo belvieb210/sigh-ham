@@ -279,6 +279,10 @@ export const pharmacieFr = {
     statutPayee: "Payée",
     statutDelivree: "Délivrée",
     dejaDelivree: "Médicaments déjà remis au client.",
+    apercuFacture: "Facture pharmacie",
+    ouvrirFacture: "Ouvrir",
+    chargementFacture: "Chargement de la facture…",
+    erreurFacture: "Impossible d'afficher la facture dans le panneau.",
   },
   stock: {
     titre: "Stock",

@@ -67,6 +67,7 @@ export const egliseEn = {
     telecharger: "Download PDF",
     envoyerCaisse: "Send to cashier",
     voirPdf: "View estimate",
+    importerPdf: "Upload PDF",
   },
   panneau: {
     syntheseEstimation: "Estimate summary",

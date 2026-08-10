@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ClipboardList, Download, Send } from "lucide-react";
+import { ClipboardList, Download, Send, Upload } from "lucide-react";
 import {
   MiseEnPageMedecinsExternes,
   type UtilisateurMedecinsExternes,
@@ -13,6 +13,17 @@ import {
   FournisseurEspaceApi,
 } from "@/features/reception/contexte-espace-api";
 import { Bouton } from "@/components/ui/bouton";
+import {
+  estimationCorrespondFiltres,
+  type FiltresEstimations,
+} from "@/features/estimations/filtres-estimations";
+import {
+  BarreOutilsListeEstimations,
+  compterFiltresEstimations,
+  exporterEstimationsCsv,
+  FILTRES_ESTIMATIONS_VIDES,
+  FormulaireFiltresEstimations,
+} from "@/features/estimations/outils-liste-estimations";
 
 const PAR_PAGE = 15;
 
@@ -39,12 +50,14 @@ function PanneauEstimationSelection({
   countSelection,
   message,
   onEnvoyerCaisse,
+  onUploadPdf,
 }: {
   selection: EstimationItem | null;
   totauxSelection: { total: number; honoraire: number };
   countSelection: number;
   message: string | null;
   onEnvoyerCaisse: (id: string) => void;
+  onUploadPdf: (file: File, id: string) => void;
 }) {
   const { t } = useTranslation();
 
@@ -135,6 +148,19 @@ function PanneauEstimationSelection({
               {t("medecinsExternes.estimations.envoyerCaisse")}
             </Bouton>
           )}
+          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm hover:bg-gris-tres-clair">
+            <Upload className="h-4 w-4" />
+            {t("medecinsExternes.estimations.importerPdf")}
+            <input
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onUploadPdf(f, selection.id);
+              }}
+            />
+          </label>
         </div>
         {message && <p className="mt-2 text-xs text-emerald-700">{message}</p>}
       </section>
@@ -145,9 +171,11 @@ function PanneauEstimationSelection({
 function CorpsEstimations({
   onSelectionChange,
   idsSelection,
+  message,
 }: {
   onSelectionChange: (items: EstimationItem[]) => void;
   idsSelection: Set<string>;
+  message: string | null;
 }) {
   const { t } = useTranslation();
   const [estimations, setEstimations] = useState<EstimationItem[]>([]);
@@ -155,6 +183,9 @@ function CorpsEstimations({
   const [chargement, setChargement] = useState(true);
   const [page, setPage] = useState(1);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillon, setBrouillon] = useState<FiltresEstimations>(FILTRES_ESTIMATIONS_VIDES);
+  const [appliques, setAppliques] = useState<FiltresEstimations>(FILTRES_ESTIMATIONS_VIDES);
 
   const charger = useCallback(async () => {
     setChargement(true);
@@ -181,15 +212,40 @@ function CorpsEstimations({
     void charger();
   }, [charger]);
 
-  const totalPages = Math.max(1, Math.ceil(estimations.length / PAR_PAGE));
-  const debut = (page - 1) * PAR_PAGE;
-  const pageItems = estimations.slice(debut, debut + PAR_PAGE);
+  const estimationsFiltrees = useMemo(
+    () => estimations.filter((e) => estimationCorrespondFiltres(e, appliques)),
+    [estimations, appliques]
+  );
+
+  const nbFiltres = compterFiltresEstimations(appliques);
+  const totalPages = Math.max(1, Math.ceil(estimationsFiltrees.length / PAR_PAGE));
+  const pageCourante = Math.min(page, totalPages);
+  const debut = (pageCourante - 1) * PAR_PAGE;
+  const pageItems = estimationsFiltrees.slice(debut, debut + PAR_PAGE);
+
+  const toutSelectionne =
+    estimationsFiltrees.length > 0 &&
+    estimationsFiltrees.every((e) => idsSelection.has(e.id));
 
   const basculerSelection = (item: EstimationItem) => {
     const next = new Set(idsSelection);
     if (next.has(item.id)) next.delete(item.id);
     else next.add(item.id);
     onSelectionChange(estimations.filter((e) => next.has(e.id)));
+  };
+
+  const basculerSelectionTout = () => {
+    if (toutSelectionne) {
+      onSelectionChange([]);
+      return;
+    }
+    onSelectionChange(estimationsFiltrees);
+  };
+
+  const exporterSelection = () => {
+    const coches = estimations.filter((e) => idsSelection.has(e.id));
+    const cibles = coches.length > 0 ? coches : estimationsFiltrees;
+    exporterEstimationsCsv(cibles, { inclureMontants: true });
   };
 
   return (
@@ -221,6 +277,37 @@ function CorpsEstimations({
 
       {erreur && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{erreur}</p>
+      )}
+      {message && (
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{message}</p>
+      )}
+
+      <BarreOutilsListeEstimations
+        filtresOuverts={filtresOuverts}
+        onBasculerFiltres={() => setFiltresOuverts((o) => !o)}
+        nbFiltres={nbFiltres}
+        toutSelectionne={toutSelectionne}
+        onSelectionnerTout={basculerSelectionTout}
+        onExporter={exporterSelection}
+        labelSelectionnerTout={t("reception.liste.selectionnerTout")}
+        labelExporter={t("reception.liste.exporterSelection")}
+      />
+
+      {filtresOuverts && (
+        <FormulaireFiltresEstimations
+          valeurs={brouillon}
+          onChange={setBrouillon}
+          variante="emission"
+          onRechercher={() => {
+            setAppliques(brouillon);
+            setPage(1);
+          }}
+          onReinitialiser={() => {
+            setBrouillon(FILTRES_ESTIMATIONS_VIDES);
+            setAppliques(FILTRES_ESTIMATIONS_VIDES);
+            setPage(1);
+          }}
+        />
       )}
 
       <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white">
@@ -279,16 +366,17 @@ function CorpsEstimations({
             )}
           </tbody>
         </table>
-        {estimations.length > PAR_PAGE && (
+        {estimationsFiltrees.length > PAR_PAGE && (
           <div className="flex items-center justify-between border-t px-4 py-3 text-xs">
             <span>
-              {debut + 1}–{Math.min(debut + PAR_PAGE, estimations.length)} / {estimations.length}
+              {debut + 1}–{Math.min(debut + PAR_PAGE, estimationsFiltrees.length)} /{" "}
+              {estimationsFiltrees.length}
             </span>
             <div className="flex gap-2">
               <Bouton
                 variante="contour"
                 taille="petit"
-                disabled={page <= 1}
+                disabled={pageCourante <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
                 Préc.
@@ -296,7 +384,7 @@ function CorpsEstimations({
               <Bouton
                 variante="contour"
                 taille="petit"
-                disabled={page >= totalPages}
+                disabled={pageCourante >= totalPages}
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               >
                 Suiv.
@@ -338,6 +426,19 @@ export function ContenuEstimationsMedecinsExternes({
     setMessage(data.message ?? (res.ok ? "Transmis à la caisse." : "Erreur."));
   };
 
+  const uploadPdf = async (file: File, id: string) => {
+    setMessage(null);
+    const form = new FormData();
+    form.append("fichier", file);
+    form.append("estimationId", id);
+    const res = await fetch("/api/medecins-externes/estimations/upload", {
+      method: "POST",
+      body: form,
+    });
+    const data = (await res.json()) as { message?: string };
+    setMessage(data.message ?? (res.ok ? "PDF mis à jour." : "Erreur."));
+  };
+
   return (
     <FournisseurEspaceApi espace={ESPACE_API_MEDECINS_EXTERNES}>
       <MiseEnPageMedecinsExternes
@@ -351,10 +452,15 @@ export function ContenuEstimationsMedecinsExternes({
             countSelection={selection.length}
             message={message}
             onEnvoyerCaisse={(id) => void envoyerCaisse(id)}
+            onUploadPdf={(file, id) => void uploadPdf(file, id)}
           />
         }
       >
-        <CorpsEstimations onSelectionChange={setSelection} idsSelection={idsSelection} />
+        <CorpsEstimations
+          onSelectionChange={setSelection}
+          idsSelection={idsSelection}
+          message={message}
+        />
       </MiseEnPageMedecinsExternes>
     </FournisseurEspaceApi>
   );

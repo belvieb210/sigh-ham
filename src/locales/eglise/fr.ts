@@ -67,6 +67,7 @@ export const egliseFr = {
     telecharger: "Télécharger PDF",
     envoyerCaisse: "Transmettre à la caisse",
     voirPdf: "Voir l'estimation",
+    importerPdf: "Importer PDF",
   },
   panneau: {
     syntheseEstimation: "Synthèse estimation",

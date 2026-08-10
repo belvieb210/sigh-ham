@@ -4,7 +4,6 @@ import {
   Home,
   Users,
   Pill,
-  Wallet,
   PackageCheck,
   BarChart3,
   History,
@@ -13,7 +12,6 @@ import {
   Bell,
   UserCircle,
   UserPlus,
-  FileText,
 } from "lucide-react";
 import { metaOrientationsSauf } from "@/lib/transferts/orientations-universelles";
 import type { CodeSalle } from "@/generated/prisma/client";
@@ -24,9 +22,7 @@ export const NAVIGATION_PHARMACIE = {
     { href: "/sigh/pharmacie/patients", id: "patients", icone: Users, badge: true },
     { href: "/sigh/pharmacie/nouveau-client", id: "nouveauClient", icone: UserPlus },
     { href: "/sigh/pharmacie/vente", id: "vente", icone: Pill },
-    { href: "/sigh/pharmacie/attente-paiement", id: "attentePaiement", icone: Wallet },
     { href: "/sigh/pharmacie/paiements-valides", id: "paiementsValides", icone: PackageCheck },
-    { href: "/sigh/pharmacie/remise", id: "remise", icone: FileText },
     { href: "/sigh/pharmacie/rapports", id: "rapports", icone: BarChart3 },
     { href: "/sigh/pharmacie/historique", id: "historique", icone: History },
   ],

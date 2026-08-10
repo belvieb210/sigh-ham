@@ -1,20 +1,5 @@
-import type { Metadata } from "next";
-import { ContenuVentePharmacie } from "@/features/pharmacie/contenu-vente-pharmacie";
-import { verifierAccesPharmacie } from "@/lib/auth/garde-salle";
-import { propsUtilisateurPharmacie } from "@/lib/auth/props-utilisateur-pharmacie";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Remise — Pharmacie",
-  robots: { index: false, follow: false },
-};
-
-export default async function Page() {
-  const utilisateur = await verifierAccesPharmacie();
-
-  return (
-    <ContenuVentePharmacie
-      utilisateur={propsUtilisateurPharmacie(utilisateur)}
-      mode="remise"
-    />
-  );
+export default function Page() {
+  redirect("/sigh/pharmacie/paiements-valides");
 }

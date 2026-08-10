@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ContenuVentePharmacie } from "@/features/pharmacie/contenu-vente-pharmacie";
+import { ContenuPaiementsValidesPharmacie } from "@/features/pharmacie/contenu-paiements-valides-pharmacie";
 import { verifierAccesPharmacie } from "@/lib/auth/garde-salle";
 import { propsUtilisateurPharmacie } from "@/lib/auth/props-utilisateur-pharmacie";
 
@@ -12,9 +12,8 @@ export default async function Page() {
   const utilisateur = await verifierAccesPharmacie();
 
   return (
-    <ContenuVentePharmacie
+    <ContenuPaiementsValidesPharmacie
       utilisateur={propsUtilisateurPharmacie(utilisateur)}
-      mode="payees"
     />
   );
 }

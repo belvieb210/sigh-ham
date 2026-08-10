@@ -10,9 +10,9 @@ import {
   FileText,
   Loader2,
   Package,
+  PackageCheck,
   Pill,
   ShoppingCart,
-  Truck,
   Users,
   Wallet,
 } from "lucide-react";
@@ -115,14 +115,14 @@ export function ContenuAccueilPharmacie({
         label: t("pharmacie.dashboard.enAttentePaiement"),
         valeur: stats?.ventesEnAttentePaiement ?? 0,
         sousTitre: t("pharmacie.dashboard.aTransmettreCaisse"),
-        href: "/sigh/pharmacie/attente-paiement",
+        href: "/sigh/pharmacie/vente",
         icone: Wallet,
         couleurIcone: "bg-orange-100 text-orange-700",
       },
       {
         label: t("pharmacie.dashboard.paiementsValides"),
         valeur: stats?.paiementsValidesJour ?? 0,
-        sousTitre: t("pharmacie.dashboard.aDelivrer"),
+        sousTitre: t("pharmacie.dashboard.paiementsValidesSousTitre"),
         href: "/sigh/pharmacie/paiements-valides",
         icone: FileText,
         couleurIcone: "bg-emerald-100 text-emerald-800",
@@ -167,15 +167,9 @@ export function ContenuAccueilPharmacie({
       style: "border-cyan-200 bg-cyan-50 text-cyan-900 hover:bg-cyan-100",
     },
     {
-      href: "/sigh/pharmacie/attente-paiement",
-      label: t("pharmacie.dashboard.actionTransmettreCaisse"),
-      icone: Wallet,
-      style: "border-orange-200 bg-orange-50 text-orange-900 hover:bg-orange-100",
-    },
-    {
-      href: "/sigh/pharmacie/remise",
-      label: t("pharmacie.dashboard.actionRemise"),
-      icone: Truck,
+      href: "/sigh/pharmacie/paiements-valides",
+      label: t("pharmacie.dashboard.actionPaiementsValides"),
+      icone: PackageCheck,
       style: "border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100",
     },
     {
@@ -305,7 +299,7 @@ export function ContenuAccueilPharmacie({
                     {t("pharmacie.dashboard.ventesEnAttenteTitre")}
                   </h2>
                   <Link
-                    href="/sigh/pharmacie/attente-paiement"
+                    href="/sigh/pharmacie/vente"
                     className="text-xs font-medium text-bleu-medical hover:underline"
                   >
                     {t("pharmacie.dashboard.voirTout")}
@@ -344,7 +338,7 @@ export function ContenuAccueilPharmacie({
                             </td>
                             <td className="py-2">
                               <Link
-                                href={`/sigh/pharmacie/attente-paiement?vente=${encodeURIComponent(v.id)}`}
+                                href={`/sigh/pharmacie/vente?dossier=${encodeURIComponent(v.dossierId)}`}
                                 className="inline-flex rounded-md border border-gris-bordure bg-white px-2 py-1 text-[10px] font-medium hover:bg-gris-tres-clair"
                               >
                                 {t("pharmacie.dashboard.transmettre")}

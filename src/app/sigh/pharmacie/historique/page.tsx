@@ -14,7 +14,7 @@ export default async function Page() {
   return (
     <ContenuVentePharmacie
       utilisateur={propsUtilisateurPharmacie(utilisateur)}
-      mode="vente"
+      mode="historique"
     />
   );
 }

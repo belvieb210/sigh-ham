@@ -2,16 +2,38 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { genererNumerosPatient } from "@/lib/reception/numeros";
 
+function dateNaissanceDepuisAge(age: number): Date {
+  const d = new Date();
+  d.setHours(12, 0, 0, 0);
+  d.setFullYear(d.getFullYear() - age);
+  return d;
+}
+
+function normaliserSexe(v?: string) {
+  const s = (v ?? "").trim().toUpperCase();
+  if (s === "M" || s === "MASCULIN") return "MASCULIN" as const;
+  if (s === "F" || s === "FEMININ") return "FEMININ" as const;
+  if (s === "AUTRE") return "AUTRE" as const;
+  return null;
+}
+
 /** Client walk-in pharmacie → Patient + Dossier */
 export async function creerClientPharmacie(data: {
   prenom: string;
   nom: string;
   telephone?: string;
   adresse?: string;
+  age?: number | null;
+  sexe?: string;
 }) {
   const prenom = data.prenom.trim();
   const nom = data.nom.trim();
   if (!prenom || !nom) throw new Error("Prénom et nom requis.");
+
+  const age =
+    data.age != null && Number.isFinite(data.age) && data.age >= 0 && data.age <= 130
+      ? Math.floor(data.age)
+      : null;
 
   return prisma.$transaction(async (tx) => {
     const { numeroPatient, numeroEnregistrement } =
@@ -24,7 +46,8 @@ export async function creerClientPharmacie(data: {
         nom,
         telephone: data.telephone?.trim() || null,
         adresse: data.adresse?.trim() || null,
-        sexe: "AUTRE",
+        sexe: normaliserSexe(data.sexe) ?? "AUTRE",
+        dateNaissance: age != null ? dateNaissanceDepuisAge(age) : null,
       },
     });
 

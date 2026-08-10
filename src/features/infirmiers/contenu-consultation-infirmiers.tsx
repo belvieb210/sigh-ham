@@ -3,52 +3,43 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import {
-  Loader2,
-  Pencil,
-  Save,
-  SlidersHorizontal,
-  Stethoscope,
-  X,
-  XCircle,
-} from "lucide-react";
+import { Activity, Loader2, Save, SlidersHorizontal, X } from "lucide-react";
 import { BoutonsOutilsListe } from "@/components/ui/boutons-outils-liste";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import { PaginationListe } from "@/components/ui/pagination-liste";
-import { EVENEMENT_MEDECINS_PATIENTS_MODIFIES } from "@/constants/medecins";
+import { EVENEMENT_INFIRMIERS_PATIENTS_MODIFIES } from "@/constants/infirmiers";
 import {
   compterFiltresActifs,
   FILTRES_FACTURATION_VIDES,
   FormulaireFiltresFacturationCaisse,
   type FiltresFacturationCaisse,
 } from "@/features/caisse/formulaire-filtres-facturation-caisse";
+import { useOrientationInfirmiers } from "@/features/infirmiers/contexte-orientation-infirmiers";
+import { useSelectionInfirmiersOptionnel } from "@/features/infirmiers/contexte-selection-infirmiers";
 import {
-  MiseEnPageMedecins,
-  type UtilisateurMedecins,
-} from "@/features/medecins/mise-en-page-medecins";
+  MiseEnPageInfirmiers,
+  type UtilisateurInfirmiers,
+} from "@/features/infirmiers/mise-en-page-infirmiers";
+import { MenuActionsTransfertInfirmiers } from "@/features/infirmiers/menu-actions-transfert-infirmiers";
+import {
+  PanneauDroitInfirmiers,
+  SectionsMobileInfirmiersPatients,
+} from "@/features/infirmiers/panneau-droit-infirmiers";
 import {
   FORMULAIRE_VIDE,
   FormulaireConsultationClinique,
   formulaireDepuisConstantes,
   signesDepuisConstantes,
-  synthetiserChampsTexte,
 } from "@/features/medecins/formulaire-consultation-clinique";
-import { MenuActionsTransfertMedecins } from "@/features/medecins/menu-actions-transfert-medecins";
-import {
-  PanneauDroitMedecins,
-  SectionsMobileMedecinsPatients,
-} from "@/features/medecins/panneau-droit-medecins";
-import { useSelectionMedecins } from "@/features/medecins/contexte-selection-medecins";
 import type {
-  ConsultationDetailMedecins,
   ConstanteVitaleResume,
-  FormulaireCliniqueMedecins,
-  PatientFileMedecins,
-} from "@/lib/medecins/types";
+  PatientFileInfirmiers,
+} from "@/lib/infirmiers/types";
+import type { FormulaireCliniqueMedecins } from "@/lib/medecins/types";
 import { cn } from "@/lib/utils";
 
 interface Props {
-  utilisateur: UtilisateurMedecins;
+  utilisateur: UtilisateurInfirmiers;
 }
 
 function aujourdhuiInput() {
@@ -57,7 +48,7 @@ function aujourdhuiInput() {
 }
 
 function patientCorrespondFiltres(
-  p: PatientFileMedecins,
+  p: PatientFileInfirmiers,
   f: FiltresFacturationCaisse
 ): boolean {
   const nom = f.nom.trim().toLowerCase();
@@ -86,10 +77,58 @@ function patientCorrespondFiltres(
   return true;
 }
 
-export function CorpsConsultation({ utilisateur }: Props) {
+function useSelectionConsultationInfirmiers() {
+  const ctx = useSelectionInfirmiersOptionnel();
+  const [patientLocal, setPatientLocal] = useState<PatientFileInfirmiers | null>(
+    null
+  );
+  const [cochesLocal, setCochesLocal] = useState<string[]>([]);
+
+  const basculerLocal = useCallback((dossierId: string) => {
+    setCochesLocal((prev) =>
+      prev.includes(dossierId)
+        ? prev.filter((id) => id !== dossierId)
+        : [...prev, dossierId]
+    );
+  }, []);
+
+  const definirCochesLocal = useCallback((dossierIds: string[], coche: boolean) => {
+    setCochesLocal((prev) => {
+      const set = new Set(prev);
+      for (const id of dossierIds) {
+        if (coche) set.add(id);
+        else set.delete(id);
+      }
+      return [...set];
+    });
+  }, []);
+
+  if (ctx) {
+    return {
+      patientSelectionne: ctx.patientSelectionne,
+      selectionnerPatient: ctx.selectionnerPatient,
+      dossiersCoches: ctx.dossiersCoches,
+      basculerDossierCoche: ctx.basculerDossierCoche,
+      definirCoches: ctx.definirCoches,
+      synchroniserSelection: ctx.synchroniserSelection,
+    };
+  }
+
+  return {
+    patientSelectionne: patientLocal,
+    selectionnerPatient: setPatientLocal,
+    dossiersCoches: cochesLocal,
+    basculerDossierCoche: basculerLocal,
+    definirCoches: definirCochesLocal,
+    synchroniserSelection: () => {},
+  };
+}
+
+export function CorpsConsultationInfirmiers() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const dossierUrl = searchParams.get("dossier")?.trim() ?? "";
+  const { definirOrientations } = useOrientationInfirmiers();
 
   const {
     patientSelectionne,
@@ -98,9 +137,9 @@ export function CorpsConsultation({ utilisateur }: Props) {
     basculerDossierCoche,
     definirCoches,
     synchroniserSelection,
-  } = useSelectionMedecins();
+  } = useSelectionConsultationInfirmiers();
 
-  const [patients, setPatients] = useState<PatientFileMedecins[]>([]);
+  const [patients, setPatients] = useState<PatientFileInfirmiers[]>([]);
   const [chargementListe, setChargementListe] = useState(true);
   const [filtresOuverts, setFiltresOuverts] = useState(false);
   const [brouillonFiltres, setBrouillonFiltres] = useState<FiltresFacturationCaisse>(
@@ -111,19 +150,9 @@ export function CorpsConsultation({ utilisateur }: Props) {
   );
   const [formulaireOuvert, setFormulaireOuvert] = useState(false);
   const [pageListe, setPageListe] = useState(1);
-  const [consultation, setConsultation] =
-    useState<ConsultationDetailMedecins | null>(null);
-  const [historique, setHistorique] = useState<ConsultationDetailMedecins[]>(
-    []
-  );
-  const [constantes, setConstantes] = useState<ConstanteVitaleResume | null>(
-    null
-  );
-  const [motif, setMotif] = useState("");
   const [formulaire, setFormulaire] =
     useState<FormulaireCliniqueMedecins>(FORMULAIRE_VIDE);
   const [dateConsult, setDateConsult] = useState(aujourdhuiInput());
-  const [modeModifier, setModeModifier] = useState(false);
   const [enCours, setEnCours] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -133,22 +162,37 @@ export function CorpsConsultation({ utilisateur }: Props) {
   const chargerPatients = useCallback(async () => {
     setChargementListe(true);
     try {
-      const res = await fetch("/api/medecins/patients");
+      const res = await fetch("/api/infirmiers/patients");
       const data = (await res.json()) as {
-        patients?: PatientFileMedecins[];
+        patients?: PatientFileInfirmiers[];
         erreur?: string;
       };
       if (!res.ok) {
-        setErreur(data.erreur ?? t("medecins.erreurs.chargementPatients"));
+        setErreur(data.erreur ?? t("infirmiers.patients.erreur"));
         return;
       }
       setPatients(data.patients ?? []);
     } catch {
-      setErreur(t("medecins.erreurs.chargementPatients"));
+      setErreur(t("infirmiers.patients.erreur"));
     } finally {
       setChargementListe(false);
     }
   }, [t]);
+
+  const reinitaliserFormulaire = useCallback(
+    (opts?: { derniereConstante?: ConstanteVitaleResume | null }) => {
+      const c = opts?.derniereConstante ?? null;
+      const depuisConstante = formulaireDepuisConstantes(c);
+      setFormulaire({
+        ...FORMULAIRE_VIDE,
+        ...depuisConstante,
+        drRef: depuisConstante.drRef || "",
+        signesVitaux: signesDepuisConstantes(c),
+      });
+      setDateConsult(aujourdhuiInput());
+    },
+    []
+  );
 
   useEffect(() => {
     void chargerPatients();
@@ -156,9 +200,9 @@ export function CorpsConsultation({ utilisateur }: Props) {
 
   useEffect(() => {
     const onModifie = () => void chargerPatients();
-    window.addEventListener(EVENEMENT_MEDECINS_PATIENTS_MODIFIES, onModifie);
+    window.addEventListener(EVENEMENT_INFIRMIERS_PATIENTS_MODIFIES, onModifie);
     return () =>
-      window.removeEventListener(EVENEMENT_MEDECINS_PATIENTS_MODIFIES, onModifie);
+      window.removeEventListener(EVENEMENT_INFIRMIERS_PATIENTS_MODIFIES, onModifie);
   }, [chargerPatients]);
 
   useEffect(() => {
@@ -174,51 +218,9 @@ export function CorpsConsultation({ utilisateur }: Props) {
     }
   }, [dossierUrl, patients, selectionnerPatient]);
 
-  const reinitaliserFormulaire = useCallback(
-    (opts?: {
-      patient?: PatientFileMedecins | null;
-      constantes?: ConstanteVitaleResume | null;
-      consultation?: ConsultationDetailMedecins | null;
-      medecinNom?: string;
-    }) => {
-      const c = opts?.consultation ?? null;
-      const patient = opts?.patient;
-      const constantesLocal = opts?.constantes ?? null;
-      if (c) {
-        setConsultation(c);
-        setMotif(c.motif);
-        setFormulaire({
-          ...FORMULAIRE_VIDE,
-          ...(c.formulaireClinique ?? {}),
-          signesVitaux: {
-            ...signesDepuisConstantes(constantesLocal),
-            ...(c.formulaireClinique?.signesVitaux ?? {}),
-          },
-          drRef: c.formulaireClinique?.drRef || opts?.medecinNom || c.medecin,
-        });
-        setDateConsult(c.debutLe.slice(0, 10));
-        return;
-      }
-      setConsultation(null);
-      setMotif(patient?.motif && patient.motif !== "—" ? patient.motif : "");
-      const depuisInfirmier = formulaireDepuisConstantes(constantesLocal);
-      setFormulaire({
-        ...FORMULAIRE_VIDE,
-        ...depuisInfirmier,
-        drRef: depuisInfirmier.drRef || opts?.medecinNom || "",
-        signesVitaux: signesDepuisConstantes(constantesLocal),
-      });
-      setDateConsult(aujourdhuiInput());
-    },
-    []
-  );
-
   useEffect(() => {
     if (!dossierId) {
       reinitaliserFormulaire();
-      setConstantes(null);
-      setHistorique([]);
-      setModeModifier(false);
       setFormulaireOuvert(false);
       return;
     }
@@ -227,49 +229,34 @@ export function CorpsConsultation({ utilisateur }: Props) {
     (async () => {
       setErreur(null);
       try {
-        const [resConsult, resDetail] = await Promise.all([
-          fetch(
-            `/api/medecins/consultations?dossierId=${encodeURIComponent(dossierId)}`
-          ),
-          fetch(`/api/medecins/patients/${encodeURIComponent(dossierId)}`),
-        ]);
-        const dataConsult = (await resConsult.json()) as {
-          consultation?: ConsultationDetailMedecins | null;
-          historique?: ConsultationDetailMedecins[];
+        const res = await fetch(
+          `/api/infirmiers/constantes?dossierId=${encodeURIComponent(dossierId)}`
+        );
+        const data = (await res.json()) as {
+          constantes?: ConstanteVitaleResume[];
+          erreur?: string;
         };
-        const dataDetail = (await resDetail.json()) as {
-          patient?: {
-            constantesVitales?: ConstanteVitaleResume | null;
-            motif?: string;
-          };
-        };
+        if (!res.ok) {
+          throw new Error(data.erreur ?? t("infirmiers.consultation.erreurChargement"));
+        }
         if (annule) return;
-        const constantesLocal = dataDetail.patient?.constantesVitales ?? null;
-        setConstantes(constantesLocal);
-        setHistorique(dataConsult.historique ?? []);
-        setModeModifier(false);
+        const derniere = data.constantes?.[0] ?? null;
         reinitaliserFormulaire({
-          patient: patientSelectionne,
-          constantes: constantesLocal,
-          consultation: dataConsult.consultation ?? null,
-          medecinNom: `${utilisateur.prenom} ${utilisateur.nom}`.trim(),
+          derniereConstante: derniere,
         });
-      } catch {
-        if (!annule) setErreur(t("medecins.consultation.erreurChargement"));
+      } catch (e) {
+        if (!annule) {
+          setErreur(
+            e instanceof Error ? e.message : t("infirmiers.consultation.erreurChargement")
+          );
+        }
       }
     })();
 
     return () => {
       annule = true;
     };
-  }, [
-    dossierId,
-    patientSelectionne,
-    reinitaliserFormulaire,
-    t,
-    utilisateur.nom,
-    utilisateur.prenom,
-  ]);
+  }, [dossierId, patientSelectionne, reinitaliserFormulaire, t]);
 
   const filtrés = useMemo(
     () => patients.filter((p) => patientCorrespondFiltres(p, filtresAppliques)),
@@ -293,125 +280,46 @@ export function CorpsConsultation({ utilisateur }: Props) {
   const tousCoches =
     filtrés.length > 0 && filtrés.every((p) => dossiersCoches.includes(p.dossierId));
 
-  function fermerFormulaireApresAction() {
+  function fermerFormulaire() {
     setFormulaireOuvert(false);
-    setModeModifier(false);
-    selectionnerPatient(null);
+    setMessage(null);
+    setErreur(null);
   }
 
   async function sauvegarder() {
     if (!dossierId) {
-      setErreur("Sélectionnez un patient.");
-      return;
-    }
-    if (!motif.trim()) {
-      setErreur("Le motif de consultation est requis.");
+      setErreur(t("infirmiers.consultation.selectionnerPatient"));
       return;
     }
     setEnCours(true);
     setErreur(null);
     setMessage(null);
-    const { anamnese, examenClinique, conclusion } =
-      synthetiserChampsTexte(formulaire);
+    const sv = formulaire.signesVitaux ?? {};
     try {
-      if (consultation) {
-        const res = await fetch(
-          `/api/medecins/consultations/${encodeURIComponent(consultation.id)}`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              motif,
-              anamnese,
-              examenClinique,
-              conclusion,
-              formulaireClinique: formulaire,
-              autoriserCloturee: Boolean(consultation.finLe),
-            }),
-          }
-        );
-        const data = (await res.json()) as {
-          consultation?: ConsultationDetailMedecins;
-          erreur?: string;
-        };
-        if (!res.ok || !data.consultation) {
-          throw new Error(data.erreur ?? "Enregistrement impossible.");
-        }
-        setMessage(t("medecins.consultation.enregistree"));
-      } else {
-        const res = await fetch("/api/medecins/consultations", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            dossierId,
-            motif,
-            anamnese,
-            examenClinique,
-            conclusion,
-            formulaireClinique: formulaire,
-          }),
-        });
-        const data = (await res.json()) as {
-          consultation?: ConsultationDetailMedecins;
-          erreur?: string;
-        };
-        if (!res.ok || !data.consultation) {
-          throw new Error(data.erreur ?? "Enregistrement impossible.");
-        }
-        setMessage(t("medecins.consultation.enregistree"));
+      const res = await fetch("/api/infirmiers/constantes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dossierId,
+          formulaireClinique: formulaire,
+          ...sv,
+        }),
+      });
+      const data = (await res.json()) as { message?: string };
+      if (!res.ok) {
+        throw new Error(data.message ?? t("infirmiers.consultation.erreurSave"));
       }
+      setMessage(data.message ?? t("infirmiers.consultation.enregistree"));
+      definirOrientations(["MEDECINS"]);
       await chargerPatients();
-      fermerFormulaireApresAction();
+      fermerFormulaire();
+      window.dispatchEvent(new CustomEvent(EVENEMENT_INFIRMIERS_PATIENTS_MODIFIES));
     } catch (e) {
-      setErreur(e instanceof Error ? e.message : "Erreur d'enregistrement.");
+      setErreur(e instanceof Error ? e.message : t("infirmiers.consultation.erreurSave"));
     } finally {
       setEnCours(false);
     }
   }
-
-  async function cloturer() {
-    if (!consultation) return;
-    setEnCours(true);
-    setErreur(null);
-    try {
-      const res = await fetch(
-        `/api/medecins/consultations/${encodeURIComponent(consultation.id)}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "cloturer" }),
-        }
-      );
-      const data = (await res.json()) as {
-        consultation?: ConsultationDetailMedecins;
-        erreur?: string;
-      };
-      if (!res.ok || !data.consultation) {
-        throw new Error(data.erreur ?? "Clôture impossible.");
-      }
-      setMessage(t("medecins.consultation.cloturee"));
-      await chargerPatients();
-      fermerFormulaireApresAction();
-    } catch (e) {
-      setErreur(e instanceof Error ? e.message : "Erreur de clôture.");
-    } finally {
-      setEnCours(false);
-    }
-  }
-
-  const chargerHistorique = (c: ConsultationDetailMedecins) => {
-    reinitaliserFormulaire({
-      patient: patientSelectionne,
-      constantes,
-      consultation: c,
-      medecinNom: c.medecin,
-    });
-    setModeModifier(true);
-    setFormulaireOuvert(true);
-    setMessage(
-      `Consultation du ${new Date(c.debutLe).toLocaleString("fr-FR")} chargée.`
-    );
-  };
 
   const identite = {
     nom: patientSelectionne
@@ -438,15 +346,17 @@ export function CorpsConsultation({ utilisateur }: Props) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <Stethoscope className="h-5 w-5 text-bleu-medical" />
+            <Activity className="h-5 w-5 text-bleu-medical" />
             <h2 className="text-xl font-bold text-texte-principal">
-              {t("medecins.consultation.titre")}
+              {t("infirmiers.consultation.titre")}
             </h2>
           </div>
           <p className="mt-1 text-sm text-texte-secondaire">
             {afficherFormulaire && patientSelectionne
-              ? `Consultation — ${patientSelectionne.nomComplet}`
-              : "Sélectionnez un patient orienté vers la consultation."}
+              ? t("infirmiers.consultation.patientActif", {
+                  nom: patientSelectionne.nomComplet,
+                })
+              : t("infirmiers.consultation.aideSelection")}
           </p>
         </div>
 
@@ -502,11 +412,11 @@ export function CorpsConsultation({ utilisateur }: Props) {
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a");
               a.href = url;
-              a.download = "file-consultation.csv";
+              a.download = "file-consultation-infirmiers.csv";
               a.click();
               URL.revokeObjectURL(url);
             }}
-            labelSelectionnerTout={t("medecins.patients.selectionnerTout")}
+            labelSelectionnerTout={t("infirmiers.patients.selectionnerTout")}
             labelExporter={t("caisse.transferts.exporterSelection")}
           />
         </div>
@@ -524,7 +434,7 @@ export function CorpsConsultation({ utilisateur }: Props) {
             setBrouillonFiltres(FILTRES_FACTURATION_VIDES);
             setFiltresAppliques(FILTRES_FACTURATION_VIDES);
           }}
-          idPrefix="filtre-consultation"
+          idPrefix="filtre-consultation-infirmiers"
           masquerNumeroFacture
         />
       ) : null}
@@ -538,45 +448,14 @@ export function CorpsConsultation({ utilisateur }: Props) {
 
       {afficherFormulaire ? (
         <div className="space-y-5">
-          {modeModifier && historique.length > 0 ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
-              <p className="mb-2 text-xs font-semibold uppercase text-amber-900">
-                Consultations enregistrées — cliquez pour charger dans le formulaire
-              </p>
-              <ul className="flex flex-wrap gap-2">
-                {historique.map((h) => (
-                  <li key={h.id}>
-                    <button
-                      type="button"
-                      onClick={() => chargerHistorique(h)}
-                      className={cn(
-                        "rounded-lg border px-2.5 py-1.5 text-xs font-medium",
-                        consultation?.id === h.id
-                          ? "border-bleu-medical bg-white text-bleu-medical"
-                          : "border-amber-200 bg-white text-texte-principal hover:border-bleu-medical"
-                      )}
-                    >
-                      {new Date(h.debutLe).toLocaleString("fr-FR", {
-                        day: "2-digit",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                      {h.finLe ? " · clôturée" : " · ouverte"}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
           <FormulaireConsultationClinique
             formulaire={formulaire}
             onChange={setFormulaire}
-            motif={motif}
-            onMotifChange={setMotif}
+            motif=""
+            onMotifChange={() => {}}
             identite={identite}
             desactive={!dossierId}
+            variante="signesSeulement"
           />
 
           <div className="flex flex-wrap gap-2 border-t border-gris-bordure pt-4">
@@ -591,49 +470,15 @@ export function CorpsConsultation({ utilisateur }: Props) {
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              Enregistrer
+              {t("infirmiers.consultation.enregistrer")}
             </button>
             <button
               type="button"
-              disabled={!dossierId || historique.length === 0}
-              onClick={() => {
-                setModeModifier((v) => !v);
-                setFormulaireOuvert(true);
-              }}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border bg-white px-4 py-2.5 text-sm font-medium",
-                modeModifier
-                  ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
-                  : "border-gris-bordure text-texte-principal hover:bg-gris-tres-clair"
-              )}
-            >
-              <Pencil className="h-4 w-4" />
-              Modifier
-            </button>
-            {consultation && !consultation.finLe ? (
-              <button
-                type="button"
-                disabled={enCours}
-                onClick={() => void cloturer()}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50"
-              >
-                <XCircle className="h-4 w-4" />
-                Clôturer
-              </button>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => {
-                setFormulaireOuvert(false);
-                setModeModifier(false);
-                selectionnerPatient(null);
-                setMessage(null);
-                setErreur(null);
-              }}
+              onClick={fermerFormulaire}
               className="inline-flex items-center gap-1.5 rounded-lg border border-gris-bordure bg-white px-4 py-2.5 text-sm font-medium text-texte-principal hover:bg-gris-tres-clair"
             >
               <X className="h-4 w-4" />
-              Annuler
+              {t("infirmiers.consultation.annuler")}
             </button>
           </div>
         </div>
@@ -641,23 +486,22 @@ export function CorpsConsultation({ utilisateur }: Props) {
 
       <section className="space-y-3">
         <h3 className="text-sm font-bold uppercase tracking-wide text-texte-principal">
-          Patients orientés vers la consultation
+          {t("infirmiers.consultation.listeTitre")}
         </h3>
         <p className="text-xs text-texte-secondaire">
-          File médicale : patients transmis depuis les autres salles vers les
-          médecins.
+          {t("infirmiers.consultation.listeDescription")}
         </p>
 
         {chargementListe ? (
           <div className="flex items-center gap-2 text-sm text-texte-secondaire">
             <Loader2 className="h-4 w-4 animate-spin" />
-            {t("medecins.patients.chargement")}
+            {t("infirmiers.patients.chargement")}
           </div>
         ) : filtrés.length === 0 ? (
           <p className="rounded-xl border border-dashed border-gris-bordure bg-white p-8 text-center text-sm text-texte-secondaire">
             {nbFiltresActifs > 0
               ? t("caisse.facturation.filtres.aucunResultat")
-              : t("medecins.patients.vide")}
+              : t("infirmiers.patients.vide")}
           </p>
         ) : (
           <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
@@ -673,45 +517,43 @@ export function CorpsConsultation({ utilisateur }: Props) {
                           coche
                         )
                       }
-                      ariaLabel={t("medecins.patients.selectionnerTout")}
+                      ariaLabel={t("infirmiers.patients.selectionnerTout")}
                     />
                   </th>
                   <th className="px-3 py-3">ID</th>
                   <th className="px-3 py-3">
-                    {t("medecins.patients.colonnes.patient")}
+                    {t("infirmiers.patients.colonnes.patient")}
                   </th>
                   <th className="hidden px-3 py-3 md:table-cell">
-                    {t("medecins.patients.colonnes.telephone")}
+                    {t("infirmiers.patients.colonnes.telephone")}
                   </th>
                   <th className="hidden px-3 py-3 lg:table-cell">
-                    {t("medecins.patients.colonnes.motif")}
+                    {t("infirmiers.patients.colonnes.motif")}
                   </th>
                   <th className="px-3 py-3">
-                    {t("medecins.patients.colonnes.orientation")}
+                    {t("infirmiers.patients.colonnes.orientation")}
                   </th>
                   <th className="px-3 py-3">
-                    {t("medecins.patients.colonnes.statut")}
+                    {t("infirmiers.patients.colonnes.statut")}
                   </th>
                   <th className="px-3 py-3">
-                    {t("medecins.patients.colonnes.heure")}
+                    {t("infirmiers.patients.colonnes.heure")}
                   </th>
                   <th className="px-3 py-3">
-                    {t("medecins.patients.colonnes.actions")}
+                    {t("infirmiers.patients.colonnes.actions")}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {patientsPage.map((p) => {
                   const selectionne =
-                    patientSelectionne?.dossierId === p.dossierId &&
-                    formulaireOuvert;
+                    patientSelectionne?.dossierId === p.dossierId && formulaireOuvert;
                   return (
                     <tr
                       key={p.cleListe}
                       onClick={() => {
                         selectionnerPatient(p);
                         setFormulaireOuvert(true);
-                        setModeModifier(false);
                         setMessage(null);
                         setErreur(null);
                       }}
@@ -770,7 +612,7 @@ export function CorpsConsultation({ utilisateur }: Props) {
                         className="px-3 py-3"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <MenuActionsTransfertMedecins
+                        <MenuActionsTransfertInfirmiers
                           patient={p}
                           onRafraichir={chargerPatients}
                         />
@@ -789,24 +631,24 @@ export function CorpsConsultation({ utilisateur }: Props) {
             />
           </div>
         )}
-        <SectionsMobileMedecinsPatients />
+        <SectionsMobileInfirmiersPatients />
       </section>
     </div>
   );
 }
 
-export function ContenuConsultationMedecins({ utilisateur }: Props) {
+export function ContenuConsultationInfirmiers({ utilisateur }: Props) {
   const { t } = useTranslation();
 
   return (
-    <MiseEnPageMedecins
+    <MiseEnPageInfirmiers
       utilisateur={utilisateur}
-      titre={t("medecins.consultation.titre")}
-      sousTitre={t("medecins.consultation.sousTitre")}
-      panneauDroit={<PanneauDroitMedecins />}
+      titre={t("infirmiers.consultation.titre")}
+      sousTitre={t("infirmiers.consultation.sousTitre")}
+      panneauDroit={<PanneauDroitInfirmiers />}
       activerSelection
     >
-      <CorpsConsultation utilisateur={utilisateur} />
-    </MiseEnPageMedecins>
+      <CorpsConsultationInfirmiers />
+    </MiseEnPageInfirmiers>
   );
 }

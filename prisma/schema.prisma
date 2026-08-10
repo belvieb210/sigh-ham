@@ -376,6 +376,8 @@ model Utilisateur {
   reactions                ReactionMessage[]
   estimationsConventionEmises EstimationConvention[] @relation("EstimationConventionEmetteur")
   estimationsConventionTraitees EstimationConvention[] @relation("EstimationConventionTraitePar")
+  fichesTraitementCreees      FicheTraitement[]      @relation("FicheTraitementInfirmier")
+  fichesTraitementCloturees   FicheTraitement[]      @relation("FicheTraitementCloturePar")
   mentionsRecues           MentionMessage[]        @relation("MentionDestinataire")
   messagesMasques          MessageMasque[]
   notifications            Notification[]
@@ -463,6 +465,7 @@ model DossierPatient {
   conversations            Conversation[]
   ventesPharmacie          VentePharmacie[]
   estimationsConvention    EstimationConvention[]
+  fichesTraitement         FicheTraitement[]
 
   @@map("dossiers_patients")
 }
@@ -579,6 +582,12 @@ model EnregistrementReception {
   @@map("enregistrements_reception")
 }
 
+enum StatutFicheTraitement {
+  EN_COURS
+  CLOTURE
+  ANNULE
+}
+
 // ─── Infirmiers ───────────────────────────────────────────────────────────────
 
 model ConstantesVitales {
@@ -597,9 +606,77 @@ model ConstantesVitales {
   saturationO2          Int?           @map("saturation_o2")
   glycemie              Decimal?       @db.Decimal(5, 2)
   observations          String?
+  formulaireClinique    Json?          @map("formulaire_clinique")
   mesureLe              DateTime       @default(now()) @map("mesure_le")
 
   @@map("constantes_vitales")
+}
+
+model FicheTraitement {
+  id                  String                @id @default(cuid())
+  dossierId           String                @map("dossier_id")
+  dossier             DossierPatient        @relation(fields: [dossierId], references: [id])
+  infirmierId         String                @map("infirmier_id")
+  infirmier           Utilisateur           @relation("FicheTraitementInfirmier", fields: [infirmierId], references: [id])
+  medecinPrescripteur String?               @map("medecin_prescripteur")
+  telPrescripteur     String?               @map("tel_prescripteur")
+  numeroRecu          String?               @map("numero_recu")
+  poidsKg             Decimal?              @map("poids_kg") @db.Decimal(5, 2)
+  sexe                String?
+  debutTraitementLe   DateTime              @map("debut_traitement_le")
+  finTraitementLe     DateTime              @map("fin_traitement_le")
+  joursProlongation   Int                   @default(0) @map("jours_prolongation")
+  statut              StatutFicheTraitement @default(EN_COURS)
+  pdfUrl              String?               @map("pdf_url")
+  clotureLe           DateTime?             @map("cloture_le")
+  clotureParId        String?               @map("cloture_par_id")
+  cloturePar          Utilisateur?          @relation("FicheTraitementCloturePar", fields: [clotureParId], references: [id])
+  createdAt           DateTime              @default(now()) @map("created_at")
+  updatedAt           DateTime              @updatedAt @map("updated_at")
+
+  lignes       LigneTraitement[]
+  commentaires CommentaireTraitement[]
+  fichiers     FichierTraitement[]
+
+  @@index([dossierId])
+  @@index([statut])
+  @@index([finTraitementLe])
+  @@map("fiches_traitement")
+}
+
+model LigneTraitement {
+  id           String          @id @default(cuid())
+  ficheId      String          @map("fiche_id")
+  fiche        FicheTraitement @relation(fields: [ficheId], references: [id], onDelete: Cascade)
+  effectueLe   DateTime?       @map("effectue_le")
+  medicament   String
+  doseQuantite String?         @map("dose_quantite")
+  nomTraiteur  String?         @map("nom_traiteur")
+  ordre        Int             @default(0)
+
+  @@map("lignes_traitement")
+}
+
+model CommentaireTraitement {
+  id      String          @id @default(cuid())
+  ficheId String          @map("fiche_id")
+  fiche   FicheTraitement @relation(fields: [ficheId], references: [id], onDelete: Cascade)
+  texte   String
+  ordre   Int             @default(0)
+
+  @@map("commentaires_traitement")
+}
+
+model FichierTraitement {
+  id       String          @id @default(cuid())
+  ficheId  String          @map("fiche_id")
+  fiche    FicheTraitement @relation(fields: [ficheId], references: [id], onDelete: Cascade)
+  nom      String
+  url      String
+  typeMime String?         @map("type_mime")
+  ordre    Int             @default(0)
+
+  @@map("fichiers_traitement")
 }
 
 // ─── Médecins ─────────────────────────────────────────────────────────────────

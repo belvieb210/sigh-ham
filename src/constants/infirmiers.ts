@@ -24,9 +24,14 @@ export const NAVIGATION_INFIRMIERS = {
       badge: true,
     },
     {
-      href: "/sigh/infirmiers/constantes",
-      id: "constantes",
+      href: "/sigh/infirmiers/consultation",
+      id: "consultation",
       icone: Activity,
+    },
+    {
+      href: "/sigh/infirmiers/fiche-traitement",
+      id: "fiche-traitement",
+      icone: ClipboardList,
     },
     {
       href: "/sigh/infirmiers/historique",
@@ -56,8 +61,8 @@ export const NAVIGATION_BASSE_INFIRMIERS = [
   { href: "/sigh/infirmiers", id: "accueil", icone: Home },
   { href: "/sigh/infirmiers/patients", id: "patients", icone: Users },
   {
-    href: "/sigh/infirmiers/constantes",
-    id: "constantes",
+    href: "/sigh/infirmiers/consultation",
+    id: "consultation",
     icone: Activity,
     fab: true,
   },

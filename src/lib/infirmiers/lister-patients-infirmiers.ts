@@ -73,6 +73,7 @@ export function mapperConstante(c: {
   glycemie: unknown;
   observations: string | null;
   mesureLe: Date;
+  formulaireClinique?: unknown;
   infirmier?: { prenom: string; nom: string } | null;
 }): ConstanteVitaleResume {
   return {
@@ -88,6 +89,7 @@ export function mapperConstante(c: {
     glycemie: decimalOuNull(c.glycemie as never),
     observations: c.observations,
     mesureLe: c.mesureLe.toISOString(),
+    formulaireClinique: (c.formulaireClinique ?? null) as ConstanteVitaleResume["formulaireClinique"],
     infirmier: c.infirmier
       ? `${c.infirmier.prenom} ${c.infirmier.nom}`.trim()
       : undefined,

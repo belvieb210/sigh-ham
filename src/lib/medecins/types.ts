@@ -141,6 +141,7 @@ export interface ConstanteVitaleResume {
   glycemie: number | null;
   observations: string | null;
   mesureLe: string;
+  formulaireClinique?: FormulaireCliniqueMedecins | null;
 }
 
 export interface ConsultationResume {

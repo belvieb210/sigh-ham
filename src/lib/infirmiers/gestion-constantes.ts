@@ -6,6 +6,8 @@ import {
 } from "@/lib/infirmiers/lister-patients-infirmiers";
 import type { ConstanteVitaleResume } from "@/lib/infirmiers/types";
 
+import type { FormulaireCliniqueMedecins } from "@/lib/medecins/types";
+
 export interface DonneesConstantesSaisie {
   temperature?: number | null;
   tensionSystolique?: number | null;
@@ -17,6 +19,7 @@ export interface DonneesConstantesSaisie {
   saturationO2?: number | null;
   glycemie?: number | null;
   observations?: string | null;
+  formulaireClinique?: FormulaireCliniqueMedecins | null;
 }
 
 function parseOptionnelNombre(v: unknown): number | null {
@@ -37,20 +40,26 @@ function parseOptionnelInt(v: unknown): number | null {
 export function normaliserDonneesConstantes(
   body: Record<string, unknown>
 ): DonneesConstantesSaisie {
+  const formulaireClinique =
+    body.formulaireClinique && typeof body.formulaireClinique === "object"
+      ? (body.formulaireClinique as FormulaireCliniqueMedecins)
+      : null;
+  const sv = formulaireClinique?.signesVitaux ?? {};
   return {
-    temperature: parseOptionnelNombre(body.temperature),
-    tensionSystolique: parseOptionnelInt(body.tensionSystolique),
-    tensionDiastolique: parseOptionnelInt(body.tensionDiastolique),
-    frequenceCardiaque: parseOptionnelInt(body.frequenceCardiaque),
+    temperature: parseOptionnelNombre(body.temperature ?? sv.temperature),
+    tensionSystolique: parseOptionnelInt(body.tensionSystolique ?? sv.tensionSystolique),
+    tensionDiastolique: parseOptionnelInt(body.tensionDiastolique ?? sv.tensionDiastolique),
+    frequenceCardiaque: parseOptionnelInt(body.frequenceCardiaque ?? sv.frequenceCardiaque),
     frequenceRespiratoire: parseOptionnelInt(body.frequenceRespiratoire),
-    poidsKg: parseOptionnelNombre(body.poidsKg),
-    tailleCm: parseOptionnelNombre(body.tailleCm),
-    saturationO2: parseOptionnelInt(body.saturationO2),
+    poidsKg: parseOptionnelNombre(body.poidsKg ?? sv.poidsKg),
+    tailleCm: parseOptionnelNombre(body.tailleCm ?? sv.tailleCm),
+    saturationO2: parseOptionnelInt(body.saturationO2 ?? sv.saturationO2),
     glycemie: parseOptionnelNombre(body.glycemie),
     observations:
       typeof body.observations === "string"
         ? body.observations.trim() || null
         : null,
+    formulaireClinique,
   };
 }
 
@@ -79,6 +88,7 @@ export async function creerConstantesVitales(
       saturationO2: donnees.saturationO2,
       glycemie: donnees.glycemie,
       observations: donnees.observations,
+      formulaireClinique: donnees.formulaireClinique ?? undefined,
     },
     include: { infirmier: { select: { prenom: true, nom: true } } },
   });
@@ -106,6 +116,7 @@ export async function mettreAJourConstantesVitales(
       saturationO2: donnees.saturationO2,
       glycemie: donnees.glycemie,
       observations: donnees.observations,
+      formulaireClinique: donnees.formulaireClinique ?? undefined,
     },
     include: { infirmier: { select: { prenom: true, nom: true } } },
   });

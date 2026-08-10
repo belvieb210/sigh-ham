@@ -50,6 +50,7 @@ export interface ConstanteVitaleResume {
   observations: string | null;
   mesureLe: string;
   infirmier?: string;
+  formulaireClinique?: import("@/lib/medecins/types").FormulaireCliniqueMedecins | null;
 }
 
 export interface DetailPatientInfirmiers extends PatientFileInfirmiers {

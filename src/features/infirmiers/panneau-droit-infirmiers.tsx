@@ -119,8 +119,8 @@ function ResumeEtOrientation() {
           <Link
             href={
               selection?.resume.dossierId
-                ? `/sigh/infirmiers/constantes?dossier=${selection.resume.dossierId}`
-                : "/sigh/infirmiers/constantes"
+                ? `/sigh/infirmiers/consultation?dossier=${selection.resume.dossierId}`
+                : "/sigh/infirmiers/consultation"
             }
             className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-gris-bordure bg-[#f8fafc] p-3 text-center text-xs font-medium text-texte-principal hover:border-bleu-medical hover:bg-bleu-medical-clair"
           >

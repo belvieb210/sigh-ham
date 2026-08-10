@@ -27,8 +27,9 @@ export function NavigationBasseInfirmiers({ onMenu }: PropsNavigationBasseInfirm
             pathname === item.href ||
             (item.id === "accueil" && pathname === "/sigh/infirmiers") ||
             (item.id === "patients" && pathname.startsWith("/sigh/infirmiers/patients")) ||
-            (item.id === "constantes" &&
-              pathname.startsWith("/sigh/infirmiers/constantes")) ||
+            (item.id === "consultation" &&
+              (pathname.startsWith("/sigh/infirmiers/consultation") ||
+                pathname.startsWith("/sigh/infirmiers/consultation"))) ||
             (item.id === "historique" &&
               pathname.startsWith("/sigh/infirmiers/historique"));
           const Icone = item.icone;

@@ -63,6 +63,8 @@ interface PropsFormulaire {
   onMotifChange: (v: string) => void;
   identite: PropsIdentite;
   desactive?: boolean;
+  /** infirmiers : signes vitaux uniquement (image consultation) */
+  variante?: "complet" | "signesSeulement";
 }
 
 function champ(
@@ -80,6 +82,7 @@ export function FormulaireConsultationClinique({
   onMotifChange,
   identite,
   desactive,
+  variante = "complet",
 }: PropsFormulaire) {
   const sv = formulaire.signesVitaux ?? {};
 
@@ -310,6 +313,8 @@ export function FormulaireConsultationClinique({
         </div>
       </section>
 
+      {variante === "complet" ? (
+        <>
       <section className="space-y-12">
         <div>
           <label className={labelCls}>Motif de votre consultation :</label>
@@ -388,6 +393,8 @@ export function FormulaireConsultationClinique({
         N&apos;oubliez pas d&apos;apporter tous documents médicaux que vous jugerez
         utiles pour le médecin.
       </p>
+        </>
+      ) : null}
     </div>
   );
 }
@@ -396,14 +403,28 @@ export function signesDepuisConstantes(
   c: ConstanteVitaleResume | null
 ): FormulaireCliniqueMedecins["signesVitaux"] {
   if (!c) return {};
+  const fc = (c as ConstanteVitaleResume & { formulaireClinique?: FormulaireCliniqueMedecins | null })
+    .formulaireClinique;
+  const sv = fc?.signesVitaux ?? {};
   return {
-    tailleCm: c.tailleCm,
-    poidsKg: c.poidsKg,
-    temperature: c.temperature,
-    frequenceCardiaque: c.frequenceCardiaque,
-    tensionSystolique: c.tensionSystolique,
-    tensionDiastolique: c.tensionDiastolique,
-    saturationO2: c.saturationO2,
+    tailleCm: c.tailleCm ?? sv.tailleCm,
+    poidsKg: c.poidsKg ?? sv.poidsKg,
+    temperature: c.temperature ?? sv.temperature,
+    frequenceCardiaque: c.frequenceCardiaque ?? sv.frequenceCardiaque,
+    tensionSystolique: c.tensionSystolique ?? sv.tensionSystolique,
+    tensionDiastolique: c.tensionDiastolique ?? sv.tensionDiastolique,
+    saturationO2: c.saturationO2 ?? sv.saturationO2,
+  };
+}
+
+/** Reconstitue le formulaire infirmier enregistré pour pré-remplir côté médecin */
+export function formulaireDepuisConstantes(
+  c: (ConstanteVitaleResume & { formulaireClinique?: FormulaireCliniqueMedecins | null }) | null
+): Partial<FormulaireCliniqueMedecins> {
+  if (!c?.formulaireClinique) return {};
+  return {
+    ...c.formulaireClinique,
+    signesVitaux: signesDepuisConstantes(c),
   };
 }
 

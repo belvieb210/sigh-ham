@@ -432,6 +432,7 @@ export async function obtenirConstantesVitalesDossier(
     glycemie: decimalOuNull(constantes.glycemie),
     observations: constantes.observations,
     mesureLe: constantes.mesureLe.toISOString(),
+    formulaireClinique: constantes.formulaireClinique as ConstanteVitaleResume["formulaireClinique"],
   };
 }
 

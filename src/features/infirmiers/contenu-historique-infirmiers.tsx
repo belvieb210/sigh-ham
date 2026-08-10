@@ -80,7 +80,7 @@ export function ContenuHistoriqueInfirmiers({ utilisateur }: Props) {
               {liste.map((c) => (
                 <Link
                   key={c.id}
-                  href={`/sigh/infirmiers/constantes?dossier=${c.dossierId}`}
+                  href={`/sigh/infirmiers/consultation?dossier=${c.dossierId}`}
                   className="block rounded-xl border border-gris-bordure bg-white p-4 shadow-sm"
                 >
                   <p className="font-semibold text-texte-principal">{c.nomComplet}</p>
@@ -110,7 +110,7 @@ export function ContenuHistoriqueInfirmiers({ utilisateur }: Props) {
                     <tr key={c.id} className="border-b border-gris-bordure/60">
                       <td className="px-4 py-3">
                         <Link
-                          href={`/sigh/infirmiers/constantes?dossier=${c.dossierId}`}
+                          href={`/sigh/infirmiers/consultation?dossier=${c.dossierId}`}
                           className="font-medium text-bleu-medical hover:underline"
                         >
                           {c.nomComplet}

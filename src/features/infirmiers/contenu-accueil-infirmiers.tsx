@@ -77,7 +77,7 @@ export function ContenuAccueilInfirmiers({ utilisateur }: PropsContenuAccueilInf
       valeur: stats?.constantesAujourdhui ?? 0,
       icone: Activity,
       couleur: "bg-emerald-50 text-emerald-700",
-      href: "/sigh/infirmiers/constantes",
+      href: "/sigh/infirmiers/consultation",
     },
     {
       label: t("infirmiers.dashboard.transfertsSortantsAujourdhui"),
@@ -96,7 +96,7 @@ export function ContenuAccueilInfirmiers({ utilisateur }: PropsContenuAccueilInf
       icone: Users,
     },
     {
-      href: "/sigh/infirmiers/constantes",
+      href: "/sigh/infirmiers/consultation",
       titre: t("infirmiers.dashboard.raccourciConstantes"),
       desc: t("infirmiers.dashboard.raccourciConstantesDesc"),
       icone: Activity,

@@ -23,10 +23,9 @@ interface PropsPanneauDroitLaboratoire {
   patient: PatientFileLaboratoire | null;
   orientation: string | null;
   onOrientationChange: (id: string) => void;
-  /** Sur les pages statut (Reçus, En cours…), affiche le détail des examens au lieu d'orienter */
+  /** Pages statut (Reçus, En cours…) : affiche Résultats & paramètres filtrés par la page */
   modeDetailExamens?: boolean;
-  statutAffiche?: IdOrientationStatutAnalyse | null;
-  onStatutAfficheChange?: (id: string) => void;
+  statutPage?: IdOrientationStatutAnalyse | null;
   /** Destinations multiples */
   orientations?: string[];
   onOrientationsChange?: (ids: string[]) => void;
@@ -42,8 +41,7 @@ export function PanneauDroitLaboratoire({
   orientation,
   onOrientationChange,
   modeDetailExamens = false,
-  statutAffiche = null,
-  onStatutAfficheChange,
+  statutPage = null,
   orientations = [],
   onOrientationsChange,
   peutOrienter,
@@ -52,17 +50,6 @@ export function PanneauDroitLaboratoire({
 }: PropsPanneauDroitLaboratoire) {
   const { t } = useTranslation();
   const orientable = peutOrienter ?? Boolean(patient);
-  const statutSelectionne = modeDetailExamens
-    ? statutAffiche ?? orientation
-    : orientation;
-
-  const onChangeStatut = (id: string) => {
-    if (modeDetailExamens) {
-      onStatutAfficheChange?.(id);
-      return;
-    }
-    onOrientationChange(id);
-  };
 
   const optionsDestination = ORIENTATIONS_DESTINATION_LABO.map((o) => ({
     id: o.id,
@@ -88,43 +75,36 @@ export function PanneauDroitLaboratoire({
         <ResumePatientLaboratoire patient={patient} />
       </section>
 
-      {variante === "examens" ? (
-        <>
-          <section className="min-w-0 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-              {modeDetailExamens
-                ? t("laboratoire.panneau.detailExamens")
-                : t("laboratoire.panneau.statutAnalyse")}
-            </h2>
-            <ListeOrientationLaboratoire
-              options={optionsStatut}
-              cleTraduction="orientationsStatut"
-              valeur={statutSelectionne}
-              onChange={onChangeStatut}
-              desactive={!orientable && !modeDetailExamens}
-              aide={
-                modeDetailExamens
-                  ? orientable
-                    ? t("laboratoire.panneau.aideDetailExamens")
-                    : t("laboratoire.panneau.selectionnerPatientDetail")
-                  : orientable
-                    ? t("laboratoire.panneau.aideStatutAnalyse")
-                    : t("laboratoire.panneau.selectionnerPatient")
-              }
-            />
-          </section>
-          {modeDetailExamens && statutAffiche ? (
-            <section className="min-w-0 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-              <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-                {t("laboratoire.panneau.resultatsExamens")}
-              </h2>
-              <DetailExamensPatientLaboratoire
-                dossierId={patient?.dossierId ?? null}
-                statutFiltre={statutAffiche}
-              />
-            </section>
-          ) : null}
-        </>
+      {variante === "examens" && modeDetailExamens && statutPage ? (
+        <section className="min-w-0 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
+            {t("laboratoire.panneau.resultatsExamens")}
+          </h2>
+          <DetailExamensPatientLaboratoire
+            dossierId={patient?.dossierId ?? null}
+            statutFiltre={statutPage}
+          />
+        </section>
+      ) : null}
+
+      {variante === "examens" && !modeDetailExamens ? (
+        <section className="min-w-0 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
+            {t("laboratoire.panneau.statutAnalyse")}
+          </h2>
+          <ListeOrientationLaboratoire
+            options={optionsStatut}
+            cleTraduction="orientationsStatut"
+            valeur={orientation}
+            onChange={onOrientationChange}
+            desactive={!orientable}
+            aide={
+              orientable
+                ? t("laboratoire.panneau.aideStatutAnalyse")
+                : t("laboratoire.panneau.selectionnerPatient")
+            }
+          />
+        </section>
       ) : null}
 
       {afficherDestinations ? (

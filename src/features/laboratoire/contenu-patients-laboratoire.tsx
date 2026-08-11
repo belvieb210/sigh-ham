@@ -44,6 +44,7 @@ import type {
   DetailPatientLaboratoire,
   PatientFileLaboratoire,
 } from "@/lib/laboratoire/types";
+import { cheminSaisieResultats } from "@/lib/laboratoire/saisie-resultats";
 import { cn } from "@/lib/utils";
 
 interface PropsContenuPatientsLaboratoire {
@@ -292,7 +293,7 @@ export function ContenuPatientsLaboratoire({
       return;
     }
     if (id === "ajouterResultat") {
-      router.push("/sigh/laboratoire/saisie-resultats");
+      router.push(cheminSaisieResultats(dossierId));
       return;
     }
     if (id === "historiqueRapport") {

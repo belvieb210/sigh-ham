@@ -44,6 +44,7 @@ import {
 } from "@/features/laboratoire/utils-affichage";
 import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
+import { cheminSaisieResultats } from "@/lib/laboratoire/saisie-resultats";
 import { cn } from "@/lib/utils";
 
 const PAR_PAGE_STATUT = 12;
@@ -281,7 +282,7 @@ export function ContenuExamensEnCoursLaboratoire({
       return;
     }
     if (id === "saisie") {
-      router.push("/sigh/laboratoire/saisie-resultats");
+      router.push(cheminSaisieResultats(selectionId));
       return;
     }
     if (id === "valider") {
@@ -298,7 +299,7 @@ export function ContenuExamensEnCoursLaboratoire({
     if (!dossierId) return;
     selectionner(dossierId);
     if (id === "ajouterResultat") {
-      router.push("/sigh/laboratoire/saisie-resultats");
+      router.push(cheminSaisieResultats(dossierId));
       return;
     }
     if (id === "voirDonneesRapport" || id === "ficheTravail") {
@@ -570,9 +571,7 @@ export function ContenuExamensEnCoursLaboratoire({
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     selectionner(p.dossierId);
-                                    router.push(
-                                      "/sigh/laboratoire/saisie-resultats"
-                                    );
+                                    router.push(cheminSaisieResultats(p.dossierId));
                                   }}
                                   className="inline-flex rounded-lg border border-gris-bordure p-1.5 text-amber-700 hover:bg-amber-50"
                                   title={t("laboratoire.actions.saisirResultat")}
@@ -658,7 +657,7 @@ export function ContenuExamensEnCoursLaboratoire({
                           type="button"
                           onClick={() => {
                             selectionner(p.dossierId);
-                            router.push("/sigh/laboratoire/saisie-resultats");
+                            router.push(cheminSaisieResultats(p.dossierId));
                           }}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-amber-700 hover:bg-amber-50"
                           title={t("laboratoire.actions.saisirResultat")}

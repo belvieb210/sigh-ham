@@ -804,10 +804,33 @@ model TypeExamen {
   actif          Boolean @default(true)
   /** Inclus automatiquement à l'enregistrement Église (pack prénuptial). */
   packPrenuptial Boolean @default(false) @map("pack_prenuptial")
+  formulaire     String?
+  serviceLabo    String? @map("service_labo")
+  specimen       String?
+  uniteDefaut    String? @map("unite_defaut")
+  rangeUsuelle   String? @map("range_usuelle")
+  description    String? @db.Text
 
-  examens ExamenLaboratoire[]
+  parametres ParametreTypeExamen[]
+  examens    ExamenLaboratoire[]
 
   @@map("types_examen")
+}
+
+model ParametreTypeExamen {
+  id           String     @id @default(cuid())
+  typeExamenId String     @map("type_examen_id")
+  typeExamen   TypeExamen @relation(fields: [typeExamenId], references: [id], onDelete: Cascade)
+  nom          String
+  unite        String?
+  rangeUsuelle String?    @map("range_usuelle")
+  obligatoire  Boolean    @default(true)
+  ordre        Int        @default(0)
+
+  resultats ResultatExamen[]
+
+  @@unique([typeExamenId, nom])
+  @@map("parametres_type_examen")
 }
 
 model ExamenLaboratoire {
@@ -834,16 +857,20 @@ model ExamenLaboratoire {
 }
 
 model ResultatExamen {
-  id        String            @id @default(cuid())
-  examenId  String            @map("examen_id")
-  examen    ExamenLaboratoire @relation(fields: [examenId], references: [id], onDelete: Cascade)
-  parametre String
-  valeur    String
-  unite     String?
-  normeMin  String?           @map("norme_min")
-  normeMax  String?           @map("norme_max")
-  anormal   Boolean           @default(false)
+  id                    String               @id @default(cuid())
+  examenId              String               @map("examen_id")
+  examen                ExamenLaboratoire    @relation(fields: [examenId], references: [id], onDelete: Cascade)
+  parametreTypeExamenId String?              @map("parametre_type_examen_id")
+  parametreTypeExamen   ParametreTypeExamen? @relation(fields: [parametreTypeExamenId], references: [id], onDelete: SetNull)
+  parametre             String
+  valeur                String
+  unite                 String?
+  normeMin              String?              @map("norme_min")
+  normeMax              String?              @map("norme_max")
+  nonRequis             Boolean              @default(false) @map("non_requis")
+  anormal               Boolean              @default(false)
 
+  @@unique([examenId, parametreTypeExamenId])
   @@map("resultats_examen")
 }
 

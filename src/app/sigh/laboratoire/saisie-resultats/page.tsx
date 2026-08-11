@@ -14,6 +14,7 @@ export default async function PageSaisieResultatsLaboratoire() {
     <ContenuPlaceholderLaboratoire
       utilisateur={propsUtilisateurLaboratoire(utilisateur)}
       titreKey="laboratoire.nav.saisieResultats"
+      descriptionKey="laboratoire.saisieResultats.selectionnerPatient"
     />
   );
 }

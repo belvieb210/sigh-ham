@@ -89,6 +89,9 @@ export function ContenuExamensEnCoursLaboratoire({
     FILTRES_LABORATOIRE_VIDES
   );
   const [selectionId, setSelectionId] = useState<string | null>(dossierUrl);
+  const [statutAffiche, setStatutAffiche] = useState<IdOrientationStatutAnalyse>(
+    pageStatut ?? "EN_COURS"
+  );
   const [orientationEnCours, setOrientationEnCours] = useState(false);
   const [idsCoches, setIdsCoches] = useState<Set<string>>(new Set());
   const [messageAction, setMessageAction] = useState<string | null>(null);
@@ -156,6 +159,10 @@ export function ContenuExamensEnCoursLaboratoire({
     (patientSelectionne?.statutAnalyse as IdOrientationStatutAnalyse | undefined) ||
     pageStatut ||
     "EN_COURS";
+
+  useEffect(() => {
+    if (pageStatut) setStatutAffiche(pageStatut);
+  }, [pageStatut]);
 
   useEffect(() => {
     if (dossierUrl) setSelectionId(dossierUrl);
@@ -374,6 +381,11 @@ export function ContenuExamensEnCoursLaboratoire({
     onOrientationChange: (id: string) => {
       if (orientationEnCours) return;
       void changerOrientation(id);
+    },
+    modeDetailExamens: Boolean(pageStatut),
+    statutAffiche: pageStatut ? statutAffiche : null,
+    onStatutAfficheChange: (id: string) => {
+      setStatutAffiche(id as IdOrientationStatutAnalyse);
     },
     peutOrienter: Boolean(selectionId) || idsCoches.size > 0,
     onAction,

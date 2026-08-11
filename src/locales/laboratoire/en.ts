@@ -214,6 +214,12 @@ export const laboratoireEn: LaboratoireFr = {
   panneau: {
     resumePatient: "Patient summary",
     orientationRapide: "Quick orientation",
+    detailExamens: "Exam details",
+    resultatsExamens: "Results & parameters",
+    aideDetailExamens:
+      "Choose a status to view exams and parameters for the selected patient.",
+    selectionnerPatientDetail:
+      "Select a patient from the list to view their exam details.",
     statutAnalyse: "Quick orientation",
     actionsRapides: "Quick actions",
     aucunPatient: "No patient selected",
@@ -418,5 +424,14 @@ export const laboratoireEn: LaboratoireFr = {
     typesFichiersAcceptes: "All file types accepted",
     supprimerFichier: "Remove file",
     total: "Total",
+  },
+  detailExamens: {
+    selectionnerPatient: "Select a patient to view their exams.",
+    erreur: "Unable to load exam details.",
+    aucunExamenStatut: "No « {{statut}} » exams for this patient.",
+    aucunParametre: "No parameters defined for this exam.",
+    compteurParametres: "{{total}} params · {{renseignes}} filled · {{vides}} empty",
+    plusieursExamens: "{{count}} exams — expand to view parameters.",
+    ouvrirSaisie: "Open entry form",
   },
 };

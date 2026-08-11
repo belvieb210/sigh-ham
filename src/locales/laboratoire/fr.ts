@@ -215,6 +215,12 @@ export const laboratoireFr = {
   panneau: {
     resumePatient: "Résumé du patient",
     orientationRapide: "Orientation rapide",
+    detailExamens: "Détail des examens",
+    resultatsExamens: "Résultats & paramètres",
+    aideDetailExamens:
+      "Choisissez un statut pour afficher les examens et paramètres du patient sélectionné.",
+    selectionnerPatientDetail:
+      "Sélectionnez un patient dans la liste pour voir le détail de ses examens.",
     statutAnalyse: "Orientation rapide",
     actionsRapides: "Actions rapides",
     aucunPatient: "Aucun patient sélectionné",
@@ -419,6 +425,15 @@ export const laboratoireFr = {
     typesFichiersAcceptes: "Tous types de fichiers acceptés",
     supprimerFichier: "Retirer le fichier",
     total: "Total",
+  },
+  detailExamens: {
+    selectionnerPatient: "Sélectionnez un patient pour afficher ses examens.",
+    erreur: "Impossible de charger le détail des examens.",
+    aucunExamenStatut: "Aucun examen « {{statut}} » pour ce patient.",
+    aucunParametre: "Aucun paramètre défini pour cet examen.",
+    compteurParametres: "{{total}} param. · {{renseignes}} renseigné(s) · {{vides}} vide(s)",
+    plusieursExamens: "{{count}} examens — développez pour voir les paramètres.",
+    ouvrirSaisie: "Ouvrir la saisie",
   },
 };
 

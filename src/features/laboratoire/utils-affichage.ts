@@ -3,10 +3,9 @@ import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import type { StatutExamen } from "@/generated/prisma/client";
 
 /** Examens visibles sur une page de suivi (filtrage par statut d'examen). */
-export function examensPourPageStatut(
-  examens: { statut: StatutExamen | string; libelle: string }[],
-  pageStatut: IdOrientationStatutAnalyse
-) {
+export function examensPourPageStatut<
+  T extends { statut: StatutExamen | string; libelle: string },
+>(examens: T[], pageStatut: IdOrientationStatutAnalyse): T[] {
   switch (pageStatut) {
     case "EN_COURS":
       return examens.filter((e) => e.statut === "EN_ANALYSE");

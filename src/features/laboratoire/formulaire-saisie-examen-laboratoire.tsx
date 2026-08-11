@@ -7,9 +7,11 @@ import {
   Activity,
   CloudUpload,
   Eye,
+  FileText,
   Info,
   LineChart,
   Plus,
+  Sparkles,
   TestTube2,
   Wand2,
   X,
@@ -63,7 +65,7 @@ interface PropsFormulaireSaisieExamenLaboratoire {
     patch: Partial<Pick<ParametreEtat, "valeur" | "nonRequis" | "nom">>
   ) => void;
   onRemarqueChange: (remarque: string) => void;
-  onAjouterParametre: () => void;
+  onAjouterParametre: (nom: string) => void;
   onSupprimerParametre: (parametreId: string) => void;
   onFichiersAjoutes: (files: File[]) => void;
   onFichierRetire: (fichierId: string) => void;
@@ -105,6 +107,58 @@ function LegendeItem({
   );
 }
 
+function AideInterpretation() {
+  const { t } = useTranslation();
+  const lignes = [
+    {
+      dot: "bg-sky-500",
+      label: t("laboratoire.saisieResultats.legendeBas"),
+      labelClass: "text-sky-600",
+      desc: t("laboratoire.saisieResultats.aideBasCourt"),
+    },
+    {
+      dot: "bg-emerald-500",
+      label: t("laboratoire.saisieResultats.legendeNormal"),
+      labelClass: "text-emerald-600",
+      desc: t("laboratoire.saisieResultats.aideNormalCourt"),
+    },
+    {
+      dot: "bg-rose-500",
+      label: t("laboratoire.saisieResultats.legendeEleve"),
+      labelClass: "text-rose-600",
+      desc: t("laboratoire.saisieResultats.aideEleveCourt"),
+    },
+    {
+      dot: "bg-slate-500",
+      label: "NR",
+      labelClass: "font-bold text-slate-700",
+      desc: t("laboratoire.saisieResultats.aideNrCourt"),
+    },
+  ] as const;
+
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h4 className="mb-3 flex items-center gap-2 text-sm font-bold text-violet-900">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-violet-200 bg-violet-50">
+          <Sparkles className="h-4 w-4 text-violet-600" />
+        </span>
+        {t("laboratoire.saisieResultats.aideInterpretation")}
+      </h4>
+      <ul className="space-y-2.5">
+        {lignes.map((l) => (
+          <li key={l.label} className="flex items-start gap-2.5 text-sm">
+            <span className={cn("mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full", l.dot)} />
+            <span className="leading-snug text-slate-800">
+              <span className={cn("font-semibold", l.labelClass)}>{l.label}</span>
+              <span className="text-slate-600"> : {l.desc}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export function FormulaireSaisieExamenLaboratoire({
   examen,
   patient,
@@ -124,10 +178,25 @@ export function FormulaireSaisieExamenLaboratoire({
   const router = useRouter();
   const inputFichierRef = useRef<HTMLInputElement>(null);
   const [glisserActif, setGlisserActif] = useState(false);
+  const [ajoutParametreOuvert, setAjoutParametreOuvert] = useState(false);
+  const [nomNouveauParametre, setNomNouveauParametre] = useState("");
 
   const traiterFichiers = (liste: FileList | File[]) => {
     const valides = Array.from(liste).filter((f) => f.size <= MAX_FICHIER_OCTETS);
     if (valides.length > 0) onFichiersAjoutes(valides);
+  };
+
+  const confirmerAjoutParametre = () => {
+    const nom = nomNouveauParametre.trim();
+    if (!nom) return;
+    onAjouterParametre(nom);
+    setNomNouveauParametre("");
+    setAjoutParametreOuvert(false);
+  };
+
+  const annulerAjoutParametre = () => {
+    setNomNouveauParametre("");
+    setAjoutParametreOuvert(false);
   };
 
   const apercuLignes = examen.parametres.map((p) => {
@@ -189,9 +258,11 @@ export function FormulaireSaisieExamenLaboratoire({
                   return (
                     <tr key={p.id} className="hover:bg-slate-50/50">
                       <td className="px-4 py-3">
-                        <p className="font-bold text-slate-900">{acronyme}</p>
+                        <p className="font-bold text-violet-900 underline decoration-violet-700 decoration-1 underline-offset-[3px]">
+                          {acronyme}
+                        </p>
                         {libelle && libelle !== acronyme && (
-                          <p className="text-xs text-slate-500">{libelle}</p>
+                          <p className="mt-0.5 text-xs text-violet-700/70">{libelle}</p>
                         )}
                       </td>
                       <td className="px-3 py-3">
@@ -264,100 +335,141 @@ export function FormulaireSaisieExamenLaboratoire({
           </table>
         </div>
 
-        <button
-          type="button"
-          onClick={onAjouterParametre}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-violet-200 py-3 text-sm font-medium text-violet-700 transition-colors hover:border-violet-300 hover:bg-violet-50/50"
-        >
-          <Plus className="h-4 w-4" />
-          {t("laboratoire.saisieResultats.ajouterParametrePerso")}
-        </button>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setAjoutParametreOuvert(true)}
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-violet-400 bg-white px-4 py-2 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-50"
+          >
+            <Plus className="h-4 w-4" />
+            {t("laboratoire.saisieResultats.ajouterParametrePerso")}
+          </button>
 
-        <div className="mt-6">
-          <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800">
-            <Info className="h-4 w-4 text-violet-600" />
-            {t("laboratoire.saisieResultats.observations")}
-          </label>
-          <textarea
-            value={examen.remarque}
-            maxLength={MAX_REMARQUE}
-            onChange={(e) => onRemarqueChange(e.target.value.slice(0, MAX_REMARQUE))}
-            rows={4}
-            placeholder={t("laboratoire.saisieResultats.observationsPlaceholder")}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-          />
-          <p className="mt-1 text-right text-xs text-slate-400">
-            {examen.remarque.length} / {MAX_REMARQUE}
-          </p>
+          {ajoutParametreOuvert && (
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:flex-nowrap">
+              <input
+                type="text"
+                value={nomNouveauParametre}
+                onChange={(e) => setNomNouveauParametre(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") confirmerAjoutParametre();
+                  if (e.key === "Escape") annulerAjoutParametre();
+                }}
+                placeholder={t("laboratoire.saisieResultats.placeholderNomParametre")}
+                className="min-w-[160px] flex-1 rounded-lg border border-violet-200 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={confirmerAjoutParametre}
+                disabled={!nomNouveauParametre.trim()}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-40"
+              >
+                {t("laboratoire.saisieResultats.ajouter")}
+              </button>
+              <button
+                type="button"
+                onClick={annulerAjoutParametre}
+                className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"
+                aria-label={t("laboratoire.saisieResultats.annuler")}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
 
-        <div className="mt-6">
-          <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800">
-            <CloudUpload className="h-4 w-4 text-violet-600" />
-            {t("laboratoire.saisieResultats.piecesJointes")}
-          </label>
-          <input
-            ref={inputFichierRef}
-            type="file"
-            multiple
-            accept=".jpg,.jpeg,.png,.pdf,image/*,application/pdf"
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files) traiterFichiers(e.target.files);
-              e.target.value = "";
-            }}
-          />
-          <div
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") inputFichierRef.current?.click();
-            }}
-            onClick={() => inputFichierRef.current?.click()}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setGlisserActif(true);
-            }}
-            onDragLeave={() => setGlisserActif(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setGlisserActif(false);
-              if (e.dataTransfer.files.length) traiterFichiers(e.dataTransfer.files);
-            }}
-            className={cn(
-              "cursor-pointer rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors",
-              glisserActif
-                ? "border-violet-400 bg-violet-50"
-                : "border-slate-200 bg-slate-50/50 hover:border-violet-300 hover:bg-violet-50/30"
-            )}
-          >
-            <CloudUpload className="mx-auto mb-2 h-8 w-8 text-violet-400" />
-            <p className="text-sm font-medium text-slate-700">
-              {t("laboratoire.saisieResultats.glisserDeposer")}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              {t("laboratoire.saisieResultats.formatsAcceptes")}
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <label className="mb-3 flex items-center gap-2 text-sm font-bold text-violet-900">
+              <Info className="h-4 w-4 text-violet-600" />
+              {t("laboratoire.saisieResultats.observations")}
+            </label>
+            <textarea
+              value={examen.remarque}
+              maxLength={MAX_REMARQUE}
+              onChange={(e) => onRemarqueChange(e.target.value.slice(0, MAX_REMARQUE))}
+              rows={5}
+              placeholder={t("laboratoire.saisieResultats.observationsPlaceholder")}
+              className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            />
+            <p className="mt-1.5 text-right text-xs text-slate-400">
+              {examen.remarque.length} / {MAX_REMARQUE}
             </p>
           </div>
-          {fichiers.length > 0 && (
-            <ul className="mt-3 space-y-1.5">
-              {fichiers.map((f) => (
-                <li
-                  key={f.id}
-                  className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs"
-                >
-                  <span className="min-w-0 truncate text-slate-700">{f.nom}</span>
-                  <button
-                    type="button"
-                    onClick={() => onFichierRetire(f.id)}
-                    className="ml-2 shrink-0 text-red-600 hover:underline"
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <label className="mb-3 flex items-center gap-2 text-sm font-bold text-violet-900">
+              <FileText className="h-4 w-4 text-violet-600" />
+              {t("laboratoire.saisieResultats.piecesJointes")}
+            </label>
+            <input
+              ref={inputFichierRef}
+              type="file"
+              multiple
+              accept=".jpg,.jpeg,.png,.pdf,image/*,application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files) traiterFichiers(e.target.files);
+                e.target.value = "";
+              }}
+            />
+            <div
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") inputFichierRef.current?.click();
+              }}
+              onClick={() => inputFichierRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setGlisserActif(true);
+              }}
+              onDragLeave={() => setGlisserActif(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setGlisserActif(false);
+                if (e.dataTransfer.files.length) traiterFichiers(e.dataTransfer.files);
+              }}
+              className={cn(
+                "cursor-pointer rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors",
+                glisserActif
+                  ? "border-violet-400 bg-violet-50"
+                  : "border-violet-200/80 bg-violet-50/30 hover:border-violet-300 hover:bg-violet-50/50"
+              )}
+            >
+              <CloudUpload className="mx-auto mb-2 h-7 w-7 text-violet-500" />
+              <p className="text-sm font-medium text-violet-800">
+                {t("laboratoire.saisieResultats.glisserDeposer")}
+              </p>
+              <p className="mt-1 text-xs text-violet-600/80">
+                {t("laboratoire.saisieResultats.formatsAcceptes")}
+              </p>
+            </div>
+            {fichiers.length === 0 ? (
+              <p className="mt-3 text-center text-xs text-slate-400">
+                {t("laboratoire.saisieResultats.aucunFichier")}
+              </p>
+            ) : (
+              <ul className="mt-3 space-y-1.5">
+                {fichiers.map((f) => (
+                  <li
+                    key={f.id}
+                    className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs"
                   >
-                    {t("laboratoire.saisieResultats.supprimerFichier")}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+                    <span className="min-w-0 truncate text-slate-700">{f.nom}</span>
+                    <button
+                      type="button"
+                      onClick={() => onFichierRetire(f.id)}
+                      className="ml-2 shrink-0 text-red-600 hover:underline"
+                    >
+                      {t("laboratoire.saisieResultats.supprimerFichier")}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         <div className="mt-8 flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-6">
@@ -430,30 +542,7 @@ export function FormulaireSaisieExamenLaboratoire({
           </button>
         </section>
 
-        <section className="rounded-xl border border-violet-100 bg-violet-50/60 p-4">
-          <h4 className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-violet-800">
-            <Info className="h-3.5 w-3.5" />
-            {t("laboratoire.saisieResultats.aideInterpretation")}
-          </h4>
-          <ul className="space-y-1.5 text-xs text-violet-900/80">
-            <li className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-sky-500" />
-              {t("laboratoire.saisieResultats.aideBas")}
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              {t("laboratoire.saisieResultats.aideNormal")}
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-rose-500" />
-              {t("laboratoire.saisieResultats.aideEleve")}
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-slate-300" />
-              {t("laboratoire.saisieResultats.aideNr")}
-            </li>
-          </ul>
-        </section>
+        <AideInterpretation />
 
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <h4 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">
@@ -465,7 +554,9 @@ export function FormulaireSaisieExamenLaboratoire({
           <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
             {apercuLignes.map((l) => (
               <div key={l.id} className="contents">
-                <span className="font-semibold text-slate-700">{l.acronyme}</span>
+                <span className="font-semibold text-violet-900 underline decoration-violet-700 decoration-1 underline-offset-2">
+                  {l.acronyme}
+                </span>
                 <span
                   className={cn(
                     "text-right font-medium",

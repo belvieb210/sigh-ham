@@ -13,7 +13,16 @@ export function formaterParametre(nom: string): { acronyme: string; libelle: str
     return { acronyme: nettoye, libelle: "" };
   }
 
-  const mots = nettoye.split(/\s+/);
+  const mots = nettoye.split(/\s+/).filter(Boolean);
+  if (mots.length >= 2) {
+    const initiales = mots
+      .map((m) => m.replace(/[^a-zA-ZÀ-ÿ0-9]/g, "")[0]?.toUpperCase() ?? "")
+      .join("");
+    if (initiales.length >= 2) {
+      return { acronyme: initiales, libelle: nettoye };
+    }
+  }
+
   if (mots.length > 1 && mots[0]!.length <= 8) {
     return { acronyme: mots[0]!.toUpperCase(), libelle: nettoye };
   }

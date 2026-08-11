@@ -133,12 +133,12 @@ export function ContenuSaisieResultatsLaboratoire({
     );
   };
 
-  const ajouterParametrePerso = (examenId: string) => {
-    const nom = window.prompt(t("laboratoire.saisieResultats.nomParametrePerso"));
-    if (!nom?.trim()) return;
+  const ajouterParametrePerso = (examenId: string, nom: string) => {
+    const nomTrim = nom.trim();
+    if (!nomTrim) return;
     const nouveau: ParametreEtat = {
       id: genererIdParametrePerso(),
-      nom: nom.trim(),
+      nom: nomTrim,
       unite: null,
       rangeUsuelle: null,
       obligatoire: false,
@@ -301,7 +301,7 @@ export function ContenuSaisieResultatsLaboratoire({
                       onRemarqueChange={(remarque) =>
                         mettreAJourExamen(ex.id, { remarque })
                       }
-                      onAjouterParametre={() => ajouterParametrePerso(ex.id)}
+                      onAjouterParametre={(nom) => ajouterParametrePerso(ex.id, nom)}
                       onSupprimerParametre={(parametreId) =>
                         supprimerParametrePerso(ex.id, parametreId)
                       }

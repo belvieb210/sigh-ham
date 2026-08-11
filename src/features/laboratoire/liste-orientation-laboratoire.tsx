@@ -122,10 +122,10 @@ export function ListeOrientationLaboratoire({
             </span>
             <Icone className="h-4 w-4 shrink-0" />
             <span className="min-w-0 flex-1">
-              <span className="block">
+              <span className="block break-words">
                 {t(`laboratoire.${cleTraduction}.${opt.id}.label`)}
               </span>
-              <span className="block text-xs font-normal text-texte-secondaire">
+              <span className="block break-words text-xs font-normal text-texte-secondaire">
                 {t(`laboratoire.${cleTraduction}.${opt.id}.description`)}
               </span>
             </span>

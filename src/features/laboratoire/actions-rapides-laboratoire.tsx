@@ -94,7 +94,7 @@ export function ActionsRapidesLaboratoire({
   return (
     <section
       className={cn(
-        "rounded-xl border border-gris-bordure bg-white p-4 shadow-sm",
+        "min-w-0 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm",
         className
       )}
     >

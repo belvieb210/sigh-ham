@@ -60,8 +60,8 @@ export function PanneauDroitLaboratoire({
     variante === "patients" && Boolean(onOrientationsChange);
 
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-4 xl:w-[300px]">
-      <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
+    <aside className="flex w-full min-w-0 shrink-0 flex-col gap-4">
+      <section className="min-w-0 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
         <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
           {t("laboratoire.panneau.resumePatient")}
         </h2>
@@ -69,7 +69,7 @@ export function PanneauDroitLaboratoire({
       </section>
 
       {variante === "examens" ? (
-        <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
+        <section className="min-w-0 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
             {t("laboratoire.panneau.statutAnalyse")}
           </h2>
@@ -89,7 +89,7 @@ export function PanneauDroitLaboratoire({
       ) : null}
 
       {afficherDestinations ? (
-        <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
+        <section className="min-w-0 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
             {t("laboratoire.panneau.orientationRapide")}
           </h2>

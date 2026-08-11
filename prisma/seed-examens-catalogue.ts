@@ -1,65 +1,17 @@
-/**
- * Importe le catalogue complet des examens et paramètres depuis liste_examens_et_paramètres.json
- * Usage : npx tsx prisma/seed-examens-catalogue.ts
- */
 import "dotenv/config";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { PrismaClient, Prisma } from "../src/generated/prisma/client";
+import {
+  categorieDepuisType,
+  chargerCatalogueExamens,
+} from "./lib/examens-catalogue";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
-interface ParametreJson {
-  name: string;
-  unite?: string;
-  range_usuelle?: string;
-  required?: boolean;
-}
-
-interface ExamenJson {
-  code: string;
-  nom: string;
-  type: string;
-  formulaire?: string;
-  service?: string;
-  specimen?: string;
-  prix: number;
-  unite?: string;
-  range_usuelle?: string;
-  description?: string;
-  parameters: ParametreJson[];
-}
-
-interface ExportJson {
-  examens: ExamenJson[];
-}
-
-function categorieDepuisType(type: string): string {
-  const map: Record<string, string> = {
-    BIOCHIMIE: "Biochimie",
-    HEMATOLOGIE: "Hématologie",
-    HORMONES: "Hormonologie",
-    "IMMUNO CHIMILUMINESCENCE (CLIA)": "Immunologie",
-    MICROBIOLOGIE: "Microbiologie",
-    SEROLOGIE: "Sérologie",
-    COAGULATION: "Hémostase",
-    "FLUIDE (LIQUIDE BIOLOGIQUE)": "Fluides",
-    HISTOPATHOLOGIE: "Histopathologie",
-    "FROTTIS - SECRETION": "Cytologie",
-    "BILANS DES ANALYSES MEDICALES": "Bilans",
-    "CHARGE VIRAL": "Virologie",
-    PARASITOLOGIE: "Parasitologie",
-  };
-  return map[type] ?? type;
-}
-
 async function main() {
-  const chemin = join(process.cwd(), "liste_examens_et_paramètres.json");
-  const brut = readFileSync(chemin, "utf-8");
-  const data = JSON.parse(brut) as ExportJson;
+  const data = chargerCatalogueExamens();
 
   console.log(`📋 Import de ${data.examens.length} examens…`);
 

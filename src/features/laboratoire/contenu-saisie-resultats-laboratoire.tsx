@@ -19,7 +19,7 @@ import {
 import type {
   ExamenSaisieDto,
   SaisieResultatsDto,
-} from "@/lib/laboratoire/saisie-resultats";
+} from "@/lib/laboratoire/saisie-resultats-types";
 import { cn } from "@/lib/utils";
 
 interface PropsContenuSaisieResultatsLaboratoire {

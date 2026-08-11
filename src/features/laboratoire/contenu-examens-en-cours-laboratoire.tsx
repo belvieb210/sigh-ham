@@ -44,7 +44,7 @@ import {
 } from "@/features/laboratoire/utils-affichage";
 import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
-import { cheminSaisieResultats } from "@/lib/laboratoire/saisie-resultats";
+import { cheminSaisieResultats } from "@/lib/laboratoire/saisie-resultats-types";
 import { cn } from "@/lib/utils";
 
 const PAR_PAGE_STATUT = 12;

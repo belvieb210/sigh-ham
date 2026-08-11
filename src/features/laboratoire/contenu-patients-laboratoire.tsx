@@ -44,7 +44,7 @@ import type {
   DetailPatientLaboratoire,
   PatientFileLaboratoire,
 } from "@/lib/laboratoire/types";
-import { cheminSaisieResultats } from "@/lib/laboratoire/saisie-resultats";
+import { cheminSaisieResultats } from "@/lib/laboratoire/saisie-resultats-types";
 import { cn } from "@/lib/utils";
 
 interface PropsContenuPatientsLaboratoire {

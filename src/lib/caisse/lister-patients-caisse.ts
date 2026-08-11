@@ -164,15 +164,16 @@ export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse
       enFile: true,
     });
 
-    if (etat.facturationComplete) continue;
-
-    const facActive =
-      !etat.factureExamensPayee && etat.aDesExamens
+    // Reste en file jusqu'à confirmation du transfert sortant (menu ⋮), même si payé.
+    const facActive = etat.facturationComplete
+      ? facs.pharmacie ?? facs.examens
+      : !etat.factureExamensPayee && etat.aDesExamens
         ? facs.examens
         : facs.pharmacie ?? facs.examens;
 
     const montantFacture = facActive?.montantTotal ?? montantEstime;
     const montantPaye = facActive?.montantPaye ?? 0;
+    const reste = Math.max(0, montantFacture - montantPaye);
 
     resultats.push({
       fileAttenteId: file.id,
@@ -190,16 +191,18 @@ export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse
       arriveeLe: file.arriveLe.toISOString(),
       numeroOrdre: file.numeroOrdre,
       nombreExamens: examens.length,
-      montantEstime: facActive
-        ? Math.max(0, montantFacture - montantPaye) || montantFacture
-        : montantEstime,
-      factureOuverte: Boolean(facActive),
-      statutFacture: facActive?.statut ?? null,
+      montantEstime: etat.facturationComplete
+        ? 0
+        : facActive
+          ? reste || montantFacture
+          : montantEstime,
+      factureOuverte: Boolean(facActive) || etat.facturationComplete,
+      statutFacture: etat.facturationComplete
+        ? "PAYEE"
+        : (facActive?.statut ?? null),
       montantFacture,
       montantPaye,
-      resteAPayer: facActive
-        ? Math.max(0, montantFacture - montantPaye)
-        : montantEstime,
+      resteAPayer: etat.facturationComplete ? 0 : facActive ? reste : montantEstime,
       modeFacture: facActive?.modeFacture ?? null,
       provenance,
       medecinResponsable: medecin,

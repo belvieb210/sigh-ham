@@ -102,14 +102,15 @@ export const caisseFr = {
   transferts: {
     titre: "Patients / Transferts",
     fil: "Patients transférés",
-    description: "Suivez les patients en attente de paiement et orientez-les rapidement vers les services.",
+    description:
+      "Patients en file caisse : en attente de paiement, facture payée (examens ou pharmacie), ou transfert à confirmer.",
     chargement: "Chargement des patients…",
     reessayer: "Réessayer",
     placeholder: "Rechercher un patient transféré…",
     exporter: "Exporter",
     reinitialiserFiltres: "Réinitialiser les filtres",
     tableau: "Patients en file caisse",
-    vide: "Aucun patient en attente à la caisse.",
+    vide: "Aucun patient en file à la caisse.",
     colNom: "Nom complet",
     colTelephone: "Téléphone",
     colMotif: "Motif",

@@ -145,15 +145,22 @@ export async function listerPatientsTransfertsCaisse(): Promise<{
       montantEstime: p.montantEstime,
       dateNaissance: p.dateNaissance,
       factureOuverte: p.factureOuverte,
+      facturationComplete: p.facturationComplete,
       provenance: p.provenance,
       medecinResponsable: p.medecinResponsable,
     };
   });
 
   const stats: StatsTransfertsCaisse = {
-    enAttente: patients.filter((p) => !p.factureOuverte && !p.transfertSortantId).length,
-    enCours: patients.filter((p) => p.factureOuverte || p.statutTransfertSortant === "EN_ATTENTE")
-      .length,
+    enAttente: patients.filter(
+      (p) => !p.factureOuverte && !p.transfertSortantId && !p.facturationComplete
+    ).length,
+    enCours: patients.filter(
+      (p) =>
+        p.facturationComplete ||
+        p.factureOuverte ||
+        p.statutTransfertSortant === "EN_ATTENTE"
+    ).length,
     transferesAujourdhui: transferesDepuisCaisse,
     versLaboratoire: patients.filter((p) => p.orientation === "Laboratoire").length,
   };

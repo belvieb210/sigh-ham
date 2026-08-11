@@ -102,14 +102,15 @@ export const caisseEn = {
   transferts: {
     titre: "Patients / Transfers",
     fil: "Transferred patients",
-    description: "Track patients awaiting payment and quickly orient them to hospital services.",
+    description:
+      "Cashier queue: awaiting payment, paid invoice (lab or pharmacy), or transfer to confirm.",
     chargement: "Loading patients…",
     reessayer: "Retry",
     placeholder: "Search a transferred patient…",
     exporter: "Export",
     reinitialiserFiltres: "Reset filters",
     tableau: "Cashier queue patients",
-    vide: "No patient waiting at the cashier.",
+    vide: "No patients in the cashier queue.",
     colNom: "Full name",
     colTelephone: "Phone",
     colMotif: "Reason",

@@ -200,6 +200,7 @@ export interface PatientTransfertCaisse {
   montantEstime: number;
   dateNaissance: string | null;
   factureOuverte: boolean;
+  facturationComplete?: boolean;
   provenance: string;
   medecinResponsable: string | null;
 }

@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronUp, FlaskConical, Loader2 } from "lucide-react";
+import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
 import { CHEMINS_STATUT_ANALYSE_LABO } from "@/constants/laboratoire-orientations";
 import {
   FormulaireSaisieExamenLaboratoire,
@@ -15,6 +16,7 @@ import {
   MiseEnPageLaboratoire,
   type UtilisateurLaboratoire,
 } from "@/features/laboratoire/mise-en-page-laboratoire";
+import { filtrerExamensSaisieParStatut } from "@/features/laboratoire/utils-affichage";
 import type {
   ActionEnregistrementResultat,
   ExamenSaisieDto,
@@ -62,6 +64,9 @@ export function ContenuSaisieResultatsLaboratoire({
 }: PropsContenuSaisieResultatsLaboratoire) {
   const { t } = useTranslation();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const statutFiltre = searchParams.get("statut") as IdOrientationStatutAnalyse | null;
+  const examenIdFiltre = searchParams.get("examen");
 
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -110,9 +115,36 @@ export function ContenuSaisieResultatsLaboratoire({
     void charger();
   }, [charger]);
 
+  const examensAffichables = useMemo(() => {
+    let list = examens;
+    if (statutFiltre) {
+      list = filtrerExamensSaisieParStatut(list, statutFiltre);
+    }
+    if (examenIdFiltre) {
+      list = list.filter((e) => e.id === examenIdFiltre);
+    }
+    return list;
+  }, [examens, statutFiltre, examenIdFiltre]);
+
+  useEffect(() => {
+    if (examensAffichables.length === 0) return;
+    setExamenOuvertId((courant) => {
+      if (courant && examensAffichables.some((e) => e.id === courant)) {
+        return courant;
+      }
+      if (
+        examenIdFiltre &&
+        examensAffichables.some((e) => e.id === examenIdFiltre)
+      ) {
+        return examenIdFiltre;
+      }
+      return examensAffichables[0]!.id;
+    });
+  }, [examensAffichables, examenIdFiltre]);
+
   const examenOuvert = useMemo(
-    () => examens.find((e) => e.id === examenOuvertId) ?? null,
-    [examens, examenOuvertId]
+    () => examensAffichables.find((e) => e.id === examenOuvertId) ?? null,
+    [examensAffichables, examenOuvertId]
   );
 
   const mettreAJourExamen = (examenId: string, patch: Partial<EtatExamenForm>) => {
@@ -214,8 +246,8 @@ export function ContenuSaisieResultatsLaboratoire({
       setMessage(data.message ?? t("laboratoire.saisieResultats.enregistre"));
 
       if (options.passerSuivant) {
-        const idx = examens.findIndex((e) => e.id === examenOuvert.id);
-        const suivant = examens[idx + 1];
+        const idx = examensAffichables.findIndex((e) => e.id === examenOuvert.id);
+        const suivant = examensAffichables[idx + 1];
         if (suivant) {
           setExamenOuvertId(suivant.id);
           await charger();
@@ -272,15 +304,15 @@ export function ContenuSaisieResultatsLaboratoire({
           </div>
         )}
 
-        {!chargement && !erreur && examens.length === 0 && (
+        {!chargement && !erreur && examensAffichables.length === 0 && (
           <div className="rounded-xl border border-dashed border-gris-bordure bg-white px-6 py-12 text-center text-sm text-texte-secondaire">
             {t("laboratoire.saisieResultats.aucunExamen")}
           </div>
         )}
 
-        {!chargement && examens.length > 0 && (
+        {!chargement && examensAffichables.length > 0 && (
           <div className="space-y-3">
-            {examens.map((ex) => {
+            {examensAffichables.map((ex) => {
               const ouvert = examenOuvertId === ex.id;
               return (
                 <div
@@ -303,7 +335,7 @@ export function ContenuSaisieResultatsLaboratoire({
                         {ex.libelle}
                       </span>
                       <span className="text-xs text-slate-500">
-                        {ex.code} · {ex.categorie} · {ex.prix} USD
+                        {ex.code} · {ex.categorie}
                       </span>
                     </span>
                     {ouvert ? (

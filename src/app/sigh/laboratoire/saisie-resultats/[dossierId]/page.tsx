@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ContenuSaisieResultatsLaboratoire } from "@/features/laboratoire/contenu-saisie-resultats-laboratoire";
 import { verifierAccesLaboratoire } from "@/lib/auth/garde-salle";
@@ -22,9 +23,11 @@ export default async function PageSaisieResultatsDossierLaboratoire({
   if (!dossierId?.trim()) notFound();
 
   return (
-    <ContenuSaisieResultatsLaboratoire
-      utilisateur={propsUtilisateurLaboratoire(utilisateur)}
-      dossierId={dossierId.trim()}
-    />
+    <Suspense fallback={null}>
+      <ContenuSaisieResultatsLaboratoire
+        utilisateur={propsUtilisateurLaboratoire(utilisateur)}
+        dossierId={dossierId.trim()}
+      />
+    </Suspense>
   );
 }

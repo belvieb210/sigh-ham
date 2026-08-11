@@ -38,11 +38,11 @@ function filtrerExamens(
   return pageStatut ? examensPourPageStatut(examens, pageStatut) : examens;
 }
 
-/** Noms d'examens (sans badge), filtrés par page si besoin. */
+/** Noms d'examens compacts (une ou deux lignes max), filtrés par page si besoin. */
 export function CelluleListeExamens({
   examens,
   pageStatut,
-  max = 6,
+  max = 2,
 }: Omit<PropsCelluleExamensStatutLaboratoire, "afficherLibelle">) {
   const source = filtrerExamens(examens, pageStatut);
 
@@ -50,23 +50,19 @@ export function CelluleListeExamens({
     return <span className="text-xs text-texte-secondaire">—</span>;
   }
 
-  const visibles = source.slice(0, max);
-  const reste = source.length - visibles.length;
+  const libelles = source.map((ex) => ex.libelle);
+  const visibles = libelles.slice(0, max);
+  const reste = libelles.length - visibles.length;
+  const texte =
+    reste > 0 ? `${visibles.join(", ")} +${reste}` : visibles.join(", ");
 
   return (
-    <ul className="space-y-1.5">
-      {visibles.map((ex) => (
-        <li
-          key={ex.id}
-          className="truncate text-xs font-medium text-texte-principal"
-        >
-          {ex.libelle}
-        </li>
-      ))}
-      {reste > 0 && (
-        <li className="text-[10px] text-texte-secondaire">+{reste}</li>
-      )}
-    </ul>
+    <p
+      className="line-clamp-2 text-xs font-medium leading-snug text-texte-principal"
+      title={libelles.join(", ")}
+    >
+      {texte}
+    </p>
   );
 }
 

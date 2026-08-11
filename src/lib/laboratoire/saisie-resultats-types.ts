@@ -51,6 +51,13 @@ export interface LigneResultatSaisie {
   commentaire?: string | null;
 }
 
-export function cheminSaisieResultats(dossierId: string) {
-  return `/sigh/laboratoire/saisie-resultats/${dossierId}`;
+export function cheminSaisieResultats(
+  dossierId: string,
+  opts?: { statut?: IdOrientationStatutAnalyse; examenId?: string }
+) {
+  const params = new URLSearchParams();
+  if (opts?.statut) params.set("statut", opts.statut);
+  if (opts?.examenId) params.set("examen", opts.examenId);
+  const query = params.toString();
+  return `/sigh/laboratoire/saisie-resultats/${dossierId}${query ? `?${query}` : ""}`;
 }

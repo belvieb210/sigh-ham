@@ -1,6 +1,7 @@
 import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
 import { lireOrientationAnalyseDepuisNotes } from "@/constants/laboratoire-orientations";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
+import { cheminSaisieResultats } from "@/lib/laboratoire/saisie-resultats-types";
 import type { StatutExamen } from "@/generated/prisma/client";
 
 type ExamenAvecNotes = {
@@ -99,7 +100,7 @@ export function codeTransfertLaboratoire(p: PatientFileLaboratoire) {
 
 export function libellesExamensDemandes(
   p: PatientFileLaboratoire,
-  max = 5,
+  max = 2,
   pageStatut?: IdOrientationStatutAnalyse
 ) {
   const source = pageStatut
@@ -173,4 +174,42 @@ export function libelleStatutLigneLabo(
     statutAnalyse,
     couleur: couleurStatutAnalyse(statutAnalyse),
   };
+}
+
+type ExamenAvecOrientation = {
+  id: string;
+  statut: StatutExamen | string;
+  libelle: string;
+  orientationAnalyse?: IdOrientationStatutAnalyse | null;
+};
+
+function examenVersNotes(ex: ExamenAvecOrientation) {
+  return ex.orientationAnalyse ? `laboOrientation=${ex.orientationAnalyse}` : null;
+}
+
+/** Filtre les examens de saisie selon le statut de la page d'origine. */
+export function filtrerExamensSaisieParStatut<T extends ExamenAvecOrientation>(
+  examens: T[],
+  pageStatut: IdOrientationStatutAnalyse
+): T[] {
+  return examensPourPageStatut(
+    examens.map((e) => ({
+      ...e,
+      notes: examenVersNotes(e),
+    })),
+    pageStatut
+  );
+}
+
+/** URL de saisie contextualisée depuis une liste patient (statut + examen unique). */
+export function cheminSaisieResultatsPatient(
+  dossierId: string,
+  examens: { id: string; statut: StatutExamen | string; libelle: string; notes?: string | null }[],
+  pageStatut?: IdOrientationStatutAnalyse
+) {
+  const examensPage = pageStatut ? examensPourPageStatut(examens, pageStatut) : examens;
+  return cheminSaisieResultats(dossierId, {
+    statut: pageStatut,
+    examenId: examensPage.length === 1 ? examensPage[0]!.id : undefined,
+  });
 }

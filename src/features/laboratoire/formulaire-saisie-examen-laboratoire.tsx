@@ -576,7 +576,7 @@ export function FormulaireSaisieExamenLaboratoire({
                 type="button"
                 disabled={sauvegardeEnCours}
                 onClick={onApprouver}
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl border border-emerald-300 px-5 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
               >
                 {t("laboratoire.saisieResultats.approuver")}
               </button>

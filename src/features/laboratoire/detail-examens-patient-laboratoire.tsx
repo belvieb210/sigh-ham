@@ -76,10 +76,12 @@ function ListeParametresExamen({ parametres }: { parametres: ParametreSaisieDto[
 function CarteExamenDetail({
   examen,
   dossierId,
+  statutFiltre,
   ouvertParDefaut,
 }: {
   examen: ExamenSaisieDto;
   dossierId: string;
+  statutFiltre: IdOrientationStatutAnalyse;
   ouvertParDefaut: boolean;
 }) {
   const { t } = useTranslation();
@@ -131,7 +133,10 @@ function CarteExamenDetail({
         <div className="space-y-2 border-t border-gris-bordure px-3 pb-3 pt-2">
           <ListeParametresExamen parametres={examen.parametres} />
           <Link
-            href={cheminSaisieResultats(dossierId)}
+            href={cheminSaisieResultats(dossierId, {
+              statut: statutFiltre,
+              examenId: examen.id,
+            })}
             className="inline-flex items-center gap-1.5 text-xs font-medium text-bleu-medical hover:underline"
           >
             <PenLine className="h-3.5 w-3.5" />
@@ -248,7 +253,10 @@ export function DetailExamensPatientLaboratoire({
         </div>
         <ListeParametresExamen parametres={examen.parametres} />
         <Link
-          href={cheminSaisieResultats(dossierId)}
+          href={cheminSaisieResultats(dossierId, {
+            statut: statutFiltre,
+            examenId: examen.id,
+          })}
           className="inline-flex items-center gap-1.5 text-xs font-medium text-bleu-medical hover:underline"
         >
           <PenLine className="h-3.5 w-3.5" />
@@ -270,6 +278,7 @@ export function DetailExamensPatientLaboratoire({
           key={ex.id}
           examen={ex}
           dossierId={dossierId}
+          statutFiltre={statutFiltre}
           ouvertParDefaut={examensFiltres.length <= 3}
         />
       ))}

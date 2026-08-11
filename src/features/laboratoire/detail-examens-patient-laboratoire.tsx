@@ -192,7 +192,13 @@ export function DetailExamensPatientLaboratoire({
 
   const examensFiltres = useMemo(() => {
     if (!saisie) return [];
-    return examensPourPageStatut(saisie.examens, statutFiltre);
+    const avecNotes = saisie.examens.map((e) => ({
+      ...e,
+      notes: e.orientationAnalyse
+        ? (`laboOrientation=${e.orientationAnalyse}` as const)
+        : null,
+    }));
+    return examensPourPageStatut(avecNotes, statutFiltre);
   }, [saisie, statutFiltre]);
 
   if (!dossierId) {

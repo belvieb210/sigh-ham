@@ -25,6 +25,7 @@ export async function POST(
         commentaire?: string | null;
       }[];
       remarque?: string | null;
+      action?: "brouillon" | "verifier" | "rejeter" | "approuver";
       verifier?: boolean;
     };
 
@@ -32,16 +33,24 @@ export async function POST(
       return NextResponse.json({ erreur: "lignes requises." }, { status: 400 });
     }
 
+    const action =
+      corps.action ?? (corps.verifier === true ? "verifier" : "brouillon");
+
     await enregistrerResultatsExamen(examenId.trim(), session.utilisateur.id, {
       lignes: corps.lignes,
       remarque: corps.remarque,
-      verifier: corps.verifier === true,
+      action,
     });
 
+    const messages: Record<string, string> = {
+      brouillon: "Résultats enregistrés.",
+      verifier: "Résultats vérifiés et enregistrés.",
+      rejeter: "Examen rejeté.",
+      approuver: "Examen approuvé par le biologiste.",
+    };
+
     return NextResponse.json({
-      message: corps.verifier
-        ? "Résultats vérifiés et enregistrés."
-        : "Résultats enregistrés.",
+      message: messages[action] ?? "Résultats enregistrés.",
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Erreur serveur.";

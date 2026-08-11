@@ -1,18 +1,35 @@
 import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
+import { lireOrientationAnalyseDepuisNotes } from "@/constants/laboratoire-orientations";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import type { StatutExamen } from "@/generated/prisma/client";
 
+type ExamenAvecNotes = {
+  statut: StatutExamen | string;
+  libelle: string;
+  notes?: string | null;
+};
+
+function orientationExamen(ex: ExamenAvecNotes): IdOrientationStatutAnalyse | null {
+  return lireOrientationAnalyseDepuisNotes(ex.notes);
+}
+
 /** Examens visibles sur une page de suivi (filtrage par statut d'examen). */
 export function examensPourPageStatut<
-  T extends { statut: StatutExamen | string; libelle: string },
+  T extends ExamenAvecNotes,
 >(examens: T[], pageStatut: IdOrientationStatutAnalyse): T[] {
   switch (pageStatut) {
     case "EN_COURS":
       return examens.filter((e) => e.statut === "EN_ANALYSE");
     case "VERIFIES":
-      return examens.filter((e) => e.statut === "TERMINE");
+      return examens.filter((e) => {
+        if (e.statut !== "TERMINE") return false;
+        const o = orientationExamen(e);
+        return !o || o === "VERIFIES";
+      });
     case "DR_APPROUVE":
-      return examens.filter((e) => e.statut === "TERMINE");
+      return examens.filter(
+        (e) => e.statut === "TERMINE" && orientationExamen(e) === "DR_APPROUVE"
+      );
     case "RECUS":
       return examens.filter(
         (e) => e.statut === "PRESCRIT" || e.statut === "PRELEVE"
@@ -33,8 +50,12 @@ export function patientCorrespondPageStatut(
 
 /** Statut d'analyse UI dérivé du statut Prisma d'un examen. */
 export function statutAnalyseDepuisExamen(
-  statut: StatutExamen | string
+  statut: StatutExamen | string,
+  notes?: string | null
 ): IdOrientationStatutAnalyse {
+  const marque = lireOrientationAnalyseDepuisNotes(notes);
+  if (marque) return marque;
+
   switch (statut) {
     case "EN_ANALYSE":
       return "EN_COURS";

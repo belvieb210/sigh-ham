@@ -1,4 +1,11 @@
 import type { StatutExamen } from "@/generated/prisma/client";
+import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
+
+export type ActionEnregistrementResultat =
+  | "brouillon"
+  | "verifier"
+  | "rejeter"
+  | "approuver";
 
 export interface ParametreSaisieDto {
   id: string;
@@ -19,6 +26,7 @@ export interface ExamenSaisieDto {
   categorie: string;
   prix: number;
   statut: StatutExamen;
+  orientationAnalyse: IdOrientationStatutAnalyse | null;
   formulaire: string | null;
   remarque: string | null;
   parametres: ParametreSaisieDto[];

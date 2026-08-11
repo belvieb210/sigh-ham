@@ -4,8 +4,11 @@ import { calculerAge } from "@/features/caisse/utils-format";
 import {
   ecrireOrientationAnalyseDansNotes,
   extraireRemarqueSansOrientation,
+  lireOrientationAnalyseDepuisNotes,
+  type IdOrientationStatutAnalyse,
 } from "@/constants/laboratoire-orientations";
 import type {
+  ActionEnregistrementResultat,
   LigneResultatSaisie,
   ParametreSaisieDto,
   SaisieResultatsDto,
@@ -101,6 +104,7 @@ export async function chargerSaisieResultats(
       categorie: ex.typeExamen.categorie,
       prix: Number(ex.typeExamen.prix),
       statut: ex.statut,
+      orientationAnalyse: lireOrientationAnalyseDepuisNotes(ex.notes),
       formulaire: ex.typeExamen.formulaire,
       remarque: extraireRemarqueSansOrientation(ex.notes) || null,
       parametres: mapperParametres(ex.typeExamen.parametres, ex.resultats),
@@ -114,9 +118,14 @@ export async function enregistrerResultatsExamen(
   input: {
     lignes: LigneResultatSaisie[];
     remarque?: string | null;
+    action?: ActionEnregistrementResultat;
+    /** @deprecated utiliser action */
     verifier?: boolean;
   }
 ) {
+  const action: ActionEnregistrementResultat =
+    input.action ?? (input.verifier === true ? "verifier" : "brouillon");
+
   const examen = await prisma.examenLaboratoire.findUnique({
     where: { id: examenId },
     include: {
@@ -131,6 +140,8 @@ export async function enregistrerResultatsExamen(
   const idsValides = new Set(examen.typeExamen.parametres.map((p) => p.id));
   const catalogue = new Map(examen.typeExamen.parametres.map((p) => [p.id, p]));
 
+  const exigerParametres = action === "verifier";
+
   for (const ligne of input.lignes) {
     if (!idsValides.has(ligne.parametreTypeExamenId)) {
       throw new Error("Paramètre invalide pour cet examen.");
@@ -138,7 +149,7 @@ export async function enregistrerResultatsExamen(
     const cat = catalogue.get(ligne.parametreTypeExamenId)!;
     const nonRequis = ligne.nonRequis === true;
     if (
-      input.verifier === true &&
+      exigerParametres &&
       !nonRequis &&
       cat.obligatoire &&
       !ligne.valeur.trim()
@@ -147,47 +158,45 @@ export async function enregistrerResultatsExamen(
     }
   }
 
+  const { statut, orientation } = statutEtOrientationPourAction(action, examen.statut);
+
   await prisma.$transaction(async (tx) => {
-    for (const ligne of input.lignes) {
-      const cat = catalogue.get(ligne.parametreTypeExamenId)!;
-      await tx.resultatExamen.upsert({
-        where: {
-          examenId_parametreTypeExamenId: {
+    if (action !== "rejeter") {
+      for (const ligne of input.lignes) {
+        const cat = catalogue.get(ligne.parametreTypeExamenId)!;
+        await tx.resultatExamen.upsert({
+          where: {
+            examenId_parametreTypeExamenId: {
+              examenId,
+              parametreTypeExamenId: ligne.parametreTypeExamenId,
+            },
+          },
+          create: {
             examenId,
             parametreTypeExamenId: ligne.parametreTypeExamenId,
+            parametre: cat.nom,
+            valeur: ligne.valeur.trim(),
+            unite: cat.unite,
+            normeMin: null,
+            normeMax: cat.rangeUsuelle,
+            nonRequis: ligne.nonRequis === true,
+            commentaire: ligne.commentaire?.trim() || null,
           },
-        },
-        create: {
-          examenId,
-          parametreTypeExamenId: ligne.parametreTypeExamenId,
-          parametre: cat.nom,
-          valeur: ligne.valeur.trim(),
-          unite: cat.unite,
-          normeMin: null,
-          normeMax: cat.rangeUsuelle,
-          nonRequis: ligne.nonRequis === true,
-          commentaire: ligne.commentaire?.trim() || null,
-        },
-        update: {
-          parametre: cat.nom,
-          valeur: ligne.valeur.trim(),
-          unite: cat.unite,
-          normeMax: cat.rangeUsuelle,
-          nonRequis: ligne.nonRequis === true,
-          commentaire: ligne.commentaire?.trim() || null,
-        },
-      });
+          update: {
+            parametre: cat.nom,
+            valeur: ligne.valeur.trim(),
+            unite: cat.unite,
+            normeMax: cat.rangeUsuelle,
+            nonRequis: ligne.nonRequis === true,
+            commentaire: ligne.commentaire?.trim() || null,
+          },
+        });
+      }
     }
 
     const maintenant = new Date();
-    const orientation = input.verifier ? "VERIFIES" : "EN_COURS";
-    const statut = input.verifier
-      ? ("TERMINE" as const)
-      : examen.statut === "TERMINE"
-        ? examen.statut
-        : ("EN_ANALYSE" as const);
     const notes = ecrireOrientationAnalyseDansNotes(
-      input.remarque?.trim() || null,
+      input.remarque?.trim() || extraireRemarqueSansOrientation(examen.notes) || null,
       orientation
     );
 
@@ -197,8 +206,31 @@ export async function enregistrerResultatsExamen(
         notes,
         technicienId,
         statut,
-        resultatLe: input.verifier ? maintenant : examen.resultatLe,
+        resultatLe:
+          action === "verifier" || action === "approuver"
+            ? maintenant
+            : examen.resultatLe,
       },
     });
   });
+}
+
+function statutEtOrientationPourAction(
+  action: ActionEnregistrementResultat,
+  statutActuel: string
+): { statut: "PRESCRIT" | "PRELEVE" | "EN_ANALYSE" | "TERMINE" | "ANNULE"; orientation: IdOrientationStatutAnalyse } {
+  switch (action) {
+    case "verifier":
+      return { statut: "TERMINE", orientation: "VERIFIES" };
+    case "rejeter":
+      return { statut: "ANNULE", orientation: "REJETES" };
+    case "approuver":
+      return { statut: "TERMINE", orientation: "DR_APPROUVE" };
+    case "brouillon":
+    default:
+      return {
+        statut: statutActuel === "TERMINE" ? "TERMINE" : "EN_ANALYSE",
+        orientation: "EN_COURS",
+      };
+  }
 }

@@ -16,6 +16,7 @@ import {
   type UtilisateurLaboratoire,
 } from "@/features/laboratoire/mise-en-page-laboratoire";
 import type {
+  ActionEnregistrementResultat,
   ExamenSaisieDto,
   SaisieResultatsDto,
 } from "@/lib/laboratoire/saisie-resultats-types";
@@ -39,6 +40,8 @@ function clonerEtat(saisie: SaisieResultatsDto): EtatExamenForm[] {
     libelle: ex.libelle,
     categorie: ex.categorie,
     prix: ex.prix,
+    statut: ex.statut,
+    orientationAnalyse: ex.orientationAnalyse,
     remarque: ex.remarque ?? "",
     parametres: ex.parametres.map((p) => ({
       ...p,
@@ -174,7 +177,10 @@ export function ContenuSaisieResultatsLaboratoire({
     );
   };
 
-  const envoyer = async (options: { verifier?: boolean; passerSuivant?: boolean }) => {
+  const envoyer = async (options: {
+    action: ActionEnregistrementResultat;
+    passerSuivant?: boolean;
+  }) => {
     if (!examenOuvert) return;
     setSauvegardeEnCours(true);
     setMessage(null);
@@ -196,7 +202,7 @@ export function ContenuSaisieResultatsLaboratoire({
               commentaire: p.commentaire?.trim() || null,
             })),
             remarque: examenOuvert.remarque,
-            verifier: options.verifier === true,
+            action: options.action,
           }),
         }
       );
@@ -217,10 +223,15 @@ export function ContenuSaisieResultatsLaboratoire({
         }
       }
 
-      const chemin = options.verifier
-        ? CHEMINS_STATUT_ANALYSE_LABO.VERIFIES
-        : CHEMINS_STATUT_ANALYSE_LABO.EN_COURS;
-      router.push(`${chemin}?dossier=${encodeURIComponent(dossierId)}`);
+      const cheminParAction: Record<ActionEnregistrementResultat, string> = {
+        brouillon: CHEMINS_STATUT_ANALYSE_LABO.EN_COURS,
+        verifier: CHEMINS_STATUT_ANALYSE_LABO.VERIFIES,
+        rejeter: CHEMINS_STATUT_ANALYSE_LABO.REJETES,
+        approuver: CHEMINS_STATUT_ANALYSE_LABO.DR_APPROUVE,
+      };
+      router.push(
+        `${cheminParAction[options.action]}?dossier=${encodeURIComponent(dossierId)}`
+      );
     } catch {
       setErreur(t("laboratoire.saisieResultats.erreurSauvegarde"));
     } finally {
@@ -336,8 +347,12 @@ export function ContenuSaisieResultatsLaboratoire({
                         }));
                       }}
                       onAnnuler={() => setExamenOuvertId(null)}
-                      onBrouillon={() => void envoyer({})}
-                      onValider={() => void envoyer({ verifier: true, passerSuivant: true })}
+                      onBrouillon={() => void envoyer({ action: "brouillon" })}
+                      onValider={() =>
+                        void envoyer({ action: "verifier", passerSuivant: true })
+                      }
+                      onRejeter={() => void envoyer({ action: "rejeter" })}
+                      onApprouver={() => void envoyer({ action: "approuver" })}
                     />
                   )}
                 </div>

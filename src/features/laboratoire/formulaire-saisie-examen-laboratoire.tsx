@@ -17,6 +17,8 @@ import {
   X,
 } from "lucide-react";
 import type { SaisieResultatsDto } from "@/lib/laboratoire/saisie-resultats-types";
+import type { StatutExamen } from "@/generated/prisma/client";
+import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
 import {
   COULEURS_INDICATEUR,
   evaluerIndicateur,
@@ -47,6 +49,8 @@ export type EtatExamenForm = {
   categorie: string;
   prix: number;
   remarque: string;
+  statut: StatutExamen;
+  orientationAnalyse: IdOrientationStatutAnalyse | null;
   parametres: ParametreEtat[];
 };
 
@@ -73,6 +77,8 @@ interface PropsFormulaireSaisieExamenLaboratoire {
   onAnnuler: () => void;
   onBrouillon: () => void;
   onValider: () => void;
+  onRejeter?: () => void;
+  onApprouver?: () => void;
 }
 
 function genererIdFichier() {
@@ -174,6 +180,8 @@ export function FormulaireSaisieExamenLaboratoire({
   onAnnuler,
   onBrouillon,
   onValider,
+  onRejeter,
+  onApprouver,
 }: PropsFormulaireSaisieExamenLaboratoire) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -185,6 +193,14 @@ export function FormulaireSaisieExamenLaboratoire({
     new Set()
   );
   const examenIdRef = useRef(examen.id);
+
+  const estVerifieEnAttente =
+    examen.statut === "TERMINE" && examen.orientationAnalyse !== "DR_APPROUVE";
+  const estConsultationSeule =
+    estVerifieEnAttente ||
+    examen.orientationAnalyse === "DR_APPROUVE" ||
+    examen.statut === "ANNULE";
+  const champsDesactives = estConsultationSeule || sauvegardeEnCours;
 
   useEffect(() => {
     if (examenIdRef.current !== examen.id) {
@@ -298,7 +314,8 @@ export function FormulaireSaisieExamenLaboratoire({
                           <input
                             type="text"
                             value={p.valeur}
-                            disabled={p.nonRequis}
+                            disabled={champsDesactives || p.nonRequis}
+                            readOnly={estConsultationSeule}
                             placeholder={t("laboratoire.saisieResultats.placeholderResultat")}
                             onChange={(e) =>
                               onParametreChange(p.id, { valeur: e.target.value })
@@ -320,6 +337,7 @@ export function FormulaireSaisieExamenLaboratoire({
                           <input
                             type="checkbox"
                             checked={p.nonRequis}
+                            disabled={champsDesactives}
                             onChange={(e) =>
                               onParametreChange(p.id, { nonRequis: e.target.checked })
                             }
@@ -328,6 +346,7 @@ export function FormulaireSaisieExamenLaboratoire({
                           />
                         </td>
                         <td className="px-2 py-3">
+                          {!estConsultationSeule && (
                           <div className="flex items-center justify-end gap-1">
                             <button
                               type="button"
@@ -361,6 +380,7 @@ export function FormulaireSaisieExamenLaboratoire({
                               </button>
                             )}
                           </div>
+                          )}
                         </td>
                       </tr>
                       {commentaireOuvert && (
@@ -372,6 +392,8 @@ export function FormulaireSaisieExamenLaboratoire({
                             <input
                               type="text"
                               value={p.commentaire}
+                              readOnly={estConsultationSeule}
+                              disabled={champsDesactives}
                               onChange={(e) =>
                                 onParametreChange(p.id, { commentaire: e.target.value })
                               }
@@ -391,6 +413,7 @@ export function FormulaireSaisieExamenLaboratoire({
           </table>
         </div>
 
+        {!estConsultationSeule && (
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
             type="button"
@@ -434,6 +457,7 @@ export function FormulaireSaisieExamenLaboratoire({
             </div>
           )}
         </div>
+        )}
 
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="rounded-xl border border-slate-200 bg-white p-4">
@@ -444,6 +468,8 @@ export function FormulaireSaisieExamenLaboratoire({
             <textarea
               value={examen.remarque}
               maxLength={MAX_REMARQUE}
+              readOnly={estConsultationSeule}
+              disabled={champsDesactives}
               onChange={(e) => onRemarqueChange(e.target.value.slice(0, MAX_REMARQUE))}
               rows={5}
               placeholder={t("laboratoire.saisieResultats.observationsPlaceholder")}
@@ -536,24 +562,47 @@ export function FormulaireSaisieExamenLaboratoire({
           >
             {t("laboratoire.saisieResultats.annuler")}
           </button>
-          <button
-            type="button"
-            disabled={sauvegardeEnCours}
-            onClick={onBrouillon}
-            className="inline-flex items-center gap-2 rounded-xl border border-violet-300 px-5 py-2.5 text-sm font-medium text-violet-700 hover:bg-violet-50 disabled:opacity-50"
-          >
-            <Wand2 className="h-4 w-4" />
-            {t("laboratoire.saisieResultats.enregistrerBrouillon")}
-          </button>
-          <button
-            type="button"
-            disabled={sauvegardeEnCours}
-            onClick={onValider}
-            className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-violet-700 disabled:opacity-50"
-          >
-            <Activity className="h-4 w-4" />
-            {t("laboratoire.saisieResultats.validerResultats")}
-          </button>
+          {estVerifieEnAttente ? (
+            <>
+              <button
+                type="button"
+                disabled={sauvegardeEnCours}
+                onClick={onRejeter}
+                className="inline-flex items-center gap-2 rounded-xl border border-rose-300 px-5 py-2.5 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+              >
+                {t("laboratoire.saisieResultats.rejeter")}
+              </button>
+              <button
+                type="button"
+                disabled={sauvegardeEnCours}
+                onClick={onApprouver}
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {t("laboratoire.saisieResultats.approuver")}
+              </button>
+            </>
+          ) : !estConsultationSeule ? (
+            <>
+              <button
+                type="button"
+                disabled={sauvegardeEnCours}
+                onClick={onBrouillon}
+                className="inline-flex items-center gap-2 rounded-xl border border-violet-300 px-5 py-2.5 text-sm font-medium text-violet-700 hover:bg-violet-50 disabled:opacity-50"
+              >
+                <Wand2 className="h-4 w-4" />
+                {t("laboratoire.saisieResultats.enregistrerBrouillon")}
+              </button>
+              <button
+                type="button"
+                disabled={sauvegardeEnCours}
+                onClick={onValider}
+                className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-violet-700 disabled:opacity-50"
+              >
+                <Activity className="h-4 w-4" />
+                {t("laboratoire.saisieResultats.validerResultats")}
+              </button>
+            </>
+          ) : null}
         </div>
       </div>
 

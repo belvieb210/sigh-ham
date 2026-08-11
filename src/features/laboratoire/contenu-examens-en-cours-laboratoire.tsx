@@ -39,8 +39,10 @@ import {
 } from "@/features/laboratoire/formulaire-filtres-laboratoire";
 import {
   couleurStatutAnalyse,
+  examensPourPageStatut,
   libellesExamensDemandes,
   numeroEnregistrementLaboratoire,
+  patientCorrespondPageStatut,
 } from "@/features/laboratoire/utils-affichage";
 import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
@@ -53,6 +55,9 @@ function patientCorrespondStatut(
   p: PatientFileLaboratoire,
   statut: IdOrientationStatutAnalyse
 ) {
+  if (statut === "EN_COURS" || statut === "VERIFIES" || statut === "RECUS") {
+    return patientCorrespondPageStatut(p, statut);
+  }
   return (p.statutAnalyse || "RECUS") === statut;
 }
 
@@ -489,9 +494,9 @@ export function ContenuExamensEnCoursLaboratoire({
                     <tbody className="divide-y divide-gris-bordure">
                       {pageData.itemsPage.map((p) => {
                         const selectionne = selectionId === p.dossierId;
-                        const examensAnalyse = p.examens.filter(
-                          (e) => e.statut === "EN_ANALYSE"
-                        );
+                        const examensPage = pageStatut
+                          ? examensPourPageStatut(p.examens, pageStatut)
+                          : p.examens.filter((e) => e.statut === "EN_ANALYSE");
                         return (
                           <tr
                             key={p.dossierId}
@@ -537,9 +542,9 @@ export function ContenuExamensEnCoursLaboratoire({
                               {p.provenance || "—"}
                             </td>
                             <td className="max-w-[200px] px-3 py-3 text-xs font-medium">
-                              {examensAnalyse.length
-                                ? examensAnalyse.map((e) => e.libelle).join(", ")
-                                : libellesExamensDemandes(p)}
+                              {examensPage.length
+                                ? examensPage.map((e) => e.libelle).join(", ")
+                                : libellesExamensDemandes(p, 5, pageStatut)}
                             </td>
                             <td className="px-3 py-3">
                               <span
@@ -640,7 +645,7 @@ export function ContenuExamensEnCoursLaboratoire({
                             {p.provenance || "—"} · {formatHeure(p.arriveeLe)}
                           </p>
                           <p className="mt-1 text-xs font-medium text-texte-principal">
-                            {libellesExamensDemandes(p, 3)}
+                            {libellesExamensDemandes(p, 3, pageStatut)}
                           </p>
                         </button>
                       </div>

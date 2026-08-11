@@ -1,5 +1,36 @@
 import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
+import type { StatutExamen } from "@/generated/prisma/client";
+
+/** Examens visibles sur une page de suivi (filtrage par statut d'examen). */
+export function examensPourPageStatut(
+  examens: { statut: StatutExamen | string; libelle: string }[],
+  pageStatut: IdOrientationStatutAnalyse
+) {
+  switch (pageStatut) {
+    case "EN_COURS":
+      return examens.filter((e) => e.statut === "EN_ANALYSE");
+    case "VERIFIES":
+      return examens.filter((e) => e.statut === "TERMINE");
+    case "DR_APPROUVE":
+      return examens.filter((e) => e.statut === "TERMINE");
+    case "RECUS":
+      return examens.filter(
+        (e) => e.statut === "PRESCRIT" || e.statut === "PRELEVE"
+      );
+    case "REJETES":
+      return examens.filter((e) => e.statut === "ANNULE");
+    default:
+      return examens;
+  }
+}
+
+export function patientCorrespondPageStatut(
+  patient: Pick<PatientFileLaboratoire, "examens">,
+  pageStatut: IdOrientationStatutAnalyse
+) {
+  return examensPourPageStatut(patient.examens, pageStatut).length > 0;
+}
 
 /** N° enregistrement (ex. 20260804008) */
 export function numeroEnregistrementLaboratoire(p: PatientFileLaboratoire) {
@@ -13,9 +44,13 @@ export function codeTransfertLaboratoire(p: PatientFileLaboratoire) {
 
 export function libellesExamensDemandes(
   p: PatientFileLaboratoire,
-  max = 5
+  max = 5,
+  pageStatut?: IdOrientationStatutAnalyse
 ) {
-  const labels = p.examens.map((e) => e.libelle);
+  const source = pageStatut
+    ? examensPourPageStatut(p.examens, pageStatut)
+    : p.examens;
+  const labels = source.map((e) => e.libelle);
   if (labels.length === 0) return "—";
   if (labels.length <= max) return labels.join(", ");
   return `${labels.slice(0, max).join(", ")} +${labels.length - max}`;

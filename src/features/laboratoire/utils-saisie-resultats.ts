@@ -1,4 +1,10 @@
-export type StatutIndicateur = "bas" | "normal" | "eleve" | "non_requis" | "vide";
+export type StatutIndicateur =
+  | "bas"
+  | "normal"
+  | "eleve"
+  | "non_requis"
+  | "vide"
+  | "saisi";
 
 export function formaterParametre(nom: string): { acronyme: string; libelle: string } {
   const nettoye = nom.trim();
@@ -35,16 +41,109 @@ function parseNombre(texte: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function evaluerIndicateur(
-  valeur: string,
-  rangeUsuelle: string | null,
-  nonRequis: boolean
-): StatutIndicateur {
-  if (nonRequis) return "non_requis";
-  if (!valeur.trim()) return "vide";
+function normaliserQualitatif(texte: string): string {
+  return texte
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[^a-z0-9+/-]/g, "");
+}
 
+type CategorieQualitative =
+  | "negatif"
+  | "positif"
+  | "absent"
+  | "present"
+  | "sterile"
+  | "normal"
+  | "autre";
+
+function categoriserQualitatif(texte: string): CategorieQualitative | null {
+  const n = normaliserQualitatif(texte);
+  if (!n) return null;
+
+  if (
+    n === "negatif" ||
+    n === "negative" ||
+    n === "neg" ||
+    n === "non" ||
+    n === "-" ||
+    n.startsWith("negatif") ||
+    n.includes("negatif")
+  ) {
+    return "negatif";
+  }
+
+  if (
+    n === "positif" ||
+    n === "positive" ||
+    n === "pos" ||
+    n === "+" ||
+    n === "oui" ||
+    n === "yes" ||
+    n.startsWith("positif") ||
+    n.includes("positif")
+  ) {
+    return "positif";
+  }
+
+  if (n === "absent" || n === "abs" || n.startsWith("absent") || n.includes("absent")) {
+    return "absent";
+  }
+
+  if (
+    n === "present" ||
+    n === "pres" ||
+    n === "detecte" ||
+    n === "detectee" ||
+    n.startsWith("present") ||
+    n.includes("present") ||
+    n.includes("detecte")
+  ) {
+    return "present";
+  }
+
+  if (n === "sterile" || n.includes("sterile")) {
+    return "sterile";
+  }
+
+  if (n === "normal" || n === "normale") {
+    return "normal";
+  }
+
+  return "autre";
+}
+
+function referencesQualitativesEquivalentes(
+  ref: CategorieQualitative,
+  val: CategorieQualitative
+): boolean {
+  if (ref === val) return true;
+
+  const negatifLike = new Set<CategorieQualitative>(["negatif", "absent", "sterile"]);
+  const positifLike = new Set<CategorieQualitative>(["positif", "present"]);
+
+  if (negatifLike.has(ref) && negatifLike.has(val)) return true;
+  if (positifLike.has(ref) && positifLike.has(val)) return true;
+
+  return false;
+}
+
+function evaluerQualitatif(
+  valeur: string,
+  rangeUsuelle: string
+): StatutIndicateur | null {
+  const ref = categoriserQualitatif(rangeUsuelle);
+  const val = categoriserQualitatif(valeur);
+  if (!ref || !val) return null;
+  if (val === "autre") return "saisi";
+  return referencesQualitativesEquivalentes(ref, val) ? "normal" : "eleve";
+}
+
+function evaluerNumerique(valeur: string, rangeUsuelle: string): StatutIndicateur | null {
   const num = parseNombre(valeur);
-  if (num === null || !rangeUsuelle?.trim()) return "vide";
+  if (num === null) return null;
 
   const range = rangeUsuelle.trim();
 
@@ -52,7 +151,7 @@ export function evaluerIndicateur(
   if (entre) {
     const min = parseNombre(entre[1]!);
     const max = parseNombre(entre[2]!);
-    if (min === null || max === null) return "vide";
+    if (min === null || max === null) return null;
     if (num < min) return "bas";
     if (num > max) return "eleve";
     return "normal";
@@ -61,18 +160,38 @@ export function evaluerIndicateur(
   const sup = range.match(/^>\s*=?\s*(\d+[.,]?\d*)/);
   if (sup) {
     const min = parseNombre(sup[1]!);
-    if (min === null) return "vide";
+    if (min === null) return null;
     return num >= min ? "normal" : "bas";
   }
 
   const inf = range.match(/^<\s*=?\s*(\d+[.,]?\d*)/);
   if (inf) {
     const max = parseNombre(inf[1]!);
-    if (max === null) return "vide";
+    if (max === null) return null;
     return num <= max ? "normal" : "eleve";
   }
 
-  return "vide";
+  return null;
+}
+
+export function evaluerIndicateur(
+  valeur: string,
+  rangeUsuelle: string | null,
+  nonRequis: boolean
+): StatutIndicateur {
+  if (nonRequis) return "non_requis";
+  if (!valeur.trim()) return "vide";
+
+  const range = rangeUsuelle?.trim() ?? "";
+  if (!range) return "saisi";
+
+  const numerique = evaluerNumerique(valeur, range);
+  if (numerique) return numerique;
+
+  const qualitatif = evaluerQualitatif(valeur, range);
+  if (qualitatif) return qualitatif;
+
+  return "saisi";
 }
 
 export const COULEURS_INDICATEUR: Record<
@@ -103,5 +222,10 @@ export const COULEURS_INDICATEUR: Record<
     dot: "bg-transparent border border-slate-200",
     input: "border-violet-200 bg-violet-50/30 focus:border-violet-400 focus:ring-violet-100",
     text: "text-slate-400",
+  },
+  saisi: {
+    dot: "bg-violet-500",
+    input: "border-violet-300 bg-violet-50/50 focus:border-violet-500 focus:ring-violet-200",
+    text: "text-violet-700",
   },
 };

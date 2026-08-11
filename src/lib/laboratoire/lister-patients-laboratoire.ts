@@ -218,12 +218,12 @@ export async function obtenirStatsLaboratoire(): Promise<StatsLaboratoireJour> {
     (p) => new Date(p.arriveeLe) >= debut
   ).length;
 
-  const analysesEnCoursListe = patients.filter(
-    (p) => p.statutAnalyse === "EN_COURS"
+  const analysesEnCoursListe = patients.filter((p) =>
+    p.examens.some((e) => e.statut === "EN_ANALYSE")
   );
 
-  const resultatsAValiderListe = patients.filter(
-    (p) => p.statutAnalyse === "VERIFIES"
+  const resultatsAValiderListe = patients.filter((p) =>
+    p.examens.some((e) => e.statut === "TERMINE")
   );
 
   const resultatsValidesListe = patients.filter(
@@ -232,8 +232,12 @@ export async function obtenirStatsLaboratoire(): Promise<StatsLaboratoireJour> {
 
   const compteursStatutAnalyse = {
     RECUS: patients.filter((p) => p.statutAnalyse === "RECUS").length,
-    EN_COURS: patients.filter((p) => p.statutAnalyse === "EN_COURS").length,
-    VERIFIES: resultatsAValiderListe.length,
+    EN_COURS: patients.filter((p) =>
+      p.examens.some((e) => e.statut === "EN_ANALYSE")
+    ).length,
+    VERIFIES: patients.filter((p) =>
+      p.examens.some((e) => e.statut === "TERMINE")
+    ).length,
     REJETES: patients.filter((p) => p.statutAnalyse === "REJETES").length,
     DR_APPROUVE: resultatsValidesListe.length,
   };

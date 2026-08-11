@@ -113,12 +113,19 @@ export function ecrireOrientationAnalyseDansNotes(
   notes: string | null | undefined,
   orientation: IdOrientationStatutAnalyse
 ): string {
-  const nettoye = (notes ?? "")
-    .replace(/\s*laboOrientation=[A-Z_]+\s*/g, " ")
-    .trim();
+  const nettoye = extraireRemarqueSansOrientation(notes);
   return nettoye
     ? `${nettoye} laboOrientation=${orientation}`
     : `laboOrientation=${orientation}`;
+}
+
+/** Retire le marqueur d'orientation pour n'afficher que la remarque utilisateur. */
+export function extraireRemarqueSansOrientation(
+  notes: string | null | undefined
+): string {
+  return (notes ?? "")
+    .replace(/\s*laboOrientation=[A-Z_]+\s*/g, " ")
+    .trim();
 }
 
 /** Code salle → id d'orientation UI du panneau labo */

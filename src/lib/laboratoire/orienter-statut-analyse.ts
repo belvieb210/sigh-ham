@@ -4,7 +4,6 @@ import {
   ecrireOrientationAnalyseDansNotes,
   type IdOrientationStatutAnalyse,
   ORIENTATIONS_STATUT_ANALYSE,
-  lireOrientationAnalyseDepuisNotes,
 } from "@/constants/laboratoire-orientations";
 import { prisma } from "@/lib/prisma";
 
@@ -122,13 +121,8 @@ export function deriverStatutAnalyse(examens: {
   statut: StatutExamen;
   notes?: string | null;
 }[]): IdOrientationStatutAnalyse {
-  for (const ex of examens) {
-    const marque = lireOrientationAnalyseDepuisNotes(ex.notes);
-    if (marque) return marque;
-  }
-
   if (examens.some((e) => e.statut === "ANNULE")) return "REJETES";
-  if (examens.some((e) => e.statut === "TERMINE")) return "VERIFIES";
   if (examens.some((e) => e.statut === "EN_ANALYSE")) return "EN_COURS";
+  if (examens.some((e) => e.statut === "TERMINE")) return "VERIFIES";
   return "RECUS";
 }

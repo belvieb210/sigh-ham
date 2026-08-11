@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronUp, FlaskConical, Loader2 } from "lucide-react";
+import { CHEMINS_STATUT_ANALYSE_LABO } from "@/constants/laboratoire-orientations";
 import {
   FormulaireSaisieExamenLaboratoire,
   genererIdFichier,
@@ -56,6 +58,7 @@ export function ContenuSaisieResultatsLaboratoire({
   dossierId,
 }: PropsContenuSaisieResultatsLaboratoire) {
   const { t } = useTranslation();
+  const router = useRouter();
 
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -207,10 +210,17 @@ export function ContenuSaisieResultatsLaboratoire({
       if (options.passerSuivant) {
         const idx = examens.findIndex((e) => e.id === examenOuvert.id);
         const suivant = examens[idx + 1];
-        if (suivant) setExamenOuvertId(suivant.id);
+        if (suivant) {
+          setExamenOuvertId(suivant.id);
+          await charger();
+          return;
+        }
       }
 
-      await charger();
+      const chemin = options.verifier
+        ? CHEMINS_STATUT_ANALYSE_LABO.VERIFIES
+        : CHEMINS_STATUT_ANALYSE_LABO.EN_COURS;
+      router.push(`${chemin}?dossier=${encodeURIComponent(dossierId)}`);
     } catch {
       setErreur(t("laboratoire.saisieResultats.erreurSauvegarde"));
     } finally {

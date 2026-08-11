@@ -1,6 +1,10 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { calculerAge } from "@/features/caisse/utils-format";
+import {
+  ecrireOrientationAnalyseDansNotes,
+  extraireRemarqueSansOrientation,
+} from "@/constants/laboratoire-orientations";
 import type {
   LigneResultatSaisie,
   ParametreSaisieDto,
@@ -98,7 +102,7 @@ export async function chargerSaisieResultats(
       prix: Number(ex.typeExamen.prix),
       statut: ex.statut,
       formulaire: ex.typeExamen.formulaire,
-      remarque: ex.notes,
+      remarque: extraireRemarqueSansOrientation(ex.notes) || null,
       parametres: mapperParametres(ex.typeExamen.parametres, ex.resultats),
     })),
   };
@@ -133,7 +137,12 @@ export async function enregistrerResultatsExamen(
     }
     const cat = catalogue.get(ligne.parametreTypeExamenId)!;
     const nonRequis = ligne.nonRequis === true;
-    if (!nonRequis && cat.obligatoire && !ligne.valeur.trim()) {
+    if (
+      input.verifier === true &&
+      !nonRequis &&
+      cat.obligatoire &&
+      !ligne.valeur.trim()
+    ) {
       throw new Error(`Le paramètre « ${cat.nom} » est requis.`);
     }
   }
@@ -171,16 +180,21 @@ export async function enregistrerResultatsExamen(
     }
 
     const maintenant = new Date();
+    const orientation = input.verifier ? "VERIFIES" : "EN_COURS";
     const statut = input.verifier
       ? ("TERMINE" as const)
-      : examen.statut === "PRESCRIT" || examen.statut === "PRELEVE"
-        ? ("EN_ANALYSE" as const)
-        : examen.statut;
+      : examen.statut === "TERMINE"
+        ? examen.statut
+        : ("EN_ANALYSE" as const);
+    const notes = ecrireOrientationAnalyseDansNotes(
+      input.remarque?.trim() || null,
+      orientation
+    );
 
     await tx.examenLaboratoire.update({
       where: { id: examenId },
       data: {
-        notes: input.remarque?.trim() || null,
+        notes,
         technicienId,
         statut,
         resultatLe: input.verifier ? maintenant : examen.resultatLe,

@@ -19,6 +19,7 @@ import {
   determinerNavigationApresSauvegardeResultat,
   filtrerExamensSaisieParStatut,
 } from "@/features/laboratoire/utils-affichage";
+import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
 import type {
   ActionEnregistrementResultat,
   ExamenSaisieDto,
@@ -262,6 +263,8 @@ export function ContenuSaisieResultatsLaboratoire({
         return;
       }
       setMessage(data.message ?? t("laboratoire.saisieResultats.enregistre"));
+
+      window.dispatchEvent(new CustomEvent(EVENT_RAFRAICHIR_NOTIFICATIONS));
 
       const examensActualises = await rechargerDonnees({ silencieux: true });
       if (!examensActualises) return;

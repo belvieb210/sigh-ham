@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { listerPatientsFileAttenteSalle } from "@/lib/transferts/visibilite-salle";
 import { calculerAge } from "@/features/caisse/utils-format";
+import { patientCorrespondPageStatut } from "@/features/laboratoire/utils-affichage";
 import { deriverStatutAnalyse } from "@/lib/laboratoire/orienter-statut-analyse";
 import type {
   DetailPatientLaboratoire,
@@ -231,15 +232,16 @@ export async function obtenirStatsLaboratoire(): Promise<StatsLaboratoireJour> {
   );
 
   const compteursStatutAnalyse = {
-    RECUS: patients.filter((p) => p.statutAnalyse === "RECUS").length,
-    EN_COURS: patients.filter((p) =>
-      p.examens.some((e) => e.statut === "EN_ANALYSE")
+    RECUS: patients.filter((p) => patientCorrespondPageStatut(p, "RECUS")).length,
+    EN_COURS: patients.filter((p) => patientCorrespondPageStatut(p, "EN_COURS"))
+      .length,
+    VERIFIES: patients.filter((p) => patientCorrespondPageStatut(p, "VERIFIES"))
+      .length,
+    REJETES: patients.filter((p) => patientCorrespondPageStatut(p, "REJETES"))
+      .length,
+    DR_APPROUVE: patients.filter((p) =>
+      patientCorrespondPageStatut(p, "DR_APPROUVE")
     ).length,
-    VERIFIES: patients.filter((p) =>
-      p.examens.some((e) => e.statut === "TERMINE")
-    ).length,
-    REJETES: patients.filter((p) => p.statutAnalyse === "REJETES").length,
-    DR_APPROUVE: resultatsValidesListe.length,
   };
 
   const examensEnCours = patients.reduce(

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Eye, FlaskConical, Loader2 } from "lucide-react";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
@@ -55,16 +55,6 @@ import { cn } from "@/lib/utils";
 
 const PAR_PAGE_STATUT = 12;
 
-function patientCorrespondStatut(
-  p: PatientFileLaboratoire,
-  statut: IdOrientationStatutAnalyse
-) {
-  if (statut === "EN_COURS" || statut === "VERIFIES" || statut === "RECUS") {
-    return patientCorrespondPageStatut(p, statut);
-  }
-  return (p.statutAnalyse || "RECUS") === statut;
-}
-
 interface PropsContenuExamensEnCoursLaboratoire {
   utilisateur: UtilisateurLaboratoire;
   /** Page dédiée (Reçus, En cours, …) — sinon vue générale examens en cours */
@@ -79,6 +69,7 @@ export function ContenuExamensEnCoursLaboratoire({
 }: PropsContenuExamensEnCoursLaboratoire) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const dossierUrl = searchParams.get("dossier");
 
@@ -130,11 +121,18 @@ export function ContenuExamensEnCoursLaboratoire({
 
   useEffect(() => {
     void charger();
+  }, [charger, pathname]);
+
+  useEffect(() => {
+    const onRafraichir = () => void charger();
+    window.addEventListener(EVENT_RAFRAICHIR_NOTIFICATIONS, onRafraichir);
+    return () =>
+      window.removeEventListener(EVENT_RAFRAICHIR_NOTIFICATIONS, onRafraichir);
   }, [charger]);
 
   const enCours = useMemo(() => {
     if (pageStatut) {
-      return patients.filter((p) => patientCorrespondStatut(p, pageStatut));
+      return patients.filter((p) => patientCorrespondPageStatut(p, pageStatut));
     }
     return patients.filter((p) => p.statutAnalyse === "EN_COURS");
   }, [patients, pageStatut]);

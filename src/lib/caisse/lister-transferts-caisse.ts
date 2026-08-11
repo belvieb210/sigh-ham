@@ -30,18 +30,19 @@ function libelleStatutLigne(opts: {
   statutFacture?: string | null;
   statutTransfert: string | null;
   enRecuperation: boolean;
+  facturationComplete?: boolean;
 }): { statut: string; statutCouleur: string } {
   if (opts.enRecuperation && opts.statutTransfert === "REFUSE") {
     return { statut: "Rejeté", statutCouleur: "bg-red-100 text-red-700" };
+  }
+  if (opts.statutFacture === "PAYEE" || opts.facturationComplete) {
+    return { statut: "Payée", statutCouleur: "bg-emerald-100 text-emerald-700" };
   }
   if (opts.statutTransfert === "EN_ATTENTE") {
     return { statut: "À confirmer", statutCouleur: "bg-orange-100 text-orange-800" };
   }
   if (opts.statutFacture === "PARTIELLEMENT_PAYEE") {
     return { statut: "Avance", statutCouleur: "bg-amber-100 text-amber-800" };
-  }
-  if (opts.statutFacture === "PAYEE") {
-    return { statut: "Payée", statutCouleur: "bg-emerald-100 text-emerald-700" };
   }
   if (opts.factureOuverte) {
     return { statut: "En cours", statutCouleur: "bg-blue-100 text-blue-700" };
@@ -54,7 +55,7 @@ export async function listerPatientsTransfertsCaisse(): Promise<{
   stats: StatsTransfertsCaisse;
 }> {
   const [file, transferesDepuisCaisse] = await Promise.all([
-    listerPatientsEnAttenteCaisse(),
+    listerPatientsEnAttenteCaisse({ pourPageTransferts: true }),
     (async () => {
       const debut = new Date();
       debut.setHours(0, 0, 0, 0);
@@ -112,6 +113,7 @@ export async function listerPatientsTransfertsCaisse(): Promise<{
       statutFacture: p.statutFacture,
       statutTransfert: sortant?.statut ?? null,
       enRecuperation,
+      facturationComplete: p.facturationComplete,
     });
 
     return {

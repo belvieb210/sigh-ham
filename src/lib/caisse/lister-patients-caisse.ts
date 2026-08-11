@@ -77,10 +77,85 @@ interface FacturesDossier {
   } | null;
 }
 
-export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse[]> {
+type ResumeFacture = NonNullable<FacturesDossier["examens"]>;
+
+function prioriteStatutFacture(statut: StatutFacture): number {
+  if (statut === "PAYEE") return 4;
+  if (statut === "PARTIELLEMENT_PAYEE") return 3;
+  if (statut === "EMISE") return 2;
+  if (statut === "BROUILLON") return 1;
+  return 0;
+}
+
+function retenirMeilleureFacture(
+  courante: ResumeFacture | null,
+  candidate: ResumeFacture
+): ResumeFacture {
+  if (!courante) return candidate;
+  return prioriteStatutFacture(candidate.statut) >= prioriteStatutFacture(courante.statut)
+    ? candidate
+    : courante;
+}
+
+const includePassageCaisse = {
+  passage: {
+    include: {
+      dossier: {
+        include: {
+          patient: true,
+          examensLaboratoire: {
+            where: { statut: { not: "ANNULE" as const } },
+            include: { typeExamen: true },
+          },
+          enregistrementsReception: {
+            orderBy: { enregistreLe: "desc" as const },
+            take: 1,
+            select: {
+              medecinResponsable: true,
+              enregistreLe: true,
+              agent: { select: { prenom: true, nom: true } },
+            },
+          },
+        },
+      },
+      transferts: {
+        orderBy: { emisLe: "desc" as const },
+        include: {
+          salleOrigine: { select: { code: true, nom: true } },
+          salleDestination: { select: { code: true, nom: true } },
+          emetteur: { select: { prenom: true, nom: true } },
+        },
+      },
+    },
+  },
+} as const;
+
+/** Tous les patients en file caisse (y compris facture payée en attente de transfert). */
+async function listerFileAttenteCaissePourTransferts() {
+  return prisma.fileAttente.findMany({
+    where: {
+      salle: { code: "CAISSE" },
+      serviLe: null,
+    },
+    include: includePassageCaisse,
+    orderBy: { numeroOrdre: "asc" },
+  });
+}
+
+function aFacturePayee(facs: FacturesDossier): boolean {
+  return facs.examens?.statut === "PAYEE" || facs.pharmacie?.statut === "PAYEE";
+}
+
+export async function listerPatientsEnAttenteCaisse(options?: {
+  /** Page transferts : file élargie + uniquement facture payée (examens ou pharmacie). */
+  pourPageTransferts?: boolean;
+}): Promise<PatientFileCaisse[]> {
   await reintegrerPatientsCaisseNonConfirmes();
 
-  const files = await listerPatientsFileAttenteSalle("CAISSE");
+  const pourTransferts = options?.pourPageTransferts === true;
+  const files = pourTransferts
+    ? await listerFileAttenteCaissePourTransferts()
+    : await listerPatientsFileAttenteSalle("CAISSE");
 
   const dossierIds = files.map((f) => f.passage.dossier.id);
   if (dossierIds.length === 0) return [];
@@ -125,9 +200,9 @@ export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse
       modeFacture: extraireModeFacture(f.paiements[0]?.reference),
     };
     if (estPh) {
-      if (!courant.pharmacie) courant.pharmacie = resume;
-    } else if (!courant.examens) {
-      courant.examens = resume;
+      courant.pharmacie = retenirMeilleureFacture(courant.pharmacie, resume);
+    } else {
+      courant.examens = retenirMeilleureFacture(courant.examens, resume);
     }
     facturesParDossier.set(f.dossierId, courant);
   }
@@ -137,7 +212,10 @@ export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse
   for (const file of files) {
     const dossier = file.passage.dossier;
     const patient = dossier.patient;
-    const transfert = file.passage.transferts[0];
+    const transfertEntrant =
+      file.passage.transferts.find((t) => t.salleDestination.code === "CAISSE") ??
+      file.passage.transferts[0];
+    const transfert = transfertEntrant;
     const examens = dossier.examensLaboratoire;
     const montantEstime = examens.reduce(
       (acc, ex) => acc + decimalVersNombre(ex.typeExamen.prix),
@@ -163,6 +241,10 @@ export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse
       statutFacturePharmacie: facs.pharmacie?.statut ?? null,
       enFile: true,
     });
+
+    if (pourTransferts && !etat.facturationComplete && !aFacturePayee(facs)) {
+      continue;
+    }
 
     // Reste en file jusqu'à confirmation du transfert sortant (menu ⋮), même si payé.
     const facActive = etat.facturationComplete
@@ -196,8 +278,8 @@ export async function listerPatientsEnAttenteCaisse(): Promise<PatientFileCaisse
         : facActive
           ? reste || montantFacture
           : montantEstime,
-      factureOuverte: Boolean(facActive) || etat.facturationComplete,
-      statutFacture: etat.facturationComplete
+      factureOuverte: Boolean(facActive) || etat.facturationComplete || aFacturePayee(facs),
+      statutFacture: etat.facturationComplete || aFacturePayee(facs)
         ? "PAYEE"
         : (facActive?.statut ?? null),
       montantFacture,

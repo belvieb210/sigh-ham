@@ -1,7 +1,8 @@
 import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
-import { lireOrientationAnalyseDepuisNotes } from "@/constants/laboratoire-orientations";
+import { CHEMINS_STATUT_ANALYSE_LABO, lireOrientationAnalyseDepuisNotes } from "@/constants/laboratoire-orientations";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import { cheminSaisieResultats } from "@/lib/laboratoire/saisie-resultats-types";
+import type { ActionEnregistrementResultat } from "@/lib/laboratoire/saisie-resultats-types";
 import type { StatutExamen } from "@/generated/prisma/client";
 
 type ExamenAvecNotes = {
@@ -212,4 +213,55 @@ export function cheminSaisieResultatsPatient(
     statut: pageStatut,
     examenId: examensPage.length === 1 ? examensPage[0]!.id : undefined,
   });
+}
+
+export type NavigationApresSauvegardeResultat =
+  | { type: "rester-saisie"; examenId: string }
+  | { type: "naviguer"; chemin: string };
+
+/**
+ * Après enregistrement d'un résultat :
+ * - s'il reste des examens sur la page d'origine → y rester (liste ou saisie suivante) ;
+ * - sinon → retour à la liste d'origine sans patient sélectionné ;
+ * - sans contexte d'origine → page de destination de l'action.
+ */
+export function determinerNavigationApresSauvegardeResultat(input: {
+  statutOrigine: IdOrientationStatutAnalyse | null;
+  action: ActionEnregistrementResultat;
+  dossierId: string;
+  examens: ExamenAvecOrientation[];
+  passerSuivant?: boolean;
+}): NavigationApresSauvegardeResultat {
+  const cheminDestination: Record<ActionEnregistrementResultat, string> = {
+    brouillon: CHEMINS_STATUT_ANALYSE_LABO.EN_COURS,
+    verifier: CHEMINS_STATUT_ANALYSE_LABO.VERIFIES,
+    rejeter: CHEMINS_STATUT_ANALYSE_LABO.REJETES,
+    approuver: CHEMINS_STATUT_ANALYSE_LABO.DR_APPROUVE,
+  };
+
+  if (input.statutOrigine) {
+    const restants = filtrerExamensSaisieParStatut(
+      input.examens,
+      input.statutOrigine
+    );
+    const cheminOrigine = CHEMINS_STATUT_ANALYSE_LABO[input.statutOrigine];
+
+    if (input.passerSuivant && restants.length > 0) {
+      return { type: "rester-saisie", examenId: restants[0]!.id };
+    }
+
+    if (restants.length > 0) {
+      return {
+        type: "naviguer",
+        chemin: `${cheminOrigine}?dossier=${encodeURIComponent(input.dossierId)}`,
+      };
+    }
+
+    return { type: "naviguer", chemin: cheminOrigine };
+  }
+
+  return {
+    type: "naviguer",
+    chemin: `${cheminDestination[input.action]}?dossier=${encodeURIComponent(input.dossierId)}`,
+  };
 }

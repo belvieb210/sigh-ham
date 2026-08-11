@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronUp, FlaskConical, Loader2 } from "lucide-react";
 import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
-import { CHEMINS_STATUT_ANALYSE_LABO } from "@/constants/laboratoire-orientations";
 import {
   FormulaireSaisieExamenLaboratoire,
   genererIdFichier,
@@ -16,7 +15,10 @@ import {
   MiseEnPageLaboratoire,
   type UtilisateurLaboratoire,
 } from "@/features/laboratoire/mise-en-page-laboratoire";
-import { filtrerExamensSaisieParStatut } from "@/features/laboratoire/utils-affichage";
+import {
+  determinerNavigationApresSauvegardeResultat,
+  filtrerExamensSaisieParStatut,
+} from "@/features/laboratoire/utils-affichage";
 import type {
   ActionEnregistrementResultat,
   ExamenSaisieDto,
@@ -81,35 +83,51 @@ export function ContenuSaisieResultatsLaboratoire({
     Record<string, FichierJoint[]>
   >({});
 
+  const rechargerDonnees = useCallback(
+    async (options?: { silencieux?: boolean }): Promise<EtatExamenForm[] | null> => {
+      if (!options?.silencieux) {
+        setChargement(true);
+      }
+      setErreur(null);
+      try {
+        const res = await fetch(
+          `/api/laboratoire/dossiers/${encodeURIComponent(dossierId)}/saisie-resultats`
+        );
+        const data = (await res.json()) as {
+          saisie?: SaisieResultatsDto;
+          erreur?: string;
+        };
+        if (!res.ok) {
+          setErreur(data.erreur ?? t("laboratoire.saisieResultats.erreurChargement"));
+          return null;
+        }
+        if (!data.saisie) {
+          setErreur(t("laboratoire.saisieResultats.dossierIntrouvable"));
+          return null;
+        }
+        const { examens: liste, ...infosPatient } = data.saisie;
+        const clones = clonerEtat(data.saisie);
+        setPatient(infosPatient);
+        setExamens(clones);
+        if (!options?.silencieux) {
+          setExamenOuvertId((courant) => courant ?? liste[0]?.id ?? null);
+        }
+        return clones;
+      } catch {
+        setErreur(t("laboratoire.saisieResultats.erreurChargement"));
+        return null;
+      } finally {
+        if (!options?.silencieux) {
+          setChargement(false);
+        }
+      }
+    },
+    [dossierId, t]
+  );
+
   const charger = useCallback(async () => {
-    setChargement(true);
-    setErreur(null);
-    try {
-      const res = await fetch(
-        `/api/laboratoire/dossiers/${encodeURIComponent(dossierId)}/saisie-resultats`
-      );
-      const data = (await res.json()) as {
-        saisie?: SaisieResultatsDto;
-        erreur?: string;
-      };
-      if (!res.ok) {
-        setErreur(data.erreur ?? t("laboratoire.saisieResultats.erreurChargement"));
-        return;
-      }
-      if (!data.saisie) {
-        setErreur(t("laboratoire.saisieResultats.dossierIntrouvable"));
-        return;
-      }
-      const { examens: liste, ...infosPatient } = data.saisie;
-      setPatient(infosPatient);
-      setExamens(clonerEtat(data.saisie));
-      setExamenOuvertId((courant) => courant ?? liste[0]?.id ?? null);
-    } catch {
-      setErreur(t("laboratoire.saisieResultats.erreurChargement"));
-    } finally {
-      setChargement(false);
-    }
-  }, [dossierId, t]);
+    await rechargerDonnees();
+  }, [rechargerDonnees]);
 
   useEffect(() => {
     void charger();
@@ -245,25 +263,29 @@ export function ContenuSaisieResultatsLaboratoire({
       }
       setMessage(data.message ?? t("laboratoire.saisieResultats.enregistre"));
 
-      if (options.passerSuivant) {
-        const idx = examensAffichables.findIndex((e) => e.id === examenOuvert.id);
-        const suivant = examensAffichables[idx + 1];
-        if (suivant) {
-          setExamenOuvertId(suivant.id);
-          await charger();
-          return;
+      const examensActualises = await rechargerDonnees({ silencieux: true });
+      if (!examensActualises) return;
+
+      const navigation = determinerNavigationApresSauvegardeResultat({
+        statutOrigine: statutFiltre,
+        action: options.action,
+        dossierId,
+        examens: examensActualises,
+        passerSuivant: options.passerSuivant,
+      });
+
+      if (navigation.type === "rester-saisie") {
+        setExamenOuvertId(navigation.examenId);
+        if (statutFiltre) {
+          router.replace(
+            `/sigh/laboratoire/saisie-resultats/${dossierId}?statut=${statutFiltre}`,
+            { scroll: false }
+          );
         }
+        return;
       }
 
-      const cheminParAction: Record<ActionEnregistrementResultat, string> = {
-        brouillon: CHEMINS_STATUT_ANALYSE_LABO.EN_COURS,
-        verifier: CHEMINS_STATUT_ANALYSE_LABO.VERIFIES,
-        rejeter: CHEMINS_STATUT_ANALYSE_LABO.REJETES,
-        approuver: CHEMINS_STATUT_ANALYSE_LABO.DR_APPROUVE,
-      };
-      router.push(
-        `${cheminParAction[options.action]}?dossier=${encodeURIComponent(dossierId)}`
-      );
+      router.push(navigation.chemin);
     } catch {
       setErreur(t("laboratoire.saisieResultats.erreurSauvegarde"));
     } finally {

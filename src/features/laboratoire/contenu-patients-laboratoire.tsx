@@ -36,6 +36,11 @@ import {
 } from "@/features/laboratoire/formulaire-filtres-laboratoire";
 import { MenuActionsTransfertLaboratoire } from "@/features/laboratoire/menu-actions-transfert-laboratoire";
 import {
+  CelluleBadgesStatutExamens,
+  CelluleExamensStatutLaboratoire,
+  CelluleListeExamens,
+} from "@/features/laboratoire/cellule-examens-statut-laboratoire";
+import {
   libelleStatutLigneLabo,
   libellesExamensDemandes,
   numeroEnregistrementLaboratoire,
@@ -538,22 +543,22 @@ export function ContenuPatientsLaboratoire({
                             <td className="px-3 py-3 text-xs text-texte-secondaire">
                               {p.provenance || "—"}
                             </td>
-                            <td className="max-w-[200px] px-3 py-3 text-xs font-medium text-texte-principal">
-                              {libellesExamensDemandes(p)}
+                            <td className="max-w-[220px] px-3 py-3">
+                              <CelluleListeExamens examens={p.examens} />
                             </td>
                             <td className="px-3 py-3">
-                              <span
-                                className={cn(
-                                  "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                                  statut.couleur
-                                )}
-                              >
-                                {statut.type === "transfert"
-                                  ? t(`laboratoire.transferts.statut.${statut.cle}`)
-                                  : t(
-                                      `laboratoire.orientationsStatut.${statut.statutAnalyse}.label`
-                                    )}
-                              </span>
+                              {statut.type === "transfert" ? (
+                                <span
+                                  className={cn(
+                                    "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                                    statut.couleur
+                                  )}
+                                >
+                                  {t(`laboratoire.transferts.statut.${statut.cle}`)}
+                                </span>
+                              ) : (
+                                <CelluleBadgesStatutExamens examens={p.examens} />
+                              )}
                             </td>
                             <td className="px-3 py-3">
                               <div className="flex items-center gap-1.5">
@@ -644,9 +649,12 @@ export function ContenuPatientsLaboratoire({
                           <p className="mt-2 text-xs text-texte-secondaire">
                             {formatHeure(p.arriveeLe)} · {p.provenance}
                           </p>
-                          <p className="mt-1 text-xs font-medium">
-                            {libellesExamensDemandes(p, 3)}
-                          </p>
+                          <div className="mt-2">
+                            <CelluleExamensStatutLaboratoire
+                              examens={p.examens}
+                              max={4}
+                            />
+                          </div>
                         </button>
                         <div className="mt-3 flex items-center gap-1.5">
                           <button

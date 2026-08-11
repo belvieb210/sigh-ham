@@ -31,6 +31,41 @@ export function patientCorrespondPageStatut(
   return examensPourPageStatut(patient.examens, pageStatut).length > 0;
 }
 
+/** Statut d'analyse UI dérivé du statut Prisma d'un examen. */
+export function statutAnalyseDepuisExamen(
+  statut: StatutExamen | string
+): IdOrientationStatutAnalyse {
+  switch (statut) {
+    case "EN_ANALYSE":
+      return "EN_COURS";
+    case "TERMINE":
+      return "VERIFIES";
+    case "ANNULE":
+      return "REJETES";
+    case "PRESCRIT":
+    case "PRELEVE":
+    default:
+      return "RECUS";
+  }
+}
+
+/** Statuts d'analyse distincts parmi les examens d'un patient. */
+export function statutsAnalyseDistincts(
+  examens: { statut: StatutExamen | string }[],
+  pageStatut?: IdOrientationStatutAnalyse
+): IdOrientationStatutAnalyse[] {
+  const source = pageStatut
+    ? examensPourPageStatut(
+        examens.map((e) => ({ statut: e.statut, libelle: "" })),
+        pageStatut
+      )
+    : examens;
+  const ids = new Set(
+    source.map((e) => statutAnalyseDepuisExamen(e.statut))
+  );
+  return [...ids];
+}
+
 /** N° enregistrement (ex. 20260804008) */
 export function numeroEnregistrementLaboratoire(p: PatientFileLaboratoire) {
   return p.numeroEnregistrement || p.numeroDossier;

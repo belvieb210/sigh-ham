@@ -39,11 +39,15 @@ import {
 } from "@/features/laboratoire/formulaire-filtres-laboratoire";
 import {
   couleurStatutAnalyse,
-  examensPourPageStatut,
   libellesExamensDemandes,
   numeroEnregistrementLaboratoire,
   patientCorrespondPageStatut,
 } from "@/features/laboratoire/utils-affichage";
+import {
+  CelluleBadgesStatutExamens,
+  CelluleExamensStatutLaboratoire,
+  CelluleListeExamens,
+} from "@/features/laboratoire/cellule-examens-statut-laboratoire";
 import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import { cheminSaisieResultats } from "@/lib/laboratoire/saisie-resultats-types";
@@ -370,6 +374,9 @@ export function ContenuExamensEnCoursLaboratoire({
     });
 
   const libelleStatutOrientation = (p: PatientFileLaboratoire) => {
+    if (pageStatut) {
+      return t(`laboratoire.orientationsStatut.${pageStatut}.label`);
+    }
     const id = p.statutAnalyse || "EN_COURS";
     return t(`laboratoire.orientationsStatut.${id}.label`);
   };
@@ -506,9 +513,6 @@ export function ContenuExamensEnCoursLaboratoire({
                     <tbody className="divide-y divide-gris-bordure">
                       {pageData.itemsPage.map((p) => {
                         const selectionne = selectionId === p.dossierId;
-                        const examensPage = pageStatut
-                          ? examensPourPageStatut(p.examens, pageStatut)
-                          : p.examens.filter((e) => e.statut === "EN_ANALYSE");
                         return (
                           <tr
                             key={p.dossierId}
@@ -553,20 +557,17 @@ export function ContenuExamensEnCoursLaboratoire({
                             <td className="px-3 py-3 text-xs text-texte-secondaire">
                               {p.provenance || "—"}
                             </td>
-                            <td className="max-w-[200px] px-3 py-3 text-xs font-medium">
-                              {examensPage.length
-                                ? examensPage.map((e) => e.libelle).join(", ")
-                                : libellesExamensDemandes(p, 5, pageStatut)}
+                            <td className="max-w-[220px] px-3 py-3">
+                              <CelluleListeExamens
+                                examens={p.examens}
+                                pageStatut={pageStatut}
+                              />
                             </td>
                             <td className="px-3 py-3">
-                              <span
-                                className={cn(
-                                  "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                                  couleurStatutAnalyse(p.statutAnalyse)
-                                )}
-                              >
-                                {libelleStatutOrientation(p)}
-                              </span>
+                              <CelluleBadgesStatutExamens
+                                examens={p.examens}
+                                pageStatut={pageStatut}
+                              />
                             </td>
                             <td className="px-3 py-3">
                               <div className="flex items-center gap-1.5">
@@ -647,7 +648,9 @@ export function ContenuExamensEnCoursLaboratoire({
                             <span
                               className={cn(
                                 "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                                couleurStatutAnalyse(p.statutAnalyse)
+                                pageStatut
+                                  ? couleurStatutAnalyse(pageStatut)
+                                  : couleurStatutAnalyse(p.statutAnalyse)
                               )}
                             >
                               {libelleStatutOrientation(p)}
@@ -656,9 +659,13 @@ export function ContenuExamensEnCoursLaboratoire({
                           <p className="mt-2 text-xs text-texte-secondaire">
                             {p.provenance || "—"} · {formatHeure(p.arriveeLe)}
                           </p>
-                          <p className="mt-1 text-xs font-medium text-texte-principal">
-                            {libellesExamensDemandes(p, 3, pageStatut)}
-                          </p>
+                          <div className="mt-2">
+                            <CelluleExamensStatutLaboratoire
+                              examens={p.examens}
+                              pageStatut={pageStatut}
+                              max={4}
+                            />
+                          </div>
                         </button>
                       </div>
                       <div className="mt-3 flex items-center gap-1.5 pl-7">

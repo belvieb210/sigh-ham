@@ -266,6 +266,10 @@ export const laboratoireFr = {
     },
   },
   orientationsDestination: {
+    RECEPTION: {
+      label: "Réception",
+      description: "Retour à l'accueil",
+    },
     INFIRMIERS: {
       label: "Infirmiers",
       description: "Prise de signes vitaux",
@@ -278,13 +282,21 @@ export const laboratoireFr = {
       label: "Caisse",
       description: "Facturation et paiement",
     },
+    PHARMACIE: {
+      label: "Pharmacie",
+      description: "Délivrance des médicaments",
+    },
+    HOSPITALISATION: {
+      label: "Hospitalisation",
+      description: "Admission / lits",
+    },
     MEDECIN_EXTERNE: {
       label: "Médecin externe",
       description: "Patient référé par un médecin",
     },
-    PHARMACIE: {
-      label: "Pharmacie",
-      description: "Délivrance des médicaments",
+    EGLISE: {
+      label: "Église",
+      description: "Examens prénuptiaux",
     },
   },
   orientationsStatut: {
@@ -358,6 +370,15 @@ export const laboratoireFr = {
     verifierSuivant: "Vérifier et suivant",
     enregistre: "Résultats enregistrés.",
     erreurSauvegarde: "Impossible d'enregistrer les résultats.",
+    apercuResultats: "Aperçu des résultats",
+    effacerValeur: "Effacer la valeur",
+    joindreFichier: "Joindre un fichier",
+    pieceJointe: "Pièce jointe",
+    piecesJointes: "Pièces jointes",
+    ajouterFichier: "Ajouter un fichier",
+    typesFichiersAcceptes: "Tous types de fichiers acceptés",
+    supprimerFichier: "Retirer le fichier",
+    total: "Total",
   },
 };
 

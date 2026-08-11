@@ -265,6 +265,10 @@ export const laboratoireEn: LaboratoireFr = {
     },
   },
   orientationsDestination: {
+    RECEPTION: {
+      label: "Reception",
+      description: "Back to front desk",
+    },
     INFIRMIERS: {
       label: "Nurses",
       description: "Vital signs check",
@@ -277,13 +281,21 @@ export const laboratoireEn: LaboratoireFr = {
       label: "Cashier",
       description: "Billing and payment",
     },
+    PHARMACIE: {
+      label: "Pharmacy",
+      description: "Medication dispensing",
+    },
+    HOSPITALISATION: {
+      label: "Hospitalization",
+      description: "Admission / beds",
+    },
     MEDECIN_EXTERNE: {
       label: "External doctor",
       description: "Patient referred by a doctor",
     },
-    PHARMACIE: {
-      label: "Pharmacy",
-      description: "Medication dispensing",
+    EGLISE: {
+      label: "Church",
+      description: "Premarital exams",
     },
   },
   orientationsStatut: {
@@ -357,5 +369,14 @@ export const laboratoireEn: LaboratoireFr = {
     verifierSuivant: "Verify and next",
     enregistre: "Results saved.",
     erreurSauvegarde: "Unable to save results.",
+    apercuResultats: "Results preview",
+    effacerValeur: "Clear value",
+    joindreFichier: "Attach file",
+    pieceJointe: "Attachment",
+    piecesJointes: "Attachments",
+    ajouterFichier: "Add file",
+    typesFichiersAcceptes: "All file types accepted",
+    supprimerFichier: "Remove file",
+    total: "Total",
   },
 };

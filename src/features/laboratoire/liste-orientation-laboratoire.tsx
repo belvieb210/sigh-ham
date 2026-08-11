@@ -2,7 +2,10 @@
 
 import { useTranslation } from "react-i18next";
 import {
+  BedDouble,
   BriefcaseMedical,
+  Building2,
+  Church,
   ClipboardCheck,
   FlaskConical,
   Inbox,
@@ -47,6 +50,9 @@ const ICONES_PAR_NOM: Record<string, LucideIcon> = {
   ClipboardCheck,
   XCircle,
   ShieldCheck,
+  Building2,
+  BedDouble,
+  Church,
 };
 
 export function iconeDepuisNom(nom: string): LucideIcon {

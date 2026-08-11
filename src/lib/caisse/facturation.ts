@@ -799,15 +799,6 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
 
   if (resultat.statut === "PAYEE") {
     try {
-      const { assurerInscriptionLaboratoireDossierPaye } = await import(
-        "@/lib/laboratoire/eligibilite-patient-laboratoire"
-      );
-      await assurerInscriptionLaboratoireDossierPaye(donnees.dossierId, caissierId);
-    } catch (e) {
-      console.error("[encaisserFacture] inscription laboratoire après paiement", e);
-    }
-
-    try {
       const { marquerVentePayeeParFacture } = await import(
         "@/lib/pharmacie/gestion-ventes"
       );

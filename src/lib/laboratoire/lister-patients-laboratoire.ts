@@ -2,10 +2,6 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { listerPatientsFileAttenteSalle } from "@/lib/transferts/visibilite-salle";
 import { calculerAge } from "@/features/caisse/utils-format";
-import {
-  assurerInscriptionLaboratoireDossierPaye,
-  synchroniserDossiersPayesLaboratoire,
-} from "@/lib/laboratoire/eligibilite-patient-laboratoire";
 import { deriverStatutAnalyse } from "@/lib/laboratoire/orienter-statut-analyse";
 import type {
   DetailPatientLaboratoire,
@@ -30,8 +26,6 @@ function debutJourLocal(d = new Date()) {
 }
 
 export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoire[]> {
-  await synchroniserDossiersPayesLaboratoire();
-
   const files = await listerPatientsFileAttenteSalle("LABORATOIRE");
   const dossierIds = files.map((f) => f.passage.dossier.id);
 
@@ -290,8 +284,6 @@ export async function commencerAnalysesDossier(
   dossierId: string,
   technicienId: string
 ): Promise<{ misAJour: number }> {
-  await assurerInscriptionLaboratoireDossierPaye(dossierId, technicienId);
-
   const enFile = await prisma.fileAttente.findFirst({
     where: {
       serviLe: null,

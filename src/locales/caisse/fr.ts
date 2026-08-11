@@ -149,7 +149,7 @@ export const caisseFr = {
     actionImpossible: "Action impossible.",
     erreurInattendue: "Erreur inattendue.",
     factureRequisePourConfirmer:
-      "Établissez d'abord la facture de ce patient avant de confirmer le transfert.",
+      "La facture doit être entièrement payée avant de confirmer le transfert.",
     modaleExamens: {
       titre: "Examens du patient",
       fermer: "Fermer",

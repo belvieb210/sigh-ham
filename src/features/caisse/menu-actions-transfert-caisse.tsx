@@ -96,7 +96,11 @@ export function MenuActionsTransfertCaisse({
   const executerAction = async (action: "confirmer" | "rejeter" | "recuperer") => {
     if (!patient.transfertSortantId || enCours) return;
 
-    if (action === "confirmer" && !patient.factureOuverte) {
+    if (
+      action === "confirmer" &&
+      patient.statut !== "Payée" &&
+      !patient.facturationComplete
+    ) {
       setErreur(t("caisse.transferts.factureRequisePourConfirmer"));
       return;
     }

@@ -149,7 +149,7 @@ export const caisseEn = {
     actionImpossible: "Action not possible.",
     erreurInattendue: "Unexpected error.",
     factureRequisePourConfirmer:
-      "Create the patient's invoice first before confirming the transfer.",
+      "The invoice must be fully paid before confirming the transfer.",
     modaleExamens: {
       titre: "Patient exams",
       fermer: "Close",

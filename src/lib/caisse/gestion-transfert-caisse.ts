@@ -1,6 +1,7 @@
 import "server-only";
-import type { Prisma } from "@/generated/prisma/client";
+import type { Prisma, StatutFacture } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { dossierEstFacturePayeePourTransfert } from "@/lib/caisse/facturation-transfert";
 
 async function inscrireFileAttenteDestination(
   tx: Prisma.TransactionClient,
@@ -46,7 +47,6 @@ async function chargerTransfertCaisse(transfertId: string) {
           factures: {
             where: { statut: { in: ["BROUILLON", "EMISE", "PARTIELLEMENT_PAYEE", "PAYEE"] } },
             select: { id: true, statut: true },
-            take: 1,
           },
         },
       },
@@ -62,10 +62,8 @@ async function chargerTransfertCaisse(transfertId: string) {
   return transfert;
 }
 
-function dossierAFactureEtablie(
-  factures: { id: string }[]
-): boolean {
-  return factures.length > 0;
+function dossierAFacturePayee(factures: { statut: StatutFacture }[]): boolean {
+  return factures.some((f) => f.statut === "PAYEE");
 }
 
 export async function confirmerTransfertCaisse(agentId: string, transfertId: string) {
@@ -75,9 +73,12 @@ export async function confirmerTransfertCaisse(agentId: string, transfertId: str
     throw new Error("Seuls les transferts en attente de confirmation peuvent être confirmés.");
   }
 
-  if (!dossierAFactureEtablie(transfert.dossier.factures)) {
+  const facturePayee =
+    dossierAFacturePayee(transfert.dossier.factures) ||
+    (await dossierEstFacturePayeePourTransfert(transfert.dossierId));
+  if (!facturePayee) {
     throw new Error(
-      "Établissez d'abord la facture de ce patient avant de confirmer le transfert."
+      "La facture doit être entièrement payée avant de confirmer le transfert."
     );
   }
 

@@ -397,6 +397,8 @@ export const laboratoireFr = {
     aideNormalCourt: "Valeur dans la plage normale",
     aideEleveCourt: "Valeur au dessus de la normale",
     aideNrCourt: "Non requis",
+    commentaireParametre: "Commentaire du paramètre",
+    placeholderCommentaireParametre: "Commentaire ou note sur ce paramètre…",
     historique: "Historique du paramètre",
     aucuneRemarque: "Aucune remarque",
     aucunParametre: "Aucun paramètre défini pour cet examen.",

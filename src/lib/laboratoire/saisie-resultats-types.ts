@@ -9,6 +9,7 @@ export interface ParametreSaisieDto {
   ordre: number;
   valeur: string;
   nonRequis: boolean;
+  commentaire: string;
 }
 
 export interface ExamenSaisieDto {
@@ -39,6 +40,7 @@ export interface LigneResultatSaisie {
   parametreTypeExamenId: string;
   valeur: string;
   nonRequis?: boolean;
+  commentaire?: string | null;
 }
 
 export function cheminSaisieResultats(dossierId: string) {

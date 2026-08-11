@@ -396,6 +396,8 @@ export const laboratoireEn: LaboratoireFr = {
     aideNormalCourt: "Value within normal range",
     aideEleveCourt: "Value above normal",
     aideNrCourt: "Not required",
+    commentaireParametre: "Parameter comment",
+    placeholderCommentaireParametre: "Comment or note on this parameter…",
     historique: "Parameter history",
     aucuneRemarque: "No remark",
     aucunParametre: "No parameters defined for this exam.",

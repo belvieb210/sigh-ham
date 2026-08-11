@@ -22,6 +22,7 @@ export async function POST(
         parametreTypeExamenId: string;
         valeur: string;
         nonRequis?: boolean;
+        commentaire?: string | null;
       }[];
       remarque?: string | null;
       verifier?: boolean;

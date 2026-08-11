@@ -869,6 +869,7 @@ model ResultatExamen {
   normeMax              String?              @map("norme_max")
   nonRequis             Boolean              @default(false) @map("non_requis")
   anormal               Boolean              @default(false)
+  commentaire           String?              @db.Text
 
   @@unique([examenId, parametreTypeExamenId])
   @@map("resultats_examen")

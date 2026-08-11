@@ -42,6 +42,7 @@ function clonerEtat(saisie: SaisieResultatsDto): EtatExamenForm[] {
       ...p,
       valeur: p.valeur,
       nonRequis: p.nonRequis,
+      commentaire: p.commentaire ?? "",
     })),
   }));
 }
@@ -117,7 +118,7 @@ export function ContenuSaisieResultatsLaboratoire({
   const mettreAJourParametre = (
     examenId: string,
     parametreId: string,
-    patch: Partial<Pick<ParametreEtat, "valeur" | "nonRequis" | "nom">>
+    patch: Partial<Pick<ParametreEtat, "valeur" | "nonRequis" | "nom" | "commentaire">>
   ) => {
     setExamens((prev) =>
       prev.map((ex) =>
@@ -145,6 +146,7 @@ export function ContenuSaisieResultatsLaboratoire({
       ordre: 9999,
       valeur: "",
       nonRequis: false,
+      commentaire: "",
       personnalise: true,
     };
     setExamens((prev) =>
@@ -188,6 +190,7 @@ export function ContenuSaisieResultatsLaboratoire({
               parametreTypeExamenId: p.id,
               valeur: p.valeur,
               nonRequis: p.nonRequis,
+              commentaire: p.commentaire?.trim() || null,
             })),
             remarque: examenOuvert.remarque,
             verifier: options.verifier === true,

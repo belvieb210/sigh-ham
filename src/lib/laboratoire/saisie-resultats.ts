@@ -27,6 +27,7 @@ function mapperParametres(
     parametreTypeExamenId: string | null;
     valeur: string;
     nonRequis: boolean;
+    commentaire: string | null;
   }[]
 ): ParametreSaisieDto[] {
   const parId = new Map(
@@ -49,6 +50,7 @@ function mapperParametres(
         ordre: p.ordre,
         valeur: existant?.valeur ?? "",
         nonRequis: existant?.nonRequis ?? false,
+        commentaire: existant?.commentaire ?? "",
       };
     });
 }
@@ -155,6 +157,7 @@ export async function enregistrerResultatsExamen(
           normeMin: null,
           normeMax: cat.rangeUsuelle,
           nonRequis: ligne.nonRequis === true,
+          commentaire: ligne.commentaire?.trim() || null,
         },
         update: {
           parametre: cat.nom,
@@ -162,6 +165,7 @@ export async function enregistrerResultatsExamen(
           unite: cat.unite,
           normeMax: cat.rangeUsuelle,
           nonRequis: ligne.nonRequis === true,
+          commentaire: ligne.commentaire?.trim() || null,
         },
       });
     }

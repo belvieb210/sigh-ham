@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
@@ -36,6 +36,7 @@ export type ParametreEtat = {
   ordre: number;
   valeur: string;
   nonRequis: boolean;
+  commentaire: string;
   personnalise?: boolean;
 };
 
@@ -62,7 +63,7 @@ interface PropsFormulaireSaisieExamenLaboratoire {
   sauvegardeEnCours: boolean;
   onParametreChange: (
     parametreId: string,
-    patch: Partial<Pick<ParametreEtat, "valeur" | "nonRequis" | "nom">>
+    patch: Partial<Pick<ParametreEtat, "valeur" | "nonRequis" | "nom" | "commentaire">>
   ) => void;
   onRemarqueChange: (remarque: string) => void;
   onAjouterParametre: (nom: string) => void;
@@ -180,10 +181,36 @@ export function FormulaireSaisieExamenLaboratoire({
   const [glisserActif, setGlisserActif] = useState(false);
   const [ajoutParametreOuvert, setAjoutParametreOuvert] = useState(false);
   const [nomNouveauParametre, setNomNouveauParametre] = useState("");
+  const [commentairesOuverts, setCommentairesOuverts] = useState<Set<string>>(
+    new Set()
+  );
+  const examenIdRef = useRef(examen.id);
+
+  useEffect(() => {
+    if (examenIdRef.current !== examen.id) {
+      examenIdRef.current = examen.id;
+      setCommentairesOuverts(new Set());
+    }
+    const avecCommentaire = examen.parametres
+      .filter((p) => p.commentaire.trim())
+      .map((p) => p.id);
+    if (avecCommentaire.length > 0) {
+      setCommentairesOuverts(new Set(avecCommentaire));
+    }
+  }, [examen.id, examen.parametres]);
 
   const traiterFichiers = (liste: FileList | File[]) => {
     const valides = Array.from(liste).filter((f) => f.size <= MAX_FICHIER_OCTETS);
     if (valides.length > 0) onFichiersAjoutes(valides);
+  };
+
+  const basculerCommentaireParametre = (parametreId: string) => {
+    setCommentairesOuverts((prev) => {
+      const next = new Set(prev);
+      if (next.has(parametreId)) next.delete(parametreId);
+      else next.add(parametreId);
+      return next;
+    });
   };
 
   const confirmerAjoutParametre = () => {
@@ -254,80 +281,109 @@ export function FormulaireSaisieExamenLaboratoire({
                   const { acronyme, libelle } = formaterParametre(p.nom);
                   const statut = evaluerIndicateur(p.valeur, p.rangeUsuelle, p.nonRequis);
                   const styles = COULEURS_INDICATEUR[statut];
+                  const commentaireOuvert = commentairesOuverts.has(p.id);
 
                   return (
-                    <tr key={p.id} className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3">
-                        <p className="font-bold text-violet-900 underline decoration-violet-700 decoration-1 underline-offset-[3px]">
-                          {acronyme}
-                        </p>
-                        {libelle && libelle !== acronyme && (
-                          <p className="mt-0.5 text-xs text-violet-700/70">{libelle}</p>
-                        )}
-                      </td>
-                      <td className="px-3 py-3">
-                        <input
-                          type="text"
-                          value={p.valeur}
-                          disabled={p.nonRequis}
-                          placeholder={t("laboratoire.saisieResultats.placeholderResultat")}
-                          onChange={(e) =>
-                            onParametreChange(p.id, { valeur: e.target.value })
-                          }
-                          className={cn(
-                            "w-full min-w-[120px] rounded-lg border px-3 py-2 text-sm outline-none ring-0 transition-colors focus:ring-2",
-                            styles.input
+                    <Fragment key={p.id}>
+                      <tr className="hover:bg-slate-50/50">
+                        <td className="px-4 py-3">
+                          <p className="font-bold text-violet-900 underline decoration-violet-700 decoration-1 underline-offset-[3px]">
+                            {acronyme}
+                          </p>
+                          {libelle && libelle !== acronyme && (
+                            <p className="mt-0.5 text-xs text-violet-700/70">{libelle}</p>
                           )}
-                        />
-                      </td>
-                      <td className="px-3 py-3 text-slate-600">{p.unite ?? "—"}</td>
-                      <td className="px-3 py-3 text-slate-600">{p.rangeUsuelle ?? "—"}</td>
-                      <td className="px-3 py-3 text-center">
-                        <div className="flex justify-center">
-                          <IndicateurDot statut={statut} />
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <input
-                          type="checkbox"
-                          checked={p.nonRequis}
-                          onChange={(e) =>
-                            onParametreChange(p.id, { nonRequis: e.target.checked })
-                          }
-                          className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-                          title={t("laboratoire.saisieResultats.nonRequis")}
-                        />
-                      </td>
-                      <td className="px-2 py-3">
-                        <div className="flex items-center gap-0.5">
-                          <button
-                            type="button"
-                            onClick={() => onParametreChange(p.id, { valeur: "" })}
-                            className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                            aria-label={t("laboratoire.saisieResultats.effacerValeur")}
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded p-1 text-slate-400 hover:bg-violet-50 hover:text-violet-600"
-                            aria-label={t("laboratoire.saisieResultats.historique")}
-                          >
-                            <LineChart className="h-3.5 w-3.5" />
-                          </button>
-                          {p.personnalise && (
+                        </td>
+                        <td className="px-3 py-3">
+                          <input
+                            type="text"
+                            value={p.valeur}
+                            disabled={p.nonRequis}
+                            placeholder={t("laboratoire.saisieResultats.placeholderResultat")}
+                            onChange={(e) =>
+                              onParametreChange(p.id, { valeur: e.target.value })
+                            }
+                            className={cn(
+                              "w-full min-w-[120px] rounded-lg border px-3 py-2 text-sm outline-none ring-0 transition-colors focus:ring-2",
+                              styles.input
+                            )}
+                          />
+                        </td>
+                        <td className="px-3 py-3 text-slate-600">{p.unite ?? "—"}</td>
+                        <td className="px-3 py-3 text-slate-600">{p.rangeUsuelle ?? "—"}</td>
+                        <td className="px-3 py-3 text-center">
+                          <div className="flex justify-center">
+                            <IndicateurDot statut={statut} />
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={p.nonRequis}
+                            onChange={(e) =>
+                              onParametreChange(p.id, { nonRequis: e.target.checked })
+                            }
+                            className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                            title={t("laboratoire.saisieResultats.nonRequis")}
+                          />
+                        </td>
+                        <td className="px-2 py-3">
+                          <div className="flex items-center justify-end gap-1">
                             <button
                               type="button"
-                              onClick={() => onSupprimerParametre(p.id)}
-                              className="rounded p-1 text-slate-400 hover:text-red-600"
-                              aria-label={t("laboratoire.saisieResultats.supprimerParametre")}
+                              onClick={() => basculerCommentaireParametre(p.id)}
+                              className={cn(
+                                "inline-flex h-7 w-7 items-center justify-center rounded-md border-2 bg-white transition-colors",
+                                commentaireOuvert
+                                  ? "border-violet-600 bg-violet-50 text-violet-700"
+                                  : "border-slate-800 text-slate-900 hover:bg-slate-50"
+                              )}
+                              aria-label={t("laboratoire.saisieResultats.commentaireParametre")}
+                              aria-expanded={commentaireOuvert}
                             >
-                              <X className="h-3.5 w-3.5" />
+                              <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
                             </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                            <button
+                              type="button"
+                              className="rounded p-1 text-slate-400 hover:bg-violet-50 hover:text-violet-600"
+                              aria-label={t("laboratoire.saisieResultats.historique")}
+                            >
+                              <LineChart className="h-3.5 w-3.5" />
+                            </button>
+                            {p.personnalise && (
+                              <button
+                                type="button"
+                                onClick={() => onSupprimerParametre(p.id)}
+                                className="rounded p-1 text-slate-400 hover:text-red-600"
+                                aria-label={t("laboratoire.saisieResultats.supprimerParametre")}
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                      {commentaireOuvert && (
+                        <tr className="bg-violet-50/40">
+                          <td colSpan={7} className="px-4 pb-3 pt-0">
+                            <label className="mb-1 block text-xs font-medium text-violet-800">
+                              {t("laboratoire.saisieResultats.commentaireParametre")}
+                            </label>
+                            <input
+                              type="text"
+                              value={p.commentaire}
+                              onChange={(e) =>
+                                onParametreChange(p.id, { commentaire: e.target.value })
+                              }
+                              placeholder={t(
+                                "laboratoire.saisieResultats.placeholderCommentaireParametre"
+                              )}
+                              className="w-full rounded-lg border border-violet-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                            />
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   );
                 })
               )}

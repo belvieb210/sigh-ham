@@ -65,6 +65,7 @@ export async function listerPatientsFileAttenteSalle(codeSalle: CodeSalle) {
             take: 1,
             include: {
               salleOrigine: { select: { code: true, nom: true } },
+              salleDestination: { select: { code: true, nom: true } },
               emetteur: { select: { prenom: true, nom: true } },
             },
           },

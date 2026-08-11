@@ -213,7 +213,7 @@ export async function listerPatientsEnAttenteCaisse(options?: {
     const dossier = file.passage.dossier;
     const patient = dossier.patient;
     const transfertEntrant =
-      file.passage.transferts.find((t) => t.salleDestination.code === "CAISSE") ??
+      file.passage.transferts.find((t) => t.salleDestination?.code === "CAISSE") ??
       file.passage.transferts[0];
     const transfert = transfertEntrant;
     const examens = dossier.examensLaboratoire;

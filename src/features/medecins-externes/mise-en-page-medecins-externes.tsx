@@ -28,7 +28,7 @@ interface PropsMiseEnPageMedecinsExternes {
   sousTitre: string;
   panneauDroit?: ReactNode;
   activerSelectionTransfert?: boolean;
-  /** Page patients ME : providers orientation/sélection dédiés */
+  /** Page patients ME : providers orientation/sÃ©lection dÃ©diÃ©s */
   activerSelectionPatients?: boolean;
   children: ReactNode;
 }

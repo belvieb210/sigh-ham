@@ -37,9 +37,9 @@ export type DetailsImagerie = {
 export const IMAGERIE_CATEGORIES = [
   "Abdominale",
   "Pelvienne",
-  "Obstétricale",
+  "ObstÃ©tricale",
   "Cardiaque",
-  "Thyroïdienne",
+  "ThyroÃ¯dienne",
   "Mammaire",
   "Musculo-squelettique",
   "Vasculaire",
@@ -78,7 +78,7 @@ function formaterPrixFc(prix: number): string {
   })} Fc`;
 }
 
-/** Recherche / sélection examens (style caisse-réception) */
+/** Recherche / sÃ©lection examens (style caisse-rÃ©ception) */
 export function SelectionExamensOrdonnances({
   selection,
   onChange,
@@ -128,7 +128,7 @@ export function SelectionExamensOrdonnances({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-base font-bold text-texte-principal">Examens recommandés</h3>
+      <h3 className="text-base font-bold text-texte-principal">Examens recommandÃ©s</h3>
       <p className="text-xs text-texte-secondaire">
         Recherchez et prescrivez les examens de laboratoire (optionnel).
       </p>
@@ -143,18 +143,18 @@ export function SelectionExamensOrdonnances({
             setListeOuverte(true);
           }}
           onFocus={() => setListeOuverte(true)}
-          placeholder="Rechercher un examen (code ou nom)…"
+          placeholder="Rechercher un examen (code ou nom)â€¦"
           className={CLASSE_CHAMP_RECEPTION + " pl-9"}
         />
         {listeOuverte && !desactive ? (
           <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-gris-bordure bg-white shadow-lg">
             {chargement ? (
               <li className="flex items-center gap-2 px-3 py-2 text-sm text-texte-secondaire">
-                <Loader2 className="h-4 w-4 animate-spin" /> Recherche…
+                <Loader2 className="h-4 w-4 animate-spin" /> Rechercheâ€¦
               </li>
             ) : resultats.length === 0 ? (
               <li className="px-3 py-2 text-sm text-texte-secondaire">
-                Aucun examen trouvé.
+                Aucun examen trouvÃ©.
               </li>
             ) : (
               resultats.map((e) => (
@@ -172,7 +172,7 @@ export function SelectionExamensOrdonnances({
                   >
                     <span>
                       <span className="font-semibold text-bleu-medical">{e.code}</span>{" "}
-                      — {e.libelle}
+                      â€” {e.libelle}
                       <span className="ml-1 text-xs text-texte-secondaire">
                         ({e.categorie})
                       </span>
@@ -189,7 +189,7 @@ export function SelectionExamensOrdonnances({
       <div>
         <div className="mb-2 flex items-center justify-between">
           <p className="text-sm font-semibold text-texte-principal">
-            Examens sélectionnés
+            Examens sÃ©lectionnÃ©s
           </p>
           <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-bleu-medical px-1.5 text-xs font-bold text-white">
             {selection.length}
@@ -197,7 +197,7 @@ export function SelectionExamensOrdonnances({
         </div>
         {selection.length === 0 ? (
           <p className="rounded-lg border border-dashed border-gris-bordure px-3 py-4 text-center text-xs text-texte-secondaire">
-            Aucun examen sélectionné.
+            Aucun examen sÃ©lectionnÃ©.
           </p>
         ) : (
           <div className="overflow-hidden rounded-lg border border-gris-bordure">
@@ -206,7 +206,7 @@ export function SelectionExamensOrdonnances({
                 <tr>
                   <th className="px-3 py-2">Code</th>
                   <th className="px-3 py-2">Nom</th>
-                  <th className="hidden px-3 py-2 sm:table-cell">Catégorie</th>
+                  <th className="hidden px-3 py-2 sm:table-cell">CatÃ©gorie</th>
                   <th className="px-3 py-2">Prix</th>
                   <th className="px-3 py-2">Action</th>
                 </tr>
@@ -240,7 +240,7 @@ export function SelectionExamensOrdonnances({
                 ))}
                 <tr className="border-t border-gris-bordure bg-gris-tres-clair/50">
                   <td colSpan={3} className="px-3 py-2 text-right text-sm font-medium">
-                    Montant total estimé
+                    Montant total estimÃ©
                   </td>
                   <td className="px-3 py-2 font-bold" colSpan={2}>
                     {formaterPrixUsd(total)}
@@ -255,7 +255,7 @@ export function SelectionExamensOrdonnances({
   );
 }
 
-/** Lignes médicaments + recherche autocomplete */
+/** Lignes mÃ©dicaments + recherche autocomplete */
 export function LignesMedicamentsOrdonnances({
   lignes,
   onChange,
@@ -312,14 +312,14 @@ export function LignesMedicamentsOrdonnances({
 
   return (
     <div className="space-y-3" ref={conteneurRef}>
-      <h3 className="text-base font-bold text-texte-principal">Médicaments recommandés</h3>
+      <h3 className="text-base font-bold text-texte-principal">MÃ©dicaments recommandÃ©s</h3>
       <div className="hidden grid-cols-[auto_1.4fr_0.8fr_0.8fr_0.7fr_0.5fr_auto] gap-2 text-xs font-medium text-texte-secondaire sm:grid">
         <span>Recherche</span>
-        <span>Médicament (nom)</span>
+        <span>MÃ©dicament (nom)</span>
         <span>Dosage</span>
-        <span>Fréquence</span>
-        <span>Durée</span>
-        <span>Qté</span>
+        <span>FrÃ©quence</span>
+        <span>DurÃ©e</span>
+        <span>QtÃ©</span>
         <span> </span>
       </div>
       <ul className="space-y-3">
@@ -348,7 +348,7 @@ export function LignesMedicamentsOrdonnances({
                       autoFocus
                       value={terme}
                       onChange={(e) => setTerme(e.target.value)}
-                      placeholder="Nom ou code…"
+                      placeholder="Nom ou codeâ€¦"
                       className="w-full rounded border-2 border-texte-principal px-2 py-1.5 text-sm outline-none"
                     />
                     <button
@@ -370,7 +370,7 @@ export function LignesMedicamentsOrdonnances({
                           <span className="font-semibold uppercase">{m.nom}</span>
                           {m.dosage ? ` ${m.dosage}` : ""}
                           {m.forme ? ` /${m.forme}` : ""}
-                          <span className="text-texte-secondaire"> — {m.code}</span>
+                          <span className="text-texte-secondaire"> â€” {m.code}</span>
                         </button>
                       </li>
                     ))}
@@ -380,7 +380,7 @@ export function LignesMedicamentsOrdonnances({
             </div>
             <input
               className={inputSousLigne}
-              placeholder="Médicament (nom)"
+              placeholder="MÃ©dicament (nom)"
               disabled={desactive}
               value={l.nom}
               onChange={(e) => maj(l.key, { nom: e.target.value })}
@@ -394,21 +394,21 @@ export function LignesMedicamentsOrdonnances({
             />
             <input
               className={inputSousLigne}
-              placeholder="Fréquence"
+              placeholder="FrÃ©quence"
               disabled={desactive}
               value={l.frequence}
               onChange={(e) => maj(l.key, { frequence: e.target.value })}
             />
             <input
               className={inputSousLigne}
-              placeholder="Durée"
+              placeholder="DurÃ©e"
               disabled={desactive}
               value={l.duree}
               onChange={(e) => maj(l.key, { duree: e.target.value })}
             />
             <input
               className={inputSousLigne}
-              placeholder="Qté"
+              placeholder="QtÃ©"
               inputMode="numeric"
               disabled={desactive}
               value={l.quantite}
@@ -432,7 +432,7 @@ export function LignesMedicamentsOrdonnances({
         className="inline-flex items-center gap-1 rounded-lg bg-bleu-medical-clair px-3 py-1.5 text-sm font-medium text-bleu-medical"
       >
         <Plus className="h-4 w-4" />
-        Ajouter médicament
+        Ajouter mÃ©dicament
       </button>
     </div>
   );
@@ -487,7 +487,7 @@ export function SectionImagerieOrdonnances({
             <li key={i} className="flex items-center gap-2">
               <input
                 className={cn(inputSousLigne, "flex-1")}
-                placeholder="Autres précisions"
+                placeholder="Autres prÃ©cisions"
                 disabled={desactive}
                 value={a}
                 onChange={(e) => {
@@ -527,7 +527,7 @@ export function SectionImagerieOrdonnances({
         <textarea
           disabled={desactive}
           className={areaCls}
-          placeholder="Écrire le type d'examen (ex: Échographie abdominale, Scanner thoracique)"
+          placeholder="Ã‰crire le type d'examen (ex: Ã‰chographie abdominale, Scanner thoracique)"
           value={value.typeExamen}
           onChange={(e) => onChange({ ...value, typeExamen: e.target.value })}
         />
@@ -537,13 +537,13 @@ export function SectionImagerieOrdonnances({
         <textarea
           disabled={desactive}
           className={areaCls}
-          placeholder="Précisez le but/raison de l'imagerie"
+          placeholder="PrÃ©cisez le but/raison de l'imagerie"
           value={value.but}
           onChange={(e) => onChange({ ...value, but: e.target.value })}
         />
       </div>
       <div>
-        <label className={labelCls}>Conduite à tenir :</label>
+        <label className={labelCls}>Conduite Ã  tenir :</label>
         <textarea
           disabled={desactive}
           className={`${areaCls} min-h-[5rem]`}

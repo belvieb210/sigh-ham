@@ -37,7 +37,6 @@ import {
 import { MenuActionsTransfertLaboratoire } from "@/features/laboratoire/menu-actions-transfert-laboratoire";
 import {
   CelluleBadgesStatutExamens,
-  CelluleExamensStatutLaboratoire,
   CelluleListeExamens,
 } from "@/features/laboratoire/cellule-examens-statut-laboratoire";
 import {
@@ -651,10 +650,7 @@ export function ContenuPatientsLaboratoire({
                             {formatHeure(p.arriveeLe)} · {p.provenance}
                           </p>
                           <div className="mt-2">
-                            <CelluleExamensStatutLaboratoire
-                              examens={p.examens}
-                              max={4}
-                            />
+                            <CelluleListeExamens examens={p.examens} max={4} />
                           </div>
                         </button>
                         <div className="mt-3 flex items-center gap-1.5">

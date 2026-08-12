@@ -47,7 +47,6 @@ import {
 } from "@/features/laboratoire/utils-affichage";
 import {
   CelluleBadgesStatutExamens,
-  CelluleExamensStatutLaboratoire,
   CelluleListeExamens,
 } from "@/features/laboratoire/cellule-examens-statut-laboratoire";
 import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
@@ -667,7 +666,7 @@ export function ContenuExamensEnCoursLaboratoire({
                             {p.provenance || "—"} · {formatHeure(p.arriveeLe)}
                           </p>
                           <div className="mt-2">
-                            <CelluleExamensStatutLaboratoire
+                            <CelluleListeExamens
                               examens={p.examens}
                               pageStatut={pageStatut}
                               max={4}

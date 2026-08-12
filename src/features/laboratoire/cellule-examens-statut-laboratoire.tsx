@@ -71,6 +71,10 @@ export function CelluleBadgesStatutExamens({
   examens,
   pageStatut,
 }: Pick<PropsCelluleExamensStatutLaboratoire, "examens" | "pageStatut">) {
+  if (pageStatut) {
+    return <BadgeStatutExamen statut={pageStatut} />;
+  }
+
   const source = filtrerExamens(examens, pageStatut);
 
   if (source.length === 0) {

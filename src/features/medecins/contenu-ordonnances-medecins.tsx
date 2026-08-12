@@ -697,7 +697,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
           </p>
         ) : (
           <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-            <table className="w-full text-left text-sm">
+            <table className="tableau-sigh">
               <thead className="border-b border-gris-bordure bg-gris-tres-clair/60 text-xs uppercase text-texte-secondaire">
                 <tr>
                   <th className="px-3 py-3">

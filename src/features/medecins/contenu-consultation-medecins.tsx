@@ -667,8 +667,83 @@ export function CorpsConsultation({ utilisateur }: Props) {
               : t("medecins.patients.vide")}
           </p>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-            <table className="w-full text-left text-sm">
+          <>
+            <ul className="space-y-3 2xl:hidden">
+              {patientsPage.map((p) => {
+                const selectionne =
+                  patientSelectionne?.dossierId === p.dossierId && formulaireOuvert;
+                return (
+                  <li key={p.cleListe}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        selectionnerPatient(p);
+                        setFormulaireOuvert(true);
+                        setModeModifier(false);
+                        setMessage(null);
+                        setErreur(null);
+                      }}
+                      className={cn(
+                        "w-full rounded-xl border bg-white p-4 text-left shadow-sm transition-colors",
+                        selectionne
+                          ? "border-bleu-medical bg-bleu-medical-clair/30"
+                          : "border-gris-bordure"
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        <CaseCocheLigne
+                          coche={dossiersCoches.includes(p.dossierId)}
+                          onChange={() => basculerDossierCoche(p.dossierId)}
+                          ariaLabel={p.nomComplet}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="font-semibold text-texte-principal">
+                                {p.nomComplet}
+                              </p>
+                              <p className="font-mono text-[11px] text-texte-secondaire">
+                                {p.numeroPatient} · {p.heure}
+                              </p>
+                            </div>
+                            <span onClick={(e) => e.stopPropagation()}>
+                              <MenuActionsTransfertMedecins
+                                patient={p}
+                                onRafraichir={chargerPatients}
+                              />
+                            </span>
+                          </div>
+                          <p className="mt-2 truncate text-xs text-texte-secondaire">
+                            {p.motif}
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-[11px] font-medium",
+                                p.orientationCouleur
+                              )}
+                            >
+                              {p.orientation}
+                            </span>
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-[11px] font-medium",
+                                p.statutCouleur
+                              )}
+                            >
+                              {p.statut}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm 2xl:block">
+            <table className="tableau-sigh">
               <thead className="border-b border-gris-bordure bg-gris-tres-clair/60 text-xs uppercase tracking-wide text-texte-secondaire">
                 <tr>
                   <th className="px-3 py-3">
@@ -787,6 +862,7 @@ export function CorpsConsultation({ utilisateur }: Props) {
                 })}
               </tbody>
             </table>
+            </div>
             <PaginationListe
               page={pageCourante}
               totalPages={totalPages}
@@ -794,7 +870,7 @@ export function CorpsConsultation({ utilisateur }: Props) {
               parPage={PAR_PAGE}
               onChange={setPageListe}
             />
-          </div>
+          </>
         )}
         <SectionsMobileMedecinsPatients />
       </section>

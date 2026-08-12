@@ -330,7 +330,7 @@ export function ListePatientsTransfertsCaisse() {
           </p>
         ) : (
           <>
-            <ul className="divide-y divide-gris-bordure md:hidden">
+            <ul className="divide-y divide-gris-bordure 2xl:hidden">
               {pagePatients.map((p) => {
                 const selectionne = patientSelectionne?.cleListe === p.cleListe;
                 return (
@@ -406,7 +406,7 @@ export function ListePatientsTransfertsCaisse() {
                 );
               })}
             </ul>
-            <div className="hidden overflow-x-auto md:block">
+            <div className="hidden overflow-hidden 2xl:block">
             <table className="min-w-full text-left text-sm">
               <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                 <tr>

@@ -969,8 +969,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                     : t("caisse.facturation.aucunPatientSansFacture")}
                 </p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-left text-sm">
+                <div className="overflow-hidden">
+                  <table className="tableau-sigh">
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
                         <th className="px-4 py-2.5 font-semibold">N°</th>
@@ -1173,8 +1173,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                     </p>
                   ) : (
                     <>
-                      <div className="hidden overflow-x-auto md:block">
-                        <table className="w-full min-w-[480px] text-left text-sm">
+                      <div className="hidden overflow-hidden 2xl:block">
+                        <table className="tableau-sigh">
                           <thead className="bg-gris-tres-clair/80 text-[11px] uppercase tracking-wider text-texte-secondaire">
                             <tr>
                               <th className="px-3 py-2.5">{t("caisse.facturation.numero")}</th>
@@ -1225,7 +1225,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                           </tbody>
                         </table>
                       </div>
-                      <ul className="divide-y divide-gris-bordure md:hidden">
+                      <ul className="divide-y divide-gris-bordure 2xl:hidden">
                         {lignesVisibles.map((l) => (
                           <li
                             key={l.id}
@@ -1732,8 +1732,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                     : t("caisse.facturation.aucunPatientSansFacture")}
                 </p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-left text-sm">
+                <div className="overflow-hidden">
+                  <table className="tableau-sigh">
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
                         <th className="px-4 py-2.5 font-semibold">N°</th>

@@ -160,7 +160,7 @@ export function ContenuRolesAdmin({
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[340px_1fr]">
           <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-            <table className="w-full text-left text-sm">
+            <table className="tableau-sigh">
               <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
                 <tr>
                   <th className="px-3 py-2">{t("admin.roles.colonnes.role")}</th>

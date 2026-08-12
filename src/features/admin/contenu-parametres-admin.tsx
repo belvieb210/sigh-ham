@@ -230,8 +230,8 @@ function SectionSessionsActives() {
         {t("admin.securite.sessionsDesc")}
       </p>
       {erreur ? <p className="mt-2 text-sm text-red-700">{erreur}</p> : null}
-      <div className="mt-3 overflow-x-auto">
-        <table className="w-full text-left text-sm">
+      <div className="mt-3 overflow-hidden">
+        <table className="tableau-sigh">
           <thead className="text-xs uppercase text-texte-secondaire">
             <tr>
               <th className="py-2">{t("admin.securite.colonneUser")}</th>

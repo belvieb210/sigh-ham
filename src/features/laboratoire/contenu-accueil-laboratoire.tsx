@@ -303,7 +303,7 @@ export function ContenuAccueilLaboratoire({
                   </p>
                 ) : (
                   <>
-                    <ul className="divide-y divide-gris-bordure xl:hidden">
+                    <ul className="divide-y divide-gris-bordure 2xl:hidden">
                       {pageTransferesData.itemsPage.map((p) => {
                         const statut = libelleStatutLigneLabo(p);
                         return (
@@ -468,7 +468,7 @@ export function ContenuAccueilLaboratoire({
                   </p>
                 ) : (
                   <>
-                    <ul className="divide-y divide-gris-bordure xl:hidden">
+                    <ul className="divide-y divide-gris-bordure 2xl:hidden">
                       {pageAnalysesData.itemsPage.map((p) => (
                         <li key={p.dossierId}>
                           <div className="flex items-start justify-between gap-2 px-3 py-2.5">

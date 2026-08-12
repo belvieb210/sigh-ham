@@ -243,8 +243,8 @@ export function SelectionExamensInitiaux({
           </div>
         ) : (
           <>
-            <div className="hidden overflow-x-auto sm:block">
-              <table className="w-full min-w-[520px] text-left text-sm">
+            <div className="hidden overflow-hidden sm:block">
+              <table className="tableau-sigh">
                 <thead>
                   <tr className="border-b border-gris-bordure bg-white text-xs font-semibold uppercase tracking-wide text-texte-secondaire">
                     <th className="px-5 py-3">{t("reception.examens.colonnes.code")}</th>

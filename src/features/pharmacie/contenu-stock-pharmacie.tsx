@@ -227,8 +227,8 @@ export function ContenuStockPharmacie({
       ) : vue === "retours" ? (
         <p className="text-sm text-texte-secondaire">{t("pharmacie.stock.retoursAide")}</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gris-bordure bg-white">
-          <table className="min-w-full text-left text-sm">
+        <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white">
+          <table className="tableau-sigh">
             <thead className="border-b bg-slate-50 text-xs uppercase text-texte-secondaire">
               <tr>
                 <th className="px-3 py-2">{t("pharmacie.vente.medicament")}</th>

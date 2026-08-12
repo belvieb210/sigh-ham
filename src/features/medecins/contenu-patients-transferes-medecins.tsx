@@ -103,8 +103,8 @@ function ListeTransferes({
         </div>
       ) : (
         <>
-          <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm lg:block">
-            <table className="w-full text-left text-sm">
+          <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm 2xl:block">
+            <table className="tableau-sigh">
               <thead className="border-b border-gris-bordure bg-gris-tres-clair/60 text-xs uppercase tracking-wide text-texte-secondaire">
                 <tr>
                   <th className="px-3 py-3">
@@ -194,7 +194,7 @@ function ListeTransferes({
             </table>
           </div>
 
-          <ul className="space-y-3 lg:hidden">
+          <ul className="space-y-3 2xl:hidden">
             {filtrés.map((p) => {
               const selectionne = patientSelectionne?.dossierId === p.dossierId;
               return (

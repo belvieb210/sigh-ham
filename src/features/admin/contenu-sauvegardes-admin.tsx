@@ -96,7 +96,7 @@ export function ContenuSauvegardesAdmin({
           {erreur ? <p className="text-red-700">{erreur}</p> : null}
 
           <div className="mt-4 overflow-hidden rounded-lg border border-gris-bordure">
-            <table className="w-full text-left text-sm">
+            <table className="tableau-sigh">
               <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
                 <tr>
                   <th className="px-3 py-2">{t("admin.sauvegardes.fichier")}</th>

@@ -96,7 +96,7 @@ export function ContenuHistoriqueMedecinsExternes({ utilisateur }: Props) {
           </p>
         ) : (
           <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-            <table className="w-full text-left text-sm">
+            <table className="tableau-sigh">
               <thead className="bg-gris-fond text-xs text-texte-secondaire">
                 <tr>
                   <th className="px-3 py-2">{t("medecinsExternes.historique.colonnes.patient")}</th>

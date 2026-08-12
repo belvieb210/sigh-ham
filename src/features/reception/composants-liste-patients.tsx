@@ -628,7 +628,7 @@ export function TableauPatients({
       )}
 
       {/* Cartes mobile / tablette */}
-      <div className={`space-y-3 md:hidden ${compact ? "p-3" : "p-3 sm:p-4"}`}>
+      <div className={`space-y-3 2xl:hidden ${compact ? "p-3" : "p-3 sm:p-4"}`}>
         {patients.length === 0 ? (
           <p className="py-8 text-center text-sm text-texte-secondaire">
             {t("reception.erreurs.aucunPatientCourt")}
@@ -653,8 +653,8 @@ export function TableauPatients({
       </div>
 
       {/* Tableau desktop */}
-      <div className="hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[900px] text-left text-sm">
+      <div className="hidden overflow-hidden 2xl:block">
+        <table className="tableau-sigh">
           <thead>
             <tr className="border-b border-gris-bordure bg-gris-tres-clair/80 text-xs font-semibold uppercase tracking-wide text-texte-secondaire">
               {multi ? (

@@ -183,7 +183,7 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
                 </p>
               ) : (
                 <>
-                  <ul className="divide-y divide-gris-bordure md:hidden">
+                  <ul className="divide-y divide-gris-bordure 2xl:hidden">
                     {pageLedger.map((l) => (
                       <li key={l.id} className="px-4 py-3">
                         <div className="flex items-start justify-between gap-3">
@@ -219,8 +219,8 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
                       </span>
                     </li>
                   </ul>
-                  <div className="hidden overflow-x-auto md:block">
-                  <table className="w-full min-w-[720px] text-left text-sm">
+                  <div className="hidden overflow-hidden 2xl:block">
+                  <table className="tableau-sigh">
                     <thead className="bg-gris-tres-clair/80 text-[11px] uppercase tracking-wider text-texte-secondaire">
                       <tr>
                         <th className="px-4 py-3 font-semibold">{t("caisse.encaissements.heure")}</th>

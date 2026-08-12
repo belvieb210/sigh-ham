@@ -296,7 +296,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                   </p>
                 ) : (
                   <>
-                    <ul className="divide-y divide-gris-bordure md:hidden">
+                    <ul className="divide-y divide-gris-bordure 2xl:hidden">
                       {stats?.dernieresFactures.map((f) => (
                         <li key={f.id}>
                           <Link
@@ -327,8 +327,8 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                         </li>
                       ))}
                     </ul>
-                    <div className="hidden overflow-x-auto md:block">
-                      <table className="min-w-full text-left text-sm">
+                    <div className="hidden overflow-hidden 2xl:block">
+                      <table className="tableau-sigh">
                         <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                           <tr>
                             <th className="px-4 py-2.5 font-semibold">
@@ -439,7 +439,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                   </p>
                 ) : (
                   <>
-                    <ul className="divide-y divide-gris-bordure md:hidden">
+                    <ul className="divide-y divide-gris-bordure 2xl:hidden">
                       {stats?.patientsAttente.map((p) => (
                         <li
                           key={p.dossierId}
@@ -469,8 +469,8 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                         </li>
                       ))}
                     </ul>
-                    <div className="hidden overflow-x-auto md:block">
-                      <table className="min-w-full text-left text-sm">
+                    <div className="hidden overflow-hidden 2xl:block">
+                      <table className="tableau-sigh">
                         <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                           <tr>
                             <th className="px-4 py-2.5 font-semibold">

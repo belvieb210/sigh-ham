@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import { useState, type ReactNode } from "react";
 import {
@@ -28,7 +28,7 @@ interface PropsMiseEnPageMedecinsExternes {
   sousTitre: string;
   panneauDroit?: ReactNode;
   activerSelectionTransfert?: boolean;
-  /** Page patients ME : providers orientation/sÃ©lection dÃ©diÃ©s */
+  /** Page patients ME : providers orientation/sélection dédiés */
   activerSelectionPatients?: boolean;
   children: ReactNode;
 }
@@ -60,13 +60,13 @@ export function MiseEnPageMedecinsExternes({
           onMenu={() => setMenuOuvert(true)}
         />
 
-        <div className="flex min-h-0 flex-1">
-          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 pb-[calc(6.75rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6 lg:py-6 lg:pb-6">
+        <div className="flex min-h-0 min-w-0 flex-1">
+          <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 pb-[calc(6.75rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6 lg:py-6 lg:pb-6">
             {children}
           </main>
 
           {panneauDroit && (
-            <aside className="hidden shrink-0 overflow-y-auto border-l border-gris-bordure bg-[#f8fafc] p-4 xl:block xl:w-[300px]">
+            <aside className="hidden min-w-0 shrink-0 overflow-x-hidden overflow-y-auto border-l border-gris-bordure bg-[#f8fafc] p-4 xl:block xl:w-[300px]">
               {panneauDroit}
             </aside>
           )}

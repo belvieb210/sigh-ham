@@ -469,7 +469,7 @@ export function ContenuExamensEnCoursLaboratoire({
             </p>
           ) : (
             <>
-              <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm xl:block">
+              <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm 2xl:block">
                   <table className="w-full table-fixed text-left text-sm">
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
@@ -613,7 +613,7 @@ export function ContenuExamensEnCoursLaboratoire({
                   </table>
               </div>
 
-              <ul className="space-y-3 xl:hidden">
+              <ul className="space-y-3 2xl:hidden">
                 {pageData.itemsPage.map((p) => (
                   <li key={p.dossierId}>
                     <div

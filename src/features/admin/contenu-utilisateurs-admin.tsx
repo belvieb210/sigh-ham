@@ -257,7 +257,7 @@ export function ContenuUtilisateursAdmin({
                 {t("admin.common.chargement")}
               </p>
             ) : (
-              <table className="w-full text-left text-sm">
+              <table className="tableau-sigh">
                 <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
                   <tr>
                     <th className="px-3 py-2">{t("admin.utilisateurs.colonnes.nom")}</th>

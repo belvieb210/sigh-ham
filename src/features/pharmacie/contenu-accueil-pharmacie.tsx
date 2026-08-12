@@ -310,7 +310,7 @@ export function ContenuAccueilPharmacie({
                     {t("pharmacie.dashboard.aucuneVenteAttente")}
                   </p>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-hidden">
                     <table className="min-w-full text-left text-xs">
                       <thead className="border-b border-gris-bordure text-[10px] uppercase text-texte-secondaire">
                         <tr>

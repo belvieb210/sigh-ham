@@ -120,7 +120,7 @@ export function ContenuCertificatsEglise({
           </div>
         ) : (
           <div className="mt-4 overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-            <table className="w-full text-left text-sm">
+            <table className="tableau-sigh">
               <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
                 <tr>
                   <th className="px-4 py-3">{t("eglise.certificats.patient")}</th>

@@ -43,6 +43,7 @@ import {
   libellesExamensDemandes,
   numeroEnregistrementLaboratoire,
   patientCorrespondPageStatut,
+  trierPatientsParArriveeDesc,
 } from "@/features/laboratoire/utils-affichage";
 import {
   CelluleBadgesStatutExamens,
@@ -138,8 +139,8 @@ export function ContenuExamensEnCoursLaboratoire({
   }, [patients, pageStatut]);
 
   const filtres = useMemo(() => {
-    return enCours.filter((p) =>
-      patientCorrespondFiltresLabo(p, filtresAppliques)
+    return trierPatientsParArriveeDesc(
+      enCours.filter((p) => patientCorrespondFiltresLabo(p, filtresAppliques))
     );
   }, [enCours, filtresAppliques]);
 
@@ -300,7 +301,7 @@ export function ContenuExamensEnCoursLaboratoire({
       return;
     }
     if (id === "valider") {
-      router.push("/sigh/laboratoire/resultats-a-valider");
+      router.push("/sigh/laboratoire/verifies");
       return;
     }
     if (id === "imprimer") {
@@ -328,7 +329,7 @@ export function ContenuExamensEnCoursLaboratoire({
       return;
     }
     if (id === "historiqueRapport") {
-      router.push("/sigh/laboratoire/historique");
+      router.push(`/sigh/laboratoire/verifies?dossier=${dossierId}`);
       return;
     }
     setMessageAction(t("laboratoire.actions.aVenir"));

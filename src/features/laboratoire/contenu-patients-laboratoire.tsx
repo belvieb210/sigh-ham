@@ -44,6 +44,7 @@ import {
   libelleStatutLigneLabo,
   libellesExamensDemandes,
   numeroEnregistrementLaboratoire,
+  trierPatientsParArriveeDesc,
 } from "@/features/laboratoire/utils-affichage";
 import type {
   DetailPatientLaboratoire,
@@ -113,7 +114,9 @@ export function ContenuPatientsLaboratoire({
 
   const filtrés = useMemo(
     () =>
-      patients.filter((p) => patientCorrespondFiltresLabo(p, filtresAppliques)),
+      trierPatientsParArriveeDesc(
+        patients.filter((p) => patientCorrespondFiltresLabo(p, filtresAppliques))
+      ),
     [patients, filtresAppliques]
   );
 
@@ -302,7 +305,7 @@ export function ContenuPatientsLaboratoire({
       return;
     }
     if (id === "historiqueRapport") {
-      router.push("/sigh/laboratoire/historique");
+      router.push(`/sigh/laboratoire/verifies?dossier=${dossierId}`);
       return;
     }
     setMessageAction(t("laboratoire.actions.aVenir"));

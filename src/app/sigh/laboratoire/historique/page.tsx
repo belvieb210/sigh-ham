@@ -1,19 +1,5 @@
-import type { Metadata } from "next";
-import { ContenuPlaceholderLaboratoire } from "@/features/laboratoire/contenu-placeholder-laboratoire";
-import { verifierAccesLaboratoire } from "@/lib/auth/garde-salle";
-import { propsUtilisateurLaboratoire } from "@/lib/auth/props-utilisateur-laboratoire";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Historique — Laboratoire",
-  robots: { index: false, follow: false },
-};
-
-export default async function PageHistoriqueLaboratoire() {
-  const utilisateur = await verifierAccesLaboratoire();
-  return (
-    <ContenuPlaceholderLaboratoire
-      utilisateur={propsUtilisateurLaboratoire(utilisateur)}
-      titreKey="laboratoire.nav.historique"
-    />
-  );
+export default function PageHistoriqueLaboratoire() {
+  redirect("/sigh/laboratoire/verifies");
 }

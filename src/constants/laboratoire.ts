@@ -5,9 +5,6 @@ import {
   Users,
   FlaskConical,
   ClipboardEdit,
-  ShieldCheck,
-  CheckCircle2,
-  History,
   Package,
   Settings,
   BarChart3,
@@ -99,21 +96,6 @@ export const NAVIGATION_LABORATOIRE = {
       icone: ClipboardEdit,
     },
     {
-      href: "/sigh/laboratoire/resultats-a-valider",
-      id: "resultatsAValider",
-      icone: ShieldCheck,
-    },
-    {
-      href: "/sigh/laboratoire/resultats-valides",
-      id: "resultatsValides",
-      icone: CheckCircle2,
-    },
-    {
-      href: "/sigh/laboratoire/historique",
-      id: "historique",
-      icone: History,
-    },
-    {
       href: "/sigh/laboratoire/stock-reactifs",
       id: "stockReactifs",
       icone: Package,
@@ -153,8 +135,8 @@ export const NAVIGATION_BASSE_LABORATOIRE = [
     icone: FlaskConical,
   },
   {
-    href: "/sigh/laboratoire/resultats-a-valider",
-    id: "validation",
-    icone: ShieldCheck,
+    href: "/sigh/laboratoire/verifies",
+    id: "verifies",
+    icone: ClipboardCheck,
   },
 ] as const;

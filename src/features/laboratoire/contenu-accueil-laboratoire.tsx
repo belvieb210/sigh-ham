@@ -142,7 +142,7 @@ export function ContenuAccueilLaboratoire({
       valeur: stats?.resultatsAValider ?? 0,
       icone: Beaker,
       couleur: "bg-violet-50 text-violet-700",
-      href: "/sigh/laboratoire/resultats-a-valider",
+      href: "/sigh/laboratoire/verifies",
     },
     {
       id: "valides",
@@ -150,7 +150,7 @@ export function ContenuAccueilLaboratoire({
       valeur: stats?.resultatsValidesAujourdhui ?? 0,
       icone: CheckCircle2,
       couleur: "bg-emerald-50 text-emerald-700",
-      href: "/sigh/laboratoire/resultats-valides",
+      href: "/sigh/laboratoire/dr-approuve",
     },
     {
       id: "imprimes",
@@ -158,7 +158,7 @@ export function ContenuAccueilLaboratoire({
       valeur: stats?.imprimesEnvoyes ?? 0,
       icone: FileCheck2,
       couleur: "bg-rose-50 text-rose-700",
-      href: "/sigh/laboratoire/historique",
+      href: "/sigh/laboratoire/dr-approuve",
     },
   ];
 
@@ -169,12 +169,12 @@ export function ContenuAccueilLaboratoire({
       icone: FlaskConical,
     },
     {
-      href: "/sigh/laboratoire/resultats-a-valider",
+      href: "/sigh/laboratoire/verifies",
       label: t("laboratoire.dashboard.actionValider"),
       icone: ClipboardCheck,
     },
     {
-      href: "/sigh/laboratoire/resultats-valides",
+      href: "/sigh/laboratoire/dr-approuve",
       label: t("laboratoire.dashboard.actionImprimer"),
       icone: Printer,
     },

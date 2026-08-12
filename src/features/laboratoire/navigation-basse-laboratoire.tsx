@@ -32,8 +32,8 @@ export function NavigationBasseLaboratoire({
               pathname.startsWith("/sigh/laboratoire/patients")) ||
             (item.id === "examens" &&
               pathname.startsWith("/sigh/laboratoire/examens-en-cours")) ||
-            (item.id === "validation" &&
-              pathname.startsWith("/sigh/laboratoire/resultats-a-valider"));
+            (item.id === "verifies" &&
+              pathname.startsWith("/sigh/laboratoire/verifies"));
           const Icone = item.icone;
           const estFab = "fab" in item && item.fab;
 

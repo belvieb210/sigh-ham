@@ -39,7 +39,7 @@ export const laboratoireEn: LaboratoireFr = {
     accueil: "Home",
     patients: "Patients",
     examens: "Exams",
-    validation: "Validation",
+    verifies: "Verified",
     menu: "Menu",
   },
   pages: {

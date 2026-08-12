@@ -98,7 +98,7 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
     sortantParDossier.set(t.dossierId, liste);
   }
 
-  return files.map((file) => {
+  const patients = files.map((file) => {
     const dossier = file.passage.dossier;
     const patient = dossier.patient;
     const transfert = file.passage.transferts[0];
@@ -168,6 +168,10 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
       orientation,
     };
   });
+
+  return patients.sort(
+    (a, b) => new Date(b.arriveeLe).getTime() - new Date(a.arriveeLe).getTime()
+  );
 }
 
 function raccourcirOrientation(nom: string): string {

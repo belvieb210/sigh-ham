@@ -1,19 +1,5 @@
-import type { Metadata } from "next";
-import { ContenuPlaceholderLaboratoire } from "@/features/laboratoire/contenu-placeholder-laboratoire";
-import { verifierAccesLaboratoire } from "@/lib/auth/garde-salle";
-import { propsUtilisateurLaboratoire } from "@/lib/auth/props-utilisateur-laboratoire";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Résultats validés — Laboratoire",
-  robots: { index: false, follow: false },
-};
-
-export default async function PageResultatsValidesLaboratoire() {
-  const utilisateur = await verifierAccesLaboratoire();
-  return (
-    <ContenuPlaceholderLaboratoire
-      utilisateur={propsUtilisateurLaboratoire(utilisateur)}
-      titreKey="laboratoire.nav.resultatsValides"
-    />
-  );
+export default function PageResultatsValidesLaboratoire() {
+  redirect("/sigh/laboratoire/dr-approuve");
 }

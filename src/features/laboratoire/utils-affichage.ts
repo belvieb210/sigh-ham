@@ -99,6 +99,15 @@ export function codeTransfertLaboratoire(p: PatientFileLaboratoire) {
   return p.numeroTransfert || p.numeroPatient;
 }
 
+/** Tri décroissant par date d'arrivée (les plus récents en premier). */
+export function trierPatientsParArriveeDesc<
+  T extends { arriveeLe: string },
+>(patients: T[]): T[] {
+  return patients.slice().sort(
+    (a, b) => new Date(b.arriveeLe).getTime() - new Date(a.arriveeLe).getTime()
+  );
+}
+
 export function libellesExamensDemandes(
   p: PatientFileLaboratoire,
   max = 2,

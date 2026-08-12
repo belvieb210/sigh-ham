@@ -336,6 +336,17 @@ export const laboratoireEn: LaboratoireFr = {
     imprimerResultat: "Print result",
     aVenir: "Feature to be wired next.",
   },
+  drApprouve: {
+    developperExamens: "Show Dr approved exams",
+    replierExamens: "Hide Dr approved exams",
+    examensTitre: "{{count}} Dr approved exam(s)",
+    selectionnerTousExamens: "Select all Dr approved exams for this patient",
+    selectionnerExamen: "Select {{libelle}}",
+    imprimerExamen: "Print this exam result",
+    imprimer: "Print",
+    sousTitreSelectionExamens:
+      "{{count}} patient(s) · {{selection}} exam(s) selected for printing",
+  },
   statutExamen: {
     PRESCRIT: "Prescribed",
     PRELEVE: "Collected",

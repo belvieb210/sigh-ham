@@ -337,6 +337,17 @@ export const laboratoireFr = {
     imprimerResultat: "Imprimer résultat",
     aVenir: "Fonctionnalité à brancher prochainement.",
   },
+  drApprouve: {
+    developperExamens: "Afficher les examens Dr approuve",
+    replierExamens: "Masquer les examens Dr approuve",
+    examensTitre: "{{count}} examen(s) Dr approuve",
+    selectionnerTousExamens: "Sélectionner tous les examens Dr approuve du patient",
+    selectionnerExamen: "Sélectionner {{libelle}}",
+    imprimerExamen: "Imprimer le résultat de cet examen",
+    imprimer: "Imprimer",
+    sousTitreSelectionExamens:
+      "{{count}} patient(s) · {{selection}} examen(s) sélectionné(s) pour impression",
+  },
   statutExamen: {
     PRESCRIT: "Prescrit",
     PRELEVE: "Prélevé",

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Eye, FlaskConical, Loader2 } from "lucide-react";
-import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import { telechargerCsv } from "@/components/ui/boutons-outils-liste";
 import {
   PaginationListe,
@@ -49,9 +48,12 @@ import {
   CelluleBadgesStatutExamens,
   CelluleListeExamens,
 } from "@/features/laboratoire/cellule-examens-statut-laboratoire";
+import { LignesTableauDrApprouve } from "@/features/laboratoire/lignes-tableau-dr-approuve";
 import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
-import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
+import { imprimerResultatExamenLaboratoire } from "@/lib/laboratoire/imprimer-resultat-examen";
+import type { ExamenFileLaboratoire, PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import { cn } from "@/lib/utils";
+import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 
 const PAR_PAGE_STATUT = 12;
 
@@ -86,6 +88,8 @@ export function ContenuExamensEnCoursLaboratoire({
   const [selectionId, setSelectionId] = useState<string | null>(dossierUrl);
   const [orientationEnCours, setOrientationEnCours] = useState(false);
   const [idsCoches, setIdsCoches] = useState<Set<string>>(new Set());
+  const [dossiersDeveloppes, setDossiersDeveloppes] = useState<Set<string>>(new Set());
+  const [examensCoches, setExamensCoches] = useState<Set<string>>(new Set());
   const [messageAction, setMessageAction] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const { menu, ouvrirSurPatient, fermer } = useMenuContextuelLabo();
@@ -145,7 +149,62 @@ export function ContenuExamensEnCoursLaboratoire({
 
   useEffect(() => {
     setPage(1);
+    setDossiersDeveloppes(new Set());
+    setExamensCoches(new Set());
   }, [filtresAppliques, pageStatut]);
+
+  const estPageDrApprouve = pageStatut === "DR_APPROUVE";
+
+  const basculerDeveloppementPatient = (dossierId: string) => {
+    setDossiersDeveloppes((prev) => {
+      const next = new Set(prev);
+      if (next.has(dossierId)) next.delete(dossierId);
+      else next.add(dossierId);
+      return next;
+    });
+    selectionner(dossierId);
+  };
+
+  const basculerCocheExamen = (examenId: string, coche: boolean) => {
+    setExamensCoches((prev) => {
+      const next = new Set(prev);
+      if (coche) next.add(examenId);
+      else next.delete(examenId);
+      return next;
+    });
+  };
+
+  const selectionnerTousExamensPatient = (
+    patient: PatientFileLaboratoire,
+    examens: ExamenFileLaboratoire[]
+  ) => {
+    const ids = examens.map((ex) => ex.id);
+    const tousCoches = ids.length > 0 && ids.every((id) => examensCoches.has(id));
+    setExamensCoches((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) {
+        if (tousCoches) next.delete(id);
+        else next.add(id);
+      }
+      return next;
+    });
+    selectionner(patient.dossierId);
+  };
+
+  const imprimerExamenDrApprouve = async (
+    patient: PatientFileLaboratoire,
+    examen: ExamenFileLaboratoire
+  ) => {
+    setMessageAction(null);
+    const resultat = await imprimerResultatExamenLaboratoire({
+      dossierId: patient.dossierId,
+      examenId: examen.id,
+      numeroPatient: patient.numeroPatient,
+    });
+    if (!resultat.ok) {
+      setMessageAction(t("laboratoire.actions.aVenir"));
+    }
+  };
 
   const pageData = paginerListe(filtres, page, PAR_PAGE_STATUT);
 
@@ -416,14 +475,19 @@ export function ContenuExamensEnCoursLaboratoire({
             }
             titre={titrePage}
             sousTitre={
-              idsCoches.size > 0
-                ? t("laboratoire.examensEnCours.sousTitreListeSelection", {
+              estPageDrApprouve && examensCoches.size > 0
+                ? t("laboratoire.drApprouve.sousTitreSelectionExamens", {
                     count: filtres.length,
-                    selection: idsCoches.size,
+                    selection: examensCoches.size,
                   })
-                : t("laboratoire.examensEnCours.sousTitreListe", {
-                    count: filtres.length,
-                  })
+                : idsCoches.size > 0
+                  ? t("laboratoire.examensEnCours.sousTitreListeSelection", {
+                      count: filtres.length,
+                      selection: idsCoches.size,
+                    })
+                  : t("laboratoire.examensEnCours.sousTitreListe", {
+                      count: filtres.length,
+                    })
             }
             filtresOuverts={filtresOuverts}
             onToggle={() => setFiltresOuverts((o) => !o)}
@@ -514,6 +578,40 @@ export function ContenuExamensEnCoursLaboratoire({
                     <tbody className="divide-y divide-gris-bordure">
                       {pageData.itemsPage.map((p) => {
                         const selectionne = selectionId === p.dossierId;
+
+                        if (estPageDrApprouve) {
+                          return (
+                            <LignesTableauDrApprouve
+                              key={p.dossierId}
+                              patient={p}
+                              selectionne={selectionne}
+                              developpe={dossiersDeveloppes.has(p.dossierId)}
+                              patientCoche={idsCoches.has(p.dossierId)}
+                              examensCoches={examensCoches}
+                              onSelectionnerPatient={() => selectionner(p.dossierId)}
+                              onBasculerCochePatient={(coche) => {
+                                setIdsCoches((prev) => {
+                                  const next = new Set(prev);
+                                  if (coche) next.add(p.dossierId);
+                                  else next.delete(p.dossierId);
+                                  return next;
+                                });
+                              }}
+                              onBasculerDeveloppement={() =>
+                                basculerDeveloppementPatient(p.dossierId)
+                              }
+                              onBasculerCocheExamen={basculerCocheExamen}
+                              onSelectionnerTousExamensPatient={(examens) =>
+                                selectionnerTousExamensPatient(p, examens)
+                              }
+                              onImprimerExamen={(examen) =>
+                                void imprimerExamenDrApprouve(p, examen)
+                              }
+                              onContextMenu={(e) => ouvrirSurPatient(e, p.dossierId)}
+                            />
+                          );
+                        }
+
                         return (
                           <tr
                             key={p.dossierId}

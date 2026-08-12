@@ -211,7 +211,7 @@ export async function listerPatientsInfirmiers(): Promise<PatientFileInfirmiers[
     sortantParDossier.set(t.dossierId, liste);
   }
 
-  return files.map((file) => {
+  const patients = files.map((file) => {
     const dossier = file.passage.dossier;
     const patient = dossier.patient;
     const transfert = file.passage.transferts[0];
@@ -267,6 +267,10 @@ export async function listerPatientsInfirmiers(): Promise<PatientFileInfirmiers[
       hasConstantesAujourdhui,
     };
   });
+
+  return patients.sort(
+    (a, b) => new Date(b.arriveeLe).getTime() - new Date(a.arriveeLe).getTime()
+  );
 }
 
 export async function obtenirDetailPatientInfirmiers(
@@ -511,7 +515,8 @@ export async function listerPatientsHistoriqueInfirmiers(): Promise<
     }
   }
 
-  return [...parDossier.entries()].map(([dossierId, data]) => {
+  return [...parDossier.entries()]
+    .map(([dossierId, data]) => {
     const p = data.patient;
     const derniere = data.constantes[0] ?? null;
     return {
@@ -528,7 +533,12 @@ export async function listerPatientsHistoriqueInfirmiers(): Promise<
       nbConsultations: data.constantes.length,
       derniereConstante: derniere,
     };
-  });
+  })
+    .sort(
+      (a, b) =>
+        new Date(b.derniereMesureLe).getTime() -
+        new Date(a.derniereMesureLe).getTime()
+    );
 }
 
 export async function obtenirHistoriqueCompletDossierInfirmiers(

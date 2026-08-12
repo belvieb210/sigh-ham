@@ -272,17 +272,17 @@ export function FormulaireSaisieExamenLaboratoire({
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-slate-200">
-          <table className="w-full min-w-[720px] text-sm">
+        <div className="overflow-hidden rounded-xl border border-slate-200">
+          <table className="w-full table-fixed text-sm">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                <th className="px-4 py-3">{t("laboratoire.saisieResultats.colParametre")}</th>
-                <th className="px-3 py-3">{t("laboratoire.saisieResultats.colResultat")}</th>
-                <th className="px-3 py-3">{t("laboratoire.saisieResultats.colUnite")}</th>
-                <th className="px-3 py-3">{t("laboratoire.saisieResultats.colValeursReference")}</th>
-                <th className="px-3 py-3 text-center">{t("laboratoire.saisieResultats.colIndicateur")}</th>
-                <th className="px-3 py-3 text-center">NR</th>
-                <th className="w-10 px-2 py-3" />
+              <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-[10px] font-semibold uppercase tracking-wide text-slate-500 sm:text-xs">
+                <th className="w-[24%] px-2 py-2 sm:px-3 sm:py-3">{t("laboratoire.saisieResultats.colParametre")}</th>
+                <th className="w-[22%] px-2 py-2 sm:px-3 sm:py-3">{t("laboratoire.saisieResultats.colResultat")}</th>
+                <th className="hidden w-[10%] px-2 py-2 sm:table-cell sm:px-3 sm:py-3">{t("laboratoire.saisieResultats.colUnite")}</th>
+                <th className="hidden w-[16%] px-2 py-2 lg:table-cell sm:px-3 sm:py-3">{t("laboratoire.saisieResultats.colValeursReference")}</th>
+                <th className="w-[10%] px-1 py-2 text-center sm:px-2 sm:py-3">{t("laboratoire.saisieResultats.colIndicateur")}</th>
+                <th className="w-[8%] px-1 py-2 text-center sm:px-2 sm:py-3">NR</th>
+                <th className="hidden w-[8%] px-1 py-2 sm:table-cell sm:px-2 sm:py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -302,15 +302,18 @@ export function FormulaireSaisieExamenLaboratoire({
                   return (
                     <Fragment key={p.id}>
                       <tr className="hover:bg-slate-50/50">
-                        <td className="px-4 py-3">
-                          <p className="font-bold text-violet-900 underline decoration-violet-700 decoration-1 underline-offset-[3px]">
+                        <td className="px-2 py-2 sm:px-3 sm:py-3">
+                          <p className="truncate font-bold text-violet-900 underline decoration-violet-700 decoration-1 underline-offset-[3px]">
                             {acronyme}
                           </p>
                           {libelle && libelle !== acronyme && (
-                            <p className="mt-0.5 text-xs text-violet-700/70">{libelle}</p>
+                            <p className="mt-0.5 truncate text-[10px] text-violet-700/70 sm:text-xs">{libelle}</p>
                           )}
+                          <p className="mt-0.5 text-[10px] text-slate-500 sm:hidden">
+                            {[p.unite, p.rangeUsuelle].filter(Boolean).join(" · ") || "—"}
+                          </p>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-2 py-2 sm:px-3 sm:py-3">
                           <input
                             type="text"
                             value={p.valeur}
@@ -321,19 +324,19 @@ export function FormulaireSaisieExamenLaboratoire({
                               onParametreChange(p.id, { valeur: e.target.value })
                             }
                             className={cn(
-                              "w-full min-w-[120px] rounded-lg border px-3 py-2 text-sm outline-none ring-0 transition-colors focus:ring-2",
+                              "w-full min-w-0 rounded-lg border px-2 py-1.5 text-sm outline-none ring-0 transition-colors focus:ring-2 sm:px-3 sm:py-2",
                               styles.input
                             )}
                           />
                         </td>
-                        <td className="px-3 py-3 text-slate-600">{p.unite ?? "—"}</td>
-                        <td className="px-3 py-3 text-slate-600">{p.rangeUsuelle ?? "—"}</td>
-                        <td className="px-3 py-3 text-center">
+                        <td className="hidden px-2 py-2 text-slate-600 sm:table-cell sm:px-3 sm:py-3">{p.unite ?? "—"}</td>
+                        <td className="hidden px-2 py-2 text-slate-600 lg:table-cell sm:px-3 sm:py-3">{p.rangeUsuelle ?? "—"}</td>
+                        <td className="px-1 py-2 text-center sm:px-2 sm:py-3">
                           <div className="flex justify-center">
                             <IndicateurDot statut={statut} />
                           </div>
                         </td>
-                        <td className="px-3 py-3 text-center">
+                        <td className="px-1 py-2 text-center sm:px-2 sm:py-3">
                           <input
                             type="checkbox"
                             checked={p.nonRequis}
@@ -345,9 +348,9 @@ export function FormulaireSaisieExamenLaboratoire({
                             title={t("laboratoire.saisieResultats.nonRequis")}
                           />
                         </td>
-                        <td className="px-2 py-3">
+                        <td className="hidden px-1 py-2 sm:table-cell sm:px-2 sm:py-3">
                           {!estConsultationSeule && (
-                          <div className="flex items-center justify-end gap-1">
+                          <div className="flex items-center justify-end gap-0.5 sm:gap-1">
                             <button
                               type="button"
                               onClick={() => basculerCommentaireParametre(p.id)}
@@ -364,7 +367,7 @@ export function FormulaireSaisieExamenLaboratoire({
                             </button>
                             <button
                               type="button"
-                              className="rounded p-1 text-slate-400 hover:bg-violet-50 hover:text-violet-600"
+                              className="hidden rounded p-1 text-slate-400 hover:bg-violet-50 hover:text-violet-600 lg:inline-flex"
                               aria-label={t("laboratoire.saisieResultats.historique")}
                             >
                               <LineChart className="h-3.5 w-3.5" />
@@ -435,7 +438,7 @@ export function FormulaireSaisieExamenLaboratoire({
                   if (e.key === "Escape") annulerAjoutParametre();
                 }}
                 placeholder={t("laboratoire.saisieResultats.placeholderNomParametre")}
-                className="min-w-[160px] flex-1 rounded-lg border border-violet-200 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                className="min-w-0 flex-1 rounded-lg border border-violet-200 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                 autoFocus
               />
               <button

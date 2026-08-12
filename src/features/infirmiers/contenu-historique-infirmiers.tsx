@@ -275,7 +275,7 @@ export function ContenuHistoriqueInfirmiers({ utilisateur }: Props) {
           <p className="text-sm text-texte-secondaire">{t("infirmiers.historique.vide")}</p>
         ) : (
           <>
-            <div className="space-y-3 md:hidden">
+            <div className="space-y-3 xl:hidden">
               {patientsPage.map((p) => (
                 <button
                   key={p.dossierId}
@@ -299,8 +299,8 @@ export function ContenuHistoriqueInfirmiers({ utilisateur }: Props) {
               ))}
             </div>
 
-            <div className="hidden overflow-x-auto rounded-xl border border-gris-bordure bg-white md:block">
-              <table className="min-w-full text-left text-sm">
+            <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white xl:block">
+              <table className="w-full table-fixed text-left text-sm">
                 <thead className="border-b border-gris-bordure bg-slate-50 text-xs uppercase text-texte-secondaire">
                   <tr>
                     <th className="px-4 py-3">{t("infirmiers.historique.colonnes.patient")}</th>

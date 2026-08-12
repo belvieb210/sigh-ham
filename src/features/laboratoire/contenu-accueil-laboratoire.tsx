@@ -254,13 +254,13 @@ export function ContenuAccueilLaboratoire({
           </p>
         ) : (
           <>
-            <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
               {kpis.map((k) => {
                 const Icone = k.icone;
                 return (
                   <div
                     key={k.id}
-                    className="w-[min(70vw,220px)] shrink-0 rounded-xl border border-gris-bordure bg-white p-3 shadow-sm sm:w-auto sm:p-4"
+                    className="rounded-xl border border-gris-bordure bg-white p-3 shadow-sm sm:p-4"
                   >
                     <div
                       className={`mb-2 inline-flex rounded-lg p-2 sm:mb-3 ${k.couleur}`}
@@ -303,7 +303,7 @@ export function ContenuAccueilLaboratoire({
                   </p>
                 ) : (
                   <>
-                    <ul className="divide-y divide-gris-bordure md:hidden">
+                    <ul className="divide-y divide-gris-bordure xl:hidden">
                       {pageTransferesData.itemsPage.map((p) => {
                         const statut = libelleStatutLigneLabo(p);
                         return (
@@ -350,8 +350,8 @@ export function ContenuAccueilLaboratoire({
                         );
                       })}
                     </ul>
-                    <div className="hidden overflow-x-auto md:block">
-                    <table className="w-full min-w-[560px] text-left text-sm">
+                    <div className="hidden xl:block">
+                    <table className="w-full table-fixed text-left text-sm">
                       <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-texte-secondaire">
                         <tr>
                           <th className="px-2.5 py-1.5 font-semibold">
@@ -468,7 +468,7 @@ export function ContenuAccueilLaboratoire({
                   </p>
                 ) : (
                   <>
-                    <ul className="divide-y divide-gris-bordure md:hidden">
+                    <ul className="divide-y divide-gris-bordure xl:hidden">
                       {pageAnalysesData.itemsPage.map((p) => (
                         <li key={p.dossierId}>
                           <div className="flex items-start justify-between gap-2 px-3 py-2.5">
@@ -505,8 +505,8 @@ export function ContenuAccueilLaboratoire({
                         </li>
                       ))}
                     </ul>
-                    <div className="hidden overflow-x-auto md:block">
-                      <table className="w-full min-w-[480px] text-left text-sm">
+                    <div className="hidden xl:block">
+                      <table className="w-full table-fixed text-left text-sm">
                         <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-texte-secondaire">
                           <tr>
                             <th className="px-2.5 py-1.5 font-semibold">

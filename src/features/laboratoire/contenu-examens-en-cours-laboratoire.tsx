@@ -469,9 +469,8 @@ export function ContenuExamensEnCoursLaboratoire({
             </p>
           ) : (
             <>
-              <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm md:block">
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[820px] text-left text-sm">
+              <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm xl:block">
+                  <table className="w-full table-fixed text-left text-sm">
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
                         <th className="w-10 px-3 py-3">
@@ -612,10 +611,9 @@ export function ContenuExamensEnCoursLaboratoire({
                       })}
                     </tbody>
                   </table>
-                </div>
               </div>
 
-              <ul className="space-y-3 md:hidden">
+              <ul className="space-y-3 xl:hidden">
                 {pageData.itemsPage.map((p) => (
                   <li key={p.dossierId}>
                     <div

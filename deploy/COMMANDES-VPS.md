@@ -77,6 +77,28 @@ scp prisma\backups\mon_dump.sql.gz root@185.202.236.210:/var/www/sigh-ham/prisma
 
 Pas besoin de lancer d’autres commandes sur le VPS.
 
+### Erreur `npm ci` / ENOTEMPTY (node_modules)
+
+Si `npm ci` échoue avec `ENOTEMPTY: directory not empty`, le dossier `node_modules` n’a pas été entièrement supprimé (souvent après un `rm -rf` interrompu).
+
+**Réparation rapide (SSH root) :**
+
+```bash
+systemctl stop sigh-web sigh-socket
+cd /var/www/sigh-ham
+chmod -R u+w node_modules 2>/dev/null || true
+mv node_modules node_modules.trash.$(date +%s) 2>/dev/null || true
+nohup rm -rf node_modules.trash.* node_modules >/dev/null 2>&1 &
+sudo -u sigh -H bash -lc 'cd /var/www/sigh-ham && npm ci'
+bash deploy/deploy-app.sh
+```
+
+Ou, après `git pull` (script à jour) :
+
+```bash
+bash /var/www/sigh-ham/deploy/fix-node-modules.sh
+```
+
 ---
 
 ## Scripts manuels (si besoin)
@@ -86,6 +108,7 @@ Pas besoin de lancer d’autres commandes sur le VPS.
 | `DEPLOIEMENT-VPS.bat` (PC) | Tout-en-un depuis Windows |
 | `push-and-deploy.ps1` (PC) | Même chose en PowerShell |
 | `auto-deploy-cron.sh` | Tout-en-un intelligent (crontab 1 min) |
+| `fix-node-modules.sh` | Réparer `npm ci` / ENOTEMPTY sur node_modules |
 | `migrate-db.sh --pull` | Migrations seules |
 | `deploy-app.sh` | Déploiement complet manuel |
 | `export-postgres.sh` | Backup PostgreSQL |

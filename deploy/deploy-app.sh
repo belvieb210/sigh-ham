@@ -18,6 +18,9 @@ done
 
 cd "${APP_DIR}"
 
+# shellcheck source=lib/npm-deps.sh
+source "${APP_DIR}/deploy/lib/npm-deps.sh"
+
 if [[ ! -f package.json ]]; then
   echo "❌ ${APP_DIR} ne contient pas le projet. Clonez d'abord le dépôt GitHub."
   exit 1
@@ -53,31 +56,7 @@ else
 fi
 
 echo "==> Dépendances npm"
-# Essayer sans couper le site ; en cas de verrouillage node_modules, arrêt bref.
-if ! run_as_sigh 'npm ci || { echo "⚠️  package-lock désynchronisé — npm install"; npm install; }'; then
-  echo "⚠️  node_modules verrouillé — arrêt temporaire des services"
-  if command -v systemctl >/dev/null 2>&1 && [[ "${EUID:-0}" -eq 0 ]]; then
-    systemctl stop sigh-web sigh-socket 2>/dev/null || true
-    services_running=false
-  fi
-  echo "⚠️  Réinstallation propre de node_modules"
-  if command -v systemctl >/dev/null 2>&1 && [[ "${EUID:-0}" -eq 0 ]]; then
-    systemctl stop sigh-web sigh-socket 2>/dev/null || true
-  fi
-  if [[ -d "${APP_DIR}/node_modules" ]]; then
-    trash="${APP_DIR}/node_modules.trash.$$"
-    mv "${APP_DIR}/node_modules" "${trash}" 2>/dev/null || true
-    if [[ -d "${trash}" ]]; then
-      nohup rm -rf "${trash}" >/dev/null 2>&1 &
-    fi
-  fi
-  rm -rf "${APP_DIR}/node_modules" 2>/dev/null || true
-  mkdir -p "${APP_DIR}/node_modules"
-  if [[ "${EUID:-0}" -eq 0 ]]; then
-    chown -R sigh:sigh "${APP_DIR}"
-  fi
-  run_as_sigh 'npm ci || npm install'
-fi
+npm_install_robust "${APP_DIR}" run_as_sigh
 
 echo "==> Prisma generate + migrations"
 run_as_sigh "npm run db:generate && npm run db:migrate:deploy"

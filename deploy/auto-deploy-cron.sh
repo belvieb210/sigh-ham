@@ -51,6 +51,9 @@ log() { echo "$(date -Iseconds) $*"; }
 
 cd "${APP_DIR}"
 
+# shellcheck source=lib/npm-deps.sh
+source "${APP_DIR}/deploy/lib/npm-deps.sh"
+
 if [[ ! -f .env || ! -f package.json ]]; then
   log "❌ Projet invalide dans ${APP_DIR}"
   exit 1
@@ -120,7 +123,7 @@ fi
 # ── 2. Dépendances + migrations ─────────────────────────────────────────────
 log "==> npm + migrations"
 chown -R sigh:sigh "${APP_DIR}" 2>/dev/null || true
-run_as_sigh 'if ! npm ci 2>/dev/null; then npm install; fi'
+npm_install_robust "${APP_DIR}" run_as_sigh
 run_as_sigh "npm run db:generate"
 run_as_sigh "npm run db:migrate:deploy"
 

@@ -464,7 +464,7 @@ export function CorpsConsultationInfirmiers() {
               type="button"
               disabled={enCours || !dossierId}
               onClick={() => void sauvegarder()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-bleu-medical px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-bleu-medical px-2 py-1.5 text-sm font-medium text-white disabled:opacity-50"
             >
               {enCours ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -476,7 +476,7 @@ export function CorpsConsultationInfirmiers() {
             <button
               type="button"
               onClick={fermerFormulaire}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gris-bordure bg-white px-4 py-2.5 text-sm font-medium text-texte-principal hover:bg-gris-tres-clair"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gris-bordure bg-white px-2 py-1.5 text-sm font-medium text-texte-principal hover:bg-gris-tres-clair"
             >
               <X className="h-4 w-4" />
               {t("infirmiers.consultation.annuler")}
@@ -506,84 +506,11 @@ export function CorpsConsultationInfirmiers() {
           </p>
         ) : (
           <>
-            <ul className="space-y-3 2xl:hidden">
-              {patientsPage.map((p) => {
-                const selectionne =
-                  patientSelectionne?.dossierId === p.dossierId && formulaireOuvert;
-                return (
-                  <li key={p.cleListe}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        selectionnerPatient(p);
-                        setFormulaireOuvert(true);
-                        setMessage(null);
-                        setErreur(null);
-                      }}
-                      className={cn(
-                        "w-full rounded-xl border bg-white p-4 text-left shadow-sm transition-colors",
-                        selectionne
-                          ? "border-bleu-medical bg-bleu-medical-clair/30"
-                          : "border-gris-bordure"
-                      )}
-                    >
-                      <div className="flex items-start gap-3">
-                        <CaseCocheLigne
-                          coche={dossiersCoches.includes(p.dossierId)}
-                          onChange={() => basculerDossierCoche(p.dossierId)}
-                          ariaLabel={p.nomComplet}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="font-semibold text-texte-principal">
-                                {p.nomComplet}
-                              </p>
-                              <p className="font-mono text-[11px] text-texte-secondaire">
-                                {p.numeroPatient} · {p.heure}
-                              </p>
-                            </div>
-                            <span onClick={(e) => e.stopPropagation()}>
-                              <MenuActionsTransfertInfirmiers
-                                patient={p}
-                                onRafraichir={chargerPatients}
-                              />
-                            </span>
-                          </div>
-                          <p className="mt-2 truncate text-xs text-texte-secondaire">
-                            {p.motif}
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <span
-                              className={cn(
-                                "rounded-full px-2 py-0.5 text-[11px] font-medium",
-                                p.orientationCouleur
-                              )}
-                            >
-                              {p.orientation}
-                            </span>
-                            <span
-                              className={cn(
-                                "rounded-full px-2 py-0.5 text-[11px] font-medium",
-                                p.statutCouleur
-                              )}
-                            >
-                              {p.statut}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-
-            <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm 2xl:block">
-            <table className="w-full table-fixed text-left text-sm">
+            <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
+            <table className="tableau-sigh">
               <thead className="border-b border-gris-bordure bg-gris-tres-clair/60 text-xs uppercase tracking-wide text-texte-secondaire">
                 <tr>
-                  <th className="px-3 py-3">
+                  <th className="px-2 py-1.5">
                     <CaseCocheLigne
                       coche={tousCoches}
                       onChange={(coche) =>
@@ -595,26 +522,26 @@ export function CorpsConsultationInfirmiers() {
                       ariaLabel={t("infirmiers.patients.selectionnerTout")}
                     />
                   </th>
-                  <th className="px-3 py-3">ID</th>
-                  <th className="px-3 py-3">
+                  <th className="px-2 py-1.5">ID</th>
+                  <th className="px-2 py-1.5">
                     {t("infirmiers.patients.colonnes.patient")}
                   </th>
-                  <th className="hidden px-3 py-3 md:table-cell">
+                  <th className="hidden px-2 py-1.5 md:table-cell">
                     {t("infirmiers.patients.colonnes.telephone")}
                   </th>
-                  <th className="hidden px-3 py-3 lg:table-cell">
+                  <th className="hidden px-2 py-1.5 lg:table-cell">
                     {t("infirmiers.patients.colonnes.motif")}
                   </th>
-                  <th className="px-3 py-3">
+                  <th className="px-2 py-1.5">
                     {t("infirmiers.patients.colonnes.orientation")}
                   </th>
-                  <th className="px-3 py-3">
+                  <th className="px-2 py-1.5">
                     {t("infirmiers.patients.colonnes.statut")}
                   </th>
-                  <th className="px-3 py-3">
+                  <th className="px-2 py-1.5">
                     {t("infirmiers.patients.colonnes.heure")}
                   </th>
-                  <th className="px-3 py-3">
+                  <th className="px-2 py-1.5">
                     {t("infirmiers.patients.colonnes.actions")}
                   </th>
                 </tr>
@@ -638,7 +565,7 @@ export function CorpsConsultationInfirmiers() {
                       )}
                     >
                       <td
-                        className="px-3 py-3"
+                        className="px-2 py-1.5"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <CaseCocheLigne
@@ -647,20 +574,20 @@ export function CorpsConsultationInfirmiers() {
                           ariaLabel={p.nomComplet}
                         />
                       </td>
-                      <td className="px-3 py-3 font-mono text-[11px] text-texte-secondaire">
+                      <td className="px-2 py-1.5 font-mono text-[11px] text-texte-secondaire">
                         {p.numeroPatient}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-2 py-1.5">
                         <span className="font-bold uppercase">{p.nom}</span>{" "}
                         <span className="lowercase">{p.prenom}</span>
                       </td>
-                      <td className="hidden px-3 py-3 text-texte-secondaire md:table-cell">
+                      <td className="hidden px-2 py-1.5 text-texte-secondaire md:table-cell">
                         {p.telephone}
                       </td>
-                      <td className="hidden max-w-[9rem] truncate px-3 py-3 text-texte-secondaire lg:table-cell">
+                      <td className="hidden max-w-[9rem] truncate px-2 py-1.5 text-texte-secondaire lg:table-cell">
                         {p.motif}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-2 py-1.5">
                         <span
                           className={cn(
                             "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
@@ -670,7 +597,7 @@ export function CorpsConsultationInfirmiers() {
                           {p.orientation}
                         </span>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-2 py-1.5">
                         <span
                           className={cn(
                             "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
@@ -680,11 +607,11 @@ export function CorpsConsultationInfirmiers() {
                           {p.statut}
                         </span>
                       </td>
-                      <td className="px-3 py-3 text-texte-secondaire">
+                      <td className="px-2 py-1.5 text-texte-secondaire">
                         {p.heure}
                       </td>
                       <td
-                        className="px-3 py-3"
+                        className="px-2 py-1.5"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <MenuActionsTransfertInfirmiers

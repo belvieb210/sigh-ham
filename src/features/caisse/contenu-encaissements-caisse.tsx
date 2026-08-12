@@ -172,7 +172,7 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
         ) : rapport ? (
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
             <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-              <div className="border-b border-gris-bordure px-4 py-3">
+              <div className="border-b border-gris-bordure px-2 py-1.5">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
                   {t("caisse.encaissements.ledger")}
                 </h3>
@@ -183,52 +183,16 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
                 </p>
               ) : (
                 <>
-                  <ul className="divide-y divide-gris-bordure 2xl:hidden">
-                    {pageLedger.map((l) => (
-                      <li key={l.id} className="px-4 py-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <Link
-                              href={`/sigh/caisse/facturation?dossier=${l.dossierId}`}
-                              className="block truncate text-sm font-semibold text-bleu-medical"
-                            >
-                              {l.numeroFacture}
-                            </Link>
-                            <p className="mt-0.5 truncate text-sm font-medium text-texte-principal">
-                              {l.patient}
-                            </p>
-                            <p className="mt-1 text-xs text-texte-secondaire">
-                              {formaterHeure(l.payeLe)} · {t(`caisse.modesPaiement.${l.mode}`)}
-                            </p>
-                          </div>
-                          <p className="shrink-0 text-sm font-bold tabular-nums text-texte-principal">
-                            {formaterMontantCaisse(l.montant, l.devise)}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                    <li className="flex items-center justify-between gap-3 bg-gris-tres-clair/40 px-4 py-3">
-                      <span className="text-xs font-bold uppercase tracking-wide text-texte-secondaire">
-                        {t("caisse.encaissements.totalJour")}
-                      </span>
-                      <span className="text-sm font-bold tabular-nums">
-                        {formaterMontantCaisse(
-                          rapport.agregats.encaissementsMontant,
-                          rapport.devise
-                        )}
-                      </span>
-                    </li>
-                  </ul>
-                  <div className="hidden overflow-hidden 2xl:block">
+                  <div className="overflow-hidden">
                   <table className="tableau-sigh">
                     <thead className="bg-gris-tres-clair/80 text-[11px] uppercase tracking-wider text-texte-secondaire">
                       <tr>
-                        <th className="px-4 py-3 font-semibold">{t("caisse.encaissements.heure")}</th>
-                        <th className="px-4 py-3 font-semibold">{t("caisse.encaissements.facture")}</th>
-                        <th className="px-4 py-3 font-semibold">{t("caisse.encaissements.patient")}</th>
-                        <th className="px-4 py-3 font-semibold">{t("caisse.encaissements.mode")}</th>
-                        <th className="px-4 py-3 font-semibold">{t("caisse.encaissements.caissier")}</th>
-                        <th className="px-4 py-3 text-right font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">{t("caisse.encaissements.heure")}</th>
+                        <th className="px-2 py-1.5 font-semibold">{t("caisse.encaissements.facture")}</th>
+                        <th className="px-2 py-1.5 font-semibold">{t("caisse.encaissements.patient")}</th>
+                        <th className="px-2 py-1.5 font-semibold">{t("caisse.encaissements.mode")}</th>
+                        <th className="px-2 py-1.5 font-semibold">{t("caisse.encaissements.caissier")}</th>
+                        <th className="px-2 py-1.5 text-right font-semibold">
                           {t("caisse.encaissements.montant")}
                         </th>
                       </tr>
@@ -239,10 +203,10 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
                           key={l.id}
                           className="border-t border-gris-bordure/80 hover:bg-gris-tres-clair/50"
                         >
-                          <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                          <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">
                             {formaterHeure(l.payeLe)}
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-2 py-1.5">
                             <Link
                               href={`/sigh/caisse/facturation?dossier=${l.dossierId}`}
                               className="font-semibold text-bleu-medical hover:underline"
@@ -250,14 +214,14 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
                               {l.numeroFacture}
                             </Link>
                           </td>
-                          <td className="px-4 py-3 font-medium text-texte-principal">
+                          <td className="px-2 py-1.5 font-medium text-texte-principal">
                             {l.patient}
                           </td>
-                          <td className="px-4 py-3 text-texte-secondaire">
+                          <td className="px-2 py-1.5 text-texte-secondaire">
                             {t(`caisse.modesPaiement.${l.mode}`)}
                           </td>
-                          <td className="px-4 py-3 text-texte-secondaire">{l.caissier}</td>
-                          <td className="px-4 py-3 text-right font-bold tabular-nums">
+                          <td className="px-2 py-1.5 text-texte-secondaire">{l.caissier}</td>
+                          <td className="px-2 py-1.5 text-right font-bold tabular-nums">
                             {formaterMontantCaisse(l.montant, l.devise)}
                           </td>
                         </tr>
@@ -267,11 +231,11 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
                       <tr className="border-t-2 border-gris-bordure bg-gris-tres-clair/40">
                         <td
                           colSpan={5}
-                          className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-texte-secondaire"
+                          className="px-2 py-1.5 text-right text-xs font-bold uppercase tracking-wide text-texte-secondaire"
                         >
                           {t("caisse.encaissements.totalJour")}
                         </td>
-                        <td className="px-4 py-3 text-right text-sm font-bold tabular-nums">
+                        <td className="px-2 py-1.5 text-right text-sm font-bold tabular-nums">
                           {formaterMontantCaisse(
                             rapport.agregats.encaissementsMontant,
                             rapport.devise
@@ -283,7 +247,7 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
                   </div>
                 </>
               )}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-4 py-3 text-xs text-texte-secondaire print:hidden">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-2 py-1.5 text-xs text-texte-secondaire print:hidden">
                 <p>
                   {t("caisse.encaissements.pagination", {
                     debut: ledger.length === 0 ? 0 : debut + 1,

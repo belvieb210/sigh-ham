@@ -275,38 +275,14 @@ export function ContenuHistoriqueInfirmiers({ utilisateur }: Props) {
           <p className="text-sm text-texte-secondaire">{t("infirmiers.historique.vide")}</p>
         ) : (
           <>
-            <div className="space-y-3 2xl:hidden">
-              {patientsPage.map((p) => (
-                <button
-                  key={p.dossierId}
-                  type="button"
-                  onClick={() => setPatientSelectionne(p)}
-                  className={cn(
-                    "block w-full rounded-xl border bg-white p-4 text-left shadow-sm",
-                    patientSelectionne?.dossierId === p.dossierId
-                      ? "border-bleu-medical ring-1 ring-bleu-medical"
-                      : "border-gris-bordure"
-                  )}
-                >
-                  <p className="font-semibold text-texte-principal">{p.nomComplet}</p>
-                  <p className="font-mono text-xs text-texte-secondaire">
-                    {p.numeroDossier} · {formaterMesure(p.derniereMesureLe)}
-                  </p>
-                  <p className="mt-1 text-xs text-texte-secondaire">
-                    {p.nbConsultations} consultation(s)
-                  </p>
-                </button>
-              ))}
-            </div>
-
-            <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white 2xl:block">
+            <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white">
               <table className="tableau-sigh">
                 <thead className="border-b border-gris-bordure bg-slate-50 text-xs uppercase text-texte-secondaire">
                   <tr>
-                    <th className="px-4 py-3">{t("infirmiers.historique.colonnes.patient")}</th>
-                    <th className="px-4 py-3">{t("infirmiers.historique.colonnes.mesure")}</th>
-                    <th className="px-4 py-3">{t("infirmiers.historique.colonnes.resume")}</th>
-                    <th className="px-4 py-3">{t("infirmiers.historique.nbConsultations")}</th>
+                    <th className="px-2 py-1.5">{t("infirmiers.historique.colonnes.patient")}</th>
+                    <th className="px-2 py-1.5">{t("infirmiers.historique.colonnes.mesure")}</th>
+                    <th className="px-2 py-1.5">{t("infirmiers.historique.colonnes.resume")}</th>
+                    <th className="px-2 py-1.5">{t("infirmiers.historique.nbConsultations")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -322,16 +298,16 @@ export function ContenuHistoriqueInfirmiers({ utilisateur }: Props) {
                           selectionne && "bg-bleu-medical-clair/40"
                         )}
                       >
-                        <td className="px-4 py-3">
+                        <td className="px-2 py-1.5">
                           <p className="font-medium text-texte-principal">{p.nomComplet}</p>
                           <p className="font-mono text-xs text-texte-secondaire">
                             {p.numeroDossier}
                           </p>
                         </td>
-                        <td className="px-4 py-3 text-texte-secondaire">
+                        <td className="px-2 py-1.5 text-texte-secondaire">
                           {formaterMesure(p.derniereMesureLe)}
                         </td>
-                        <td className="px-4 py-3 text-xs text-texte-secondaire">
+                        <td className="px-2 py-1.5 text-xs text-texte-secondaire">
                           {c ? (
                             <>
                               T° {c.temperature ?? "—"} · Poids {c.poidsKg ?? "—"} · TA{" "}
@@ -341,7 +317,7 @@ export function ContenuHistoriqueInfirmiers({ utilisateur }: Props) {
                             "—"
                           )}
                         </td>
-                        <td className="px-4 py-3 text-texte-secondaire">
+                        <td className="px-2 py-1.5 text-texte-secondaire">
                           {p.nbConsultations}
                         </td>
                       </tr>

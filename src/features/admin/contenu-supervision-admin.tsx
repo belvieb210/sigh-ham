@@ -83,18 +83,18 @@ export function ContenuSupervisionAdmin({
               <table className="tableau-sigh">
                 <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
                   <tr>
-                    <th className="px-4 py-3">{t("admin.services.colonnes.service")}</th>
-                    <th className="px-4 py-3">{t("admin.services.enFile")}</th>
+                    <th className="px-2 py-1.5">{t("admin.services.colonnes.service")}</th>
+                    <th className="px-2 py-1.5">{t("admin.services.enFile")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stats.salles.map((s) => (
                     <tr key={s.code} className="border-t border-gris-bordure">
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-1.5">
                         <p className="font-medium">{s.nom}</p>
                         <p className="text-xs text-texte-secondaire">{s.code}</p>
                       </td>
-                      <td className="px-4 py-3 font-semibold">{s.enFile}</td>
+                      <td className="px-2 py-1.5 font-semibold">{s.enFile}</td>
                     </tr>
                   ))}
                 </tbody>

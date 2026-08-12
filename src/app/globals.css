@@ -134,6 +134,7 @@
     clip-path: polygon(0 0, 100% 0, 96% 100%, 0 100%);
   }
 
+  .tableau-sigh,
   .tableau-liste-labo {
     @apply w-full table-fixed text-left text-xs;
   }

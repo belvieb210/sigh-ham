@@ -321,18 +321,18 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
             <table className="tableau-sigh">
               <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Patient</th>
-                  <th className="hidden px-4 py-3 font-semibold sm:table-cell">
+                  <th className="px-2 py-1.5 font-semibold">Patient</th>
+                  <th className="hidden px-2 py-1.5 font-semibold sm:table-cell">
                     Téléphone
                   </th>
-                  <th className="hidden px-4 py-3 font-semibold md:table-cell">
+                  <th className="hidden px-2 py-1.5 font-semibold md:table-cell">
                     Motif
                   </th>
-                  <th className="hidden px-4 py-3 font-semibold lg:table-cell">
+                  <th className="hidden px-2 py-1.5 font-semibold lg:table-cell">
                     Médecin
                   </th>
-                  <th className="px-4 py-3 font-semibold">Heure</th>
-                  <th className="px-4 py-3 font-semibold text-right">Actions</th>
+                  <th className="px-2 py-1.5 font-semibold">Heure</th>
+                  <th className="px-2 py-1.5 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gris-bordure">
@@ -341,7 +341,7 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
                     key={`${p.dossierId}-${p.consultationId ?? "ord"}`}
                     className="hover:bg-gris-tres-clair/50"
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-1.5">
                       <p className="font-medium text-texte-principal">
                         {p.nomComplet}
                       </p>
@@ -359,19 +359,19 @@ export function ContenuPatientsDuJourMedecins({ utilisateur }: Props) {
                         ) : null}
                       </p>
                     </td>
-                    <td className="hidden px-4 py-3 text-texte-secondaire sm:table-cell">
+                    <td className="hidden px-2 py-1.5 text-texte-secondaire sm:table-cell">
                       {p.telephone || "—"}
                     </td>
-                    <td className="hidden px-4 py-3 text-texte-secondaire md:table-cell">
+                    <td className="hidden px-2 py-1.5 text-texte-secondaire md:table-cell">
                       {p.motif || "—"}
                     </td>
-                    <td className="hidden px-4 py-3 text-texte-secondaire lg:table-cell">
+                    <td className="hidden px-2 py-1.5 text-texte-secondaire lg:table-cell">
                       {p.medecin}
                     </td>
-                    <td className="px-4 py-3 text-texte-secondaire">
+                    <td className="px-2 py-1.5 text-texte-secondaire">
                       {formater(p.debutLe)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-1.5">
                       <div className="flex flex-wrap justify-end gap-2">
                         {p.aConsultation !== false ? (
                           <button

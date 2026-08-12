@@ -243,7 +243,7 @@ export function ContenuNouveauClientPharmacie({
               disabled={busy || !prenom.trim() || !nom.trim()}
               onClick={() => void enregistrer()}
               className={cn(
-                "inline-flex items-center gap-2 rounded-lg bg-bleu-medical px-4 py-2.5 text-sm font-semibold text-white",
+                "inline-flex items-center gap-2 rounded-lg bg-bleu-medical px-2 py-1.5 text-sm font-semibold text-white",
                 "hover:bg-bleu-medical/90 disabled:opacity-50"
               )}
             >
@@ -256,7 +256,7 @@ export function ContenuNouveauClientPharmacie({
             </button>
             <Link
               href="/sigh/pharmacie/vente"
-              className="inline-flex items-center rounded-lg border border-gris-bordure px-4 py-2.5 text-sm font-semibold text-texte-principal hover:bg-gris-tres-clair"
+              className="inline-flex items-center rounded-lg border border-gris-bordure px-2 py-1.5 text-sm font-semibold text-texte-principal hover:bg-gris-tres-clair"
             >
               {t("pharmacie.nouveauClient.allerVente")}
             </Link>
@@ -313,7 +313,7 @@ export function ContenuNouveauClientPharmacie({
           )}
 
           <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-            <div className="border-b border-gris-bordure px-4 py-3">
+            <div className="border-b border-gris-bordure px-2 py-1.5">
               <h3 className="text-xs font-bold uppercase tracking-widest text-texte-principal">
                 {t("pharmacie.nouveauClient.listeTitre", { count: clientsFiltres.length })}
               </h3>
@@ -333,20 +333,20 @@ export function ContenuNouveauClientPharmacie({
                 <table className="tableau-sigh">
                   <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                     <tr>
-                      <th className="px-4 py-2.5">N°</th>
-                      <th className="px-4 py-2.5">{t("pharmacie.vente.colPatient")}</th>
-                      <th className="hidden px-4 py-2.5 sm:table-cell">
+                      <th className="px-2 py-1.5">N°</th>
+                      <th className="px-2 py-1.5">{t("pharmacie.vente.colPatient")}</th>
+                      <th className="hidden px-2 py-1.5 sm:table-cell">
                         {t("pharmacie.nouveauClient.sexe")}
                       </th>
-                      <th className="hidden px-4 py-2.5 md:table-cell">
+                      <th className="hidden px-2 py-1.5 md:table-cell">
                         {t("pharmacie.nouveauClient.age")}
                       </th>
-                      <th className="hidden px-4 py-2.5 lg:table-cell">
+                      <th className="hidden px-2 py-1.5 lg:table-cell">
                         {t("pharmacie.vente.telephone")}
                       </th>
-                      <th className="px-4 py-2.5">{t("pharmacie.vente.dossier")}</th>
-                      <th className="px-4 py-2.5">{t("pharmacie.vente.colHeure")}</th>
-                      <th className="px-4 py-2.5">{t("pharmacie.vente.colActions")}</th>
+                      <th className="px-2 py-1.5">{t("pharmacie.vente.dossier")}</th>
+                      <th className="px-2 py-1.5">{t("pharmacie.vente.colHeure")}</th>
+                      <th className="px-2 py-1.5">{t("pharmacie.vente.colActions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -360,22 +360,22 @@ export function ContenuNouveauClientPharmacie({
                             "bg-bleu-medical-clair/30"
                         )}
                       >
-                        <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                        <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">
                           {index + 1}
                         </td>
-                        <td className="px-4 py-3 font-semibold">{c.nomComplet}</td>
-                        <td className="hidden px-4 py-3 sm:table-cell">
+                        <td className="px-2 py-1.5 font-semibold">{c.nomComplet}</td>
+                        <td className="hidden px-2 py-1.5 sm:table-cell">
                           {libelleSexe(c.sexe)}
                         </td>
-                        <td className="hidden px-4 py-3 md:table-cell">
+                        <td className="hidden px-2 py-1.5 md:table-cell">
                           {c.age ?? "—"}
                         </td>
-                        <td className="hidden px-4 py-3 lg:table-cell">{c.telephone}</td>
-                        <td className="px-4 py-3 font-mono text-xs">{c.numeroDossier}</td>
-                        <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                        <td className="hidden px-2 py-1.5 lg:table-cell">{c.telephone}</td>
+                        <td className="px-2 py-1.5 font-mono text-xs">{c.numeroDossier}</td>
+                        <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">
                           {c.heure}
                         </td>
-                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                           <Link
                             href={`/sigh/pharmacie/vente?dossier=${encodeURIComponent(c.dossierId)}`}
                             className="rounded-lg border border-bleu-medical/30 px-3 py-1.5 text-xs font-semibold text-bleu-medical hover:bg-bleu-medical-clair/40"

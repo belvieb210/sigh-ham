@@ -945,7 +945,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
             )}
 
             <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-3">
+              <div className="flex items-center justify-between border-b border-gris-bordure px-2 py-1.5">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-texte-principal">
                   {t("caisse.facturation.patientsAttentePaiement", {
                     count: fileFiltree.length,
@@ -973,26 +973,26 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                   <table className="tableau-sigh">
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
-                        <th className="px-4 py-2.5 font-semibold">N°</th>
-                        <th className="px-4 py-2.5 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">N°</th>
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.facturation.colPatient")}
                         </th>
-                        <th className="hidden px-4 py-2.5 font-semibold sm:table-cell">
+                        <th className="hidden px-2 py-1.5 font-semibold sm:table-cell">
                           {t("caisse.facturation.colProvenance")}
                         </th>
-                        <th className="px-4 py-2.5 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.facturation.colPrestations")}
                         </th>
-                        <th className="px-4 py-2.5 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.facturation.colMontant")}
                         </th>
-                        <th className="px-4 py-2.5 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.facturation.colStatut")}
                         </th>
-                        <th className="px-4 py-2.5 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.facturation.colHeure")}
                         </th>
-                        <th className="px-4 py-2.5 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.facturation.colActions")}
                         </th>
                       </tr>
@@ -1004,24 +1004,24 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                           onClick={() => selectionnerPatientFile(p)}
                           className="cursor-pointer border-t border-gris-bordure/70 transition-colors hover:bg-slate-50"
                         >
-                          <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                          <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">
                             {index + 1}
                           </td>
-                          <td className="px-4 py-3 font-semibold text-texte-principal">
+                          <td className="px-2 py-1.5 font-semibold text-texte-principal">
                             {p.prenom} {p.nom}
                           </td>
-                          <td className="hidden px-4 py-3 text-texte-secondaire sm:table-cell">
+                          <td className="hidden px-2 py-1.5 text-texte-secondaire sm:table-cell">
                             {p.provenance}
                           </td>
-                          <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                          <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">
                             {p.nombreExamens}
                           </td>
-                          <td className="px-4 py-3 font-semibold text-texte-principal">
+                          <td className="px-2 py-1.5 font-semibold text-texte-principal">
                             {formaterMontantCaisse(
                               p.factureOuverte ? p.resteAPayer : p.montantEstime
                             )}
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-2 py-1.5">
                             <span
                               className={cn(
                                 "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
@@ -1038,10 +1038,10 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                                 : t("caisse.facturation.statutSansFacture")}
                             </span>
                           </td>
-                          <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                          <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">
                             {formaterHeure(p.arriveeLe)}
                           </td>
-                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                             <button
                               type="button"
                               onClick={() => selectionnerPatientFile(p)}
@@ -1158,7 +1158,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               >
                 {/* Lignes facturables (examens ou médicaments) */}
                 <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-                  <div className="border-b border-gris-bordure px-4 py-3">
+                  <div className="border-b border-gris-bordure px-2 py-1.5">
                     <h3 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
                       {modePharmacie
                         ? t("caisse.facturation.medicamentsPrescrits")
@@ -1173,7 +1173,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                     </p>
                   ) : (
                     <>
-                      <div className="hidden overflow-hidden 2xl:block">
+                      <div className="overflow-hidden">
                         <table className="tableau-sigh">
                           <thead className="bg-gris-tres-clair/80 text-[11px] uppercase tracking-wider text-texte-secondaire">
                             <tr>
@@ -1225,44 +1225,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                           </tbody>
                         </table>
                       </div>
-                      <ul className="divide-y divide-gris-bordure 2xl:hidden">
-                        {lignesVisibles.map((l) => (
-                          <li
-                            key={l.id}
-                            className="flex items-start justify-between gap-2 px-4 py-3"
-                          >
-                            <div>
-                              <p className="text-sm font-semibold">{l.libelle}</p>
-                              <p className="text-xs text-texte-secondaire">
-                                {formaterMontantCaisse(l.prixUnitaire, devise)}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-bold">
-                                {formaterMontantCaisse(l.montant, devise)}
-                              </p>
-                              <button
-                                type="button"
-                                aria-label={t("caisse.facturation.supprimerLigne")}
-                                disabled={suppressionLigneId === l.id || enCours || modePharmacie}
-                                onClick={() => void retirerExamen(l)}
-                                className="rounded p-1 text-red-500 disabled:opacity-50"
-                              >
-                                {suppressionLigneId === l.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="h-4 w-4" />
-                                )}
-                              </button>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
+                      </>
                   )}
                   {!modePharmacie && (
                     <div className="relative border-t border-gris-bordure">
-                      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5">
                         <button
                           type="button"
                           onClick={() => setRechercheExamenOuverte((o) => !o)}
@@ -1290,7 +1257,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                     </div>
                   )}
                   {modePharmacie && lignesVisibles.length > 0 && (
-                    <div className="border-t border-gris-bordure px-4 py-3 text-right">
+                    <div className="border-t border-gris-bordure px-2 py-1.5 text-right">
                       <p className="text-sm font-bold text-bleu-medical">
                         {t("caisse.facturation.totalMedicaments")}{" "}
                         {formaterMontantCaisse(totalExamens, devise)}
@@ -1344,7 +1311,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                           }
                         }}
                         className={cn(
-                          "rounded-xl border px-3 py-3 text-left transition-colors",
+                          "rounded-xl border px-2 py-1.5 text-left transition-colors",
                           modeFacture === mode.id
                             ? "border-bleu-medical bg-bleu-medical-clair/40 ring-1 ring-bleu-medical"
                             : modeRefuse
@@ -1712,7 +1679,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
 
             {/* Remplace l'ancien historique : file patients confirmés sans facture */}
             <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-3">
+              <div className="flex items-center justify-between border-b border-gris-bordure px-2 py-1.5">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-texte-principal">
                   {t("caisse.facturation.patientsAttentePaiement", {
                     count: fileFiltree.length,
@@ -1736,26 +1703,26 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                   <table className="tableau-sigh">
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
-                        <th className="px-4 py-2.5 font-semibold">N°</th>
-                        <th className="px-4 py-2.5 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">N°</th>
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.facturation.colPatient")}
                         </th>
-                        <th className="hidden px-4 py-2.5 font-semibold sm:table-cell">
+                        <th className="hidden px-2 py-1.5 font-semibold sm:table-cell">
                           {t("caisse.facturation.colProvenance")}
                         </th>
-                        <th className="px-4 py-2.5 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.facturation.colPrestations")}
                         </th>
-                        <th className="px-4 py-2.5 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.facturation.colMontant")}
                         </th>
-                        <th className="px-4 py-2.5 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.facturation.colStatut")}
                         </th>
-                        <th className="px-4 py-2.5 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.facturation.colHeure")}
                         </th>
-                        <th className="px-4 py-2.5 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.facturation.colActions")}
                         </th>
                       </tr>
@@ -1772,24 +1739,24 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                               actif ? "bg-bleu-medical-clair/50" : "hover:bg-slate-50"
                             )}
                           >
-                            <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                            <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">
                               {index + 1}
                             </td>
-                            <td className="px-4 py-3 font-semibold text-texte-principal">
+                            <td className="px-2 py-1.5 font-semibold text-texte-principal">
                               {p.prenom} {p.nom}
                             </td>
-                            <td className="hidden px-4 py-3 text-texte-secondaire sm:table-cell">
+                            <td className="hidden px-2 py-1.5 text-texte-secondaire sm:table-cell">
                               {p.provenance}
                             </td>
-                            <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                            <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">
                               {p.nombreExamens}
                             </td>
-                            <td className="px-4 py-3 font-semibold text-texte-principal">
+                            <td className="px-2 py-1.5 font-semibold text-texte-principal">
                               {formaterMontantCaisse(
                                 p.factureOuverte ? p.resteAPayer : p.montantEstime
                               )}
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-2 py-1.5">
                               <span
                                 className={cn(
                                   "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
@@ -1806,10 +1773,10 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                                   : t("caisse.facturation.statutSansFacture")}
                               </span>
                             </td>
-                            <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                            <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">
                               {formaterHeure(p.arriveeLe)}
                             </td>
-                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                               <button
                                 type="button"
                                 onClick={() => selectionnerPatientFile(p)}

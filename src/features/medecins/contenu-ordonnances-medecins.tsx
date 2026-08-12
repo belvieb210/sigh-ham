@@ -594,7 +594,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                     className={cn(CLASSE_CHAMP_RECEPTION, "w-28")}
                   />
                 </div>
-                <div className="rounded-lg border border-gris-bordure bg-white px-4 py-3 text-sm">
+                <div className="rounded-lg border border-gris-bordure bg-white px-2 py-1.5 text-sm">
                   <div className="flex justify-between gap-8">
                     <span>Examens</span>
                     <span>{formaterPrixUsd(totalExamens)}</span>
@@ -634,7 +634,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
               type="button"
               disabled={enCours || !dossierId}
               onClick={() => void enregistrer()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-bleu-medical px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-bleu-medical px-2 py-1.5 text-sm font-medium text-white disabled:opacity-50"
             >
               {enCours ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -648,7 +648,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
               disabled={!dossierId}
               onClick={() => setModeEstimation((v) => !v)}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border bg-white px-4 py-2.5 text-sm font-medium",
+                "inline-flex items-center gap-1.5 rounded-lg border bg-white px-2 py-1.5 text-sm font-medium",
                 modeEstimation
                   ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
                   : "border-gris-bordure text-texte-principal hover:bg-gris-tres-clair"
@@ -666,7 +666,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                 setMessage(null);
                 setErreur(null);
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gris-bordure bg-white px-4 py-2.5 text-sm font-medium text-texte-principal hover:bg-gris-tres-clair"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gris-bordure bg-white px-2 py-1.5 text-sm font-medium text-texte-principal hover:bg-gris-tres-clair"
             >
               <X className="h-4 w-4" />
               Annuler
@@ -700,7 +700,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
             <table className="tableau-sigh">
               <thead className="border-b border-gris-bordure bg-gris-tres-clair/60 text-xs uppercase text-texte-secondaire">
                 <tr>
-                  <th className="px-3 py-3">
+                  <th className="px-2 py-1.5">
                     <CaseCocheLigne
                       coche={tousCoches}
                       onChange={(coche) =>
@@ -712,13 +712,13 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                       ariaLabel={t("medecins.patients.selectionnerTout")}
                     />
                   </th>
-                  <th className="px-3 py-3">ID</th>
-                  <th className="px-3 py-3">Patient</th>
-                  <th className="hidden px-3 py-3 md:table-cell">Téléphone</th>
-                  <th className="px-3 py-3">Orientation</th>
-                  <th className="px-3 py-3">Statut</th>
-                  <th className="px-3 py-3">Heure</th>
-                  <th className="px-3 py-3">Actions</th>
+                  <th className="px-2 py-1.5">ID</th>
+                  <th className="px-2 py-1.5">Patient</th>
+                  <th className="hidden px-2 py-1.5 md:table-cell">Téléphone</th>
+                  <th className="px-2 py-1.5">Orientation</th>
+                  <th className="px-2 py-1.5">Statut</th>
+                  <th className="px-2 py-1.5">Heure</th>
+                  <th className="px-2 py-1.5">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -742,7 +742,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                       )}
                     >
                       <td
-                        className="px-3 py-3"
+                        className="px-2 py-1.5"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <CaseCocheLigne
@@ -751,17 +751,17 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                           ariaLabel={p.nomComplet}
                         />
                       </td>
-                      <td className="px-3 py-3 font-mono text-[11px]">
+                      <td className="px-2 py-1.5 font-mono text-[11px]">
                         {p.numeroPatient}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-2 py-1.5">
                         <span className="font-bold uppercase">{p.nom}</span>{" "}
                         <span className="lowercase">{p.prenom}</span>
                       </td>
-                      <td className="hidden px-3 py-3 md:table-cell">
+                      <td className="hidden px-2 py-1.5 md:table-cell">
                         {p.telephone}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-2 py-1.5">
                         <span
                           className={cn(
                             "rounded-full px-2 py-0.5 text-xs font-medium",
@@ -771,7 +771,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                           {p.orientation}
                         </span>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-2 py-1.5">
                         <span
                           className={cn(
                             "rounded-full px-2 py-0.5 text-xs font-medium",
@@ -781,9 +781,9 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                           {p.statut}
                         </span>
                       </td>
-                      <td className="px-3 py-3">{p.heure}</td>
+                      <td className="px-2 py-1.5">{p.heure}</td>
                       <td
-                        className="px-3 py-3"
+                        className="px-2 py-1.5"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <MenuActionsTransfertMedecins

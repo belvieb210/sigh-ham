@@ -258,7 +258,7 @@ export function ListePatientsTransfertsCaisse() {
         {cartes.map((c) => (
           <div
             key={c.label}
-            className="rounded-xl border border-gris-bordure bg-white px-4 py-3 shadow-sm"
+            className="rounded-xl border border-gris-bordure bg-white px-2 py-1.5 shadow-sm"
           >
             <p className="text-[11px] font-semibold uppercase tracking-wide text-texte-secondaire">
               {c.label}
@@ -316,7 +316,7 @@ export function ListePatientsTransfertsCaisse() {
       )}
 
       <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-        <div className="border-b border-gris-bordure px-4 py-3">
+        <div className="border-b border-gris-bordure px-2 py-1.5">
           <h3 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
             {t("caisse.transferts.tableau")}
           </h3>
@@ -330,87 +330,11 @@ export function ListePatientsTransfertsCaisse() {
           </p>
         ) : (
           <>
-            <ul className="divide-y divide-gris-bordure 2xl:hidden">
-              {pagePatients.map((p) => {
-                const selectionne = patientSelectionne?.cleListe === p.cleListe;
-                return (
-                  <li
-                    key={p.cleListe}
-                    onClick={() => selectionnerPatient(p)}
-                    className={cn(
-                      "cursor-pointer px-4 py-3 transition-colors",
-                      selectionne ? "bg-bleu-medical-clair/40" : "hover:bg-slate-50"
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 flex-1 items-start gap-2">
-                        <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
-                          <CaseCocheLigne
-                            coche={dossiersCoches.includes(p.dossierId)}
-                            onChange={() => basculerDossierCoche(p.dossierId)}
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-texte-principal">
-                          {p.nomComplet}
-                        </p>
-                        <p className="mt-0.5 font-mono text-[11px] text-texte-secondaire">
-                          {p.numeroPatient}
-                        </p>
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          <span
-                            className={cn(
-                              "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                              p.orientationCouleur
-                            )}
-                          >
-                            {p.orientation}
-                          </span>
-                          <span
-                            className={cn(
-                              "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                              p.statutCouleur
-                            )}
-                          >
-                            {p.statut}
-                          </span>
-                          <span className="text-xs tabular-nums text-texte-secondaire">
-                            {p.heure}
-                          </span>
-                        </div>
-                        </div>
-                      </div>
-                      <div
-                        className="flex shrink-0 items-center gap-1.5"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            selectionnerPatient(p);
-                            setPatientExamens(p);
-                            setModaleExamensOuverte(true);
-                          }}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:border-bleu-medical/40 hover:text-bleu-medical"
-                          aria-label={t("caisse.transferts.voirExamens")}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <MenuActionsTransfertCaisse
-                          patient={p}
-                          onRafraichir={() => void charger({ silencieux: true })}
-                        />
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-            <div className="hidden overflow-hidden 2xl:block">
-            <table className="min-w-full text-left text-sm">
+            <div className="overflow-hidden">
+            <table className="tableau-sigh">
               <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                 <tr>
-                  <th className="w-10 px-3 py-2.5">
+                  <th className="w-8 px-3 py-2.5">
                     <CaseCocheLigne
                       coche={
                         pagePatients.length > 0 &&
@@ -425,20 +349,20 @@ export function ListePatientsTransfertsCaisse() {
                       ariaLabel={t("caisse.transferts.selectionnerTout")}
                     />
                   </th>
-                  <th className="px-4 py-2.5 font-semibold">ID</th>
-                  <th className="px-4 py-2.5 font-semibold">{t("caisse.transferts.colNom")}</th>
-                  <th className="hidden px-4 py-2.5 font-semibold md:table-cell">
+                  <th className="px-2 py-1.5 font-semibold">ID</th>
+                  <th className="px-2 py-1.5 font-semibold">{t("caisse.transferts.colNom")}</th>
+                  <th className="hidden px-2 py-1.5 font-semibold md:table-cell">
                     {t("caisse.transferts.colTelephone")}
                   </th>
-                  <th className="hidden px-4 py-2.5 font-semibold lg:table-cell">
+                  <th className="hidden px-2 py-1.5 font-semibold lg:table-cell">
                     {t("caisse.transferts.colProvenance")}
                   </th>
-                  <th className="px-4 py-2.5 font-semibold">
+                  <th className="px-2 py-1.5 font-semibold">
                     {t("caisse.transferts.colOrientation")}
                   </th>
-                  <th className="px-4 py-2.5 font-semibold">{t("caisse.transferts.colStatut")}</th>
-                  <th className="px-4 py-2.5 font-semibold">{t("caisse.transferts.colHeure")}</th>
-                  <th className="px-4 py-2.5 font-semibold">{t("caisse.transferts.colActions")}</th>
+                  <th className="px-2 py-1.5 font-semibold">{t("caisse.transferts.colStatut")}</th>
+                  <th className="px-2 py-1.5 font-semibold">{t("caisse.transferts.colHeure")}</th>
+                  <th className="px-2 py-1.5 font-semibold">{t("caisse.transferts.colActions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -453,16 +377,16 @@ export function ListePatientsTransfertsCaisse() {
                         selectionne ? "bg-bleu-medical-clair/40" : "hover:bg-slate-50"
                       )}
                     >
-                      <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                         <CaseCocheLigne
                           coche={dossiersCoches.includes(p.dossierId)}
                           onChange={() => basculerDossierCoche(p.dossierId)}
                         />
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-texte-secondaire">
+                      <td className="px-2 py-1.5 font-mono text-xs text-texte-secondaire">
                         {p.numeroPatient}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-1.5">
                         <span className="block font-semibold text-texte-principal">
                           {p.nomComplet}
                         </span>
@@ -470,13 +394,13 @@ export function ListePatientsTransfertsCaisse() {
                           {p.nombreExamens} examen(s) · {formaterMontantCaisse(p.montantEstime)}
                         </span>
                       </td>
-                      <td className="hidden px-4 py-3 text-texte-secondaire md:table-cell">
+                      <td className="hidden px-2 py-1.5 text-texte-secondaire md:table-cell">
                         {p.telephone}
                       </td>
-                      <td className="hidden max-w-[160px] truncate px-4 py-3 text-texte-secondaire lg:table-cell">
+                      <td className="hidden max-w-[160px] truncate px-2 py-1.5 text-texte-secondaire lg:table-cell">
                         {p.provenance}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-1.5">
                         <span
                           className={cn(
                             "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
@@ -486,7 +410,7 @@ export function ListePatientsTransfertsCaisse() {
                           {p.orientation}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-1.5">
                         <span
                           className={cn(
                             "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
@@ -496,8 +420,8 @@ export function ListePatientsTransfertsCaisse() {
                           {p.statut}
                         </span>
                       </td>
-                      <td className="px-4 py-3 tabular-nums text-texte-secondaire">{p.heure}</td>
-                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">{p.heure}</td>
+                      <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1.5">
                           <button
                             type="button"
@@ -526,7 +450,7 @@ export function ListePatientsTransfertsCaisse() {
           </>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-4 py-3 text-xs text-texte-secondaire">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-2 py-1.5 text-xs text-texte-secondaire">
           <p>
             {t("caisse.transferts.pagination", {
               debut: filtres.length === 0 ? 0 : debut + 1,

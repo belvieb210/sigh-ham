@@ -102,12 +102,11 @@ function ListeTransferes({
           </p>
         </div>
       ) : (
-        <>
-          <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm 2xl:block">
+          <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
             <table className="tableau-sigh">
               <thead className="border-b border-gris-bordure bg-gris-tres-clair/60 text-xs uppercase tracking-wide text-texte-secondaire">
                 <tr>
-                  <th className="px-3 py-3">
+                  <th className="px-2 py-1.5">
                     <CaseCocheLigne
                       coche={tousCoches}
                       onChange={(coche) =>
@@ -119,13 +118,13 @@ function ListeTransferes({
                       ariaLabel={t("medecins.patients.selectionnerTout")}
                     />
                   </th>
-                  <th className="px-3 py-3">{t("medecins.patients.colonnes.patient")}</th>
-                  <th className="px-3 py-3">{t("medecins.patients.colonnes.telephone")}</th>
-                  <th className="px-3 py-3">{t("medecins.patients.colonnes.motif")}</th>
-                  <th className="px-3 py-3">{t("medecins.patients.colonnes.orientation")}</th>
-                  <th className="px-3 py-3">{t("medecins.patients.colonnes.statut")}</th>
-                  <th className="px-3 py-3">{t("medecins.patients.colonnes.heure")}</th>
-                  <th className="px-3 py-3">{t("medecins.patients.colonnes.actions")}</th>
+                  <th className="px-2 py-1.5">{t("medecins.patients.colonnes.patient")}</th>
+                  <th className="px-2 py-1.5">{t("medecins.patients.colonnes.telephone")}</th>
+                  <th className="px-2 py-1.5">{t("medecins.patients.colonnes.motif")}</th>
+                  <th className="px-2 py-1.5">{t("medecins.patients.colonnes.orientation")}</th>
+                  <th className="px-2 py-1.5">{t("medecins.patients.colonnes.statut")}</th>
+                  <th className="px-2 py-1.5">{t("medecins.patients.colonnes.heure")}</th>
+                  <th className="px-2 py-1.5">{t("medecins.patients.colonnes.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -140,14 +139,14 @@ function ListeTransferes({
                         selectionne && "bg-bleu-medical-clair/40"
                       )}
                     >
-                      <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                         <CaseCocheLigne
                           coche={dossiersCoches.includes(p.dossierId)}
                           onChange={() => basculerDossierCoche(p.dossierId)}
                           ariaLabel={p.nomComplet}
                         />
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-2 py-1.5">
                         <p className="font-medium text-texte-principal">
                           <span className="font-bold uppercase">{p.nom}</span>{" "}
                           <span className="font-normal lowercase">{p.prenom}</span>
@@ -156,11 +155,11 @@ function ListeTransferes({
                           {p.numeroPatient}
                         </p>
                       </td>
-                      <td className="px-3 py-3 text-texte-secondaire">{p.telephone}</td>
-                      <td className="max-w-[10rem] truncate px-3 py-3 text-texte-secondaire">
+                      <td className="px-2 py-1.5 text-texte-secondaire">{p.telephone}</td>
+                      <td className="max-w-[10rem] truncate px-2 py-1.5 text-texte-secondaire">
                         {p.motif}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-2 py-1.5">
                         <span
                           className={cn(
                             "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
@@ -170,7 +169,7 @@ function ListeTransferes({
                           {p.orientation}
                         </span>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-2 py-1.5">
                         <span
                           className={cn(
                             "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
@@ -180,8 +179,8 @@ function ListeTransferes({
                           {p.statut}
                         </span>
                       </td>
-                      <td className="px-3 py-3 text-texte-secondaire">{p.heure}</td>
-                      <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-2 py-1.5 text-texte-secondaire">{p.heure}</td>
+                      <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                         <MenuActionsTransfertMedecins
                           patient={p}
                           onRafraichir={onRafraichir}
@@ -193,62 +192,6 @@ function ListeTransferes({
               </tbody>
             </table>
           </div>
-
-          <ul className="space-y-3 2xl:hidden">
-            {filtrés.map((p) => {
-              const selectionne = patientSelectionne?.dossierId === p.dossierId;
-              return (
-                <li key={p.cleListe}>
-                  <button
-                    type="button"
-                    onClick={() => selectionnerPatient(p)}
-                    className={cn(
-                      "w-full rounded-xl border bg-white p-4 text-left shadow-sm",
-                      selectionne
-                        ? "border-bleu-medical bg-bleu-medical-clair/30"
-                        : "border-gris-bordure"
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-semibold text-texte-principal">
-                          {p.nomComplet}
-                        </p>
-                        <p className="font-mono text-[11px] text-texte-secondaire">
-                          {p.numeroPatient}
-                        </p>
-                      </div>
-                      <span onClick={(e) => e.stopPropagation()}>
-                        <MenuActionsTransfertMedecins
-                          patient={p}
-                          onRafraichir={onRafraichir}
-                        />
-                      </span>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-[11px] font-medium",
-                          p.orientationCouleur
-                        )}
-                      >
-                        {p.orientation}
-                      </span>
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-[11px] font-medium",
-                          p.statutCouleur
-                        )}
-                      >
-                        {p.statut}
-                      </span>
-                    </div>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </>
       )}
     </div>
   );

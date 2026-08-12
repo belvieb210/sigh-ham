@@ -617,7 +617,7 @@ export function TableauPatients({
   return (
     <section className="rounded-xl border border-gris-bordure bg-white shadow-sm">
       {afficherEnTete && (
-        <div className="border-b border-gris-bordure px-4 py-3 lg:px-5 lg:py-4">
+        <div className="border-b border-gris-bordure px-2 py-1.5 lg:px-5 lg:py-4">
           <h2 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
             {titre}
             {multi && dossiersCoches && dossiersCoches.length > 0
@@ -627,38 +627,12 @@ export function TableauPatients({
         </div>
       )}
 
-      {/* Cartes mobile / tablette */}
-      <div className={`space-y-3 2xl:hidden ${compact ? "p-3" : "p-3 sm:p-4"}`}>
-        {patients.length === 0 ? (
-          <p className="py-8 text-center text-sm text-texte-secondaire">
-            {t("reception.erreurs.aucunPatientCourt")}
-          </p>
-        ) : (
-          patients.map((patient) => (
-            <CartePatientEnregistre
-              key={patient.cleListe}
-              patient={patient}
-              selectionne={patient.id === patientSelectionneId}
-              onSelectionner={onSelectionnerPatient}
-              coche={
-                Boolean(patient.dossierId && dossiersCoches?.includes(patient.dossierId))
-              }
-              onBasculerCoche={onBasculerCoche}
-              varianteActions={varianteActions}
-              onRafraichirTransferts={onRafraichirTransferts}
-              onVoirExamens={onVoirExamens}
-            />
-          ))
-        )}
-      </div>
-
-      {/* Tableau desktop */}
-      <div className="hidden overflow-hidden 2xl:block">
+      <div className="overflow-hidden">
         <table className="tableau-sigh">
           <thead>
-            <tr className="border-b border-gris-bordure bg-gris-tres-clair/80 text-xs font-semibold uppercase tracking-wide text-texte-secondaire">
+            <tr className="border-b border-gris-bordure bg-gris-tres-clair/80 text-[10px] font-semibold uppercase tracking-wide text-texte-secondaire">
               {multi ? (
-                <th className="w-10 px-3 py-3.5">
+                <th className="w-8 px-1.5 py-1.5">
                   <CaseCocheLigne
                     coche={
                       patients.length > 0 &&
@@ -670,14 +644,20 @@ export function TableauPatients({
                   />
                 </th>
               ) : null}
-              <th className="px-5 py-3.5">{t("reception.liste.colonnes.id")}</th>
-              <th className="px-5 py-3.5">{t("reception.liste.colonnes.nom")}</th>
-              <th className="px-5 py-3.5">{t("reception.liste.colonnes.telephone")}</th>
-              <th className="px-5 py-3.5">{t("reception.liste.colonnes.motif")}</th>
-              <th className="px-5 py-3.5">{t("reception.liste.colonnes.orientation")}</th>
-              <th className="px-5 py-3.5">{t("reception.liste.colonnes.statut")}</th>
-              <th className="px-5 py-3.5">{t("reception.liste.colonnes.heure")}</th>
-              <th className="px-5 py-3.5">{t("reception.liste.colonnes.actions")}</th>
+              <th className="px-2 py-1.5">{t("reception.liste.colonnes.id")}</th>
+              <th className="px-2 py-1.5">{t("reception.liste.colonnes.nom")}</th>
+              <th className="hidden px-2 py-1.5 md:table-cell">
+                {t("reception.liste.colonnes.telephone")}
+              </th>
+              <th className="hidden px-2 py-1.5 lg:table-cell">
+                {t("reception.liste.colonnes.motif")}
+              </th>
+              <th className="px-2 py-1.5">{t("reception.liste.colonnes.orientation")}</th>
+              <th className="px-2 py-1.5">{t("reception.liste.colonnes.statut")}</th>
+              <th className="hidden px-2 py-1.5 sm:table-cell">
+                {t("reception.liste.colonnes.heure")}
+              </th>
+              <th className="w-[72px] px-1.5 py-1.5">{t("reception.liste.colonnes.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -685,7 +665,7 @@ export function TableauPatients({
               <tr>
                 <td
                   colSpan={multi ? 9 : 8}
-                  className="px-5 py-12 text-center text-sm text-texte-secondaire"
+                  className="px-2 py-8 text-center text-sm text-texte-secondaire"
                 >
                   {t("reception.liste.aucunPatient")}
                 </td>
@@ -702,7 +682,7 @@ export function TableauPatients({
                   )}
                 >
                   {multi ? (
-                    <td className="px-3 py-3.5" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-1.5 py-1.5" onClick={(e) => e.stopPropagation()}>
                       <CaseCocheLigne
                         coche={Boolean(
                           patient.dossierId && dossiersCoches?.includes(patient.dossierId)
@@ -711,24 +691,30 @@ export function TableauPatients({
                       />
                     </td>
                   ) : null}
-                  <td className="px-5 py-3.5 font-mono text-xs text-texte-secondaire">
+                  <td className="px-2 py-1.5 font-mono text-[11px] text-texte-secondaire">
                     {patient.id}
                   </td>
-                  <td className="px-5 py-3.5 font-semibold text-texte-principal">
-                    {patient.nom}
+                  <td className="px-2 py-1.5">
+                    <p className="truncate text-xs font-semibold text-texte-principal">
+                      {patient.nom}
+                    </p>
                   </td>
-                  <td className="px-5 py-3.5 text-texte-secondaire">{patient.telephone}</td>
-                  <td className="px-5 py-3.5 text-texte-secondaire">{patient.motif}</td>
-                  <td className="px-5 py-3.5">
+                  <td className="hidden px-2 py-1.5 text-[11px] text-texte-secondaire md:table-cell">
+                    {patient.telephone}
+                  </td>
+                  <td className="hidden max-w-[8rem] truncate px-2 py-1.5 text-[11px] text-texte-secondaire lg:table-cell">
+                    {patient.motif}
+                  </td>
+                  <td className="px-2 py-1.5">
                     <BadgeOrientation patient={patient} />
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-2 py-1.5">
                     <BadgeStatut patient={patient} />
                   </td>
-                  <td className="px-5 py-3.5 tabular-nums text-texte-secondaire">
+                  <td className="hidden px-2 py-1.5 tabular-nums text-[11px] text-texte-secondaire sm:table-cell">
                     {patient.heure}
                   </td>
-                  <td className="relative overflow-visible px-5 py-3.5">
+                  <td className="relative overflow-visible px-1.5 py-1.5">
                     <ActionsPatient
                       patient={patient}
                       onSelectionner={onSelectionnerPatient}

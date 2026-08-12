@@ -350,106 +350,29 @@ export function ContenuFacturesJourCaisse({
                 </p>
               ) : (
                 <>
-                <ul className="divide-y divide-gris-bordure 2xl:hidden">
-                  {facturesPage.map((f) => {
-                    const statutUi = statutAffiche(f);
-                    const actif = factureSelectionnee?.id === f.id;
-                    const nb = f.nombreLignes || f.nombreExamens;
-                    return (
-                      <li key={f.id}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectionId(f.id);
-                            setMenuOuvertId(null);
-                          }}
-                          className={cn(
-                            "flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition-colors",
-                            actif ? "bg-bleu-medical-clair/40" : "hover:bg-gris-tres-clair/60"
-                          )}
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold text-bleu-medical">
-                              {f.numeroFacture}
-                            </p>
-                            <p className="mt-0.5 truncate text-sm font-medium text-texte-principal">
-                              {f.prenom} {f.nom}
-                            </p>
-                            <p className="mt-1 text-xs text-texte-secondaire">
-                              {t("caisse.factures.nbExamens", { count: nb })} ·{" "}
-                              {libelleModePaiement(f)}
-                            </p>
-                            <p className="mt-1 text-sm font-bold tabular-nums text-texte-principal">
-                              {formaterMontantCaisse(f.montantTotal, f.devise)}
-                            </p>
-                          </div>
-                          <div className="flex shrink-0 flex-col items-end gap-2">
-                            <span className={classeStatutUi(statutUi)}>
-                              {t(`caisse.factures.statutsUi.${statutUi}`)}
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectionId(f.id);
-                                  imprimerRecuCaisseThermique(f);
-                                }}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire"
-                                aria-label={t("caisse.factures.imprimer")}
-                              >
-                                <Printer className="h-3.5 w-3.5" />
-                              </button>
-                              {f.isPharmacie ? (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    ouvrirFacturePharma(f);
-                                  }}
-                                  className="inline-flex rounded-lg border border-bleu-medical px-2.5 py-1 text-xs font-semibold text-bleu-medical"
-                                >
-                                  {t("caisse.factures.facturePharma")}
-                                </button>
-                              ) : (
-                                <Link
-                                  href={`/sigh/caisse/facturation?dossier=${f.dossierId}&facture=${f.id}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="inline-flex rounded-lg border border-bleu-medical px-2.5 py-1 text-xs font-semibold text-bleu-medical"
-                                >
-                                  {t("caisse.factures.ouvrirFacturation")}
-                                </Link>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <div className="hidden overflow-hidden 2xl:block">
+                <div className="overflow-hidden">
                   <table className="tableau-sigh">
                     <thead className="bg-gris-tres-clair/80 text-[11px] uppercase tracking-wider text-texte-secondaire">
                       <tr>
-                        <th className="px-4 py-3 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.factures.numero")}
                         </th>
-                        <th className="px-4 py-3 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.factures.patient")}
                         </th>
-                        <th className="px-4 py-3 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.factures.examens")}
                         </th>
-                        <th className="px-4 py-3 font-semibold text-right">
+                        <th className="px-2 py-1.5 font-semibold text-right">
                           {t("caisse.factures.montant")}
                         </th>
-                        <th className="px-4 py-3 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.factures.modePaiement")}
                         </th>
-                        <th className="px-4 py-3 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("caisse.factures.statut")}
                         </th>
-                        <th className="px-4 py-3 font-semibold text-center">
+                        <th className="px-2 py-1.5 font-semibold text-center">
                           {t("caisse.factures.action")}
                         </th>
                       </tr>
@@ -473,12 +396,12 @@ export function ContenuFacturesJourCaisse({
                                 : "hover:bg-gris-tres-clair/60"
                             )}
                           >
-                            <td className="px-4 py-3">
+                            <td className="px-2 py-1.5">
                               <span className="font-semibold text-bleu-medical">
                                 {f.numeroFacture}
                               </span>
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-2 py-1.5">
                               <p className="font-semibold text-texte-principal">
                                 {f.prenom} {f.nom}
                               </p>
@@ -486,21 +409,21 @@ export function ContenuFacturesJourCaisse({
                                 ID: {f.numeroPatient}
                               </p>
                             </td>
-                            <td className="px-4 py-3 font-semibold text-texte-principal">
+                            <td className="px-2 py-1.5 font-semibold text-texte-principal">
                               {t("caisse.factures.nbExamens", { count: nb })}
                             </td>
-                            <td className="px-4 py-3 text-right font-bold tabular-nums text-texte-principal">
+                            <td className="px-2 py-1.5 text-right font-bold tabular-nums text-texte-principal">
                               {formaterMontantCaisse(f.montantTotal, f.devise)}
                             </td>
-                            <td className="px-4 py-3 text-texte-secondaire">
+                            <td className="px-2 py-1.5 text-texte-secondaire">
                               {libelleModePaiement(f)}
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-2 py-1.5">
                               <span className={classeStatutUi(statutUi)}>
                                 {t(`caisse.factures.statutsUi.${statutUi}`)}
                               </span>
                             </td>
-                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                               <div className="relative flex items-center justify-center gap-1.5">
                                 <button
                                   type="button"
@@ -598,7 +521,7 @@ export function ContenuFacturesJourCaisse({
                     </tbody>
                   </table>
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-4 py-3 text-xs text-texte-secondaire">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-2 py-1.5 text-xs text-texte-secondaire">
                   <p>
                     {t("caisse.factures.pagination", {
                       debut: facturesFiltrees.length === 0 ? 0 : debut + 1,
@@ -783,7 +706,7 @@ export function ContenuFacturesJourCaisse({
                       <button
                         type="button"
                         onClick={() => imprimerRecuCaisseThermique(factureSelectionnee)}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-bleu-medical bg-white px-4 py-2.5 text-sm font-semibold text-bleu-medical hover:bg-bleu-medical-clair"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-bleu-medical bg-white px-2 py-1.5 text-sm font-semibold text-bleu-medical hover:bg-bleu-medical-clair"
                       >
                         <Printer className="h-4 w-4" />
                         {t("caisse.factures.imprimer")}
@@ -792,14 +715,14 @@ export function ContenuFacturesJourCaisse({
                         <button
                           type="button"
                           onClick={() => ouvrirFacturePharma(factureSelectionnee)}
-                          className="inline-flex w-full items-center justify-center rounded-lg bg-bleu-medical px-4 py-2.5 text-sm font-semibold text-white hover:bg-bleu-medical-fonce"
+                          className="inline-flex w-full items-center justify-center rounded-lg bg-bleu-medical px-2 py-1.5 text-sm font-semibold text-white hover:bg-bleu-medical-fonce"
                         >
                           {t("caisse.factures.facturePharma")}
                         </button>
                       ) : (
                         <Link
                           href={`/sigh/caisse/facturation?dossier=${factureSelectionnee.dossierId}&facture=${factureSelectionnee.id}`}
-                          className="inline-flex w-full items-center justify-center rounded-lg bg-bleu-medical px-4 py-2.5 text-sm font-semibold text-white hover:bg-bleu-medical-fonce"
+                          className="inline-flex w-full items-center justify-center rounded-lg bg-bleu-medical px-2 py-1.5 text-sm font-semibold text-white hover:bg-bleu-medical-fonce"
                         >
                           {t("caisse.factures.ouvrirFacturation")}
                         </Link>

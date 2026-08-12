@@ -96,7 +96,7 @@ export function ContenuCertificatsEglise({
         />
 
         {message && (
-          <p className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          <p className="mt-4 rounded-lg border border-green-200 bg-green-50 px-2 py-1.5 text-sm text-green-800">
             {message}
           </p>
         )}
@@ -106,7 +106,7 @@ export function ContenuCertificatsEglise({
             {t("eglise.common.chargement")}
           </p>
         ) : erreur ? (
-          <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-sm text-red-700">
             {erreur}
           </p>
         ) : items.length === 0 ? (
@@ -123,30 +123,30 @@ export function ContenuCertificatsEglise({
             <table className="tableau-sigh">
               <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
                 <tr>
-                  <th className="px-4 py-3">{t("eglise.certificats.patient")}</th>
-                  <th className="px-4 py-3">{t("eglise.certificats.paroisse")}</th>
-                  <th className="px-4 py-3">{t("eglise.certificats.conjoint")}</th>
-                  <th className="px-4 py-3">{t("eglise.certificats.dateMariage")}</th>
-                  <th className="px-4 py-3" />
+                  <th className="px-2 py-1.5">{t("eglise.certificats.patient")}</th>
+                  <th className="px-2 py-1.5">{t("eglise.certificats.paroisse")}</th>
+                  <th className="px-2 py-1.5">{t("eglise.certificats.conjoint")}</th>
+                  <th className="px-2 py-1.5">{t("eglise.certificats.dateMariage")}</th>
+                  <th className="px-2 py-1.5" />
                 </tr>
               </thead>
               <tbody>
                 {items.map((item) => (
                   <tr key={item.id} className="border-t border-gris-bordure">
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-1.5">
                       <p className="font-medium">{item.patient}</p>
                       <p className="text-xs text-texte-secondaire">
                         {item.numeroDossier}
                       </p>
                     </td>
-                    <td className="px-4 py-3">{item.paroisse || "—"}</td>
-                    <td className="px-4 py-3">{item.conjointNom || "—"}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-1.5">{item.paroisse || "—"}</td>
+                    <td className="px-2 py-1.5">{item.conjointNom || "—"}</td>
+                    <td className="px-2 py-1.5">
                       {item.dateMariage
                         ? new Date(item.dateMariage).toLocaleDateString("fr-FR")
                         : "—"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-1.5">
                       <div className="flex flex-wrap justify-end gap-2">
                         {item.certificatUrl ? (
                           <>

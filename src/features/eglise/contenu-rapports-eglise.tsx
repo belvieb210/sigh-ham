@@ -75,7 +75,7 @@ export function ContenuRapportsEglise({
             {t("eglise.common.chargement")}
           </p>
         ) : erreur ? (
-          <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-sm text-red-700">
             {erreur}
           </p>
         ) : rapports.length === 0 ? (
@@ -92,30 +92,30 @@ export function ContenuRapportsEglise({
             <table className="tableau-sigh">
               <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
                 <tr>
-                  <th className="px-4 py-3">{t("eglise.rapports.patient")}</th>
-                  <th className="px-4 py-3">{t("eglise.rapports.paroisse")}</th>
-                  <th className="px-4 py-3">{t("eglise.rapports.date")}</th>
-                  <th className="px-4 py-3">{t("eglise.rapports.statut")}</th>
-                  <th className="px-4 py-3" />
+                  <th className="px-2 py-1.5">{t("eglise.rapports.patient")}</th>
+                  <th className="px-2 py-1.5">{t("eglise.rapports.paroisse")}</th>
+                  <th className="px-2 py-1.5">{t("eglise.rapports.date")}</th>
+                  <th className="px-2 py-1.5">{t("eglise.rapports.statut")}</th>
+                  <th className="px-2 py-1.5" />
                 </tr>
               </thead>
               <tbody>
                 {rapports.map((r) => (
                   <tr key={r.id} className="border-t border-gris-bordure">
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-1.5">
                       <p className="font-medium text-texte-principal">{r.patient}</p>
                       <p className="text-xs text-texte-secondaire">
                         {r.numeroDossier}
                       </p>
                     </td>
-                    <td className="px-4 py-3">{r.paroisse || "—"}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-1.5">{r.paroisse || "—"}</td>
+                    <td className="px-2 py-1.5">
                       {r.termineLe
                         ? new Date(r.termineLe).toLocaleString("fr-FR")
                         : "—"}
                     </td>
-                    <td className="px-4 py-3">{r.statut}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-1.5">{r.statut}</td>
+                    <td className="px-2 py-1.5">
                       <div className="flex flex-wrap justify-end gap-2">
                         <Bouton
                           type="button"

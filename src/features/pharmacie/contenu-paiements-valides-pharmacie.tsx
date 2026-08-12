@@ -341,7 +341,7 @@ export function ContenuPaiementsValidesPharmacie({
         )}
 
         <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-          <div className="border-b border-gris-bordure px-4 py-3">
+          <div className="border-b border-gris-bordure px-2 py-1.5">
             <h3 className="text-xs font-bold uppercase tracking-widest text-texte-principal">
               {t("pharmacie.paiementsValides.listeTitre", { count: paiementsFiltres.length })}
             </h3>
@@ -361,21 +361,21 @@ export function ContenuPaiementsValidesPharmacie({
               <table className="tableau-sigh">
                 <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                   <tr>
-                    <th className="px-4 py-2.5">N°</th>
-                    <th className="px-4 py-2.5">{t("pharmacie.paiementsValides.colVente")}</th>
-                    <th className="px-4 py-2.5">{t("pharmacie.vente.colPatient")}</th>
-                    <th className="hidden px-4 py-2.5 sm:table-cell">
+                    <th className="px-2 py-1.5">N°</th>
+                    <th className="px-2 py-1.5">{t("pharmacie.paiementsValides.colVente")}</th>
+                    <th className="px-2 py-1.5">{t("pharmacie.vente.colPatient")}</th>
+                    <th className="hidden px-2 py-1.5 sm:table-cell">
                       {t("pharmacie.paiementsValides.colNumPatient")}
                     </th>
-                    <th className="hidden px-4 py-2.5 md:table-cell">
+                    <th className="hidden px-2 py-1.5 md:table-cell">
                       {t("pharmacie.paiementsValides.colType")}
                     </th>
-                    <th className="px-4 py-2.5">{t("pharmacie.vente.colMontant")}</th>
-                    <th className="hidden px-4 py-2.5 lg:table-cell">
+                    <th className="px-2 py-1.5">{t("pharmacie.vente.colMontant")}</th>
+                    <th className="hidden px-2 py-1.5 lg:table-cell">
                       {t("pharmacie.paiementsValides.colPaiement")}
                     </th>
-                    <th className="px-4 py-2.5">{t("pharmacie.paiementsValides.colStatut")}</th>
-                    <th className="px-4 py-2.5">{t("pharmacie.vente.colActions")}</th>
+                    <th className="px-2 py-1.5">{t("pharmacie.paiementsValides.colStatut")}</th>
+                    <th className="px-2 py-1.5">{t("pharmacie.vente.colActions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -388,22 +388,22 @@ export function ContenuPaiementsValidesPharmacie({
                         selectionne?.id === p.id && "bg-bleu-medical-clair/30"
                       )}
                     >
-                      <td className="px-4 py-3 tabular-nums text-texte-secondaire">
+                      <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">
                         {index + 1}
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs font-semibold text-bleu-medical">
+                      <td className="px-2 py-1.5 font-mono text-xs font-semibold text-bleu-medical">
                         {p.numero}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-1.5">
                         <p className="font-semibold">{p.nomComplet}</p>
                         <p className="text-[11px] text-texte-secondaire lg:hidden">
                           {p.heurePaiement}
                         </p>
                       </td>
-                      <td className="hidden px-4 py-3 font-mono text-xs sm:table-cell">
+                      <td className="hidden px-2 py-1.5 font-mono text-xs sm:table-cell">
                         {p.numeroPatient}
                       </td>
-                      <td className="hidden px-4 py-3 md:table-cell">
+                      <td className="hidden px-2 py-1.5 md:table-cell">
                         <span
                           className={cn(
                             "rounded-md px-1.5 py-0.5 text-[10px] font-semibold",
@@ -417,13 +417,13 @@ export function ContenuPaiementsValidesPharmacie({
                             : libelleType(p.type, t)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-medium tabular-nums">
+                      <td className="px-2 py-1.5 font-medium tabular-nums">
                         {formaterMontant(p.montantTotal)}
                       </td>
-                      <td className="hidden px-4 py-3 tabular-nums text-texte-secondaire lg:table-cell">
+                      <td className="hidden px-2 py-1.5 tabular-nums text-texte-secondaire lg:table-cell">
                         {p.heurePaiement}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-1.5">
                         <span
                           className={cn(
                             "inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-semibold",
@@ -435,7 +435,7 @@ export function ContenuPaiementsValidesPharmacie({
                           {libelleStatut(p.statut, t)}
                         </span>
                       </td>
-                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                         {p.statut === "PAYEE" ? (
                           <button
                             type="button"

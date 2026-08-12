@@ -169,7 +169,7 @@ export function SelectionExamensInitiaux({
                     <button
                       type="button"
                       onClick={() => ajouter(examen)}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-bleu-medical-clair/40"
+                      className="flex w-full items-center gap-3 px-2 py-1.5 text-left transition-colors hover:bg-bleu-medical-clair/40"
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-bleu-medical-clair text-bleu-medical">
                         <FlaskConical className="h-4 w-4" aria-hidden />
@@ -211,7 +211,7 @@ export function SelectionExamensInitiaux({
       )}
 
       <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-gris-bordure bg-gris-tres-clair/50 px-4 py-3 sm:px-5">
+        <div className="flex items-center justify-between border-b border-gris-bordure bg-gris-tres-clair/50 px-2 py-1.5 sm:px-5">
           <div>
             <h4 className="text-sm font-bold text-texte-principal">
               {t("reception.examens.selectionnes")}
@@ -260,21 +260,21 @@ export function SelectionExamensInitiaux({
                       key={examen.id}
                       className="border-b border-gris-bordure/50 last:border-b-0 hover:bg-gris-tres-clair/30"
                     >
-                      <td className="px-5 py-3.5 font-mono text-xs font-bold text-bleu-medical">
+                      <td className="px-2 py-1.5 font-mono text-xs font-bold text-bleu-medical">
                         {examen.code}
                       </td>
-                      <td className="px-5 py-3.5 font-medium text-texte-principal">
+                      <td className="px-2 py-1.5 font-medium text-texte-principal">
                         {examen.libelle}
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-2 py-1.5">
                         <span className="rounded-full bg-gris-tres-clair px-2.5 py-0.5 text-xs font-medium text-texte-secondaire">
                           {examen.categorie}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 text-right tabular-nums font-semibold text-texte-principal">
+                      <td className="px-2 py-1.5 text-right tabular-nums font-semibold text-texte-principal">
                         {formaterPrix(examen.prix)}
                       </td>
-                      <td className="px-5 py-3.5 text-center">
+                      <td className="px-2 py-1.5 text-center">
                         {!lectureSeule && (
                         <button
                           type="button"
@@ -326,7 +326,7 @@ export function SelectionExamensInitiaux({
               ))}
             </div>
 
-            <div className="flex items-center justify-between border-t border-gris-bordure bg-gradient-to-r from-bleu-medical-clair/30 to-white px-4 py-3.5 sm:px-5">
+            <div className="flex items-center justify-between border-t border-gris-bordure bg-gradient-to-r from-bleu-medical-clair/30 to-white px-2 py-1.5.5 sm:px-5">
               <span className="text-sm font-medium text-texte-secondaire">
                 {t("reception.examens.montantTotal")}
               </span>

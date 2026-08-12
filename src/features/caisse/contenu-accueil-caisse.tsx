@@ -276,7 +276,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
 
             <div className="grid gap-4 xl:grid-cols-5">
               <section className="rounded-xl border border-gris-bordure bg-white shadow-sm xl:col-span-3">
-                <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-3">
+                <div className="flex items-center justify-between border-b border-gris-bordure px-2 py-1.5">
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-bleu-medical" />
                     <h3 className="text-sm font-semibold text-texte-principal">
@@ -296,57 +296,26 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                   </p>
                 ) : (
                   <>
-                    <ul className="divide-y divide-gris-bordure 2xl:hidden">
-                      {stats?.dernieresFactures.map((f) => (
-                        <li key={f.id}>
-                          <Link
-                            href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
-                            className="flex items-start justify-between gap-3 px-4 py-3 transition-colors hover:bg-slate-50"
-                          >
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-semibold text-bleu-medical">
-                                {f.numeroFacture}
-                              </p>
-                              <p className="mt-0.5 truncate text-sm font-medium text-texte-principal">
-                                {f.patient}
-                              </p>
-                              <p className="mt-1 text-xs font-semibold tabular-nums text-texte-principal">
-                                {formaterMontantCaisse(
-                                  f.montantTotal,
-                                  f.devise === "USD" ? "USD" : "CDF"
-                                )}
-                              </p>
-                            </div>
-                            <div className="flex shrink-0 flex-col items-end gap-2">
-                              {badgeStatut(f.statutAffiche, labelsStatut)}
-                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire">
-                                <Eye className="h-4 w-4" />
-                              </span>
-                            </div>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="hidden overflow-hidden 2xl:block">
+                    <div className="overflow-hidden">
                       <table className="tableau-sigh">
                         <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                           <tr>
-                            <th className="px-4 py-2.5 font-semibold">
+                            <th className="px-2 py-1.5 font-semibold">
                               {t("caisse.dashboard.colNumero")}
                             </th>
-                            <th className="px-4 py-2.5 font-semibold">
+                            <th className="px-2 py-1.5 font-semibold">
                               {t("caisse.dashboard.colPatient")}
                             </th>
-                            <th className="hidden px-4 py-2.5 font-semibold lg:table-cell">
+                            <th className="hidden px-2 py-1.5 font-semibold lg:table-cell">
                               {t("caisse.dashboard.colExamens")}
                             </th>
-                            <th className="px-4 py-2.5 font-semibold">
+                            <th className="px-2 py-1.5 font-semibold">
                               {t("caisse.dashboard.colMontant")}
                             </th>
-                            <th className="px-4 py-2.5 font-semibold">
+                            <th className="px-2 py-1.5 font-semibold">
                               {t("caisse.dashboard.colStatut")}
                             </th>
-                            <th className="px-4 py-2.5 font-semibold">
+                            <th className="px-2 py-1.5 font-semibold">
                               {t("caisse.dashboard.colAction")}
                             </th>
                           </tr>
@@ -354,7 +323,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                         <tbody>
                           {stats?.dernieresFactures.map((f) => (
                             <tr key={f.id} className="border-t border-gris-bordure/70">
-                              <td className="px-4 py-3">
+                              <td className="px-2 py-1.5">
                                 <Link
                                   href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
                                   className="font-semibold text-bleu-medical hover:underline"
@@ -362,22 +331,22 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                                   {f.numeroFacture}
                                 </Link>
                               </td>
-                              <td className="px-4 py-3 font-medium text-texte-principal">
+                              <td className="px-2 py-1.5 font-medium text-texte-principal">
                                 {f.patient}
                               </td>
-                              <td className="hidden max-w-[180px] truncate px-4 py-3 text-texte-secondaire lg:table-cell">
+                              <td className="hidden max-w-[180px] truncate px-2 py-1.5 text-texte-secondaire lg:table-cell">
                                 {f.examens}
                               </td>
-                              <td className="px-4 py-3 font-semibold text-texte-principal">
+                              <td className="px-2 py-1.5 font-semibold text-texte-principal">
                                 {formaterMontantCaisse(
                                   f.montantTotal,
                                   f.devise === "USD" ? "USD" : "CDF"
                                 )}
                               </td>
-                              <td className="px-4 py-3">
+                              <td className="px-2 py-1.5">
                                 {badgeStatut(f.statutAffiche, labelsStatut)}
                               </td>
-                              <td className="px-4 py-3">
+                              <td className="px-2 py-1.5">
                                 <Link
                                   href={`/sigh/caisse/facturation?dossier=${f.dossierId}`}
                                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:bg-slate-50 hover:text-bleu-medical"
@@ -396,7 +365,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
               </section>
 
               <section className="rounded-xl border border-gris-bordure bg-white shadow-sm xl:col-span-2">
-                <div className="flex items-center justify-between gap-2 border-b border-gris-bordure px-4 py-3">
+                <div className="flex items-center justify-between gap-2 border-b border-gris-bordure px-2 py-1.5">
                   <div className="flex min-w-0 items-center gap-2">
                     <TrendingUp className="h-4 w-4 shrink-0 text-bleu-medical" />
                     <h3 className="truncate text-sm font-semibold text-texte-principal">
@@ -419,7 +388,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
 
             <div className="grid gap-4 xl:grid-cols-5">
               <section className="rounded-xl border border-gris-bordure bg-white shadow-sm xl:col-span-3">
-                <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-3">
+                <div className="flex items-center justify-between border-b border-gris-bordure px-2 py-1.5">
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-bleu-medical" />
                     <h3 className="text-sm font-semibold text-texte-principal">
@@ -439,53 +408,23 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                   </p>
                 ) : (
                   <>
-                    <ul className="divide-y divide-gris-bordure 2xl:hidden">
-                      {stats?.patientsAttente.map((p) => (
-                        <li
-                          key={p.dossierId}
-                          className="flex items-start justify-between gap-3 px-4 py-3"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold text-texte-principal">
-                              {p.patient}
-                            </p>
-                            <p className="mt-0.5 truncate text-xs text-texte-secondaire">
-                              {p.service}
-                            </p>
-                            <p
-                              className={`mt-1 text-xs font-semibold ${
-                                p.minutesAttente >= 40 ? "text-rose-600" : "text-texte-secondaire"
-                              }`}
-                            >
-                              {p.tempsAttenteLabel}
-                            </p>
-                          </div>
-                          <Link
-                            href={`/sigh/caisse/facturation?dossier=${p.dossierId}`}
-                            className="shrink-0 rounded-lg bg-bleu-medical px-3 py-1.5 text-xs font-semibold text-white hover:bg-bleu-medical/90"
-                          >
-                            {t("caisse.dashboard.facturer")}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="hidden overflow-hidden 2xl:block">
+                    <div className="overflow-hidden">
                       <table className="tableau-sigh">
                         <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                           <tr>
-                            <th className="px-4 py-2.5 font-semibold">
+                            <th className="px-2 py-1.5 font-semibold">
                               {t("caisse.dashboard.colPatient")}
                             </th>
-                            <th className="px-4 py-2.5 font-semibold">
+                            <th className="px-2 py-1.5 font-semibold">
                               {t("caisse.dashboard.colService")}
                             </th>
-                            <th className="hidden px-4 py-2.5 font-semibold lg:table-cell">
+                            <th className="hidden px-2 py-1.5 font-semibold lg:table-cell">
                               {t("caisse.dashboard.colExamensDemandes")}
                             </th>
-                            <th className="px-4 py-2.5 font-semibold">
+                            <th className="px-2 py-1.5 font-semibold">
                               {t("caisse.dashboard.colTempsAttente")}
                             </th>
-                            <th className="px-4 py-2.5 font-semibold">
+                            <th className="px-2 py-1.5 font-semibold">
                               {t("caisse.dashboard.colAction")}
                             </th>
                           </tr>
@@ -493,15 +432,15 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                         <tbody>
                           {stats?.patientsAttente.map((p) => (
                             <tr key={p.dossierId} className="border-t border-gris-bordure/70">
-                              <td className="px-4 py-3 font-medium text-texte-principal">
+                              <td className="px-2 py-1.5 font-medium text-texte-principal">
                                 {p.patient}
                               </td>
-                              <td className="px-4 py-3 text-texte-secondaire">{p.service}</td>
-                              <td className="hidden max-w-[200px] truncate px-4 py-3 text-texte-secondaire lg:table-cell">
+                              <td className="px-2 py-1.5 text-texte-secondaire">{p.service}</td>
+                              <td className="hidden max-w-[200px] truncate px-2 py-1.5 text-texte-secondaire lg:table-cell">
                                 {p.examensDemandes}
                               </td>
                               <td
-                                className={`px-4 py-3 font-semibold ${
+                                className={`px-2 py-1.5 font-semibold ${
                                   p.minutesAttente >= 40
                                     ? "text-rose-600"
                                     : "text-texte-principal"
@@ -509,7 +448,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                               >
                                 {p.tempsAttenteLabel}
                               </td>
-                              <td className="px-4 py-3">
+                              <td className="px-2 py-1.5">
                                 <Link
                                   href={`/sigh/caisse/facturation?dossier=${p.dossierId}`}
                                   className="inline-flex rounded-lg bg-bleu-medical px-3 py-1.5 text-xs font-semibold text-white hover:bg-bleu-medical/90"
@@ -527,7 +466,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
               </section>
 
               <section className="rounded-xl border border-gris-bordure bg-white shadow-sm xl:col-span-2">
-                <div className="flex items-center gap-2 border-b border-gris-bordure px-4 py-3">
+                <div className="flex items-center gap-2 border-b border-gris-bordure px-2 py-1.5">
                   <LayoutGrid className="h-4 w-4 text-bleu-medical" />
                   <h3 className="text-sm font-semibold text-texte-principal">
                     {t("caisse.dashboard.raccourcis")}

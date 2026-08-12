@@ -134,19 +134,7 @@
     clip-path: polygon(0 0, 100% 0, 96% 100%, 0 100%);
   }
 
-  /*
-   * Listes SIGH (sidebar + panneau droit) : cartes en dessous de 2xl,
-   * tableaux compacts sans scroll horizontal au-dessus.
-   */
-  .conteneur-tableau-sigh {
-    @apply hidden overflow-hidden 2xl:block;
-  }
-
-  .liste-cartes-sigh {
-    @apply 2xl:hidden;
-  }
-
-  .tableau-sigh {
-    @apply w-full table-fixed text-left text-sm;
+  .tableau-liste-labo {
+    @apply w-full table-fixed text-left text-xs;
   }
 }

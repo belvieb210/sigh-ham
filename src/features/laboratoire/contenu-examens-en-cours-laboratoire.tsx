@@ -468,11 +468,11 @@ export function ContenuExamensEnCoursLaboratoire({
             </p>
           ) : (
             <>
-              <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm 2xl:block">
-                  <table className="w-full table-fixed text-left text-sm">
-                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
+              <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
+                  <table className="tableau-liste-labo">
+                    <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
-                        <th className="w-10 px-3 py-3">
+                        <th className="w-8 px-1.5 py-1.5">
                           <CaseCocheLigne
                             coche={
                               filtres.length > 0 &&
@@ -491,22 +491,22 @@ export function ContenuExamensEnCoursLaboratoire({
                             ariaLabel={t("laboratoire.selection.tout")}
                           />
                         </th>
-                        <th className="px-3 py-3 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("laboratoire.patients.colonnes.enregistrement")}
                         </th>
-                        <th className="px-3 py-3 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("laboratoire.patients.colonnes.patient")}
                         </th>
-                        <th className="px-3 py-3 font-semibold">
+                        <th className="hidden px-2 py-1.5 font-semibold lg:table-cell">
                           {t("laboratoire.patients.colonnes.service")}
                         </th>
-                        <th className="px-3 py-3 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("laboratoire.patients.colonnes.examensDemandes")}
                         </th>
-                        <th className="px-3 py-3 font-semibold">
+                        <th className="w-[72px] px-2 py-1.5 font-semibold">
                           {t("laboratoire.patients.colonnes.statut")}
                         </th>
-                        <th className="px-3 py-3 font-semibold">
+                        <th className="w-[72px] px-1.5 py-1.5 font-semibold">
                           {t("laboratoire.patients.colonnes.actions")}
                         </th>
                       </tr>
@@ -527,7 +527,7 @@ export function ContenuExamensEnCoursLaboratoire({
                                 : "hover:bg-slate-50/80"
                             )}
                           >
-                            <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                            <td className="px-1.5 py-1.5" onClick={(e) => e.stopPropagation()}>
                               <CaseCocheLigne
                                 coche={idsCoches.has(p.dossierId)}
                                 onChange={(coche) => {
@@ -543,35 +543,35 @@ export function ContenuExamensEnCoursLaboratoire({
                                 })}
                               />
                             </td>
-                            <td className="px-3 py-3 font-mono text-xs font-semibold text-bleu-medical">
+                            <td className="px-2 py-1.5 font-mono text-[11px] font-semibold text-bleu-medical">
                               {numeroEnregistrementLaboratoire(p)}
                             </td>
-                            <td className="px-3 py-3">
-                              <p className="font-semibold">
+                            <td className="px-2 py-1.5">
+                              <p className="truncate text-xs font-semibold leading-tight">
                                 {p.nom} {p.prenom}
                               </p>
-                              <p className="text-[11px] text-texte-secondaire">
+                              <p className="truncate text-[10px] text-texte-secondaire">
                                 {p.age != null ? `${p.age} ans` : "—"}
                                 {p.sexe ? ` / ${p.sexe}` : ""}
                               </p>
                             </td>
-                            <td className="px-3 py-3 text-xs text-texte-secondaire">
+                            <td className="hidden px-2 py-1.5 text-[11px] text-texte-secondaire lg:table-cell">
                               {p.provenance || "—"}
                             </td>
-                            <td className="max-w-[220px] px-3 py-3">
+                            <td className="px-2 py-1.5">
                               <CelluleListeExamens
                                 examens={p.examens}
                                 pageStatut={pageStatut}
                               />
                             </td>
-                            <td className="px-3 py-3">
+                            <td className="px-2 py-1.5">
                               <CelluleBadgesStatutExamens
                                 examens={p.examens}
                                 pageStatut={pageStatut}
                               />
                             </td>
-                            <td className="px-3 py-3">
-                              <div className="flex items-center gap-1.5">
+                            <td className="px-1.5 py-1.5">
+                              <div className="flex items-center gap-1">
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -580,10 +580,10 @@ export function ContenuExamensEnCoursLaboratoire({
                                       `/sigh/laboratoire/patients?dossier=${p.dossierId}`
                                     );
                                   }}
-                                  className="inline-flex rounded-lg border border-gris-bordure p-1.5 text-texte-secondaire hover:text-bleu-medical"
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gris-bordure text-texte-secondaire hover:text-bleu-medical"
                                   title={t("laboratoire.patients.ouvrirDossier")}
                                 >
-                                  <Eye className="h-4 w-4" />
+                                  <Eye className="h-3.5 w-3.5" />
                                 </button>
                                 <button
                                   type="button"
@@ -598,10 +598,10 @@ export function ContenuExamensEnCoursLaboratoire({
                                       )
                                     );
                                   }}
-                                  className="inline-flex rounded-lg border border-gris-bordure p-1.5 text-amber-700 hover:bg-amber-50"
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gris-bordure text-amber-700 hover:bg-amber-50"
                                   title={t("laboratoire.actions.saisirResultat")}
                                 >
-                                  <FlaskConical className="h-4 w-4" />
+                                  <FlaskConical className="h-3.5 w-3.5" />
                                 </button>
                               </div>
                             </td>
@@ -611,100 +611,6 @@ export function ContenuExamensEnCoursLaboratoire({
                     </tbody>
                   </table>
               </div>
-
-              <ul className="space-y-3 2xl:hidden">
-                {pageData.itemsPage.map((p) => (
-                  <li key={p.dossierId}>
-                    <div
-                      className={cn(
-                        "w-full rounded-xl border bg-white p-3 text-left shadow-sm sm:p-4",
-                        selectionId === p.dossierId
-                          ? "border-bleu-medical ring-1 ring-bleu-medical/30"
-                          : "border-gris-bordure"
-                      )}
-                      onContextMenu={(e) => ouvrirSurPatient(e, p.dossierId)}
-                    >
-                      <div className="flex items-start gap-2">
-                        <CaseCocheLigne
-                          className="mt-1"
-                          coche={idsCoches.has(p.dossierId)}
-                          onChange={(coche) => {
-                            setIdsCoches((prev) => {
-                              const next = new Set(prev);
-                              if (coche) next.add(p.dossierId);
-                              else next.delete(p.dossierId);
-                              return next;
-                            });
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => selectionner(p.dossierId)}
-                          className="min-w-0 flex-1 text-left"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="truncate font-bold text-texte-principal">
-                                {p.nom} {p.prenom}
-                              </p>
-                              <p className="font-mono text-xs text-bleu-medical">
-                                {numeroEnregistrementLaboratoire(p)}
-                              </p>
-                            </div>
-                            <span
-                              className={cn(
-                                "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                                pageStatut
-                                  ? couleurStatutAnalyse(pageStatut)
-                                  : couleurStatutAnalyse(p.statutAnalyse)
-                              )}
-                            >
-                              {libelleStatutOrientation(p)}
-                            </span>
-                          </div>
-                          <p className="mt-2 text-xs text-texte-secondaire">
-                            {p.provenance || "—"} · {formatHeure(p.arriveeLe)}
-                          </p>
-                          <div className="mt-2">
-                            <CelluleListeExamens
-                              examens={p.examens}
-                              pageStatut={pageStatut}
-                              max={4}
-                            />
-                          </div>
-                        </button>
-                      </div>
-                      <div className="mt-3 flex items-center gap-1.5 pl-7">
-                        <button
-                          type="button"
-                          onClick={() => selectionner(p.dossierId)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:text-bleu-medical"
-                          title={t("laboratoire.patients.ouvrirDossier")}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            selectionner(p.dossierId);
-                            router.push(
-                              cheminSaisieResultatsPatient(
-                                p.dossierId,
-                                p.examens,
-                                pageStatut
-                              )
-                            );
-                          }}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-amber-700 hover:bg-amber-50"
-                          title={t("laboratoire.actions.saisirResultat")}
-                        >
-                          <FlaskConical className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
 
               <PaginationListe
                 page={pageData.pageCourante}

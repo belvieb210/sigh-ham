@@ -448,11 +448,11 @@ export function ContenuPatientsLaboratoire({
             </div>
           ) : (
             <>
-              <div className="hidden overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm 2xl:block">
-                  <table className="w-full table-fixed text-left text-sm">
-                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
+              <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
+                  <table className="tableau-liste-labo">
+                    <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
-                        <th className="w-10 px-3 py-3">
+                        <th className="w-8 px-1.5 py-1.5">
                           <CaseCocheLigne
                             coche={
                               filtrés.length > 0 &&
@@ -471,22 +471,22 @@ export function ContenuPatientsLaboratoire({
                             ariaLabel={t("laboratoire.selection.tout")}
                           />
                         </th>
-                        <th className="px-3 py-3 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("laboratoire.patients.colonnes.enregistrement")}
                         </th>
-                        <th className="px-3 py-3 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("laboratoire.patients.colonnes.patient")}
                         </th>
-                        <th className="px-3 py-3 font-semibold">
+                        <th className="hidden px-2 py-1.5 font-semibold lg:table-cell">
                           {t("laboratoire.patients.colonnes.service")}
                         </th>
-                        <th className="px-3 py-3 font-semibold">
+                        <th className="px-2 py-1.5 font-semibold">
                           {t("laboratoire.patients.colonnes.examensDemandes")}
                         </th>
-                        <th className="px-3 py-3 font-semibold">
+                        <th className="w-[72px] px-2 py-1.5 font-semibold">
                           {t("laboratoire.patients.colonnes.statut")}
                         </th>
-                        <th className="px-3 py-3 font-semibold">
+                        <th className="w-[72px] px-1.5 py-1.5 font-semibold">
                           {t("laboratoire.patients.colonnes.actions")}
                         </th>
                       </tr>
@@ -507,7 +507,7 @@ export function ContenuPatientsLaboratoire({
                                 : "hover:bg-slate-50/80"
                             )}
                           >
-                            <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                            <td className="px-1.5 py-1.5" onClick={(e) => e.stopPropagation()}>
                               <CaseCocheLigne
                                 coche={idsCoches.has(p.dossierId)}
                                 onChange={(coche) => {
@@ -520,10 +520,10 @@ export function ContenuPatientsLaboratoire({
                                 }}
                               />
                             </td>
-                            <td className="px-3 py-3">
+                            <td className="px-2 py-1.5">
                               <button
                                 type="button"
-                                className="font-mono text-xs font-semibold text-bleu-medical hover:underline"
+                                className="font-mono text-[11px] font-semibold text-bleu-medical hover:underline"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   void ouvrirDetail(p.dossierId);
@@ -532,26 +532,26 @@ export function ContenuPatientsLaboratoire({
                                 {numeroEnregistrementLaboratoire(p)}
                               </button>
                             </td>
-                            <td className="px-3 py-3">
-                              <p className="font-semibold text-texte-principal">
+                            <td className="px-2 py-1.5">
+                              <p className="truncate text-xs font-semibold leading-tight text-texte-principal">
                                 {p.nom} {p.prenom}
                               </p>
-                              <p className="text-[11px] text-texte-secondaire">
+                              <p className="truncate text-[10px] text-texte-secondaire">
                                 {p.age != null ? `${p.age} ans` : "—"}
                                 {p.sexe ? ` / ${p.sexe}` : ""}
                               </p>
                             </td>
-                            <td className="px-3 py-3 text-xs text-texte-secondaire">
+                            <td className="hidden px-2 py-1.5 text-[11px] text-texte-secondaire lg:table-cell">
                               {p.provenance || "—"}
                             </td>
-                            <td className="max-w-[220px] px-3 py-3">
+                            <td className="px-2 py-1.5">
                               <CelluleListeExamens examens={p.examens} />
                             </td>
-                            <td className="px-3 py-3">
+                            <td className="px-2 py-1.5">
                               {statut.type === "transfert" ? (
                                 <span
                                   className={cn(
-                                    "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                                    "inline-flex rounded-full px-1.5 py-0 text-[10px] font-semibold leading-5",
                                     statut.couleur
                                   )}
                                 >
@@ -561,18 +561,18 @@ export function ContenuPatientsLaboratoire({
                                 <CelluleBadgesStatutExamens examens={p.examens} />
                               )}
                             </td>
-                            <td className="px-3 py-3">
-                              <div className="flex items-center gap-1.5">
+                            <td className="px-1.5 py-1.5">
+                              <div className="flex items-center gap-1">
                                 <button
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     void ouvrirDetail(p.dossierId);
                                   }}
-                                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:text-bleu-medical"
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gris-bordure text-texte-secondaire hover:text-bleu-medical"
                                   title={t("laboratoire.patients.ouvrirDossier")}
                                 >
-                                  <Eye className="h-4 w-4" />
+                                  <Eye className="h-3.5 w-3.5" />
                                 </button>
                                 <MenuActionsTransfertLaboratoire
                                   patient={p}
@@ -586,92 +586,6 @@ export function ContenuPatientsLaboratoire({
                     </tbody>
                   </table>
               </div>
-
-              <ul className="space-y-3 2xl:hidden">
-                {filtrés.map((p) => {
-                  const statut = libelleStatutLigneLabo(p);
-                  return (
-                    <li key={p.dossierId}>
-                      <div
-                        className={cn(
-                          "w-full rounded-xl border bg-white p-4 text-left shadow-sm",
-                          selectionId === p.dossierId
-                            ? "border-bleu-medical ring-1 ring-bleu-medical/30"
-                            : "border-gris-bordure"
-                        )}
-                        onContextMenu={(e) => ouvrirSurPatient(e, p.dossierId)}
-                      >
-                        <div className="mb-2 flex items-center gap-2">
-                          <CaseCocheLigne
-                            coche={idsCoches.has(p.dossierId)}
-                            onChange={(coche) => {
-                              setIdsCoches((prev) => {
-                                const next = new Set(prev);
-                                if (coche) next.add(p.dossierId);
-                                else next.delete(p.dossierId);
-                                return next;
-                              });
-                            }}
-                          />
-                          <span className="text-xs text-texte-secondaire">
-                            {idsCoches.has(p.dossierId)
-                              ? t("laboratoire.selection.coche")
-                              : t("laboratoire.selection.cocher")}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => selectionner(p.dossierId)}
-                          className="w-full text-left"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="font-bold text-texte-principal">
-                                {p.nom} {p.prenom}
-                              </p>
-                              <p className="font-mono text-xs text-bleu-medical">
-                                {numeroEnregistrementLaboratoire(p)}
-                              </p>
-                            </div>
-                            <span
-                              className={cn(
-                                "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                                statut.couleur
-                              )}
-                            >
-                              {statut.type === "transfert"
-                                ? t(`laboratoire.transferts.statut.${statut.cle}`)
-                                : t(
-                                    `laboratoire.orientationsStatut.${statut.statutAnalyse}.label`
-                                  )}
-                            </span>
-                          </div>
-                          <p className="mt-2 text-xs text-texte-secondaire">
-                            {formatHeure(p.arriveeLe)} · {p.provenance}
-                          </p>
-                          <div className="mt-2">
-                            <CelluleListeExamens examens={p.examens} max={4} />
-                          </div>
-                        </button>
-                        <div className="mt-3 flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => void ouvrirDetail(p.dossierId)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:text-bleu-medical"
-                            title={t("laboratoire.patients.ouvrirDossier")}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <MenuActionsTransfertLaboratoire
-                            patient={p}
-                            onRafraichir={() => void charger()}
-                          />
-                        </div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
             </>
           )}
 

@@ -1,7 +1,8 @@
 # Documentation — `pdf_resultat.php`
 
 > Guide de référence pour comprendre **comment chaque type d'examen est rendu en PDF** dans le laboratoire HAM.  
-> Fichier source : [`pdf_resultat.php`](pdf_resultat.php) (~6200 lignes, FPDF + Calibri).
+> Fichier source legacy : [`docs/legacy/pdf_resultat.php`](docs/legacy/pdf_resultat.php) (~6200 lignes, FPDF + Calibri).  
+> Implémentation Next.js : `src/lib/laboratoire/pdf-resultats/` (@react-pdf/renderer).
 
 ---
 
@@ -41,10 +42,22 @@
 
 ## 2. Points d'entrée HTTP
 
-### GET — PDF unitaire
+### GET — PDF unitaire (Next.js)
 
 ```
-pdf_resultat.php?patient_id={id}&exam_id={id}&type={modal_type}
+GET /api/laboratoire/examens/{examenId}/resultat-pdf?dossierId={dossierId}
+```
+
+### GET — PDF multi-examens
+
+```
+GET /api/laboratoire/examens/{examenId}/resultat-pdf?dossierId={dossierId}&examIds=id1,id2,id3
+```
+
+### GET — PDF unitaire (legacy PHP)
+
+```
+docs/legacy/pdf_resultat.php?patient_id={id}&exam_id={id}&type={modal_type}
 ```
 
 - `type` (optionnel) : force le `modal_type` si la détection automatique échoue

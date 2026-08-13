@@ -200,9 +200,10 @@ export function ContenuExamensEnCoursLaboratoire({
       dossierId: patient.dossierId,
       examenId: examen.id,
       numeroPatient: patient.numeroPatient,
+      libelleExamen: examen.libelle,
     });
     if (!resultat.ok) {
-      setMessageAction(t("laboratoire.actions.aVenir"));
+      setMessageAction(t("laboratoire.actions.erreurImpression"));
     }
   };
 

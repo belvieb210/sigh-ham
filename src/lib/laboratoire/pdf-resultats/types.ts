@@ -1,0 +1,79 @@
+/** Données normalisées pour le rendu PDF d'un résultat d'examen laboratoire. */
+
+export interface LigneParametrePdf {
+  name: string;
+  value: string;
+  other?: string;
+  unit?: string;
+  flag?: string;
+  range?: string;
+  nonRequis?: boolean;
+  commentaire?: string;
+}
+
+export interface DonneesPatientResultatPdf {
+  dossierId: string;
+  numeroEnregistrement: string;
+  numeroPatient: string;
+  nom: string;
+  prenom: string;
+  sexe: string | null;
+  age: number | null;
+  telephone: string | null;
+  medecinDemandeur?: string | null;
+  cnomMedecin?: string | null;
+}
+
+export interface DonneesExamenResultatPdf {
+  examenId: string;
+  typeCode: string;
+  typeFormulaire: string | null;
+  libelle: string;
+  specimen: string | null;
+  description: string | null;
+  commentaireGlobal: string | null;
+  dateAnalyse: string | null;
+  resultats: LigneParametrePdf[];
+}
+
+export interface DonneesResultatExamenPdf {
+  patient: DonneesPatientResultatPdf;
+  examen: DonneesExamenResultatPdf;
+  /** Type normalisé pour le registre de renders (ex. hemogramme, ionogramme). */
+  typeRender: string;
+}
+
+/** Options du tableau générique `renderParamètres` (port PHP). */
+export interface OptionsTableauParametresPdf {
+  showFlag?: boolean;
+  showRange?: boolean;
+  showValues?: boolean;
+  showUnit?: boolean;
+  paramProportion?: number;
+  centerAll?: boolean;
+  equalFour?: boolean;
+  commentProportion?: number;
+}
+
+export type ModeRenderExamenPdf =
+  | { kind: "parametres"; options: OptionsTableauParametresPdf }
+  | { kind: "serologie"; options?: OptionsTableauParametresPdf }
+  | { kind: "groupageSanguin" }
+  | { kind: "microfilaire" }
+  | { kind: "goutteFraiche" }
+  | { kind: "electrophorese" }
+  | { kind: "malaria" }
+  | { kind: "malariaTDR" }
+  | { kind: "ziehlNelsen" }
+  | { kind: "bilansTorch" }
+  | {
+      kind: "deuxColonnes";
+      options: {
+        col2Label: string;
+        paramProportion?: number;
+        majusculesValeur?: boolean;
+        alignLeftCol2?: boolean;
+      };
+    }
+  | { kind: "bioCliaHorm"; options?: OptionsTableauParametresPdf }
+  | { kind: "generic"; options?: OptionsTableauParametresPdf };

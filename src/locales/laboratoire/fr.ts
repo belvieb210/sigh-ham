@@ -336,6 +336,7 @@ export const laboratoireFr = {
     validerResultat: "Valider résultat",
     imprimerResultat: "Imprimer résultat",
     aVenir: "Fonctionnalité à brancher prochainement.",
+    erreurImpression: "Impossible de générer le PDF du résultat.",
   },
   drApprouve: {
     developperExamens: "Afficher les examens Dr approuve",

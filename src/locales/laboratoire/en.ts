@@ -335,6 +335,7 @@ export const laboratoireEn: LaboratoireFr = {
     validerResultat: "Validate result",
     imprimerResultat: "Print result",
     aVenir: "Feature to be wired next.",
+    erreurImpression: "Unable to generate the result PDF.",
   },
   drApprouve: {
     developperExamens: "Show Dr approved exams",

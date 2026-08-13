@@ -25,6 +25,7 @@ import type {
   ExamenSaisieDto,
   SaisieResultatsDto,
 } from "@/lib/laboratoire/saisie-resultats-types";
+import { televerserPieceJointeLaboratoire } from "@/features/laboratoire/televerser-piece-jointe-laboratoire";
 import { cn } from "@/lib/utils";
 
 interface PropsContenuSaisieResultatsLaboratoire {
@@ -35,7 +36,9 @@ interface PropsContenuSaisieResultatsLaboratoire {
 type FichierJoint = {
   id: string;
   nom: string;
-  file: File;
+  file?: File;
+  url?: string;
+  mimeType?: string;
 };
 
 function clonerEtat(saisie: SaisieResultatsDto): EtatExamenForm[] {
@@ -110,6 +113,19 @@ export function ContenuSaisieResultatsLaboratoire({
         const clones = clonerEtat(data.saisie);
         setPatient(infosPatient);
         setExamens(clones);
+        setFichiersParExamen(
+          Object.fromEntries(
+            liste.map((ex) => [
+              ex.id,
+              ex.piecesJointes.map((pj, idx) => ({
+                id: `persist-${idx}-${pj.url}`,
+                nom: pj.nom,
+                url: pj.url,
+                mimeType: pj.mimeType,
+              })),
+            ])
+          )
+        );
         if (!options?.silencieux) {
           setExamenOuvertId((courant) => courant ?? liste[0]?.id ?? null);
         }
@@ -240,6 +256,30 @@ export function ContenuSaisieResultatsLaboratoire({
     const lignesCatalogue = examenOuvert.parametres.filter((p) => !p.personnalise);
 
     try {
+      const fichiers = fichiersParExamen[examenOuvert.id] ?? [];
+      const piecesJointes: {
+        nom: string;
+        url: string;
+        mimeType: string;
+        taille?: number;
+      }[] = [];
+
+      for (const f of fichiers) {
+        if (f.file) {
+          const upload = await televerserPieceJointeLaboratoire(
+            examenOuvert.id,
+            f.file
+          );
+          piecesJointes.push(upload);
+        } else if (f.url) {
+          piecesJointes.push({
+            nom: f.nom,
+            url: f.url,
+            mimeType: f.mimeType ?? "application/octet-stream",
+          });
+        }
+      }
+
       const res = await fetch(
         `/api/laboratoire/examens/${encodeURIComponent(examenOuvert.id)}/resultats`,
         {
@@ -253,6 +293,7 @@ export function ContenuSaisieResultatsLaboratoire({
               commentaire: p.commentaire?.trim() || null,
             })),
             remarque: examenOuvert.remarque,
+            piecesJointes,
             action: options.action,
           }),
         }

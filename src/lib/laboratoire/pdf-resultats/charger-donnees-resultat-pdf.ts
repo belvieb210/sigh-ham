@@ -5,19 +5,77 @@ import { calculerAge } from "@/features/caisse/utils-format";
 import {
   extraireRemarqueSansOrientation,
 } from "@/constants/laboratoire-orientations";
+import {
+  lirePiecesJointesDepuisNotes,
+  retirerPiecesJointesDesNotes,
+} from "@/constants/laboratoire-notes-examen";
 import { detecterTypeExamenPdf } from "@/lib/laboratoire/pdf-resultats/detecter-type-examen";
-import type { DonneesResultatExamenPdf } from "@/lib/laboratoire/pdf-resultats/types";
+import { detecterTypeParStructureResultats } from "@/lib/laboratoire/pdf-resultats/detecter-type-par-structure";
+import {
+  genererQrCodeDataUrl,
+  urlRecuFactureAbsolue,
+} from "@/lib/laboratoire/pdf-resultats/generer-qrcode-pdf";
+import {
+  estImageAffichablePdf,
+  resoudreCheminFichierPdf,
+} from "@/lib/laboratoire/pdf-resultats/resoudre-chemin-fichier-pdf";
+import type {
+  DonneesResultatExamenPdf,
+  PieceJointeResultatPdf,
+} from "@/lib/laboratoire/pdf-resultats/types";
 import { mapperResultatsPrismaVersPdf } from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
+
+function formaterNomPrescripteur(
+  prenom: string,
+  nom: string
+): string {
+  const complet = `${prenom} ${nom}`.trim();
+  if (!complet) return "—";
+  return /^dr\.?\s/i.test(complet) ? complet : `Dr ${complet}`;
+}
+
+async function resoudrePiecesJointesPdf(
+  notes: string | null | undefined
+): Promise<PieceJointeResultatPdf[]> {
+  const brutes = lirePiecesJointesDepuisNotes(notes);
+  return brutes.map((pj) => {
+    const chemin = resoudreCheminFichierPdf(pj.url);
+    const cheminAffichable =
+      estImageAffichablePdf(pj.mimeType) && chemin ? chemin : null;
+    return {
+      nom: pj.nom,
+      url: pj.url,
+      mimeType: pj.mimeType,
+      cheminAffichable,
+    };
+  });
+}
+
+async function resoudreQrFactureDossier(
+  dossierId: string,
+  request?: Request
+): Promise<string | null> {
+  const facture = await prisma.facture.findFirst({
+    where: { dossierId },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+  if (!facture) return null;
+  const url = urlRecuFactureAbsolue(facture.id, request);
+  return genererQrCodeDataUrl(url);
+}
 
 export async function chargerDonneesResultatExamenPdf(
   dossierId: string,
-  examenId: string
+  examenId: string,
+  request?: Request
 ): Promise<DonneesResultatExamenPdf | null> {
   const examen = await prisma.examenLaboratoire.findFirst({
     where: { id: examenId, dossierId },
     include: {
       dossier: { include: { patient: true } },
       typeExamen: true,
+      prescripteur: { include: { medecinExterne: true } },
       resultats: {
         orderBy: { parametre: "asc" },
       },
@@ -27,7 +85,16 @@ export async function chargerDonneesResultatExamenPdf(
   if (!examen) return null;
 
   const patient = examen.dossier.patient;
-  const remarque = extraireRemarqueSansOrientation(examen.notes);
+  const notesSansPj = retirerPiecesJointesDesNotes(examen.notes);
+  const remarque = extraireRemarqueSansOrientation(notesSansPj);
+
+  const prescripteur = examen.prescripteur;
+  const medecinExterne = prescripteur.medecinExterne;
+  const medecinDemandeur = formaterNomPrescripteur(
+    prescripteur.prenom,
+    prescripteur.nom
+  );
+  const cnomMedecin = medecinExterne?.numeroOrdre?.trim() || null;
 
   const examenPdf = {
     examenId: examen.id,
@@ -50,7 +117,16 @@ export async function chargerDonneesResultatExamenPdf(
         commentaire: r.commentaire,
       }))
     ),
+    piecesJointes: await resoudrePiecesJointesPdf(examen.notes),
   };
+
+  let typeRender = detecterTypeExamenPdf(examenPdf);
+  if (typeRender === "generic") {
+    const depuisStructure = detecterTypeParStructureResultats(examenPdf.resultats);
+    if (depuisStructure) typeRender = depuisStructure;
+  }
+
+  const qrCodeDataUrl = await resoudreQrFactureDossier(dossierId, request);
 
   return {
     patient: {
@@ -62,22 +138,31 @@ export async function chargerDonneesResultatExamenPdf(
       sexe: patient.sexe,
       age: calculerAge(patient.dateNaissance?.toISOString() ?? null),
       telephone: patient.telephone,
-      medecinDemandeur: null,
-      cnomMedecin: null,
+      medecinDemandeur,
+      cnomMedecin,
+      qrCodeDataUrl,
     },
     examen: examenPdf,
-    typeRender: detecterTypeExamenPdf(examenPdf),
+    typeRender,
   };
 }
 
 export async function chargerDonneesResultatsMultiExamensPdf(
   dossierId: string,
-  examenIds: string[]
+  examenIds: string[],
+  request?: Request
 ): Promise<DonneesResultatExamenPdf[]> {
+  const qrCodeDataUrl = await resoudreQrFactureDossier(dossierId, request);
   const pages: DonneesResultatExamenPdf[] = [];
+
   for (const id of examenIds) {
-    const data = await chargerDonneesResultatExamenPdf(dossierId, id);
-    if (data) pages.push(data);
+    const data = await chargerDonneesResultatExamenPdf(dossierId, id, request);
+    if (data) {
+      pages.push({
+        ...data,
+        patient: { ...data.patient, qrCodeDataUrl },
+      });
+    }
   }
   return pages;
 }

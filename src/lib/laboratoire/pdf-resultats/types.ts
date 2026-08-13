@@ -11,6 +11,14 @@ export interface LigneParametrePdf {
   commentaire?: string;
 }
 
+export interface PieceJointeResultatPdf {
+  nom: string;
+  url: string;
+  mimeType: string;
+  /** Chemin local ou URL utilisable par react-pdf `<Image />`. */
+  cheminAffichable?: string | null;
+}
+
 export interface DonneesPatientResultatPdf {
   dossierId: string;
   numeroEnregistrement: string;
@@ -22,6 +30,8 @@ export interface DonneesPatientResultatPdf {
   telephone: string | null;
   medecinDemandeur?: string | null;
   cnomMedecin?: string | null;
+  /** QR reçu facture (data URL PNG) — bandeau patient. */
+  qrCodeDataUrl?: string | null;
 }
 
 export interface DonneesExamenResultatPdf {
@@ -34,6 +44,7 @@ export interface DonneesExamenResultatPdf {
   commentaireGlobal: string | null;
   dateAnalyse: string | null;
   resultats: LigneParametrePdf[];
+  piecesJointes?: PieceJointeResultatPdf[];
 }
 
 export interface DonneesResultatExamenPdf {

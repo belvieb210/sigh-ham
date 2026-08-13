@@ -1,6 +1,7 @@
 import { View } from "@react-pdf/renderer";
 import type { LigneParametrePdf } from "@/lib/laboratoire/pdf-resultats/types";
 import { TableauColonnesPdf } from "@/lib/laboratoire/pdf-resultats/composants/renders-speciaux/primitives-tableau-pdf";
+import { TableauParametresResultatPdf } from "@/lib/laboratoire/pdf-resultats/composants/tableau-parametres-resultat-pdf";
 
 interface LigneZn {
   date: string;
@@ -46,10 +47,23 @@ function parserZiehlNelsen(lignes: LigneParametrePdf[]): LigneZn[] {
     }));
 }
 
-/** Port renderZiehlNelsen() — DATE · ÉCHANTILLON · ASPECT · RÉSULTAT. */
+/** Port renderZiehlNelsen() — DATE · ÉCHANTILLON · ASPECT · RÉSULTAT ou fallback 4 cols égales. */
 export function ZiehlNelsenResultatPdf({ lignes }: { lignes: LigneParametrePdf[] }) {
   const parsed = parserZiehlNelsen(lignes);
-  if (!parsed.length) return null;
+
+  if (!parsed.length) {
+    return (
+      <TableauParametresResultatPdf
+        lignes={lignes}
+        options={{
+          showFlag: true,
+          showRange: true,
+          showUnit: true,
+          equalFour: true,
+        }}
+      />
+    );
+  }
 
   const rows = parsed.map((r) => [r.date, r.ech, r.aspect, r.resultat]);
 

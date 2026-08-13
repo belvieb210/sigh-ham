@@ -25,6 +25,18 @@ export const stylesResultatPdf = StyleSheet.create({
     padding: 6,
     marginBottom: 8,
     minHeight: 70,
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  bandeauContenu: {
+    flex: 1,
+    paddingRight: 34,
+  },
+  bandeauQr: {
+    width: 28,
+    height: 20,
+    objectFit: "contain",
+    marginTop: 4,
   },
   bandeauLigne: {
     flexDirection: "row",
@@ -129,5 +141,20 @@ export const stylesResultatPdf = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 4,
     fontSize: 9,
+  },
+  annexeNomFichier: {
+    fontSize: 9,
+    color: COULEURS_RESULTAT_PDF.gris,
+    marginBottom: 6,
+    textAlign: "center",
+  },
+  annexeImageWrap: {
+    alignItems: "center",
+    marginTop: 4,
+  },
+  annexeImage: {
+    maxWidth: "92%",
+    maxHeight: 620,
+    objectFit: "contain",
   },
 });

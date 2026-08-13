@@ -7,6 +7,11 @@ import {
   lireOrientationAnalyseDepuisNotes,
   type IdOrientationStatutAnalyse,
 } from "@/constants/laboratoire-orientations";
+import {
+  ecrirePiecesJointesDansNotes,
+  lirePiecesJointesDepuisNotes,
+  type PieceJointeExamenPersistee,
+} from "@/constants/laboratoire-notes-examen";
 import type {
   ActionEnregistrementResultat,
   LigneResultatSaisie,
@@ -108,6 +113,7 @@ export async function chargerSaisieResultats(
       formulaire: ex.typeExamen.formulaire,
       remarque: extraireRemarqueSansOrientation(ex.notes) || null,
       parametres: mapperParametres(ex.typeExamen.parametres, ex.resultats),
+      piecesJointes: lirePiecesJointesDepuisNotes(ex.notes),
     })),
   };
 }
@@ -118,6 +124,7 @@ export async function enregistrerResultatsExamen(
   input: {
     lignes: LigneResultatSaisie[];
     remarque?: string | null;
+    piecesJointes?: PieceJointeExamenPersistee[];
     action?: ActionEnregistrementResultat;
     /** @deprecated utiliser action */
     verifier?: boolean;
@@ -195,10 +202,15 @@ export async function enregistrerResultatsExamen(
     }
 
     const maintenant = new Date();
-    const notes = ecrireOrientationAnalyseDansNotes(
-      input.remarque?.trim() || extraireRemarqueSansOrientation(examen.notes) || null,
-      orientation
-    );
+    const remarqueBase =
+      input.remarque?.trim() ||
+      extraireRemarqueSansOrientation(examen.notes) ||
+      null;
+    const pieces =
+      input.piecesJointes ??
+      lirePiecesJointesDepuisNotes(examen.notes);
+    const notesAvecPj = ecrirePiecesJointesDansNotes(remarqueBase, pieces);
+    const notes = ecrireOrientationAnalyseDansNotes(notesAvecPj, orientation);
 
     await tx.examenLaboratoire.update({
       where: { id: examenId },

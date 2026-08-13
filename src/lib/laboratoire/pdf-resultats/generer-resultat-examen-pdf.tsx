@@ -16,9 +16,10 @@ import {
 
 export async function genererBufferPdfResultatExamen(
   dossierId: string,
-  examenId: string
+  examenId: string,
+  request?: Request
 ): Promise<Buffer | null> {
-  const donnees = await chargerDonneesResultatExamenPdf(dossierId, examenId);
+  const donnees = await chargerDonneesResultatExamenPdf(dossierId, examenId, request);
   if (!donnees) return null;
 
   enregistrerPolicesPdfServeur();
@@ -39,9 +40,14 @@ export async function genererBufferPdfResultatExamen(
 
 export async function genererBufferPdfResultatsMultiExamens(
   dossierId: string,
-  examenIds: string[]
+  examenIds: string[],
+  request?: Request
 ): Promise<Buffer | null> {
-  const pages = await chargerDonneesResultatsMultiExamensPdf(dossierId, examenIds);
+  const pages = await chargerDonneesResultatsMultiExamensPdf(
+    dossierId,
+    examenIds,
+    request
+  );
   if (!pages.length) return null;
 
   enregistrerPolicesPdfServeur();

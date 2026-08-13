@@ -1,4 +1,4 @@
-import { Text, View } from "@react-pdf/renderer";
+import { Image, Text, View } from "@react-pdf/renderer";
 import type {
   DonneesExamenResultatPdf,
   DonneesPatientResultatPdf,
@@ -43,7 +43,7 @@ function LigneBandeau({
   );
 }
 
-/** Bandeau patient (port renderPatientInfo PHP). */
+/** Bandeau patient (port renderPatientInfo PHP) + QR facture à droite. */
 export function BandeauPatientResultatPdf({
   patient,
   examen,
@@ -52,38 +52,40 @@ export function BandeauPatientResultatPdf({
   examen: DonneesExamenResultatPdf;
 }) {
   const nomComplet = `${patient.nom} ${patient.prenom}`.trim();
-  const age =
-    patient.age != null ? `${patient.age} ans` : "—";
-  const medecin = examen.commentaireGlobal
-    ? patient.medecinDemandeur ?? "—"
-    : patient.medecinDemandeur ?? "—";
+  const age = patient.age != null ? `${patient.age} ans` : "—";
+  const medecin = patient.medecinDemandeur ?? "—";
 
   return (
     <View style={stylesResultatPdf.bandeauPatient}>
-      <LigneBandeau
-        labelG="NOM"
-        valG={nomComplet}
-        labelD="TEL"
-        valD={patient.telephone ?? "—"}
-      />
-      <LigneBandeau
-        labelG="ID PATIENT"
-        valG={patient.numeroEnregistrement}
-        labelD="SEXE"
-        valD={patient.sexe ?? "—"}
-      />
-      <LigneBandeau
-        labelG="DATE D'ANALYSE"
-        valG={formaterDate(examen.dateAnalyse)}
-        labelD="AGE"
-        valD={age}
-      />
-      <LigneBandeau
-        labelG="MEDECIN"
-        valG={medecin}
-        labelD="CNOM"
-        valD={patient.cnomMedecin ?? "—"}
-      />
+      <View style={stylesResultatPdf.bandeauContenu}>
+        <LigneBandeau
+          labelG="NOM"
+          valG={nomComplet}
+          labelD="TEL"
+          valD={patient.telephone ?? "—"}
+        />
+        <LigneBandeau
+          labelG="ID PATIENT"
+          valG={patient.numeroEnregistrement}
+          labelD="SEXE"
+          valD={patient.sexe ?? "—"}
+        />
+        <LigneBandeau
+          labelG="DATE D'ANALYSE"
+          valG={formaterDate(examen.dateAnalyse)}
+          labelD="AGE"
+          valD={age}
+        />
+        <LigneBandeau
+          labelG="MEDECIN"
+          valG={medecin}
+          labelD="CNOM"
+          valD={patient.cnomMedecin ?? "—"}
+        />
+      </View>
+      {patient.qrCodeDataUrl ? (
+        <Image src={patient.qrCodeDataUrl} style={stylesResultatPdf.bandeauQr} />
+      ) : null}
     </View>
   );
 }

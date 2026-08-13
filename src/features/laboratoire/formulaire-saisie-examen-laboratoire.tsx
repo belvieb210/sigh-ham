@@ -57,7 +57,9 @@ export type EtatExamenForm = {
 type FichierJoint = {
   id: string;
   nom: string;
-  file: File;
+  file?: File;
+  url?: string;
+  mimeType?: string;
 };
 
 interface PropsFormulaireSaisieExamenLaboratoire {

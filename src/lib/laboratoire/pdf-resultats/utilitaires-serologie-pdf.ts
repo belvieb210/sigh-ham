@@ -78,13 +78,25 @@ export function grouperParametresTorch(lignes: LigneParametrePdf[]): {
   return { groupes, restants: lignes.filter((_, i) => !used.has(i)) };
 }
 
+/** Retire suffixes RESULTAT / VALEUR répétés (port renderWidal PHP). */
+export function normaliserNomParametreWidal(rawName: string): string {
+  return rawName
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/(?:\s+(?:RESULTAT|VALEURS?))+$/iu, "")
+    .trim();
+}
+
 /** Regroupe paires RESULTAT + VALEUR (port renderMalaria / renderSerologie PHP). */
 export function grouperParametresSerologie(
   lignes: LigneParametrePdf[],
-  options?: { prefixesMalaria?: boolean }
+  options?: { prefixesMalaria?: boolean; normaliserPrefixe?: boolean }
 ): { groupes: GroupeSerologiePdf[]; restants: LigneParametrePdf[] } {
   const groups: Record<string, { resultat?: string; valeur?: string }> = {};
   const used = new Set<number>();
+  const normaliser = options?.normaliserPrefixe
+    ? normaliserNomParametreWidal
+    : (s: string) => s.trim();
 
   for (let i = 0; i < lignes.length; i++) {
     const r = lignes[i]!;
@@ -92,7 +104,7 @@ export function grouperParametresSerologie(
     const display = afficherValeur(r);
 
     if (/\s+VALEURS?$/i.test(name)) {
-      const prefix = name.replace(/\s+VALEURS?$/i, "").trim();
+      const prefix = normaliser(name.replace(/\s+VALEURS?$/i, ""));
       if (!groups[prefix]) groups[prefix] = {};
       groups[prefix].valeur = display;
       used.add(i);
@@ -100,7 +112,7 @@ export function grouperParametresSerologie(
     }
 
     if (/\s+RESULTAT$/i.test(name)) {
-      const prefix = name.replace(/\s+RESULTAT$/i, "").trim();
+      const prefix = normaliser(name.replace(/\s+RESULTAT$/i, ""));
       if (!groups[prefix]) groups[prefix] = {};
       groups[prefix].resultat = display;
       used.add(i);
@@ -125,7 +137,13 @@ export function grouperParametresSerologie(
     })
   );
 
-  const restants = lignes.filter((_, i) => !used.has(i));
+  const restants = lignes
+    .filter((_, i) => !used.has(i))
+    .map((l) =>
+      options?.normaliserPrefixe
+        ? { ...l, name: normaliserNomParametreWidal(l.name) }
+        : l
+    );
   return { groupes, restants };
 }
 

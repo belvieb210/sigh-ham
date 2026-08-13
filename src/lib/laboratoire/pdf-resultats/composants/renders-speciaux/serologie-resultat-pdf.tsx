@@ -8,11 +8,15 @@ import { grouperParametresSerologie } from "@/lib/laboratoire/pdf-resultats/util
 export function SerologieResultatPdf({
   lignes,
   titreSerologie,
+  normaliserPrefixe = false,
 }: {
   lignes: LigneParametrePdf[];
   titreSerologie?: string;
+  normaliserPrefixe?: boolean;
 }) {
-  const { groupes, restants } = grouperParametresSerologie(lignes);
+  const { groupes, restants } = grouperParametresSerologie(lignes, {
+    normaliserPrefixe,
+  });
 
   if (groupes.length === 0 && restants.length <= 2) {
     return (

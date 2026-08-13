@@ -1,5 +1,11 @@
 /** Orientations UI — module laboratoire (toutes salles sauf LABORATOIRE) */
 
+import {
+  ecrirePiecesJointesDansNotes,
+  lirePiecesJointesDepuisNotes,
+  retirerPiecesJointesDesNotes,
+} from "@/constants/laboratoire-notes-examen";
+
 export const ORIENTATIONS_DESTINATION_LABO = [
   {
     id: "RECEPTION",
@@ -113,9 +119,11 @@ export function ecrireOrientationAnalyseDansNotes(
   notes: string | null | undefined,
   orientation: IdOrientationStatutAnalyse
 ): string {
-  const nettoye = extraireRemarqueSansOrientation(notes);
-  return nettoye
-    ? `${nettoye} laboOrientation=${orientation}`
+  const pieces = lirePiecesJointesDepuisNotes(notes);
+  const remarque = extraireRemarqueSansOrientation(notes);
+  const avecPj = ecrirePiecesJointesDansNotes(remarque || null, pieces);
+  return avecPj
+    ? `${avecPj} laboOrientation=${orientation}`
     : `laboOrientation=${orientation}`;
 }
 
@@ -123,9 +131,9 @@ export function ecrireOrientationAnalyseDansNotes(
 export function extraireRemarqueSansOrientation(
   notes: string | null | undefined
 ): string {
-  return (notes ?? "")
-    .replace(/\s*laboOrientation=[A-Z_]+\s*/g, " ")
-    .trim();
+  return retirerPiecesJointesDesNotes(
+    (notes ?? "").replace(/\s*laboOrientation=[A-Z_]+\s*/g, " ").trim()
+  );
 }
 
 /** Code salle → id d'orientation UI du panneau labo */

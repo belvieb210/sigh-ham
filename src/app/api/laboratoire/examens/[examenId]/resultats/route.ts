@@ -25,6 +25,12 @@ export async function POST(
         commentaire?: string | null;
       }[];
       remarque?: string | null;
+      piecesJointes?: {
+        nom: string;
+        url: string;
+        mimeType: string;
+        taille?: number;
+      }[];
       action?: "brouillon" | "verifier" | "rejeter" | "approuver";
       verifier?: boolean;
     };
@@ -39,6 +45,7 @@ export async function POST(
     await enregistrerResultatsExamen(examenId.trim(), session.utilisateur.id, {
       lignes: corps.lignes,
       remarque: corps.remarque,
+      piecesJointes: corps.piecesJointes,
       action,
     });
 

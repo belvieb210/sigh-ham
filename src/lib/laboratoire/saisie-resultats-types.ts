@@ -1,5 +1,6 @@
 import type { StatutExamen } from "@/generated/prisma/client";
 import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
+import type { PieceJointeExamenPersistee } from "@/constants/laboratoire-notes-examen";
 
 export type ActionEnregistrementResultat =
   | "brouillon"
@@ -30,6 +31,7 @@ export interface ExamenSaisieDto {
   formulaire: string | null;
   remarque: string | null;
   parametres: ParametreSaisieDto[];
+  piecesJointes: PieceJointeExamenPersistee[];
 }
 
 export interface SaisieResultatsDto {

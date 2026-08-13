@@ -38,8 +38,8 @@ export async function GET(request: NextRequest, ctx: Ctx) {
   try {
     const buffer =
       examIds.length > 1
-        ? await genererBufferPdfResultatsMultiExamens(dossierId, examIds)
-        : await genererBufferPdfResultatExamen(dossierId, examenId.trim());
+        ? await genererBufferPdfResultatsMultiExamens(dossierId, examIds, request)
+        : await genererBufferPdfResultatExamen(dossierId, examenId.trim(), request);
 
     if (!buffer || buffer.length < 100) {
       return NextResponse.json(

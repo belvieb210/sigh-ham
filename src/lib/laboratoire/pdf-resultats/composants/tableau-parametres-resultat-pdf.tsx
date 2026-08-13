@@ -12,9 +12,29 @@ function colonnesDepuisOptions(opts: OptionsTableauParametresPdf): ColDef[] {
   const showFlag = opts.showFlag ?? true;
   const showRange = opts.showRange ?? true;
   const showValues = opts.showValues ?? false;
-  const cols: ColDef[] = [{ key: "param", label: "Paramètres", width: "36%" }];
+  const equalFour = opts.equalFour && showFlag && showRange && !showValues;
+
+  if (equalFour) {
+    return [
+      { key: "param", label: "Paramètres", width: "25%" },
+      { key: "flag", label: "Flag", width: "25%" },
+      { key: "result", label: "Résultat", width: "25%" },
+      { key: "range", label: "Range usuelle", width: "25%" },
+    ];
+  }
+
+  const prop = opts.paramProportion;
+  const paramPct =
+    prop != null && prop > 0 && prop < 1 ? `${Math.round(prop * 100)}%` : "36%";
+
+  const cols: ColDef[] = [{ key: "param", label: "Paramètres", width: paramPct }];
   if (showFlag) cols.push({ key: "flag", label: "Flag", width: "10%", center: true });
-  cols.push({ key: "result", label: "Résultat", width: showValues ? "22%" : "28%", center: true });
+  cols.push({
+    key: "result",
+    label: "Résultat",
+    width: showValues ? "22%" : "28%",
+    center: true,
+  });
   if (showValues) cols.push({ key: "values", label: "Valeur", width: "22%", center: true });
   if (showRange) cols.push({ key: "range", label: "Range usuelle", width: "22%" });
   return cols;

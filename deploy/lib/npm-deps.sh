@@ -19,7 +19,11 @@ clean_node_modules() {
   chmod -R u+w "${app_dir}/node_modules" 2>/dev/null || true
 
   if mv "${app_dir}/node_modules" "${trash}" 2>/dev/null; then
-    nohup rm -rf "${trash}" >/dev/null 2>&1 &
+    if [[ "${2:-}" == "sync" ]]; then
+      rm -rf "${trash}"
+    else
+      nohup rm -rf "${trash}" >/dev/null 2>&1 &
+    fi
   else
     echo "⚠️  mv impossible — suppression directe"
     rm -rf "${app_dir}/node_modules" 2>/dev/null || true
@@ -48,7 +52,7 @@ npm_install_robust() {
 
   if ! $run_fn 'npm ci'; then
     echo "⚠️  npm ci échoué — réinstallation propre de node_modules"
-    clean_node_modules "${app_dir}"
+    clean_node_modules "${app_dir}" sync
     $run_fn 'npm ci' || $run_fn 'npm install'
   fi
 }

@@ -103,7 +103,7 @@ export interface DonneesGroupageSanguinPdf {
 export function parserGroupageSanguin(
   lignes: LigneParametrePdf[]
 ): DonneesGroupageSanguinPdf {
-  let groupe = trouverValeur(lignes, [
+  const groupe = trouverValeur(lignes, [
     "groupe",
     "groupe_sanguin",
     "groupe_abo",

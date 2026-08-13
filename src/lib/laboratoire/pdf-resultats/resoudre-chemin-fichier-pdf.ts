@@ -11,7 +11,7 @@ export function resoudreCheminFichierPdf(url: string): string | null {
     return brut;
   }
 
-  let rel = brut.replace(/^\//, "");
+  const rel = brut.replace(/^\//, "");
   if (rel.startsWith("uploads/")) {
     const local = join(process.cwd(), "public", rel);
     if (existsSync(local)) return local;

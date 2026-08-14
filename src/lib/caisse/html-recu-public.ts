@@ -151,6 +151,21 @@ export function construireDocumentHtmlRecuPublic(
         .join("")
     : `<li class="empty">Aucune prestation sur cette facture.</li>`;
 
+  const medicamentsHtml =
+    detail.lignesMedicaments && detail.lignesMedicaments.length > 0
+      ? detail.lignesMedicaments
+          .map(
+            (l) => `<li class="item">
+            <div class="item-main">
+              <p class="item-title">${echapper(l.libelle)}</p>
+              <p class="item-meta">${l.quantite > 1 ? `×${l.quantite}` : "Médicament"}</p>
+            </div>
+            <p class="item-price">${echapper(formaterMontant(l.montant, detail.devise))}</p>
+          </li>`
+          )
+          .join("")
+      : "";
+
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -401,6 +416,13 @@ export function construireDocumentHtmlRecuPublic(
       <p class="label">Examens &amp; prestations</p>
       <p class="sub" style="margin-bottom:8px">Liés à cette facture uniquement</p>
       <ul class="list">${lignesHtml}</ul>
+      ${
+        medicamentsHtml
+          ? `<p class="label" style="margin-top:16px">Médicaments</p>
+      <p class="sub" style="margin-bottom:8px">Facture pharmacie du même dossier</p>
+      <ul class="list">${medicamentsHtml}</ul>`
+          : ""
+      }
       <div class="totals">
         <div class="tot-row"><span>Total</span><span class="tot-main">${echapper(formaterMontant(detail.montantTotal, detail.devise))}</span></div>
         <div class="tot-row"><span>${echapper(libellePaye)}</span><span>${echapper(formaterMontant(detail.montantPaye, detail.devise))}</span></div>

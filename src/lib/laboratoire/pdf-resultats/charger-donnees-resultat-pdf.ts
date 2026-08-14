@@ -12,6 +12,7 @@ import {
 import { detecterTypeExamenPdf } from "@/lib/laboratoire/pdf-resultats/detecter-type-examen";
 import { detecterTypeParStructureResultats } from "@/lib/laboratoire/pdf-resultats/detecter-type-par-structure";
 import { trierParametresParFormulaire } from "@/lib/laboratoire/ordre-parametres-formulaire";
+import { resoudreFactureIdPourQrPdfLabo } from "@/lib/caisse/recu-public";
 import {
   genererQrCodeDataUrl,
   urlRecuFactureAbsolue,
@@ -56,13 +57,9 @@ async function resoudreQrFactureDossier(
   dossierId: string,
   request?: Request
 ): Promise<string | null> {
-  const facture = await prisma.facture.findFirst({
-    where: { dossierId },
-    orderBy: { createdAt: "desc" },
-    select: { id: true },
-  });
-  if (!facture) return null;
-  const url = urlRecuFactureAbsolue(facture.id, request);
+  const factureId = await resoudreFactureIdPourQrPdfLabo(dossierId);
+  if (!factureId) return null;
+  const url = urlRecuFactureAbsolue(factureId, request);
   return genererQrCodeDataUrl(url);
 }
 

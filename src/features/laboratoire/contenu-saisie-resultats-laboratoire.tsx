@@ -179,6 +179,24 @@ export function ContenuSaisieResultatsLaboratoire({
     return list;
   }, [examens, statutFiltre, examenIdFiltre]);
 
+  const construireUrlRetourSaisie = useCallback(
+    (examenId: string) => {
+      const params = new URLSearchParams();
+      if (statutFiltre) params.set("statut", statutFiltre);
+      params.set("examen", examenId);
+      return `/sigh/laboratoire/saisie-resultats/${encodeURIComponent(dossierId)}?${params.toString()}`;
+    },
+    [dossierId, statutFiltre]
+  );
+
+  const construireLienHistorique = useCallback(
+    (examenId: string) => {
+      const retour = construireUrlRetourSaisie(examenId);
+      return `/sigh/laboratoire/saisie-resultats/${encodeURIComponent(dossierId)}/historique/${encodeURIComponent(examenId)}?retour=${encodeURIComponent(retour)}`;
+    },
+    [construireUrlRetourSaisie, dossierId]
+  );
+
   useEffect(() => {
     if (examensAffichables.length === 0) return;
     setExamenOuvertId((courant) => {
@@ -486,6 +504,7 @@ export function ContenuSaisieResultatsLaboratoire({
                       }
                       onRejeter={() => void envoyer({ action: "rejeter" })}
                       onApprouver={() => void envoyer({ action: "approuver" })}
+                      lienHistorique={construireLienHistorique(ex.id)}
                     />
                   )}
                 </div>

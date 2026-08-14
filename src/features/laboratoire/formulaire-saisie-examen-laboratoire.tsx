@@ -96,6 +96,8 @@ interface PropsFormulaireSaisieExamenLaboratoire {
   onValider: () => void;
   onRejeter?: () => void;
   onApprouver?: () => void;
+  /** Lien vers la page d'historique des résultats antérieurs (même type d'examen). */
+  lienHistorique?: string;
 }
 
 function genererIdFichier() {
@@ -238,6 +240,7 @@ export function FormulaireSaisieExamenLaboratoire({
   onValider,
   onRejeter,
   onApprouver,
+  lienHistorique,
 }: PropsFormulaireSaisieExamenLaboratoire) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -339,7 +342,22 @@ export function FormulaireSaisieExamenLaboratoire({
                 <th className="hidden w-[10%] px-2 py-2 sm:table-cell sm:px-3 sm:py-3">{t("laboratoire.saisieResultats.colUnite")}</th>
                 <th className="hidden w-[16%] px-2 py-2 lg:table-cell sm:px-3 sm:py-3">{t("laboratoire.saisieResultats.colValeursReference")}</th>
                 <th className="w-[10%] px-1 py-2 text-center sm:px-2 sm:py-3">{t("laboratoire.saisieResultats.colIndicateur")}</th>
-                <th className="w-[8%] px-1 py-2 text-center sm:px-2 sm:py-3">NR</th>
+                <th className="w-[8%] px-1 py-2 text-center sm:px-2 sm:py-3">
+                  <div className="inline-flex items-center justify-center gap-1">
+                    <span>NR</span>
+                    {lienHistorique && (
+                      <button
+                        type="button"
+                        onClick={() => router.push(lienHistorique)}
+                        className="inline-flex h-6 w-6 items-center justify-center rounded border border-violet-200 bg-white text-violet-600 transition-colors hover:bg-violet-50"
+                        aria-label={t("laboratoire.saisieResultats.historiqueExamen")}
+                        title={t("laboratoire.saisieResultats.historiqueExamen")}
+                      >
+                        <LineChart className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </th>
                 <th className="hidden w-[8%] px-1 py-2 sm:table-cell sm:px-2 sm:py-3" />
               </tr>
             </thead>
@@ -433,13 +451,6 @@ export function FormulaireSaisieExamenLaboratoire({
                               aria-expanded={commentaireOuvert}
                             >
                               <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-                            </button>
-                            <button
-                              type="button"
-                              className="hidden rounded p-1 text-slate-400 hover:bg-violet-50 hover:text-violet-600 lg:inline-flex"
-                              aria-label={t("laboratoire.saisieResultats.historique")}
-                            >
-                              <LineChart className="h-3.5 w-3.5" />
                             </button>
                             {p.personnalise && (
                               <button

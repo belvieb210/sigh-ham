@@ -1,5 +1,10 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { estNumeroFacturePharmacie } from "@/lib/caisse/etat-facturation-dual";
+import {
+  resoudreFactureExamensPourQr,
+  resoudreFacturePharmaciePourQr,
+} from "@/lib/caisse/resoudre-facture-qr-dossier";
 import { verifierTokenRecuFacture } from "@/lib/caisse/token-recu-public";
 
 export interface DetailRecuPublic {
@@ -27,11 +32,18 @@ export interface DetailRecuPublic {
     libelle: string;
     quantite: number;
     montant: number;
+    type?: "examen" | "medicament";
   }>;
   examens: Array<{
     libelle: string;
     code: string | null;
     statut: string;
+  }>;
+  /** Lignes médicaments d'une facture pharmacie distincte (même dossier). */
+  lignesMedicaments?: Array<{
+    libelle: string;
+    quantite: number;
+    montant: number;
   }>;
   isPharmacie: boolean;
 }
@@ -57,6 +69,7 @@ export async function chargerRecuPublicParToken(
     include: {
       lignes: { orderBy: { id: "asc" } },
       paiements: { orderBy: { payeLe: "desc" }, take: 1 },
+      ventePharmacie: true,
       dossier: {
         include: {
           patient: true,
@@ -99,6 +112,20 @@ export async function chargerRecuPublicParToken(
     };
   });
 
+  const facturePharmacie =
+    !estNumeroFacturePharmacie(facture.numeroFacture) && !facture.ventePharmacie
+      ? await resoudreFacturePharmaciePourQr(facture.dossierId)
+      : null;
+
+  const lignesMedicaments =
+    facturePharmacie?.lignes
+      .filter((l) => decimalVersNombre(l.montant) > 0)
+      .map((l) => ({
+        libelle: l.libelle,
+        quantite: l.quantite,
+        montant: decimalVersNombre(l.montant),
+      })) ?? [];
+
   return {
     factureId: facture.id,
     numeroFacture: facture.numeroFacture,
@@ -124,8 +151,20 @@ export async function chargerRecuPublicParToken(
       libelle: l.libelle,
       quantite: l.quantite,
       montant: decimalVersNombre(l.montant),
+      type: estNumeroFacturePharmacie(facture.numeroFacture)
+        ? ("medicament" as const)
+        : ("examen" as const),
     })),
     examens,
-    isPharmacie: facture.numeroFacture.startsWith("FAC-PH-"),
+    lignesMedicaments: lignesMedicaments.length > 0 ? lignesMedicaments : undefined,
+    isPharmacie: estNumeroFacturePharmacie(facture.numeroFacture),
   };
+}
+
+/** Facture utilisée pour le QR du PDF laboratoire (examens, pas pharmacie seule). */
+export async function resoudreFactureIdPourQrPdfLabo(
+  dossierId: string
+): Promise<string | null> {
+  const facture = await resoudreFactureExamensPourQr(dossierId);
+  return facture?.id ?? null;
 }

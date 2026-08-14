@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,6 +19,7 @@ const schemaFormulaireContact = z.object({
 type DonneesFormulaireContact = z.infer<typeof schemaFormulaireContact>;
 
 export function SectionContact() {
+  const [messageSucces, setMessageSucces] = useState(false);
   const {
     register,
     handleSubmit,
@@ -32,7 +34,8 @@ export function SectionContact() {
     void donnees;
     await new Promise((resolve) => setTimeout(resolve, 1000));
     reset();
-    alert("Message envoyé avec succès !");
+    setMessageSucces(true);
+    window.setTimeout(() => setMessageSucces(false), 5000);
   };
 
   return (
@@ -106,6 +109,14 @@ export function SectionContact() {
             className="rounded-xl border border-gris-bordure bg-white p-6 shadow-sm lg:p-8"
             noValidate
           >
+            {messageSucces ? (
+              <p
+                role="status"
+                className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+              >
+                Message envoyé avec succès !
+              </p>
+            ) : null}
             <div className="space-y-4">
               <div>
                 <label htmlFor="nomComplet" className="mb-1 block text-sm font-medium">

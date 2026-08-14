@@ -16,6 +16,7 @@ import {
   GestionComptesMedecinsExternesClient,
 } from "@/features/client/gestion-comptes-partenaires-client";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
+import { useDemanderConfirmation } from "@/components/ui/fournisseur-modale-confirmation";
 import { cn } from "@/lib/utils";
 
 const ONGLETS_VITRINE = [
@@ -78,6 +79,7 @@ export function ContenuMedecinsClient({
   utilisateur: UtilisateurClient;
 }) {
   const { t } = useTranslation();
+  const demanderConfirmation = useDemanderConfirmation();
   const [section, setSection] = useState<(typeof SECTIONS)[number]["value"]>("vitrine");
   const [onglet, setOnglet] = useState<string>("MEDECIN");
   const [liste, setListe] = useState<MedecinVitrine[]>([]);
@@ -153,21 +155,29 @@ export function ContenuMedecinsClient({
     }
   };
 
-  const supprimer = async (id: string) => {
-    if (!window.confirm(t("client.medecins.confirmerSuppression"))) return;
-    setEnCours(true);
-    try {
-      const res = await fetch(`/api/client/medecins-vitrine/${id}`, {
-        method: "DELETE",
-      });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
-      charger();
-    } catch (e: unknown) {
-      setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
-    } finally {
-      setEnCours(false);
-    }
+  const supprimer = (id: string) => {
+    demanderConfirmation({
+      titre: t("client.common.supprimer"),
+      description: t("client.medecins.confirmerSuppression"),
+      libelleConfirmer: t("client.common.supprimer"),
+      libelleAnnuler: t("client.common.annuler"),
+      onConfirmer: async () => {
+        setEnCours(true);
+        try {
+          const res = await fetch(`/api/client/medecins-vitrine/${id}`, {
+            method: "DELETE",
+          });
+          const data = (await res.json()) as { message?: string };
+          if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
+          charger();
+        } catch (e: unknown) {
+          setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
+          throw e;
+        } finally {
+          setEnCours(false);
+        }
+      },
+    });
   };
 
   const uploadPhoto = async (fichier: File) => {
@@ -477,7 +487,7 @@ export function ContenuMedecinsClient({
                   <Bouton
                     variante="danger"
                     taille="petit"
-                    onClick={() => void supprimer(m.id)}
+                    onClick={() => supprimer(m.id)}
                     disabled={enCours}
                   >
                     <Trash2 className="h-4 w-4" />

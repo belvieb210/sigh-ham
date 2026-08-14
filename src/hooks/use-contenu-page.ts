@@ -11,8 +11,14 @@ import { CONTENU_CONTACT } from "@/constants/contact";
 import { CONTENU_RENDEZ_VOUS } from "@/constants/rendez-vous";
 import { CONTENU_SERVICES } from "@/constants/services";
 import { useCampagnes } from "@/hooks/use-campagnes";
+import { useStatistiquesVitrine } from "@/hooks/use-statistiques-vitrine";
 import { normaliserContenuAPropos } from "@/lib/client/normaliser-a-propos";
 import { extraireImagesFondHero } from "@/lib/client/extraire-images-fond-hero";
+import {
+  fusionnerIndicateursAvecStats,
+  statistiquesHeroCampagnes,
+} from "@/lib/client/statistiques-vitrine-utils";
+import { formaterNombreVitrine } from "@/lib/client/formater-valeur-vitrine";
 import type { PagesFr } from "@/locales/pages/fr";
 
 function usePages(): PagesFr {
@@ -207,6 +213,7 @@ export function useContenuServices() {
   const pages = usePages();
   const services = pages.services;
   const imagesFond = useImagesFondHeroPage("services");
+  const { data: stats } = useStatistiquesVitrine();
   const { data: servicesDb } = useQuery({
     queryKey: ["public", "services-vitrine"],
     queryFn: async () => {
@@ -243,7 +250,10 @@ export function useContenuServices() {
         imagesFond,
         statistiques: [
           {
-            valeur: CONTENU_SERVICES.hero.statistiques[0].valeur,
+            valeur:
+              stats && stats.typesAnalyses > 0
+                ? formaterNombreVitrine(stats.typesAnalyses)
+                : CONTENU_SERVICES.hero.statistiques[0].valeur,
             libelle: services.hero.stats.analyses,
           },
           {
@@ -251,7 +261,10 @@ export function useContenuServices() {
             libelle: services.hero.stats.delai,
           },
           {
-            valeur: CONTENU_SERVICES.hero.statistiques[2].valeur,
+            valeur:
+              stats && stats.certification
+                ? stats.certification.replace(":2015", "").split(":")[0] ?? "ISO"
+                : CONTENU_SERVICES.hero.statistiques[2].valeur,
             libelle: services.hero.stats.iso,
           },
           {
@@ -327,8 +340,8 @@ export function useContenuServices() {
       impact: {
         titre: services.impact.titre,
         sousTitre: services.impact.sousTitre,
-        indicateurs: CONTENU_SERVICES.impact.indicateurs.map(
-          (indicateur, index) => ({
+        indicateurs: fusionnerIndicateursAvecStats(
+          CONTENU_SERVICES.impact.indicateurs.map((indicateur, index) => ({
             id: indicateur.id,
             valeur: indicateur.valeur,
             libelle:
@@ -336,7 +349,8 @@ export function useContenuServices() {
             description:
               services.impact.items[index]?.description ??
               indicateur.description,
-          })
+          })),
+          stats
         ),
       },
       specialites: {
@@ -378,7 +392,7 @@ export function useContenuServices() {
         telephone: CONTENU_SERVICES.cta.telephone,
       },
     }),
-    [services, servicesDb, imagesFond]
+    [services, servicesDb, imagesFond, stats]
   );
 }
 
@@ -386,9 +400,12 @@ export function useContenuCampagnes() {
   const pages = usePages();
   const campagnes = pages.campagnes;
   const imagesFond = useImagesFondHeroPage("campagnes");
+  const { data: stats } = useStatistiquesVitrine();
 
   return useMemo(
-    () => ({
+    () => {
+      const heroStats = stats ? statistiquesHeroCampagnes(stats) : null;
+      return {
       hero: {
         surtitre: campagnes.hero.surtitre,
         titre: campagnes.hero.titre,
@@ -397,19 +414,26 @@ export function useContenuCampagnes() {
         imagesFond,
         statistiques: [
           {
-            valeur: CONTENU_CAMPAGNES.hero.statistiques[0].valeur,
+            valeur:
+              heroStats?.sensibilises ??
+              CONTENU_CAMPAGNES.hero.statistiques[0].valeur,
             libelle: campagnes.hero.stats.sensibilises,
           },
           {
-            valeur: CONTENU_CAMPAGNES.hero.statistiques[1].valeur,
+            valeur:
+              heroStats?.actions ??
+              CONTENU_CAMPAGNES.hero.statistiques[1].valeur,
             libelle: campagnes.hero.stats.actions,
           },
           {
-            valeur: CONTENU_CAMPAGNES.hero.statistiques[2].valeur,
+            valeur:
+              heroStats?.satisfaction ??
+              CONTENU_CAMPAGNES.hero.statistiques[2].valeur,
             libelle: campagnes.hero.stats.satisfaction,
           },
           {
-            valeur: CONTENU_CAMPAGNES.hero.statistiques[3].valeur,
+            valeur:
+              heroStats?.iso ?? CONTENU_CAMPAGNES.hero.statistiques[3].valeur,
             libelle: campagnes.hero.stats.iso,
           },
         ],
@@ -418,8 +442,8 @@ export function useContenuCampagnes() {
       impact: {
         titre: campagnes.impact.titre,
         sousTitre: campagnes.impact.sousTitre,
-        indicateurs: CONTENU_CAMPAGNES.impact.indicateurs.map(
-          (indicateur, index) => ({
+        indicateurs: fusionnerIndicateursAvecStats(
+          CONTENU_CAMPAGNES.impact.indicateurs.map((indicateur, index) => ({
             id: indicateur.id,
             valeur: indicateur.valeur,
             libelle:
@@ -427,7 +451,8 @@ export function useContenuCampagnes() {
             description:
               campagnes.impact.items[index]?.description ??
               indicateur.description,
-          })
+          })),
+          stats
         ),
       },
       parcours: {
@@ -454,8 +479,9 @@ export function useContenuCampagnes() {
         telephone: CONTENU_CAMPAGNES.cta.telephone,
       },
       items: campagnes.items,
-    }),
-    [campagnes, imagesFond]
+    };
+    },
+    [campagnes, imagesFond, stats]
   );
 }
 
@@ -488,6 +514,7 @@ export function useCampagnesTraduits() {
 export function useContenuAPropos() {
   const pages = usePages();
   const aPropos = pages.aPropos;
+  const { data: stats } = useStatistiquesVitrine();
   const { data: medecinsDb } = useQuery({
     queryKey: ["public", "medecins-vitrine"],
     queryFn: async () => {
@@ -636,15 +663,16 @@ export function useContenuAPropos() {
       impact: {
         titre: aPropos.impact.titre,
         sousTitre: aPropos.impact.sousTitre,
-        indicateurs: CONTENU_A_PROPOS.impact.indicateurs.map(
-          (indicateur, index) => ({
+        indicateurs: fusionnerIndicateursAvecStats(
+          CONTENU_A_PROPOS.impact.indicateurs.map((indicateur, index) => ({
             id: indicateur.id,
             valeur: indicateur.valeur,
             libelle: aPropos.impact.items[index]?.libelle ?? indicateur.libelle,
             description:
               aPropos.impact.items[index]?.description ??
               indicateur.description,
-          })
+          })),
+          stats
         ),
       },
       bandeau: {
@@ -668,5 +696,5 @@ export function useContenuAPropos() {
         telephone: CONTENU_A_PROPOS.cta.telephone,
       },
     };
-  }, [aPropos, medecinsDb, pageDb]);
+  }, [aPropos, medecinsDb, pageDb, stats]);
 }

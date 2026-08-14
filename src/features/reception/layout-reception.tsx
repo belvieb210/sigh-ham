@@ -252,7 +252,7 @@ export function EnTeteSigh({ titre, sousTitre, utilisateur, onMenu }: PropsEnTet
   const { t } = useTranslation();
 
   return (
-    <header className="sticky top-0 z-30 shrink-0 border-b border-gris-bordure bg-white">
+    <header className="sticky top-0 z-40 shrink-0 border-b border-gris-bordure bg-white/95 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-white/90">
       {/* Mobile */}
       <div className="flex items-center gap-1.5 px-2.5 py-2 sm:gap-2 sm:px-4 sm:py-2.5 lg:hidden">
         <button

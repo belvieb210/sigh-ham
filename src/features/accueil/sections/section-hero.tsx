@@ -15,6 +15,8 @@ import { useTranslation } from "react-i18next";
 import { Bouton } from "@/components/ui/bouton";
 import { CarrouselFondHero } from "@/features/accueil/components/carrousel-fond-hero";
 import { STATISTIQUES_ACCUEIL } from "@/constants/navigation";
+import { useStatistiquesVitrine } from "@/hooks/use-statistiques-vitrine";
+import { statistiquesHeroAccueil } from "@/lib/client/statistiques-vitrine-utils";
 
 const CARTE_ICONES_STATS = {
   medecins: Stethoscope,
@@ -74,6 +76,7 @@ export function SectionHero({
   diapositives?: import("@/types/hero-accueil").DiapositiveHeroAccueil[];
 }) {
   const { t } = useTranslation();
+  const { data: stats } = useStatistiquesVitrine();
   const [slideActif, setSlideActif] = useState(
     diapositives?.[0] ?? undefined
   );
@@ -84,6 +87,8 @@ export function SectionHero({
     patients: "accueil.stats.patients",
     certification: "accueil.stats.certification",
   };
+
+  const valeursStats = stats ? statistiquesHeroAccueil(stats) : null;
 
   const legendeSlide =
     slideActif?.titre?.trim() ||
@@ -181,6 +186,19 @@ export function SectionHero({
           <div className="grid grid-cols-2 gap-4 sm:flex sm:items-center sm:justify-between sm:gap-2">
             {STATISTIQUES_ACCUEIL.map((stat, index) => {
               const Icone = CARTE_ICONES_STATS[stat.icone];
+              const valeurDynamique =
+                stat.id === "medecins"
+                  ? valeursStats?.medecins
+                  : stat.id === "departements"
+                    ? valeursStats?.departements &&
+                      valeursStats.departements !== "0"
+                      ? valeursStats.departements
+                      : null
+                    : stat.id === "patients"
+                      ? valeursStats?.patients
+                      : stat.id === "certification"
+                        ? valeursStats?.certification
+                        : null;
               return (
                 <div
                   key={stat.id}
@@ -198,7 +216,7 @@ export function SectionHero({
                   </div>
                   <div className="min-w-0">
                     <p className="text-[13px] font-bold leading-tight text-[#2d2a6e] sm:text-sm">
-                      {stat.valeur}
+                      {valeurDynamique ?? stat.valeur}
                     </p>
                     <p className="text-[10px] leading-snug text-texte-secondaire sm:text-[11px]">
                       {t(CLES_STATS[stat.id] ?? stat.libelle)}

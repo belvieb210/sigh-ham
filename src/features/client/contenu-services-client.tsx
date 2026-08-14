@@ -14,6 +14,7 @@ import {
   type ImageVitrineItem,
 } from "@/features/client/zone-images-vitrine";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
+import { useDemanderConfirmation } from "@/components/ui/fournisseur-modale-confirmation";
 
 interface ServiceVitrine {
   id: string;
@@ -74,6 +75,7 @@ export function ContenuServicesClient({
   utilisateur: UtilisateurClient;
 }) {
   const { t } = useTranslation();
+  const demanderConfirmation = useDemanderConfirmation();
   const [liste, setListe] = useState<ServiceVitrine[]>([]);
   const [form, setForm] = useState<FormService>(FORM_VIDE);
   const [pointsTexte, setPointsTexte] = useState("");
@@ -141,21 +143,29 @@ export function ContenuServicesClient({
     }
   };
 
-  const supprimer = async (id: string) => {
-    if (!window.confirm(t("client.services.confirmerSuppression"))) return;
-    setEnCours(true);
-    try {
-      const res = await fetch(`/api/client/services-vitrine/${id}`, {
-        method: "DELETE",
-      });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
-      charger();
-    } catch (e: unknown) {
-      setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
-    } finally {
-      setEnCours(false);
-    }
+  const supprimer = (id: string) => {
+    demanderConfirmation({
+      titre: t("client.common.supprimer"),
+      description: t("client.services.confirmerSuppression"),
+      libelleConfirmer: t("client.common.supprimer"),
+      libelleAnnuler: t("client.common.annuler"),
+      onConfirmer: async () => {
+        setEnCours(true);
+        try {
+          const res = await fetch(`/api/client/services-vitrine/${id}`, {
+            method: "DELETE",
+          });
+          const data = (await res.json()) as { message?: string };
+          if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
+          charger();
+        } catch (e: unknown) {
+          setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
+          throw e;
+        } finally {
+          setEnCours(false);
+        }
+      },
+    });
   };
 
   const ouvrirEdition = (s: ServiceVitrine) => {
@@ -374,7 +384,7 @@ export function ContenuServicesClient({
                 <Bouton
                   variante="danger"
                   taille="petit"
-                  onClick={() => void supprimer(s.id)}
+                  onClick={() => supprimer(s.id)}
                   disabled={enCours}
                 >
                   <Trash2 className="h-4 w-4" />

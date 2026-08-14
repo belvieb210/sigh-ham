@@ -19,9 +19,14 @@ export function SectionGrilleServices() {
       ? services
       : services.filter((s) => s.categorie === categorieActive);
 
+  const estServicePhare = (service: (typeof services)[number]) =>
+    ("estPhare" in service &&
+      Boolean((service as { estPhare?: boolean }).estPhare)) ||
+    ("badge" in service && Boolean((service as { badge?: string }).badge));
+
   const servicesAffiches =
     categorieActive === "tous"
-      ? servicesFiltres.filter((s) => !("badge" in s))
+      ? servicesFiltres.filter((s) => !estServicePhare(s))
       : servicesFiltres;
 
   return (
@@ -37,7 +42,7 @@ export function SectionGrilleServices() {
           sousTitre={grille.sousTitre}
         />
 
-        <div className="sticky top-16 z-30 mt-8 rounded-2xl border border-gris-bordure bg-white p-4 shadow-sm sm:mt-10 sm:p-5">
+        <div className="sticky top-16 z-30 mt-8 rounded-2xl border border-gris-bordure bg-white p-4 shadow-sm sm:mt-10 sm:p-5 lg:top-20">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-texte-principal">
             <Filter className="h-4 w-4 text-bleu-medical" />
             Filtrer par catégorie
@@ -73,20 +78,26 @@ export function SectionGrilleServices() {
         </div>
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-          <AnimatePresence mode="popLayout">
-            {servicesAffiches.map((service, index) => (
-              <motion.div
-                key={service.id}
-                layout
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.25, delay: index * 0.04 }}
-              >
-                <CarteService service={service} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          {servicesAffiches.length === 0 ? (
+            <p className="col-span-full rounded-xl border border-dashed border-gris-bordure bg-white px-4 py-10 text-center text-sm text-texte-secondaire">
+              Aucun service dans cette catégorie pour le moment.
+            </p>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {servicesAffiches.map((service, index) => (
+                <motion.div
+                  key={service.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{ duration: 0.25, delay: index * 0.04 }}
+                >
+                  <CarteService service={service} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          )}
         </div>
       </div>
     </section>

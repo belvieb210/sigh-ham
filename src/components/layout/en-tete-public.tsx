@@ -22,7 +22,7 @@ export function EnTetePublic() {
 
   return (
     <>
-      <header className="en-tete-public sticky top-0 z-50 border-b border-gris-bordure/80 bg-white/98 backdrop-blur-sm">
+      <header className="en-tete-public fixed inset-x-0 top-0 z-50 border-b border-gris-bordure/80 bg-white/95 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-white/90">
         <div className="conteneur-principal">
           <div className="flex h-16 items-center justify-between gap-3 lg:hidden">
             <LogoHam taille="petit" afficherTexte />

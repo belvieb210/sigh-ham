@@ -15,6 +15,7 @@ import {
   type ImageVitrineItem,
 } from "@/features/client/zone-images-vitrine";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
+import { useDemanderConfirmation } from "@/components/ui/fournisseur-modale-confirmation";
 
 interface MediaGalerie {
   id: string;
@@ -32,6 +33,7 @@ export function ContenuGalerieClient({
   utilisateur: UtilisateurClient;
 }) {
   const { t } = useTranslation();
+  const demanderConfirmation = useDemanderConfirmation();
   const [liste, setListe] = useState<MediaGalerie[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -109,19 +111,27 @@ export function ContenuGalerieClient({
     }
   };
 
-  const supprimer = async (id: string) => {
-    if (!window.confirm(t("client.galerie.confirmerSuppression"))) return;
-    setEnCours(true);
-    try {
-      const res = await fetch(`/api/client/galerie/${id}`, { method: "DELETE" });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
-      charger();
-    } catch (e: unknown) {
-      setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
-    } finally {
-      setEnCours(false);
-    }
+  const supprimer = (id: string) => {
+    demanderConfirmation({
+      titre: t("client.common.supprimer"),
+      description: t("client.galerie.confirmerSuppression"),
+      libelleConfirmer: t("client.common.supprimer"),
+      libelleAnnuler: t("client.common.annuler"),
+      onConfirmer: async () => {
+        setEnCours(true);
+        try {
+          const res = await fetch(`/api/client/galerie/${id}`, { method: "DELETE" });
+          const data = (await res.json()) as { message?: string };
+          if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
+          charger();
+        } catch (e: unknown) {
+          setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
+          throw e;
+        } finally {
+          setEnCours(false);
+        }
+      },
+    });
   };
 
   return (
@@ -233,7 +243,7 @@ export function ContenuGalerieClient({
                       <Bouton
                         variante="danger"
                         taille="petit"
-                        onClick={() => void supprimer(m.id)}
+                        onClick={() => supprimer(m.id)}
                         disabled={enCours}
                       >
                         <Trash2 className="h-4 w-4" />

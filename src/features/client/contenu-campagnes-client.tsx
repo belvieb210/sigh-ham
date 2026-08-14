@@ -17,6 +17,7 @@ import {
   type ImageVitrineItem,
 } from "@/features/client/zone-images-vitrine";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
+import { useDemanderConfirmation } from "@/components/ui/fournisseur-modale-confirmation";
 
 interface CampagneItem {
   id: string;
@@ -75,6 +76,7 @@ export function ContenuCampagnesClient({
   utilisateur: UtilisateurClient;
 }) {
   const { t } = useTranslation();
+  const demanderConfirmation = useDemanderConfirmation();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
 
@@ -164,20 +166,28 @@ export function ContenuCampagnesClient({
     }
   };
 
-  const supprimer = async (id: string) => {
-    if (!window.confirm(t("client.campagnes.confirmerSuppression"))) return;
-    setEnCours(true);
-    try {
-      const res = await fetch(`/api/client/campagnes/${id}`, { method: "DELETE" });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
-      charger();
-      if (form.id === id) fermerForm();
-    } catch (e: unknown) {
-      setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
-    } finally {
-      setEnCours(false);
-    }
+  const supprimer = (id: string) => {
+    demanderConfirmation({
+      titre: t("client.common.supprimer"),
+      description: t("client.campagnes.confirmerSuppression"),
+      libelleConfirmer: t("client.common.supprimer"),
+      libelleAnnuler: t("client.common.annuler"),
+      onConfirmer: async () => {
+        setEnCours(true);
+        try {
+          const res = await fetch(`/api/client/campagnes/${id}`, { method: "DELETE" });
+          const data = (await res.json()) as { message?: string };
+          if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
+          charger();
+          if (form.id === id) fermerForm();
+        } catch (e: unknown) {
+          setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
+          throw e;
+        } finally {
+          setEnCours(false);
+        }
+      },
+    });
   };
 
   return (
@@ -470,7 +480,7 @@ export function ContenuCampagnesClient({
                 <Bouton
                   variante="danger"
                   taille="petit"
-                  onClick={() => void supprimer(c.id)}
+                  onClick={() => supprimer(c.id)}
                   disabled={enCours}
                 >
                   <Trash2 className="h-4 w-4" />

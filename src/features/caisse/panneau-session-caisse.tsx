@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
+import { useDemanderConfirmation } from "@/components/ui/fournisseur-modale-confirmation";
 import { formaterMontantCaisse } from "@/features/caisse/utils-format";
 import type { SessionCaisseActive } from "@/lib/caisse/types";
 
 export function PanneauSessionCaisse() {
   const { t } = useTranslation();
+  const demanderConfirmation = useDemanderConfirmation();
   const [session, setSession] = useState<SessionCaisseActive | null>(null);
   const [chargement, setChargement] = useState(true);
   const [enCours, setEnCours] = useState(false);
@@ -38,27 +40,35 @@ export function PanneauSessionCaisse() {
     void charger();
   }, [charger]);
 
-  const cloturer = async () => {
+  const cloturer = () => {
     if (!session || enCours) return;
-    const ok = window.confirm(t("caisse.layout.confirmerCloture"));
-    if (!ok) return;
-    setEnCours(true);
-    setErreur(null);
-    try {
-      const res = await fetch("/api/caisse/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "cloturer" }),
-      });
-      const data = (await res.json()) as { erreur?: string };
-      if (!res.ok) throw new Error(data.erreur ?? "Clôture impossible");
-      setSession(null);
-      setSoldeSaisi("0");
-    } catch (e) {
-      setErreur(e instanceof Error ? e.message : "Clôture impossible");
-    } finally {
-      setEnCours(false);
-    }
+    demanderConfirmation({
+      titre: t("caisse.layout.cloturerSession"),
+      description: t("caisse.layout.confirmerCloture"),
+      libelleConfirmer: t("caisse.layout.cloturerSession"),
+      libelleAnnuler: t("client.common.annuler"),
+      variante: "avertissement",
+      onConfirmer: async () => {
+        setEnCours(true);
+        setErreur(null);
+        try {
+          const res = await fetch("/api/caisse/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "cloturer" }),
+          });
+          const data = (await res.json()) as { erreur?: string };
+          if (!res.ok) throw new Error(data.erreur ?? "Clôture impossible");
+          setSession(null);
+          setSoldeSaisi("0");
+        } catch (e) {
+          setErreur(e instanceof Error ? e.message : "Clôture impossible");
+          throw e;
+        } finally {
+          setEnCours(false);
+        }
+      },
+    });
   };
 
   const ouvrir = async () => {
@@ -124,7 +134,7 @@ export function PanneauSessionCaisse() {
           <button
             type="button"
             disabled={enCours}
-            onClick={() => void cloturer()}
+            onClick={cloturer}
             className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100 disabled:opacity-50"
           >
             {enCours ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}

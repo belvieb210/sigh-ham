@@ -194,10 +194,13 @@ export const clientEn = {
     note: "Internal note / content",
   },
   medecins: {
-    titre: "Team & showcase doctors",
+    titre: "Team & partner accounts",
     description:
-      "Public profiles by category — not linked to SIGH medical records.",
+      "Public showcase profiles and login accounts for external doctors / church partners.",
     fil: "Team",
+    sectionVitrine: "Showcase team (public site)",
+    sectionExternes: "External doctor accounts",
+    sectionEglise: "Church partner accounts",
     nouveau: "Add a member",
     confirmerSuppression: "Permanently delete this profile?",
     prenom: "First name",

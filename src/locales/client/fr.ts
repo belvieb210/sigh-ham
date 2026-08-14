@@ -196,10 +196,13 @@ export const clientFr = {
     note: "Note interne / contenu",
   },
   medecins: {
-    titre: "Équipe & médecins vitrine",
+    titre: "Équipe & comptes partenaires",
     description:
-      "Fiches publiques par catégorie — sans lien avec le dossier médical SIGH.",
+      "Fiches vitrine (site public) et comptes de connexion médecins externes / conventionnés.",
     fil: "Équipe",
+    sectionVitrine: "Équipe vitrine (site public)",
+    sectionExternes: "Comptes médecins externes",
+    sectionEglise: "Comptes conventionnés (Église)",
     nouveau: "Ajouter un membre",
     confirmerSuppression: "Supprimer définitivement cette fiche ?",
     prenom: "Prénom",

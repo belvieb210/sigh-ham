@@ -11,10 +11,14 @@ import {
   type UtilisateurClient,
 } from "@/features/client/mise-en-page-client";
 import { televerserFichierClient } from "@/features/client/televerser-fichier-client";
+import {
+  GestionComptesEgliseClient,
+  GestionComptesMedecinsExternesClient,
+} from "@/features/client/gestion-comptes-partenaires-client";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 import { cn } from "@/lib/utils";
 
-const ONGLETS = [
+const ONGLETS_VITRINE = [
   {
     value: "MEDECIN",
     labelKey: "client.medecins.ongletEquipe" as const,
@@ -27,14 +31,12 @@ const ONGLETS = [
     value: "PERSONNEL",
     labelKey: "client.medecins.ongletPersonnel" as const,
   },
-  {
-    value: "MEDECIN_EXTERNE",
-    labelKey: "client.medecins.ongletExternes" as const,
-  },
-  {
-    value: "SERVICE_EGLISE",
-    labelKey: "client.medecins.ongletEglise" as const,
-  },
+] as const;
+
+const SECTIONS = [
+  { value: "vitrine", labelKey: "client.medecins.sectionVitrine" as const },
+  { value: "externes", labelKey: "client.medecins.sectionExternes" as const },
+  { value: "eglise", labelKey: "client.medecins.sectionEglise" as const },
 ] as const;
 
 interface MedecinVitrine {
@@ -76,6 +78,7 @@ export function ContenuMedecinsClient({
   utilisateur: UtilisateurClient;
 }) {
   const { t } = useTranslation();
+  const [section, setSection] = useState<(typeof SECTIONS)[number]["value"]>("vitrine");
   const [onglet, setOnglet] = useState<string>("MEDECIN");
   const [liste, setListe] = useState<MedecinVitrine[]>([]);
   const [form, setForm] = useState<FormMedecin>(formVide("MEDECIN"));
@@ -180,15 +183,11 @@ export function ContenuMedecinsClient({
   };
 
   const titreForm =
-    onglet === "MEDECIN_EXTERNE"
-      ? "Médecin externe"
-      : onglet === "SERVICE_EGLISE"
-        ? "Service Église"
-        : onglet === "RESPONSABLE_LABO"
-          ? "Responsable / Direction"
-          : onglet === "PERSONNEL"
-            ? "Personnel"
-            : "Médecin / agent";
+    onglet === "RESPONSABLE_LABO"
+      ? "Responsable / Direction"
+      : onglet === "PERSONNEL"
+        ? "Personnel"
+        : "Médecin / agent";
 
   return (
     <MiseEnPageClient
@@ -214,7 +213,30 @@ export function ContenuMedecinsClient({
         ) : null}
 
         <div className="flex flex-wrap gap-2 rounded-xl border border-gris-bordure bg-white p-2 shadow-sm">
-          {ONGLETS.map((o) => (
+          {SECTIONS.map((s) => (
+            <button
+              key={s.value}
+              type="button"
+              onClick={() => {
+                setSection(s.value);
+                setModeForm(false);
+              }}
+              className={cn(
+                "rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:text-sm",
+                section === s.value
+                  ? "bg-[#2d2a6e] text-white"
+                  : "text-texte-secondaire hover:bg-gris-tres-clair hover:text-texte-principal"
+              )}
+            >
+              {t(s.labelKey)}
+            </button>
+          ))}
+        </div>
+
+        {section === "vitrine" ? (
+          <>
+        <div className="flex flex-wrap gap-2 rounded-xl border border-gris-bordure bg-white p-2 shadow-sm">
+          {ONGLETS_VITRINE.map((o) => (
             <button
               key={o.value}
               type="button"
@@ -470,6 +492,12 @@ export function ContenuMedecinsClient({
             </p>
           ) : null}
         </div>
+          </>
+        ) : section === "externes" ? (
+          <GestionComptesMedecinsExternesClient />
+        ) : (
+          <GestionComptesEgliseClient />
+        )}
       </div>
     </MiseEnPageClient>
   );

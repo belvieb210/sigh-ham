@@ -13,11 +13,17 @@ export const stylesResultatPdf = StyleSheet.create({
   page: {
     fontFamily: "Roboto",
     fontSize: 10,
-    paddingTop: 28,
+    paddingTop: 200,
     paddingHorizontal: 42,
     paddingBottom: 48,
     color: COULEURS_RESULTAT_PDF.noir,
     backgroundColor: "#ffffff",
+  },
+  enteteFixe: {
+    position: "absolute",
+    top: 28,
+    left: 42,
+    right: 42,
   },
   bandeauPatient: {
     borderWidth: 1,
@@ -153,18 +159,8 @@ export const stylesResultatPdf = StyleSheet.create({
     marginBottom: 4,
   },
   validationBloc: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginTop: 4,
-  },
-  validationGauche: {
-    flex: 1,
-    paddingRight: 8,
-    minWidth: 0,
-  },
-  validationLegende: {
-    width: "42%",
-    minWidth: 180,
+    marginTop: 8,
+    width: "100%",
   },
   validationLigne: {
     flexDirection: "row",
@@ -180,19 +176,20 @@ export const stylesResultatPdf = StyleSheet.create({
   validationFin: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 6,
-    fontSize: 9,
+    marginTop: 10,
+    width: "100%",
   },
-  validationFinLigne: {
+  validationFinTrait: {
     flex: 1,
-    textAlign: "center",
-    fontSize: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: COULEURS_RESULTAT_PDF.noir,
+    height: 1,
   },
   validationFinCentre: {
-    width: 36,
+    paddingHorizontal: 10,
     textAlign: "center",
     fontWeight: "bold",
+    fontSize: 9,
   },
   annexeNomFichier: {
     fontSize: 9,
@@ -214,33 +211,22 @@ export const stylesResultatPdf = StyleSheet.create({
     borderColor: "#e2e8f0",
     borderRadius: 4,
     padding: 6,
-    marginBottom: 0,
-    marginTop: 10,
+    marginBottom: 4,
+    marginTop: 8,
     backgroundColor: "#fafafa",
+    width: "100%",
   },
   legendeTitre: {
     fontSize: 9,
     fontWeight: "bold",
-    color: "#6d28d9",
-    marginBottom: 6,
-  },
-  legendeLigne: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 3,
-  },
-  legendePastille: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 2,
-    marginRight: 6,
+    color: COULEURS_RESULTAT_PDF.noir,
+    marginBottom: 4,
   },
   legendeTexte: {
-    flex: 1,
     fontSize: 8,
-    lineHeight: 1.3,
+    lineHeight: 1.35,
     color: COULEURS_RESULTAT_PDF.gris,
+    marginBottom: 2,
   },
   legendeLabel: {
     fontWeight: "bold",

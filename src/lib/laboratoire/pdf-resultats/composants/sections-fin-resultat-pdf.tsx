@@ -43,30 +43,22 @@ export function SignatureValidationPdf({
 
   return (
     <View style={stylesResultatPdf.validationBloc}>
-      <View style={stylesResultatPdf.validationGauche}>
-        <Text style={stylesResultatPdf.validationTitre}>VALIDATION</Text>
-        <View style={stylesResultatPdf.validationLigne}>
-          <Text style={{ width: "50%" }}>Biologiste responsable:</Text>
-          <Text style={{ width: "50%" }}>Date: {date}</Text>
-        </View>
-        {signaturePath ? (
-          <Image src={signaturePath} style={stylesResultatPdf.signatureImage} />
-        ) : null}
-        <View style={stylesResultatPdf.validationFin}>
-          <Text style={stylesResultatPdf.validationFinLigne}>
-            ________________________________________
-          </Text>
-          <Text style={stylesResultatPdf.validationFinCentre}>FIN</Text>
-          <Text style={stylesResultatPdf.validationFinLigne}>
-            ________________________________________
-          </Text>
-        </View>
+      <Text style={stylesResultatPdf.validationTitre}>VALIDATION</Text>
+      <View style={stylesResultatPdf.validationLigne}>
+        <Text style={{ width: "50%" }}>Biologiste responsable:</Text>
+        <Text style={{ width: "50%" }}>Date: {date}</Text>
       </View>
-      {afficherLegende ? (
-        <View style={stylesResultatPdf.validationLegende}>
-          <LegendeInterpretationPdf />
-        </View>
+      {signaturePath ? (
+        <Image src={signaturePath} style={stylesResultatPdf.signatureImage} />
       ) : null}
+
+      {afficherLegende ? <LegendeInterpretationPdf /> : null}
+
+      <View style={stylesResultatPdf.validationFin}>
+        <View style={stylesResultatPdf.validationFinTrait} />
+        <Text style={stylesResultatPdf.validationFinCentre}>FIN</Text>
+        <View style={stylesResultatPdf.validationFinTrait} />
+      </View>
     </View>
   );
 }

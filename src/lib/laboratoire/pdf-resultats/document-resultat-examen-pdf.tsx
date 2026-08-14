@@ -1,6 +1,6 @@
 import { Document, Page, View } from "@react-pdf/renderer";
+import { EnteteFixePageResultatPdf } from "@/lib/laboratoire/pdf-resultats/composants/entete-fixe-resultat-pdf";
 import {
-  EnTeteResultatPdfServeur,
   PiedResultatPdfServeur,
 } from "@/lib/laboratoire/pdf-resultats/composants/en-tete-resultat-pdf-serveur";
 import { PagesAnnexeResultatPdf } from "@/lib/laboratoire/pdf-resultats/composants/annexe-resultat-pdf";
@@ -30,16 +30,18 @@ export function DocumentResultatExamenPdf({
   return (
     <Document>
       <Page size="A4" style={stylesResultatPdf.page} wrap>
-        <EnTeteResultatPdfServeur
+        <EnteteFixePageResultatPdf
           logoPath={logoPath}
-          lignesBadge={["RAPPORT DE", "RÉSULTATS"]}
+          patient={donnees.patient}
+          examen={donnees.examen}
+          avatarHomme={avatarHomme}
+          avatarFemme={avatarFemme}
         />
         <ContenuExamenResultatPdf
           donnees={donnees}
           signaturePath={signaturePath}
           afficherSignature
-          avatarHomme={avatarHomme}
-          avatarFemme={avatarFemme}
+          afficherBandeau={false}
         />
         <PiedResultatPdfServeur />
       </Page>
@@ -69,16 +71,17 @@ export function DocumentResultatsMultiExamensPdf({
   return (
     <Document>
       <Page size="A4" style={stylesResultatPdf.page} wrap>
-        <EnTeteResultatPdfServeur
+        <EnteteFixePageResultatPdf
           logoPath={logoPath}
-          lignesBadge={["RAPPORT DE", "RÉSULTATS"]}
+          patient={premier.patient}
+          examen={premier.examen}
+          avatarHomme={avatarHomme}
+          avatarFemme={avatarFemme}
         />
         <ContenuExamenResultatPdf
           donnees={premier}
           afficherSignature={false}
-          afficherBandeau
-          avatarHomme={avatarHomme}
-          avatarFemme={avatarFemme}
+          afficherBandeau={false}
         />
         {pages.slice(1).map((donnees) => (
           <View key={donnees.examen.examenId} style={stylesResultatPdf.blocExamen}>

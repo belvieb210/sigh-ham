@@ -342,23 +342,22 @@ export function FormulaireSaisieExamenLaboratoire({
                 <th className="hidden w-[10%] px-2 py-2 sm:table-cell sm:px-3 sm:py-3">{t("laboratoire.saisieResultats.colUnite")}</th>
                 <th className="hidden w-[16%] px-2 py-2 lg:table-cell sm:px-3 sm:py-3">{t("laboratoire.saisieResultats.colValeursReference")}</th>
                 <th className="w-[10%] px-1 py-2 text-center sm:px-2 sm:py-3">{t("laboratoire.saisieResultats.colIndicateur")}</th>
-                <th className="w-[8%] px-1 py-2 text-center sm:px-2 sm:py-3">
-                  <div className="inline-flex items-center justify-center gap-1">
-                    <span>NR</span>
-                    {lienHistorique && (
+                <th className="w-[8%] px-1 py-2 text-center sm:px-2 sm:py-3">NR</th>
+                <th className="hidden w-[8%] px-1 py-2 sm:table-cell sm:px-2 sm:py-3">
+                  {lienHistorique && (
+                    <div className="flex items-center justify-end">
                       <button
                         type="button"
                         onClick={() => router.push(lienHistorique)}
-                        className="inline-flex h-6 w-6 items-center justify-center rounded border border-violet-200 bg-white text-violet-600 transition-colors hover:bg-violet-50"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-violet-200 bg-white text-violet-600 transition-colors hover:bg-violet-50"
                         aria-label={t("laboratoire.saisieResultats.historiqueExamen")}
                         title={t("laboratoire.saisieResultats.historiqueExamen")}
                       >
                         <LineChart className="h-3.5 w-3.5" />
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </th>
-                <th className="hidden w-[8%] px-1 py-2 sm:table-cell sm:px-2 sm:py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

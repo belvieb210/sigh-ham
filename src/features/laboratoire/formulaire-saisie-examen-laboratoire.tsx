@@ -714,12 +714,12 @@ export function FormulaireSaisieExamenLaboratoire({
             </div>
             <div>
               <dt className="text-xs text-slate-500">{t("laboratoire.saisieResultats.numeroDossier")}</dt>
-              <dd className="font-mono text-slate-800">{patient.numeroEnregistrement}</dd>
+              <dd className="font-mono text-slate-800">{patient.numeroTransfert ?? "—"}</dd>
             </div>
-            {patient.numeroTransfert && (
+            {patient.numeroEnregistrement && (
               <div>
                 <dt className="text-xs text-slate-500">{t("laboratoire.saisieResultats.numeroDemande")}</dt>
-                <dd className="font-mono text-slate-800">{patient.numeroTransfert}</dd>
+                <dd className="font-mono text-slate-800">{patient.numeroEnregistrement}</dd>
               </div>
             )}
           </dl>

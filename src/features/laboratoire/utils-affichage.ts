@@ -89,14 +89,19 @@ export function statutsAnalyseDistincts(
   return [...ids];
 }
 
-/** N° permanent patient (ex. 20260804008) */
+/** N° patient affiché en labo = n° transfert (ex. PAT-202600001). */
 export function numeroEnregistrementLaboratoire(p: PatientFileLaboratoire) {
+  return p.numeroTransfert ?? "—";
+}
+
+/** N° permanent patient (ex. 20260804008). */
+export function numeroPermanentPatientLaboratoire(p: PatientFileLaboratoire) {
   return p.numeroEnregistrement || p.numeroPatient;
 }
 
-/** N° transfert annuel (ex. PAT-202600001) */
+/** @deprecated Alias — préférer numeroEnregistrementLaboratoire */
 export function codeTransfertLaboratoire(p: PatientFileLaboratoire) {
-  return p.numeroTransfert ?? "—";
+  return numeroEnregistrementLaboratoire(p);
 }
 
 /** Tri décroissant par date d'arrivée (les plus récents en premier). */

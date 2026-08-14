@@ -7,6 +7,7 @@ import {
   codeTransfertLaboratoire,
   initialesPatient,
   numeroEnregistrementLaboratoire,
+  numeroPermanentPatientLaboratoire,
 } from "@/features/laboratoire/utils-affichage";
 
 interface PropsResumePatientLaboratoire {
@@ -103,7 +104,7 @@ export function ResumePatientLaboratoire({ patient }: PropsResumePatientLaborato
         />
         <Ligne
           label={t("laboratoire.panneau.numeroTransfert")}
-          valeur={codeTransfertLaboratoire(patient)}
+          valeur={numeroPermanentPatientLaboratoire(patient)}
         />
         <Ligne
           label={t("laboratoire.panneau.heureTransfert")}

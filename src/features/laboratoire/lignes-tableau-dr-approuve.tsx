@@ -51,6 +51,7 @@ export function LignesTableauDrApprouve({
   const examensSelectionnes = examensDrApprouve.filter((ex) =>
     examensCoches.has(ex.id)
   );
+  const modeSelectionImpression = examensSelectionnes.length > 0;
 
   const tousExamensCoches =
     examensDrApprouve.length > 0 &&
@@ -139,7 +140,7 @@ export function LignesTableauDrApprouve({
                   })}
                 </p>
                 <div className="flex shrink-0 items-center gap-1.5">
-                  {examensSelectionnes.length > 0 ? (
+                  {modeSelectionImpression ? (
                     <button
                       type="button"
                       onClick={(e) => {
@@ -201,6 +202,19 @@ export function LignesTableauDrApprouve({
                           </p>
                         ) : null}
                       </div>
+                      {!modeSelectionImpression ? (
+                        <button
+                          type="button"
+                          onClick={() => onImprimerExamensSelectionnes([examen])}
+                          className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-gris-bordure px-2 text-[11px] font-medium text-texte-secondaire transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
+                          title={t("laboratoire.drApprouve.imprimerExamen")}
+                        >
+                          <Printer className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">
+                            {t("laboratoire.drApprouve.imprimer")}
+                          </span>
+                        </button>
+                      ) : null}
                     </li>
                   );
                 })}

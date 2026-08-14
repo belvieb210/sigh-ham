@@ -3,6 +3,7 @@ import {
   obtenirSessionApiClient,
   reponseNonAutoriseClient,
 } from "@/lib/auth/garde-api-client";
+import { invaliderCacheCampagnes } from "@/lib/client/invalider-cache-vitrine";
 import { versHexPourInputCouleur } from "@/lib/client/couleurs-campagne";
 import {
   campagneDbVersPublication,
@@ -121,6 +122,7 @@ export async function POST(request: NextRequest) {
       where: { id: row.id },
       include: includeImages,
     });
+    invaliderCacheCampagnes({ slug: fresh!.slug });
     return NextResponse.json(
       { campagne: campagneDbVersPublication(fresh!) },
       { status: 201 }

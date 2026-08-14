@@ -4,13 +4,13 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight, ChevronDown, Megaphone } from "lucide-react";
 import { IMAGE_HERO_CAMPAGNES } from "@/constants/images";
-import { obtenirCampagnesPublieesSync } from "@/services/service-campagnes-sync";
+import { useCampagnes } from "@/hooks/use-campagnes";
 import { Bouton } from "@/components/ui/bouton";
 import { useContenuCampagnes } from "@/hooks/use-contenu-page";
 
 export function SectionHeroCampagnes() {
   const { hero } = useContenuCampagnes();
-  const campagnes = obtenirCampagnesPublieesSync();
+  const { data: campagnes = [] } = useCampagnes();
   const enCours = campagnes.filter((c) => c.statut === "en_cours").length;
 
   const statistiques = hero.statistiques;

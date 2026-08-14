@@ -3,6 +3,7 @@ import {
   obtenirSessionApiClient,
   reponseNonAutoriseClient,
 } from "@/lib/auth/garde-api-client";
+import { invaliderCacheCampagnes } from "@/lib/client/invalider-cache-vitrine";
 import {
   campagneDbVersPublication,
   synchroniserImagesCampagne,
@@ -68,6 +69,10 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
     const body = (await request.json()) as Record<string, unknown>;
     const images = parserImages(body);
     const imageUrlFromImages = images?.[0]?.url;
+    const avant = await prisma.campagnePublique.findUnique({
+      where: { id },
+      select: { slug: true },
+    });
     const row = await prisma.campagnePublique.update({
       where: { id },
       data: {
@@ -144,8 +149,13 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
       where: { id },
       include: includeImages,
     });
+    const campagne = campagneDbVersPublication(fresh ?? row);
+    invaliderCacheCampagnes({
+      slug: campagne.slug,
+      ancienSlug: avant?.slug,
+    });
     return NextResponse.json({
-      campagne: campagneDbVersPublication(fresh ?? row),
+      campagne,
     });
   } catch (error) {
     console.error("[PUT /api/client/campagnes/[id]]", error);
@@ -162,7 +172,12 @@ export async function DELETE(_request: NextRequest, ctx: Ctx) {
   const { id } = await ctx.params;
 
   try {
+    const existante = await prisma.campagnePublique.findUnique({
+      where: { id },
+      select: { slug: true },
+    });
     await prisma.campagnePublique.delete({ where: { id } });
+    invaliderCacheCampagnes({ slug: existante?.slug });
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[DELETE /api/client/campagnes/[id]]", error);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   enrichirAvecStatut,
@@ -9,7 +10,7 @@ import { obtenirCampagnesEnVedette as filtrerVedette } from "@/lib/campagnes-uti
 import type { CampagnePublication } from "@/types/campagnes";
 
 async function fetchCampagnesPubliees(): Promise<CampagneAvecStatut[]> {
-  const res = await fetch("/api/public/campagnes");
+  const res = await fetch("/api/public/campagnes", { cache: "no-store" });
   if (!res.ok) return [];
   const data = (await res.json()) as {
     campagnes?: (CampagnePublication & { statut?: string })[];
@@ -19,31 +20,31 @@ async function fetchCampagnesPubliees(): Promise<CampagneAvecStatut[]> {
   );
 }
 
-async function fetchCampagnesVedette(): Promise<CampagneAvecStatut[]> {
-  const toutes = await fetchCampagnesPubliees();
-  return filtrerVedette(toutes).map((c) =>
-    "statut" in c && c.statut
-      ? (c as CampagneAvecStatut)
-      : enrichirAvecStatut(c)
-  );
-}
+const OPTIONS_REQUETE_CAMPAGNES = {
+  queryKey: ["campagnes", "publiees"] as const,
+  queryFn: fetchCampagnesPubliees,
+  initialData: [] as CampagneAvecStatut[],
+  staleTime: 0,
+  gcTime: 5 * 60_000,
+  refetchOnMount: "always" as const,
+  refetchOnWindowFocus: true,
+};
 
 /** Hook — campagnes publiées CMS uniquement (pas de constants statiques) */
 export function useCampagnes() {
-  return useQuery({
-    queryKey: ["campagnes", "publiees"],
-    queryFn: fetchCampagnesPubliees,
-    initialData: [],
-    staleTime: 60_000,
-  });
+  return useQuery(OPTIONS_REQUETE_CAMPAGNES);
 }
 
-/** Hook — campagnes vedette CMS */
+/** Hook — campagnes vedette CMS (même source fraîche que useCampagnes) */
 export function useCampagnesVedette() {
-  return useQuery({
-    queryKey: ["campagnes", "vedette"],
-    queryFn: fetchCampagnesVedette,
-    initialData: [],
-    staleTime: 60_000,
-  });
+  const query = useCampagnes();
+  const data = useMemo(
+    () => filtrerVedette(query.data ?? []).map((c) =>
+      "statut" in c && c.statut
+        ? (c as CampagneAvecStatut)
+        : enrichirAvecStatut(c)
+    ),
+    [query.data]
+  );
+  return { ...query, data };
 }

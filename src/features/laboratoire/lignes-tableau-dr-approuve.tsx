@@ -27,7 +27,7 @@ interface PropsLignesTableauDrApprouve {
   onBasculerDeveloppement: () => void;
   onBasculerCocheExamen: (examenId: string, coche: boolean) => void;
   onSelectionnerTousExamensPatient: (examens: ExamenFileLaboratoire[]) => void;
-  onImprimerExamen: (examen: ExamenFileLaboratoire) => void;
+  onImprimerExamensSelectionnes: (examens: ExamenFileLaboratoire[]) => void;
   onContextMenu?: (e: React.MouseEvent) => void;
 }
 
@@ -42,11 +42,15 @@ export function LignesTableauDrApprouve({
   onBasculerDeveloppement,
   onBasculerCocheExamen,
   onSelectionnerTousExamensPatient,
-  onImprimerExamen,
+  onImprimerExamensSelectionnes,
   onContextMenu,
 }: PropsLignesTableauDrApprouve) {
   const { t } = useTranslation();
   const examensDrApprouve = examensPourPageStatut(patient.examens, "DR_APPROUVE");
+
+  const examensSelectionnes = examensDrApprouve.filter((ex) =>
+    examensCoches.has(ex.id)
+  );
 
   const tousExamensCoches =
     examensDrApprouve.length > 0 &&
@@ -134,22 +138,42 @@ export function LignesTableauDrApprouve({
                     count: examensDrApprouve.length,
                   })}
                 </p>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectionnerTousExamensPatient(examensDrApprouve);
-                  }}
-                  className={cn(
-                    "inline-flex h-7 w-7 items-center justify-center rounded-md border border-gris-bordure text-texte-secondaire transition-colors hover:bg-slate-50 hover:text-bleu-medical",
-                    tousExamensCoches &&
-                      "border-bleu-medical/40 bg-bleu-medical-clair/30 text-bleu-medical"
-                  )}
-                  title={t("laboratoire.drApprouve.selectionnerTousExamens")}
-                  aria-pressed={tousExamensCoches}
-                >
-                  <ListChecks className="h-4 w-4" />
-                </button>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {examensSelectionnes.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onImprimerExamensSelectionnes(examensSelectionnes);
+                      }}
+                      className="inline-flex h-7 items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 text-[11px] font-semibold text-amber-900 transition-colors hover:bg-amber-100"
+                      title={t("laboratoire.drApprouve.imprimerSelection", {
+                        count: examensSelectionnes.length,
+                      })}
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                      <span>
+                        {t("laboratoire.drApprouve.imprimer")} ({examensSelectionnes.length})
+                      </span>
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectionnerTousExamensPatient(examensDrApprouve);
+                    }}
+                    className={cn(
+                      "inline-flex h-7 w-7 items-center justify-center rounded-md border border-gris-bordure text-texte-secondaire transition-colors hover:bg-slate-50 hover:text-bleu-medical",
+                      tousExamensCoches &&
+                        "border-bleu-medical/40 bg-bleu-medical-clair/30 text-bleu-medical"
+                    )}
+                    title={t("laboratoire.drApprouve.selectionnerTousExamens")}
+                    aria-pressed={tousExamensCoches}
+                  >
+                    <ListChecks className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <ul className="divide-y divide-gris-bordure/60">
                 {examensDrApprouve.map((examen) => {
@@ -177,17 +201,6 @@ export function LignesTableauDrApprouve({
                           </p>
                         ) : null}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => onImprimerExamen(examen)}
-                        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-gris-bordure px-2 text-[11px] font-medium text-texte-secondaire transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
-                        title={t("laboratoire.drApprouve.imprimerExamen")}
-                      >
-                        <Printer className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">
-                          {t("laboratoire.drApprouve.imprimer")}
-                        </span>
-                      </button>
                     </li>
                   );
                 })}

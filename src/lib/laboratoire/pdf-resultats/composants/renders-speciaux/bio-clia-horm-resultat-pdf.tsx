@@ -1,7 +1,7 @@
 import { Text, View } from "@react-pdf/renderer";
 import type { LigneParametrePdf } from "@/lib/laboratoire/pdf-resultats/types";
 import { stylesResultatPdf } from "@/lib/laboratoire/pdf-resultats/composants/styles-resultat-pdf";
-import { valeurAffichageParametre } from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
+import { valeurAffichageParametre, flagAffichagePdf } from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
 
 /** Port renderBioCliaHorm() — Paramètres 45 % · Flag 12 % · Résultat 23 % · Range reste. */
 export function BioCliaHormResultatPdf({ lignes }: { lignes: LigneParametrePdf[] }) {
@@ -47,7 +47,7 @@ export function BioCliaHormResultatPdf({ lignes }: { lignes: LigneParametrePdf[]
                 { width: cols[1]!.width },
               ]}
             >
-              {l.flag ?? ""}
+              {flagAffichagePdf(l.flag)}
             </Text>
             <Text
               style={[

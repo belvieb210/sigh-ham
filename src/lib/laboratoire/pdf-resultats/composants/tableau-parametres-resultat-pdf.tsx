@@ -4,7 +4,7 @@ import type {
   OptionsTableauParametresPdf,
 } from "@/lib/laboratoire/pdf-resultats/types";
 import { stylesResultatPdf } from "@/lib/laboratoire/pdf-resultats/composants/styles-resultat-pdf";
-import { valeurAffichageParametre } from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
+import { valeurAffichageParametre, flagAffichagePdf } from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
 
 type ColDef = { key: string; label: string; width: string; center?: boolean };
 
@@ -148,7 +148,7 @@ export function TableauParametresResultatPdf({
           <Cell width={cols[0]!.width}>{l.name}</Cell>
           {options.showFlag ? (
             <Cell width={cols.find((c) => c.key === "flag")!.width} center>
-              {l.flag ?? ""}
+              {flagAffichagePdf(l.flag)}
             </Cell>
           ) : null}
           <Cell

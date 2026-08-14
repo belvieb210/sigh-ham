@@ -345,6 +345,7 @@ export const laboratoireEn: LaboratoireFr = {
     selectionnerExamen: "Select {{libelle}}",
     imprimerExamen: "Print this exam result",
     imprimer: "Print",
+    imprimerSelection: "Print {{count}} selected exam(s) as one PDF",
     sousTitreSelectionExamens:
       "{{count}} patient(s) · {{selection}} exam(s) selected for printing",
   },

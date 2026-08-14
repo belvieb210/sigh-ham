@@ -191,16 +191,22 @@ export function ContenuExamensEnCoursLaboratoire({
     selectionner(patient.dossierId);
   };
 
-  const imprimerExamenDrApprouve = async (
+  const imprimerExamensDrApprouve = async (
     patient: PatientFileLaboratoire,
-    examen: ExamenFileLaboratoire
+    examens: ExamenFileLaboratoire[]
   ) => {
+    if (examens.length === 0) return;
     setMessageAction(null);
+    const ids = examens.map((ex) => ex.id);
     const resultat = await imprimerResultatExamenLaboratoire({
       dossierId: patient.dossierId,
-      examenId: examen.id,
+      examenId: ids[0]!,
+      examenIds: ids.length > 1 ? ids : undefined,
       numeroPatient: patient.numeroPatient,
-      libelleExamen: examen.libelle,
+      libelleExamen:
+        ids.length > 1
+          ? `${ids.length}-examens`
+          : examens[0]!.libelle,
     });
     if (!resultat.ok) {
       setMessageAction(t("laboratoire.actions.erreurImpression"));
@@ -605,8 +611,8 @@ export function ContenuExamensEnCoursLaboratoire({
                               onSelectionnerTousExamensPatient={(examens) =>
                                 selectionnerTousExamensPatient(p, examens)
                               }
-                              onImprimerExamen={(examen) =>
-                                void imprimerExamenDrApprouve(p, examen)
+                              onImprimerExamensSelectionnes={(examens) =>
+                                void imprimerExamensDrApprouve(p, examens)
                               }
                               onContextMenu={(e) => ouvrirSurPatient(e, p.dossierId)}
                             />

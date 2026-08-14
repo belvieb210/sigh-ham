@@ -42,6 +42,13 @@ export function valeurAffichageParametre(ligne: LigneParametrePdf): string {
   return unit ? `${val.toUpperCase()} ${unit}` : val.toUpperCase();
 }
 
+/** Flag affiché en PDF : B/E uniquement (N normal et NR masqués). */
+export function flagAffichagePdf(flag: string | undefined | null): string {
+  const f = flag?.trim().toUpperCase();
+  if (!f || f === "N") return "";
+  return f;
+}
+
 export function mapperResultatsPrismaVersPdf(
   resultats: {
     parametre: string;
@@ -64,13 +71,14 @@ export function mapperResultatsPrismaVersPdf(
       else if (r.normeMin) range = r.normeMin;
       else if (r.normeMax) range = r.normeMax;
 
-      const flag =
+      const flagCalcule =
         calculerFlagDepuisParametre({
           valeur: r.valeur,
           valeurSecondaire: r.valeurSecondaire,
           rangeUsuelle: r.normeMax ?? r.normeMin,
           nonRequis: r.nonRequis,
         }) ?? "";
+      const flag = flagAffichagePdf(flagCalcule);
       const other = r.valeurSecondaire?.trim() || undefined;
 
       const ligne: LigneParametrePdf = {

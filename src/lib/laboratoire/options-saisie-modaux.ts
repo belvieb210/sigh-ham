@@ -12,86 +12,86 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
   "bilansAnalyses": {},
   "ionogramme": {
     "SODIUM": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "POTASSIUM": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "CHLORIDE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "spot_urines": {
     "SODIUM": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "POTASSIUM": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "CHLORIDE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "ptt": {
     "PROTEINE TOTALES": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "ALBUMINE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "GLOBULINE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "RAPPORT ALBU/GLOBU": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "bilans_azotes": {
     "UREE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "CREATININE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "ACIDE URIQUE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "RAPPORT UREE/CREATININE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "profilLipidique": {
     "TOTAL CHOLESTEROL": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "HDL CHOLESTEROL": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "TRIGLYCERIDE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "LDL CHOLESTEROL": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "RAPPORT CHOL/HDL": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "RAPPORT LDL/HDL": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "VLDL": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "bilirubi": {
     "BILIRUBINE TOTAL": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "BILIRUBINE DIRECT": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "BILIRUBINE INDIRECT": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "serology": {
@@ -1405,84 +1405,84 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
   },
   "nfs": {
     "GR": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "HGB": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "HCT": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "VGM": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "TCMH": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "CCMH": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "RDW-SD": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "RDW-CV": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "PLT": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "MPV": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "PDW": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "PCT": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "P-LCR": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "P-LCC": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "GB": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "NEUT%": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "LYMPH%": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "MONO%": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "EOS%": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "BASO%": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "nfl": {
     "GB": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "NEUT%": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "LYMPH%": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "MONO%": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "EOS%": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "BASO%": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "hematologie": {},
@@ -2189,24 +2189,24 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
   },
   "micro_albuminurie": {
     "ALBUMINURIE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "CREATINURIE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "RAPPORT ALBU/CREAT": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "glycemie_gestationnelle": {
     "GLYCÉMIE À JEÛNE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "GLYCÉMIE APRÈS 1 HEURE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "GLYCÉMIE APRÈS 2 HEURES": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "bilans_torch": {
@@ -2293,65 +2293,65 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
   },
   "surveillance_prostatique": {
     "PSA TOTAL": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "PSA SPECIFIQUE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "PSA LIBRE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "temps_saignement": {
     "TEMPS DE SAIGNEMENT": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "TEMPS DE COAGULATION": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "tp_inr": {
     "PROTHROMBINE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "INR": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "reticulocyte": {
     "RET% (POURCENTAGE DE RETICULOCYTES)": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "RET# (NUMERATION DES RETICULOCYTES)": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "IRF (FRACTION DE RETICULOCYTES IMMATURES)": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "RET-HE (EQUIVALENT DE LA CONCENTRATION EN HEMOGLOBINE DES RETICULOCYTES)": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "RBC-HE (EQUIVALENCE EN HEMOGLOBINE DES RBC MATURE)": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "hb_hct": {
     "HEMOGLOBINE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "HEMATOCRITE": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   },
   "valeur_absolu_eosinophiles": {
     "GLOBULES BLANCS": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "POURCENTAGE DES EOSINOPHILES": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     },
     "VALEUR ABSOLU DES EOSINOPHILES": {
-      "typeSaisie": "flag_valeur"
+      "typeSaisie": "texte"
     }
   }
 };

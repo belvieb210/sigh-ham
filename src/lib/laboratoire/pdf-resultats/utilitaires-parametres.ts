@@ -1,4 +1,5 @@
 import type { LigneParametrePdf } from "@/lib/laboratoire/pdf-resultats/types";
+import { calculerFlagDepuisParametre } from "@/lib/laboratoire/indicateur-resultat";
 
 const EXPOSANTS: Record<string, string> = {
   "-": "⁻",
@@ -63,7 +64,13 @@ export function mapperResultatsPrismaVersPdf(
       else if (r.normeMin) range = r.normeMin;
       else if (r.normeMax) range = r.normeMax;
 
-      const flag = r.flag?.trim() || (r.anormal ? "!" : "");
+      const flag =
+        calculerFlagDepuisParametre({
+          valeur: r.valeur,
+          valeurSecondaire: r.valeurSecondaire,
+          rangeUsuelle: r.normeMax ?? r.normeMin,
+          nonRequis: r.nonRequis,
+        }) ?? "";
       const other = r.valeurSecondaire?.trim() || undefined;
 
       const ligne: LigneParametrePdf = {

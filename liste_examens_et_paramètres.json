@@ -3610,6 +3610,12 @@
                     "required": true
                 },
                 {
+                    "name": "ETALEMENT MINCE",
+                    "unite": "---",
+                    "range_usuelle": "Normal",
+                    "required": true
+                },
+                {
                     "name": "TROPHOZOIDE",
                     "unite": "\/µL",
                     "range_usuelle": "0",
@@ -3623,18 +3629,6 @@
                 },
                 {
                     "name": "SCHIZONTE",
-                    "unite": "\/µL",
-                    "range_usuelle": "0",
-                    "required": true
-                },
-                {
-                    "name": "ETALEMENT MINCE",
-                    "unite": "---",
-                    "range_usuelle": "Normal",
-                    "required": true
-                },
-                {
-                    "name": "DENSITE PARASITAIRE",
                     "unite": "\/µL",
                     "range_usuelle": "0",
                     "required": true
@@ -3660,6 +3654,12 @@
                 {
                     "name": "PLASMODIUM VIVAX",
                     "unite": "%",
+                    "range_usuelle": "0",
+                    "required": true
+                },
+                {
+                    "name": "DENSITE PARASITAIRE",
+                    "unite": "\/µL",
                     "range_usuelle": "0",
                     "required": true
                 }

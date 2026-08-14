@@ -23,6 +23,7 @@ import {
   COULEURS_INDICATEUR,
   evaluerIndicateur,
   formaterParametre,
+  valeurEffectivePourIndicateur,
 } from "@/features/laboratoire/utils-saisie-resultats";
 import type { ConfigSaisieParametre } from "@/lib/laboratoire/config-saisie-parametre";
 import { ChampSaisieParametre } from "@/features/laboratoire/champ-saisie-parametre";
@@ -78,7 +79,7 @@ interface PropsFormulaireSaisieExamenLaboratoire {
     patch: Partial<
       Pick<
         ParametreEtat,
-        "valeur" | "flag" | "valeurSecondaire" | "nonRequis" | "nom" | "commentaire"
+        "valeur" | "valeurSecondaire" | "nonRequis" | "nom" | "commentaire"
       >
     >
   ) => void;
@@ -310,15 +311,19 @@ export function FormulaireSaisieExamenLaboratoire({
               ) : (
                 examen.parametres.map((p) => {
                   const { acronyme, libelle } = formaterParametre(p.nom);
-                  const statut = evaluerIndicateur(
+                  const configSaisie = p.configSaisie ?? { typeSaisie: "texte" as const };
+                  const valeurIndicateur = valeurEffectivePourIndicateur(
                     p.valeur,
+                    p.valeurSecondaire,
+                    configSaisie.typeSaisie
+                  );
+                  const statut = evaluerIndicateur(
+                    valeurIndicateur,
                     p.rangeUsuelle,
-                    p.nonRequis,
-                    p.flag
+                    p.nonRequis
                   );
                   const styles = COULEURS_INDICATEUR[statut];
                   const commentaireOuvert = commentairesOuverts.has(p.id);
-                  const configSaisie = p.configSaisie ?? { typeSaisie: "texte" as const };
 
                   return (
                     <Fragment key={p.id}>
@@ -341,7 +346,6 @@ export function FormulaireSaisieExamenLaboratoire({
                             fieldClassName={styles.input}
                             valeurs={{
                               valeur: p.valeur,
-                              flag: p.flag,
                               valeurSecondaire: p.valeurSecondaire,
                             }}
                             onChange={(patch) => onParametreChange(p.id, patch)}

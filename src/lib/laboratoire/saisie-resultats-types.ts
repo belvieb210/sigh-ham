@@ -53,7 +53,6 @@ export interface SaisieResultatsDto {
 export interface LigneResultatSaisie {
   parametreTypeExamenId: string;
   valeur: string;
-  flag?: string | null;
   valeurSecondaire?: string | null;
   nonRequis?: boolean;
   commentaire?: string | null;

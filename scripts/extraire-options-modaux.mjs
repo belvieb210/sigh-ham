@@ -171,7 +171,7 @@ for (const [modalId, formulaire] of Object.entries(MODAL_VERS_FORMULAIRE)) {
     }
 
     if (estFlagValeur(block)) {
-      catalog[formulaire][nom] = { typeSaisie: "flag_valeur" };
+      catalog[formulaire][nom] = { typeSaisie: "texte" };
       continue;
     }
 

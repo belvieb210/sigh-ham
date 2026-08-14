@@ -299,7 +299,6 @@ export function ContenuSaisieResultatsLaboratoire({
             lignes: lignesCatalogue.map((p) => ({
               parametreTypeExamenId: p.id,
               valeur: p.valeur,
-              flag: p.flag,
               valeurSecondaire: p.valeurSecondaire,
               nonRequis: p.nonRequis,
               commentaire: p.commentaire?.trim() || null,

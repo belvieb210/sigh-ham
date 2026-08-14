@@ -3,7 +3,6 @@
 import { cn } from "@/lib/utils";
 import {
   OPTION_AUTRES,
-  OPTIONS_FLAG_BNE,
   type ConfigSaisieParametre,
   estValeurAutres,
   avecOptionAutres,
@@ -15,7 +14,6 @@ import {
 
 export type ValeursChampSaisie = {
   valeur: string;
-  flag: string | null;
   valeurSecondaire: string | null;
 };
 
@@ -50,35 +48,6 @@ export function ChampSaisieParametre({
     : DEFAULT_FIELD;
   const { typeSaisie, options = [], libelleSecondaire, placeholderSecondaire } =
     config;
-
-  if (typeSaisie === "flag_valeur") {
-    return (
-      <div className={`flex flex-wrap items-center gap-2 ${className}`}>
-        <select
-          className={cn(field, "w-16 shrink-0")}
-          value={valeurs.flag ?? ""}
-          disabled={disabled}
-          onChange={(e) => onChange({ flag: e.target.value || null })}
-          aria-label="Flag B N E"
-        >
-          <option value="">—</option>
-          {OPTIONS_FLAG_BNE.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <input
-          type="text"
-          className={cn(field, "flex-1 min-w-[6rem]")}
-          value={valeurs.valeur}
-          disabled={disabled}
-          onChange={(e) => onChange({ valeur: e.target.value })}
-          placeholder="Valeur"
-        />
-      </div>
-    );
-  }
 
   if (typeSaisie === "select" || typeSaisie === "select_autres") {
     const avecAutres = typeSaisie === "select_autres";

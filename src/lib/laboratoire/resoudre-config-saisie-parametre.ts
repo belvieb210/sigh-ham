@@ -2,30 +2,6 @@ import type { ConfigSaisieParametre } from "@/lib/laboratoire/config-saisie-para
 import { normaliserConfigSaisie } from "@/lib/laboratoire/config-saisie-parametre";
 import { optionsSaisieDepuisModaux } from "@/lib/laboratoire/options-saisie-modaux";
 
-const FORMULAIRES_FLAG_VALEUR = new Set([
-  "examForm",
-  "bilansAnalyses",
-  "bilans_azotes",
-  "bilirubi",
-  "ionogramme",
-  "spot_urines",
-  "proteinurie24",
-  "ptt",
-  "profilLipidique",
-  "hematologie",
-  "coagulation",
-  "nfs",
-  "nfl",
-  "fluide",
-  "reticulocyte",
-  "hb_hct",
-  "valeur_absolu_eosinophiles",
-  "micro_albuminurie",
-  "glycemie_gestationnelle",
-  "surveillance_prostatique",
-  "electrophorese",
-]);
-
 const FORMULAIRES_RESULTAT_VALEUR = new Set([
   "serology",
   "widal",
@@ -35,6 +11,13 @@ const FORMULAIRES_RESULTAT_VALEUR = new Set([
 ]);
 
 const FORMULAIRES_DESCRIPTION = new Set(["histopathologie", "chargeViral"]);
+
+function sansFlagValeur(config: ConfigSaisieParametre): ConfigSaisieParametre {
+  if (config.typeSaisie === "flag_valeur") {
+    return { typeSaisie: "texte" };
+  }
+  return config;
+}
 
 function estNomDate(nom: string): boolean {
   const u = nom.trim().toUpperCase();
@@ -48,7 +31,7 @@ function infererConfigDepuisFormulaire(
   const f = formulaire ?? "";
 
   const depuisModaux = optionsSaisieDepuisModaux(f, nomParametre);
-  if (depuisModaux) return depuisModaux;
+  if (depuisModaux) return sansFlagValeur(depuisModaux);
 
   if (estNomDate(nomParametre)) {
     return { typeSaisie: "date" };
@@ -66,10 +49,6 @@ function infererConfigDepuisFormulaire(
     };
   }
 
-  if (FORMULAIRES_FLAG_VALEUR.has(f)) {
-    return { typeSaisie: "flag_valeur" };
-  }
-
   return { typeSaisie: "texte" };
 }
 
@@ -84,7 +63,7 @@ export function resoudreConfigSaisieParametre(
   parametre: ParametrePourConfigSaisie
 ): ConfigSaisieParametre {
   const depuisBdd = normaliserConfigSaisie(parametre.configSaisie);
-  if (depuisBdd) return depuisBdd;
+  if (depuisBdd) return sansFlagValeur(depuisBdd);
 
   const nom = parametre.nom ?? "";
   const formulaire = parametre.typeExamen?.formulaire ?? null;

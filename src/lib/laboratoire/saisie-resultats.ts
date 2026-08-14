@@ -12,6 +12,8 @@ import {
   lirePiecesJointesDepuisNotes,
   type PieceJointeExamenPersistee,
 } from "@/constants/laboratoire-notes-examen";
+import { trierParametresParFormulaire } from "@/lib/laboratoire/ordre-parametres-formulaire";
+import { calculerFlagDepuisParametre } from "@/lib/laboratoire/indicateur-resultat";
 import { estValeurAutres } from "@/lib/laboratoire/config-saisie-parametre";
 import { resoudreConfigSaisieParametre } from "@/lib/laboratoire/resoudre-config-saisie-parametre";
 import type {
@@ -54,10 +56,7 @@ function mapperParametres(
       .map((r) => [r.parametreTypeExamenId!, r])
   );
 
-  return parametresCatalogue
-    .slice()
-    .sort((a, b) => a.ordre - b.ordre)
-    .map((p) => {
+  const mappees = parametresCatalogue.map((p) => {
       const existant = parId.get(p.id);
       return {
         id: p.id,
@@ -78,6 +77,8 @@ function mapperParametres(
         }),
       };
     });
+
+  return trierParametresParFormulaire(formulaire, mappees);
 }
 
 export async function chargerSaisieResultats(
@@ -196,7 +197,18 @@ export async function enregistrerResultatsExamen(
     if (action !== "rejeter") {
       for (const ligne of input.lignes) {
         const cat = catalogue.get(ligne.parametreTypeExamenId)!;
-        const flag = ligne.flag?.trim() || null;
+        const configSaisie = resoudreConfigSaisieParametre({
+          configSaisie: cat.configSaisie,
+          nom: cat.nom,
+          typeExamen: { formulaire: examen.typeExamen.formulaire },
+        });
+        const flag = calculerFlagDepuisParametre({
+          valeur: ligne.valeur.trim(),
+          valeurSecondaire: ligne.valeurSecondaire,
+          rangeUsuelle: cat.rangeUsuelle,
+          nonRequis: ligne.nonRequis === true,
+          typeSaisie: configSaisie.typeSaisie,
+        });
         const anormal = flag === "B" || flag === "E";
         await tx.resultatExamen.upsert({
           where: {

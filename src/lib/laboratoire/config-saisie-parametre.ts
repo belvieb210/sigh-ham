@@ -17,7 +17,7 @@ export type ConfigSaisieParametre = {
   placeholderSecondaire?: string;
 };
 
-/** Flags B / N / E — Bas, Normal, Élevé. */
+/** @deprecated Les flags B/N/E sont calculés automatiquement — plus de saisie manuelle. */
 export const OPTIONS_FLAG_BNE = [
   { value: "B", label: "B" },
   { value: "N", label: "N" },
@@ -57,8 +57,11 @@ export function normaliserConfigSaisie(
   ];
   if (!typesValides.includes(typeSaisie as TypeSaisieParametre)) return null;
 
+  const typeEffectif =
+    typeSaisie === "flag_valeur" ? "texte" : (typeSaisie as TypeSaisieParametre);
+
   const config: ConfigSaisieParametre = {
-    typeSaisie: typeSaisie as TypeSaisieParametre,
+    typeSaisie: typeEffectif,
   };
 
   if (Array.isArray(o.options)) {

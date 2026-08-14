@@ -335,23 +335,17 @@ export function FormulaireSaisieExamenLaboratoire({
                           </p>
                         </td>
                         <td className="px-2 py-2 sm:px-3 sm:py-3">
-                          <div
-                            className={cn(
-                              "rounded-lg border px-1 py-1 sm:px-2",
-                              styles.input
-                            )}
-                          >
-                            <ChampSaisieParametre
-                              config={configSaisie}
-                              disabled={champsDesactives || p.nonRequis}
-                              valeurs={{
-                                valeur: p.valeur,
-                                flag: p.flag,
-                                valeurSecondaire: p.valeurSecondaire,
-                              }}
-                              onChange={(patch) => onParametreChange(p.id, patch)}
-                            />
-                          </div>
+                          <ChampSaisieParametre
+                            config={configSaisie}
+                            disabled={champsDesactives || p.nonRequis}
+                            fieldClassName={styles.input}
+                            valeurs={{
+                              valeur: p.valeur,
+                              flag: p.flag,
+                              valeurSecondaire: p.valeurSecondaire,
+                            }}
+                            onChange={(patch) => onParametreChange(p.id, patch)}
+                          />
                         </td>
                         <td className="hidden px-2 py-2 text-slate-600 sm:table-cell sm:px-3 sm:py-3">{p.unite ?? "—"}</td>
                         <td className="hidden px-2 py-2 text-slate-600 lg:table-cell sm:px-3 sm:py-3">{p.rangeUsuelle ?? "—"}</td>

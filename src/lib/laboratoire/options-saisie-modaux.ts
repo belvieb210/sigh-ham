@@ -96,64 +96,88 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
   },
   "serology": {
     "RESULTAT:": {
-      "typeSaisie": "select_autres",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autres"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
+    },
+    "__defaut__": {
+      "typeSaisie": "resultat_valeur",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     }
   },
   "salmonella": {
     "IGG SALMONELLA TYPHI": {
-      "typeSaisie": "select_autres",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autres"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "IGM SALMONELLA TYPHI": {
-      "typeSaisie": "select_autres",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autres"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     }
   },
   "widal": {
     "S TYPHI AG O": {
-      "typeSaisie": "select_autres",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autres"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "S TYPHI AG H": {
-      "typeSaisie": "select_autres",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autres"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "S PARATYPHI AG BH": {
-      "typeSaisie": "select_autres",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autres"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "S PARATYPHI AG AH": {
-      "typeSaisie": "select_autres",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autres"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     }
   },
   "sedimentUrinaire": {
@@ -819,23 +843,47 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
   },
   "malaria": {
     "FALCIPARUM (PF)": {
-      "typeSaisie": "select_autres",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autres"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "MALAIAE ET AUTRES (PAN)": {
-      "typeSaisie": "select_autres",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autres"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
+    },
+    "__defaut__": {
+      "typeSaisie": "resultat_valeur",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
+    },
+    "MALARIA TESTE RAPIDE": {
+      "typeSaisie": "resultat_valeur",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     }
   },
-  "malariaTDR": {
+  "malaria_ge": {
     "GOUTTE EPAISSE": {
       "typeSaisie": "select_autres",
       "options": [
@@ -888,11 +936,11 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
     "DENSITE PARASITAIRE": {
       "typeSaisie": "select_autres",
       "options": [
-        "&lt;20/µl",
+        "<20/µl",
         "800/µl",
         "2800/µl",
         "5800/µl",
-        "&gt;10001/µl",
+        ">10001/µl",
         "Autres"
       ]
     },
@@ -1698,12 +1746,14 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
       "typeSaisie": "texte"
     },
     "RESULTAT": {
-      "typeSaisie": "select_autres",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "ABSENT",
         "PRESENT",
         "Autres"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "WUCHERERIA BANCROFTI": {
       "typeSaisie": "select_autres",
@@ -2070,7 +2120,7 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
       ]
     },
     "DEPOT DESAMORPHES": {
-      "typeSaisie": "select_autres",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Absent",
         "+",
@@ -2078,10 +2128,12 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
         "+++",
         "++++",
         "Autres"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "EXPRESSION DES RESULTATS": {
-      "typeSaisie": "select_autres",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Absent",
         "Normospermie",
@@ -2095,7 +2147,9 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
         "Cryptospermie",
         "Teratospermie",
         "Autres"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     }
   },
   "electrophorese": {
@@ -2157,68 +2211,84 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
   },
   "bilans_torch": {
     "RUBEOLE IGG": {
-      "typeSaisie": "select",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autre"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "RUBEOLE IGM": {
-      "typeSaisie": "select",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autre"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "CYTOMEGALOVIRUS IGG": {
-      "typeSaisie": "select",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autre"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "CYTOMEGALOVIRUS IGM": {
-      "typeSaisie": "select",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autre"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "HERPES SIMPLEX VIRUS TYPE-1 IGG": {
-      "typeSaisie": "select",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autre"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "HERPES SIMPLEX VIRUS TYPE-2 IGM": {
-      "typeSaisie": "select",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autre"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "TOXOPLASMOSE IGG": {
-      "typeSaisie": "select",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autre"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     },
     "TOXOPLASMOSE IGM": {
-      "typeSaisie": "select",
+      "typeSaisie": "resultat_valeur",
       "options": [
         "Négatif",
         "Positif",
         "Autre"
-      ]
+      ],
+      "libelleSecondaire": "Valeurs",
+      "placeholderSecondaire": "Titre/Valeur"
     }
   },
   "surveillance_prostatique": {
@@ -2296,8 +2366,12 @@ const CLES_EQUIVALENTES: Record<string, string[]> = {
   NITRITES: ["NITRATE", "NITRITES"],
   "GLOBULE ROUGE": ["GLOBULE ROUGE", "GLOBULES ROUGES"],
   "GLOBULES ROUGES": ["GLOBULE ROUGE", "GLOBULES ROUGES"],
-  "GRAVITE SPECIFIQUE": ["GRAVITE SPECIFIQUE", "DENSITE"],
+  "GRAVITE SPECIFIQUE": ["GRAVITE SPECIFIQUE", "DENSITE", "DENSITEPARASITAIRE"],
   DENSITE: ["GRAVITE SPECIFIQUE", "DENSITE"],
+  "GOUTTE EPAISSE": ["GOUTTE EPAISSE", "GOUTTE ÉPAISSE"],
+  "GOUTTE ÉPAISSE": ["GOUTTE EPAISSE", "GOUTTE ÉPAISSE"],
+  GAMETOCYTE: ["GAMETOCYTE", "GAMÉTOCYTE"],
+  "GAMÉTOCYTE": ["GAMETOCYTE", "GAMÉTOCYTE"],
 };
 
 const OPTIONS_RESULTAT_ZIEHL = avecOptionAutres([
@@ -2346,25 +2420,43 @@ export function optionsSaisieDepuisModaux(
     if (table[cle]) return normaliserEntree(table[cle]);
   }
 
+  const upperSans = sansAccent(upper);
   for (const [k, v] of Object.entries(table)) {
+    if (k.startsWith("__")) continue;
+    if (sansAccent(k) === upperSans) return normaliserEntree(v);
+  }
+
+  for (const [k, v] of Object.entries(table)) {
+    if (k.startsWith("__")) continue;
     if (k === upper || upper.includes(k) || k.includes(upper)) {
       return normaliserEntree(v);
     }
   }
 
+  if (table.__defaut__) return normaliserEntree(table.__defaut__);
+
   return null;
+}
+
+function sansAccent(s: string): string {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 function normaliserEntree(entree: EntreeOptionsSaisie): EntreeOptionsSaisie {
   const copie = { ...entree };
   if (
-    (copie.typeSaisie === "select" || copie.typeSaisie === "select_autres") &&
+    (copie.typeSaisie === "select" ||
+      copie.typeSaisie === "select_autres" ||
+      copie.typeSaisie === "resultat_valeur") &&
     copie.options
   ) {
     copie.options =
-      copie.typeSaisie === "select_autres"
+      copie.typeSaisie === "select_autres" || copie.typeSaisie === "resultat_valeur"
         ? avecOptionAutres(copie.options)
         : [...copie.options];
+  }
+  if (copie.typeSaisie === "resultat_valeur" && (!copie.options || copie.options.length === 0)) {
+    copie.options = avecOptionAutres(["Négatif", "Positif"]);
   }
   return copie;
 }

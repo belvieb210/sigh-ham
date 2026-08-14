@@ -31,7 +31,6 @@ const FORMULAIRES_RESULTAT_VALEUR = new Set([
   "widal",
   "salmonella",
   "malaria",
-  "malariaTDR",
   "trypanosomiase",
 ]);
 

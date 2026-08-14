@@ -31,7 +31,7 @@ const MODAL_VERS_FORMULAIRE = {
   trypanosomiaseModal: "trypanosomiase",
   sangOcculteModal: "sangOcculte",
   malariaModal: "malaria",
-  malariaGEModal: "malariaTDR",
+  malariaGEModal: "malaria_ge",
   histopathologieModal: "histopathologie",
   chargeViralModal: "chargeViral",
   frottisBloodModal: "frottis_sang",
@@ -65,13 +65,22 @@ function normaliserNom(n) {
   return n.trim().toUpperCase().replace(/\s+/g, " ");
 }
 
+function decodeHtml(v) {
+  return v
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"');
+}
+
 function extraireOptionsSelect(html) {
   const opts = [];
   const re = /<option[^>]*value="([^"]*)"[^>]*>/gi;
   let m;
   while ((m = re.exec(html))) {
-    const v = m[1].trim();
-    if (!v || v === "---" || v === "-- Sélectionner --" || v === "-- Résultats --") continue;
+    let v = decodeHtml(m[1].trim());
+    if (!v || v === "---" || v === "-- Sélectionner --" || v === "-- Résultats --")
+      continue;
     if (v.toLowerCase().includes("préciser") || v === "À préciser") continue;
     opts.push(v === "AUTRES" ? "Autres" : v);
   }
@@ -93,8 +102,18 @@ function estFlagValeur(html) {
   return /param-flag|FlagSelect|exam-flag|coagulationFlagSelect/i.test(html);
 }
 
+function estResultatValeur(html) {
+  const hasResult =
+    /param-result|ResultSelect|RESULTAT\s*:/i.test(html) ||
+    (/<select/i.test(html) && /RESULTAT/i.test(html));
+  const hasValeur =
+    /param-valeur|ResultInput|VALEURS\s*:/i.test(html) ||
+    (/type="text"/i.test(html) && /Titre\/Valeur|placeholder="Titre/i.test(html));
+  return hasResult && hasValeur;
+}
+
 function extraireNomParametre(block) {
-  let m = block.match(/data-[a-z-]+-param="([^"]+)"/i);
+  let m = block.match(/data-[a-z0-9-]+-param="([^"]+)"/i);
   if (m) return normaliserNom(m[1]);
   m = block.match(/data-param="([^"]+)"/i);
   if (m) return normaliserNom(m[1]);
@@ -156,6 +175,23 @@ for (const [modalId, formulaire] of Object.entries(MODAL_VERS_FORMULAIRE)) {
       continue;
     }
 
+    if (estResultatValeur(block)) {
+      const selects = [...block.matchAll(/<select[\s\S]*?<\/select>/gi)].map(
+        (x) => x[0]
+      );
+      const selectResult =
+        selects.find((s) => /param-result|ResultSelect/i.test(s)) ??
+        selects[0];
+      const options = selectResult ? extraireOptionsSelect(selectResult) : [];
+      catalog[formulaire][nom] = {
+        typeSaisie: "resultat_valeur",
+        options,
+        libelleSecondaire: "Valeurs",
+        placeholderSecondaire: "Titre/Valeur",
+      };
+      continue;
+    }
+
     const selectMatch = block.match(/<select[\s\S]*?<\/select>/i);
     if (selectMatch) {
       const options = extraireOptionsSelect(selectMatch[0]);
@@ -176,6 +212,36 @@ for (const [modalId, formulaire] of Object.entries(MODAL_VERS_FORMULAIRE)) {
       catalog[formulaire][nom] = { typeSaisie: "texte" };
     }
   }
+}
+
+// Sérologie : modèle unique (nom paramètre dynamique)
+{
+  const serologyModal = extraireModal("serologyFormModal");
+  if (serologyModal) {
+    const sel = serologyModal.match(
+      /id="serologyResultSelect"[\s\S]*?<\/select>/i
+    )?.[0];
+    const options = sel ? extraireOptionsSelect(sel) : ["Négatif", "Positif", "Autres"];
+    if (!catalog.serology) catalog.serology = {};
+    catalog.serology.__defaut__ = {
+      typeSaisie: "resultat_valeur",
+      options,
+      libelleSecondaire: "Valeurs",
+      placeholderSecondaire: "Titre/Valeur",
+    };
+  }
+}
+
+// Malaria test rapide : paramètre unique avec résultat + titre
+if (catalog.malaria) {
+  const tpl = {
+    typeSaisie: "resultat_valeur",
+    options: ["Négatif", "Positif", "Autres"],
+    libelleSecondaire: "Valeurs",
+    placeholderSecondaire: "Titre/Valeur",
+  };
+  catalog.malaria.__defaut__ = tpl;
+  catalog.malaria["MALARIA TESTE RAPIDE"] = tpl;
 }
 
 // Ziehl : chaque RESULTAT_N a date + echantillon + aspect + select — paramètres catalogue séparés
@@ -234,8 +300,12 @@ const CLES_EQUIVALENTES: Record<string, string[]> = {
   NITRITES: ["NITRATE", "NITRITES"],
   "GLOBULE ROUGE": ["GLOBULE ROUGE", "GLOBULES ROUGES"],
   "GLOBULES ROUGES": ["GLOBULE ROUGE", "GLOBULES ROUGES"],
-  "GRAVITE SPECIFIQUE": ["GRAVITE SPECIFIQUE", "DENSITE"],
+  "GRAVITE SPECIFIQUE": ["GRAVITE SPECIFIQUE", "DENSITE", "DENSITEPARASITAIRE"],
   DENSITE: ["GRAVITE SPECIFIQUE", "DENSITE"],
+  "GOUTTE EPAISSE": ["GOUTTE EPAISSE", "GOUTTE ÉPAISSE"],
+  "GOUTTE ÉPAISSE": ["GOUTTE EPAISSE", "GOUTTE ÉPAISSE"],
+  GAMETOCYTE: ["GAMETOCYTE", "GAMÉTOCYTE"],
+  "GAMÉTOCYTE": ["GAMETOCYTE", "GAMÉTOCYTE"],
 };
 
 const OPTIONS_RESULTAT_ZIEHL = avecOptionAutres([
@@ -284,25 +354,43 @@ export function optionsSaisieDepuisModaux(
     if (table[cle]) return normaliserEntree(table[cle]);
   }
 
+  const upperSans = sansAccent(upper);
   for (const [k, v] of Object.entries(table)) {
+    if (k.startsWith("__")) continue;
+    if (sansAccent(k) === upperSans) return normaliserEntree(v);
+  }
+
+  for (const [k, v] of Object.entries(table)) {
+    if (k.startsWith("__")) continue;
     if (k === upper || upper.includes(k) || k.includes(upper)) {
       return normaliserEntree(v);
     }
   }
 
+  if (table.__defaut__) return normaliserEntree(table.__defaut__);
+
   return null;
+}
+
+function sansAccent(s: string): string {
+  return s.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
 }
 
 function normaliserEntree(entree: EntreeOptionsSaisie): EntreeOptionsSaisie {
   const copie = { ...entree };
   if (
-    (copie.typeSaisie === "select" || copie.typeSaisie === "select_autres") &&
+    (copie.typeSaisie === "select" ||
+      copie.typeSaisie === "select_autres" ||
+      copie.typeSaisie === "resultat_valeur") &&
     copie.options
   ) {
     copie.options =
-      copie.typeSaisie === "select_autres"
+      copie.typeSaisie === "select_autres" || copie.typeSaisie === "resultat_valeur"
         ? avecOptionAutres(copie.options)
         : [...copie.options];
+  }
+  if (copie.typeSaisie === "resultat_valeur" && (!copie.options || copie.options.length === 0)) {
+    copie.options = avecOptionAutres(["Négatif", "Positif"]);
   }
   return copie;
 }

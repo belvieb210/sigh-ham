@@ -3,13 +3,6 @@ import type { Prisma } from "@/generated/prisma/client";
 
 type ClientTransaction = Prisma.TransactionClient;
 
-function extraireSequence(numero: string, prefixe: string): number {
-  if (!numero.startsWith(prefixe)) return 0;
-  const suite = numero.slice(prefixe.length);
-  const n = parseInt(suite, 10);
-  return Number.isFinite(n) ? n : 0;
-}
-
 /**
  * N° permanent patient : YYYYMMDD + compteur annuel.
  * Ex. 20260902012 — attribué une seule fois à la création du patient.
@@ -33,27 +26,23 @@ async function prochainNumeroPatientPermanent(
 }
 
 /**
- * N° de transfert annuel : PAT-YYYY + séquence sur 6 chiffres.
- * Ex. PAT-202600001, PAT-202600002 — nouveau à chaque transfert.
+ * N° de transfert annuel : PAT + année + séquence sur 5 chiffres.
+ * Ex. PAT-202600001, PAT-202600002 — repart à PAT-202700001 en 2027.
  */
 export async function prochainNumeroTransfert(
   tx: ClientTransaction,
   date = new Date()
 ): Promise<string> {
   const annee = date.getFullYear();
-  const prefix = `PAT-${annee}`;
+  const debutAnnee = new Date(annee, 0, 1);
+  const finAnnee = new Date(annee + 1, 0, 1);
 
-  const dernier = await tx.transfert.findFirst({
-    where: { numeroTransfert: { startsWith: prefix } },
-    orderBy: { numeroTransfert: "desc" },
-    select: { numeroTransfert: true },
+  const dejaCetteAnnee = await tx.transfert.count({
+    where: { emisLe: { gte: debutAnnee, lt: finAnnee } },
   });
 
-  const seq = dernier?.numeroTransfert
-    ? extraireSequence(dernier.numeroTransfert, prefix) + 1
-    : 1;
-
-  return `${prefix}${String(seq).padStart(6, "0")}`;
+  const seq = dejaCetteAnnee + 1;
+  return `PAT-${annee}${String(seq).padStart(5, "0")}`;
 }
 
 /**

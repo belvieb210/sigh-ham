@@ -29,6 +29,6 @@ WITH "ordonnes" AS (
 )
 UPDATE "transferts" AS t
 SET "numero_transfert" =
-  'PAT-' || o."annee"::text || LPAD(o."seq"::text, 6, '0')
+  'PAT-' || o."annee"::text || LPAD(o."seq"::text, 5, '0')
 FROM "ordonnes" AS o
 WHERE t."id" = o."id";

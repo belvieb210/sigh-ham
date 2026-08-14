@@ -330,8 +330,6 @@ export function FormulaireSaisieExamenLaboratoire({
           </div>
         </div>
 
-        {examen.calculsMeta && <BandeauTotalCalcul meta={examen.calculsMeta} />}
-
         <div className="overflow-hidden rounded-xl border border-slate-200">
           <table className="w-full table-fixed text-sm">
             <thead>
@@ -532,6 +530,8 @@ export function FormulaireSaisieExamenLaboratoire({
           )}
         </div>
         )}
+
+        {examen.calculsMeta && <BandeauTotalCalcul meta={examen.calculsMeta} />}
 
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="rounded-xl border border-slate-200 bg-white p-4">

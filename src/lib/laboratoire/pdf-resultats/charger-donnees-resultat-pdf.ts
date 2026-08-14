@@ -11,6 +11,7 @@ import {
 } from "@/constants/laboratoire-notes-examen";
 import { detecterTypeExamenPdf } from "@/lib/laboratoire/pdf-resultats/detecter-type-examen";
 import { detecterTypeParStructureResultats } from "@/lib/laboratoire/pdf-resultats/detecter-type-par-structure";
+import { trierParametresParFormulaire } from "@/lib/laboratoire/ordre-parametres-formulaire";
 import {
   genererQrCodeDataUrl,
   urlRecuFactureAbsolue,
@@ -74,10 +75,19 @@ export async function chargerDonneesResultatExamenPdf(
     where: { id: examenId, dossierId },
     include: {
       dossier: { include: { patient: true } },
-      typeExamen: true,
+      typeExamen: {
+        include: {
+          parametres: {
+            select: { id: true, nom: true, ordre: true },
+            orderBy: { ordre: "asc" },
+          },
+        },
+      },
       prescripteur: { include: { medecinExterne: true } },
       resultats: {
-        orderBy: { parametre: "asc" },
+        include: {
+          parametreTypeExamen: { select: { ordre: true } },
+        },
       },
     },
   });
@@ -96,6 +106,28 @@ export async function chargerDonneesResultatExamenPdf(
   );
   const cnomMedecin = medecinExterne?.numeroOrdre?.trim() || null;
 
+  const ordreParId = new Map(
+    examen.typeExamen.parametres.map((p) => [p.id, p.ordre])
+  );
+  const ordreParNom = new Map(
+    examen.typeExamen.parametres.map((p) => [p.nom.trim().toUpperCase(), p.ordre])
+  );
+
+  const resultatsTries = trierParametresParFormulaire(
+    examen.typeExamen.formulaire,
+    examen.resultats.map((r) => ({
+      ...r,
+      nom: r.parametre,
+      ordre:
+        r.parametreTypeExamen?.ordre ??
+        (r.parametreTypeExamenId
+          ? ordreParId.get(r.parametreTypeExamenId)
+          : undefined) ??
+        ordreParNom.get(r.parametre.trim().toUpperCase()) ??
+        9999,
+    }))
+  );
+
   const examenPdf = {
     examenId: examen.id,
     typeCode: examen.typeExamen.code,
@@ -106,7 +138,7 @@ export async function chargerDonneesResultatExamenPdf(
     commentaireGlobal: remarque || null,
     dateAnalyse: examen.resultatLe?.toISOString() ?? examen.updatedAt.toISOString(),
     resultats: mapperResultatsPrismaVersPdf(
-      examen.resultats.map((r) => ({
+      resultatsTries.map((r) => ({
         parametre: r.parametre,
         valeur: r.valeur,
         unite: r.unite,

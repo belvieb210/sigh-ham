@@ -50,26 +50,51 @@ export function mapperResultatsPrismaVersPdf(
     normeMax: string | null;
     nonRequis: boolean;
     anormal: boolean;
+    flag: string | null;
+    valeurSecondaire: string | null;
     commentaire: string | null;
   }[]
 ): LigneParametrePdf[] {
   return resultats
     .filter((r) => !r.nonRequis)
-    .map((r) => {
+    .flatMap((r) => {
       let range = "";
       if (r.normeMin && r.normeMax) range = `${r.normeMin} - ${r.normeMax}`;
       else if (r.normeMin) range = r.normeMin;
       else if (r.normeMax) range = r.normeMax;
 
-      return {
+      const flag = r.flag?.trim() || (r.anormal ? "!" : "");
+      const other = r.valeurSecondaire?.trim() || undefined;
+
+      const ligne: LigneParametrePdf = {
         name: r.parametre,
         value: r.valeur,
         unit: nettoyerUnite(r.unite) || undefined,
         range: range || undefined,
-        flag: r.anormal ? "!" : "",
+        flag,
+        other,
         nonRequis: r.nonRequis,
         commentaire: r.commentaire ?? undefined,
       };
+
+      const nomUpper = r.parametre.trim().toUpperCase();
+      if (
+        other &&
+        (nomUpper.includes("RESULTAT") || nomUpper.includes("RÉSULTAT")) &&
+        !nomUpper.includes("VALEUR")
+      ) {
+        return [
+          ligne,
+          {
+            name: "VALEUR",
+            value: other,
+            flag,
+            nonRequis: r.nonRequis,
+          },
+        ];
+      }
+
+      return [ligne];
     });
 }
 

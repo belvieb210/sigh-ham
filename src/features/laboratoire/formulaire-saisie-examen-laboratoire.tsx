@@ -24,6 +24,8 @@ import {
   evaluerIndicateur,
   formaterParametre,
 } from "@/features/laboratoire/utils-saisie-resultats";
+import type { ConfigSaisieParametre } from "@/lib/laboratoire/config-saisie-parametre";
+import { ChampSaisieParametre } from "@/features/laboratoire/champ-saisie-parametre";
 import { cn } from "@/lib/utils";
 
 const MAX_REMARQUE = 500;
@@ -37,8 +39,11 @@ export type ParametreEtat = {
   obligatoire: boolean;
   ordre: number;
   valeur: string;
+  flag: string | null;
+  valeurSecondaire: string | null;
   nonRequis: boolean;
   commentaire: string;
+  configSaisie?: ConfigSaisieParametre;
   personnalise?: boolean;
 };
 
@@ -51,6 +56,7 @@ export type EtatExamenForm = {
   remarque: string;
   statut: StatutExamen;
   orientationAnalyse: IdOrientationStatutAnalyse | null;
+  formulaire: string | null;
   parametres: ParametreEtat[];
 };
 
@@ -69,7 +75,12 @@ interface PropsFormulaireSaisieExamenLaboratoire {
   sauvegardeEnCours: boolean;
   onParametreChange: (
     parametreId: string,
-    patch: Partial<Pick<ParametreEtat, "valeur" | "nonRequis" | "nom" | "commentaire">>
+    patch: Partial<
+      Pick<
+        ParametreEtat,
+        "valeur" | "flag" | "valeurSecondaire" | "nonRequis" | "nom" | "commentaire"
+      >
+    >
   ) => void;
   onRemarqueChange: (remarque: string) => void;
   onAjouterParametre: (nom: string) => void;
@@ -246,8 +257,10 @@ export function FormulaireSaisieExamenLaboratoire({
 
   const apercuLignes = examen.parametres.map((p) => {
     const { acronyme } = formaterParametre(p.nom);
-    const afficher =
-      p.nonRequis ? "NR" : p.valeur.trim() ? p.valeur.trim() : "—";
+    let afficher = "—";
+    if (p.nonRequis) afficher = "NR";
+    else if (p.valeurSecondaire?.trim()) afficher = p.valeurSecondaire.trim();
+    else if (p.valeur.trim()) afficher = p.valeur.trim();
     return { id: p.id, acronyme, afficher, nonRequis: p.nonRequis };
   });
 
@@ -297,9 +310,15 @@ export function FormulaireSaisieExamenLaboratoire({
               ) : (
                 examen.parametres.map((p) => {
                   const { acronyme, libelle } = formaterParametre(p.nom);
-                  const statut = evaluerIndicateur(p.valeur, p.rangeUsuelle, p.nonRequis);
+                  const statut = evaluerIndicateur(
+                    p.valeur,
+                    p.rangeUsuelle,
+                    p.nonRequis,
+                    p.flag
+                  );
                   const styles = COULEURS_INDICATEUR[statut];
                   const commentaireOuvert = commentairesOuverts.has(p.id);
+                  const configSaisie = p.configSaisie ?? { typeSaisie: "texte" as const };
 
                   return (
                     <Fragment key={p.id}>
@@ -316,20 +335,23 @@ export function FormulaireSaisieExamenLaboratoire({
                           </p>
                         </td>
                         <td className="px-2 py-2 sm:px-3 sm:py-3">
-                          <input
-                            type="text"
-                            value={p.valeur}
-                            disabled={champsDesactives || p.nonRequis}
-                            readOnly={estConsultationSeule}
-                            placeholder={t("laboratoire.saisieResultats.placeholderResultat")}
-                            onChange={(e) =>
-                              onParametreChange(p.id, { valeur: e.target.value })
-                            }
+                          <div
                             className={cn(
-                              "w-full min-w-0 rounded-lg border px-2 py-1.5 text-sm outline-none ring-0 transition-colors focus:ring-2 sm:px-3 sm:py-2",
+                              "rounded-lg border px-1 py-1 sm:px-2",
                               styles.input
                             )}
-                          />
+                          >
+                            <ChampSaisieParametre
+                              config={configSaisie}
+                              disabled={champsDesactives || p.nonRequis}
+                              valeurs={{
+                                valeur: p.valeur,
+                                flag: p.flag,
+                                valeurSecondaire: p.valeurSecondaire,
+                              }}
+                              onChange={(patch) => onParametreChange(p.id, patch)}
+                            />
+                          </div>
                         </td>
                         <td className="hidden px-2 py-2 text-slate-600 sm:table-cell sm:px-3 sm:py-3">{p.unite ?? "—"}</td>
                         <td className="hidden px-2 py-2 text-slate-600 lg:table-cell sm:px-3 sm:py-3">{p.rangeUsuelle ?? "—"}</td>

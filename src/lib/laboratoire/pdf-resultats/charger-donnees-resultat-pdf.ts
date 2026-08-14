@@ -114,6 +114,8 @@ export async function chargerDonneesResultatExamenPdf(
         normeMax: r.normeMax,
         nonRequis: r.nonRequis,
         anormal: r.anormal,
+        flag: r.flag,
+        valeurSecondaire: r.valeurSecondaire,
         commentaire: r.commentaire,
       }))
     ),

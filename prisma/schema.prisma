@@ -826,6 +826,7 @@ model ParametreTypeExamen {
   rangeUsuelle String?    @map("range_usuelle")
   obligatoire  Boolean    @default(true)
   ordre        Int        @default(0)
+  configSaisie Json?      @map("config_saisie")
 
   resultats ResultatExamen[]
 
@@ -869,6 +870,8 @@ model ResultatExamen {
   normeMax              String?              @map("norme_max")
   nonRequis             Boolean              @default(false) @map("non_requis")
   anormal               Boolean              @default(false)
+  flag                  String?
+  valeurSecondaire      String?              @map("valeur_secondaire")
   commentaire           String?              @db.Text
 
   @@unique([examenId, parametreTypeExamenId])

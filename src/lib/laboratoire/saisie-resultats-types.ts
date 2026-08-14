@@ -1,6 +1,7 @@
 import type { StatutExamen } from "@/generated/prisma/client";
 import type { IdOrientationStatutAnalyse } from "@/constants/laboratoire-orientations";
 import type { PieceJointeExamenPersistee } from "@/constants/laboratoire-notes-examen";
+import type { ConfigSaisieParametre } from "@/lib/laboratoire/config-saisie-parametre";
 
 export type ActionEnregistrementResultat =
   | "brouillon"
@@ -16,8 +17,11 @@ export interface ParametreSaisieDto {
   obligatoire: boolean;
   ordre: number;
   valeur: string;
+  flag: string | null;
+  valeurSecondaire: string | null;
   nonRequis: boolean;
   commentaire: string;
+  configSaisie?: ConfigSaisieParametre;
 }
 
 export interface ExamenSaisieDto {
@@ -49,6 +53,8 @@ export interface SaisieResultatsDto {
 export interface LigneResultatSaisie {
   parametreTypeExamenId: string;
   valeur: string;
+  flag?: string | null;
+  valeurSecondaire?: string | null;
   nonRequis?: boolean;
   commentaire?: string | null;
 }

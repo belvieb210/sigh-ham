@@ -50,10 +50,13 @@ function clonerEtat(saisie: SaisieResultatsDto): EtatExamenForm[] {
     prix: ex.prix,
     statut: ex.statut,
     orientationAnalyse: ex.orientationAnalyse,
+    formulaire: ex.formulaire,
     remarque: ex.remarque ?? "",
     parametres: ex.parametres.map((p) => ({
       ...p,
       valeur: p.valeur,
+      flag: p.flag,
+      valeurSecondaire: p.valeurSecondaire,
       nonRequis: p.nonRequis,
       commentaire: p.commentaire ?? "",
     })),
@@ -191,7 +194,12 @@ export function ContenuSaisieResultatsLaboratoire({
   const mettreAJourParametre = (
     examenId: string,
     parametreId: string,
-    patch: Partial<Pick<ParametreEtat, "valeur" | "nonRequis" | "nom" | "commentaire">>
+    patch: Partial<
+      Pick<
+        ParametreEtat,
+        "valeur" | "flag" | "valeurSecondaire" | "nonRequis" | "nom" | "commentaire"
+      >
+    >
   ) => {
     setExamens((prev) =>
       prev.map((ex) =>
@@ -218,6 +226,8 @@ export function ContenuSaisieResultatsLaboratoire({
       obligatoire: false,
       ordre: 9999,
       valeur: "",
+      flag: null,
+      valeurSecondaire: null,
       nonRequis: false,
       commentaire: "",
       personnalise: true,
@@ -289,6 +299,8 @@ export function ContenuSaisieResultatsLaboratoire({
             lignes: lignesCatalogue.map((p) => ({
               parametreTypeExamenId: p.id,
               valeur: p.valeur,
+              flag: p.flag,
+              valeurSecondaire: p.valeurSecondaire,
               nonRequis: p.nonRequis,
               commentaire: p.commentaire?.trim() || null,
             })),

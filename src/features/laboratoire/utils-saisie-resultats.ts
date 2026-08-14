@@ -177,10 +177,14 @@ function evaluerNumerique(valeur: string, rangeUsuelle: string): StatutIndicateu
 export function evaluerIndicateur(
   valeur: string,
   rangeUsuelle: string | null,
-  nonRequis: boolean
+  nonRequis: boolean,
+  flag?: string | null
 ): StatutIndicateur {
   if (nonRequis) return "non_requis";
-  if (!valeur.trim()) return "vide";
+  if (flag === "B") return "bas";
+  if (flag === "N") return "normal";
+  if (flag === "E") return "eleve";
+  if (!valeur.trim() && !flag?.trim()) return "vide";
 
   const range = rangeUsuelle?.trim() ?? "";
   if (!range) return "saisi";

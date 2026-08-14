@@ -12,6 +12,8 @@ import {
   lirePiecesJointesDepuisNotes,
   type PieceJointeExamenPersistee,
 } from "@/constants/laboratoire-notes-examen";
+import { estValeurAutres } from "@/lib/laboratoire/config-saisie-parametre";
+import { resoudreConfigSaisieParametre } from "@/lib/laboratoire/resoudre-config-saisie-parametre";
 import type {
   ActionEnregistrementResultat,
   LigneResultatSaisie,
@@ -34,13 +36,17 @@ function mapperParametres(
     rangeUsuelle: string | null;
     obligatoire: boolean;
     ordre: number;
+    configSaisie?: unknown;
   }[],
   resultatsExistants: {
     parametreTypeExamenId: string | null;
     valeur: string;
+    flag: string | null;
+    valeurSecondaire: string | null;
     nonRequis: boolean;
     commentaire: string | null;
-  }[]
+  }[],
+  formulaire: string | null
 ): ParametreSaisieDto[] {
   const parId = new Map(
     resultatsExistants
@@ -61,8 +67,15 @@ function mapperParametres(
         obligatoire: p.obligatoire,
         ordre: p.ordre,
         valeur: existant?.valeur ?? "",
+        flag: existant?.flag ?? null,
+        valeurSecondaire: existant?.valeurSecondaire ?? null,
         nonRequis: existant?.nonRequis ?? false,
         commentaire: existant?.commentaire ?? "",
+        configSaisie: resoudreConfigSaisieParametre({
+          configSaisie: p.configSaisie,
+          nom: p.nom,
+          typeExamen: { formulaire },
+        }),
       };
     });
 }
@@ -112,7 +125,11 @@ export async function chargerSaisieResultats(
       orientationAnalyse: lireOrientationAnalyseDepuisNotes(ex.notes),
       formulaire: ex.typeExamen.formulaire,
       remarque: extraireRemarqueSansOrientation(ex.notes) || null,
-      parametres: mapperParametres(ex.typeExamen.parametres, ex.resultats),
+      parametres: mapperParametres(
+        ex.typeExamen.parametres,
+        ex.resultats,
+        ex.typeExamen.formulaire
+      ),
       piecesJointes: lirePiecesJointesDepuisNotes(ex.notes),
     })),
   };
@@ -155,13 +172,21 @@ export async function enregistrerResultatsExamen(
     }
     const cat = catalogue.get(ligne.parametreTypeExamenId)!;
     const nonRequis = ligne.nonRequis === true;
-    if (
-      exigerParametres &&
-      !nonRequis &&
-      cat.obligatoire &&
-      !ligne.valeur.trim()
-    ) {
-      throw new Error(`Le paramètre « ${cat.nom} » est requis.`);
+    const config = resoudreConfigSaisieParametre({
+      configSaisie: cat.configSaisie,
+      nom: cat.nom,
+      typeExamen: { formulaire: examen.typeExamen.formulaire },
+    });
+
+    if (exigerParametres && !nonRequis && cat.obligatoire) {
+      const valeurVide = !ligne.valeur.trim();
+      const autresSansPreciser =
+        config.typeSaisie === "select_autres" &&
+        (estValeurAutres(ligne.valeur) || ligne.valeur === "Autres") &&
+        !ligne.valeurSecondaire?.trim();
+      if (valeurVide || autresSansPreciser) {
+        throw new Error(`Le paramètre « ${cat.nom} » est requis.`);
+      }
     }
   }
 
@@ -171,6 +196,8 @@ export async function enregistrerResultatsExamen(
     if (action !== "rejeter") {
       for (const ligne of input.lignes) {
         const cat = catalogue.get(ligne.parametreTypeExamenId)!;
+        const flag = ligne.flag?.trim() || null;
+        const anormal = flag === "B" || flag === "E";
         await tx.resultatExamen.upsert({
           where: {
             examenId_parametreTypeExamenId: {
@@ -187,6 +214,9 @@ export async function enregistrerResultatsExamen(
             normeMin: null,
             normeMax: cat.rangeUsuelle,
             nonRequis: ligne.nonRequis === true,
+            anormal,
+            flag,
+            valeurSecondaire: ligne.valeurSecondaire?.trim() || null,
             commentaire: ligne.commentaire?.trim() || null,
           },
           update: {
@@ -195,6 +225,9 @@ export async function enregistrerResultatsExamen(
             unite: cat.unite,
             normeMax: cat.rangeUsuelle,
             nonRequis: ligne.nonRequis === true,
+            anormal,
+            flag,
+            valeurSecondaire: ligne.valeurSecondaire?.trim() || null,
             commentaire: ligne.commentaire?.trim() || null,
           },
         });

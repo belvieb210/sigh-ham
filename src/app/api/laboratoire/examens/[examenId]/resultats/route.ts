@@ -21,6 +21,8 @@ export async function POST(
       lignes?: {
         parametreTypeExamenId: string;
         valeur: string;
+        flag?: string | null;
+        valeurSecondaire?: string | null;
         nonRequis?: boolean;
         commentaire?: string | null;
       }[];

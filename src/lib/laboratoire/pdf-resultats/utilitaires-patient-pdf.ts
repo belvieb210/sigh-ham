@@ -16,7 +16,7 @@ export function formaterAdressePatientPdf(parts: {
 }
 
 export function idPatientAffichePdf(patient: DonneesPatientResultatPdf): string {
-  return patient.numeroTransfert ?? patient.numeroEnregistrement ?? "—";
+  return patient.numeroPatient ?? patient.numeroEnregistrement ?? "—";
 }
 
 export function resoudreAvatarPatientPdf(

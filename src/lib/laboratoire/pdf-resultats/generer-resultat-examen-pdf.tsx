@@ -9,16 +9,22 @@ import {
   chargerDonneesResultatExamenPdf,
   chargerDonneesResultatsMultiExamensPdf,
 } from "@/lib/laboratoire/pdf-resultats/charger-donnees-resultat-pdf";
+import { nomFichierResultatPdf } from "@/lib/laboratoire/pdf-resultats/nom-fichier-resultat-pdf";
 import {
   cheminsAssetsPdfServeur,
   enregistrerPolicesPdfServeur,
 } from "@/lib/pdf/assets-pdf-serveur";
 
+export type PdfResultatExamenGenere = {
+  buffer: Buffer;
+  nomFichier: string;
+};
+
 export async function genererBufferPdfResultatExamen(
   dossierId: string,
   examenId: string,
   request?: Request
-): Promise<Buffer | null> {
+): Promise<PdfResultatExamenGenere | null> {
   const donnees = await chargerDonneesResultatExamenPdf(dossierId, examenId, request);
   if (!donnees) return null;
 
@@ -37,14 +43,21 @@ export async function genererBufferPdfResultatExamen(
 
   const blob = await instance.toBlob();
   const arrayBuffer = await blob.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+  return {
+    buffer: Buffer.from(arrayBuffer),
+    nomFichier: nomFichierResultatPdf({
+      numeroPatient: donnees.patient.numeroPatient,
+      nbExamens: 1,
+      libelleExamen: donnees.examen.libelle,
+    }),
+  };
 }
 
 export async function genererBufferPdfResultatsMultiExamens(
   dossierId: string,
   examenIds: string[],
   request?: Request
-): Promise<Buffer | null> {
+): Promise<PdfResultatExamenGenere | null> {
   const pages = await chargerDonneesResultatsMultiExamensPdf(
     dossierId,
     examenIds,
@@ -67,5 +80,11 @@ export async function genererBufferPdfResultatsMultiExamens(
 
   const blob = await instance.toBlob();
   const arrayBuffer = await blob.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+  return {
+    buffer: Buffer.from(arrayBuffer),
+    nomFichier: nomFichierResultatPdf({
+      numeroPatient: pages[0]!.patient.numeroPatient,
+      nbExamens: pages.length,
+    }),
+  };
 }

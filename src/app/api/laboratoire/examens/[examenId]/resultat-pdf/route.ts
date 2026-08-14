@@ -9,11 +9,6 @@ interface Ctx {
   params: Promise<{ examenId: string }>;
 }
 
-function nomFichierResultat(examenId: string, multi: boolean): string {
-  if (multi) return `resultats-laboratoire-${examenId}.pdf`;
-  return `resultat-examen-${examenId}.pdf`;
-}
-
 export async function GET(request: NextRequest, ctx: Ctx) {
   const session = await obtenirSessionApiLaboratoire();
   if (!session) {
@@ -36,25 +31,22 @@ export async function GET(request: NextRequest, ctx: Ctx) {
     : [examenId.trim()];
 
   try {
-    const buffer =
+    const pdf =
       examIds.length > 1
         ? await genererBufferPdfResultatsMultiExamens(dossierId, examIds, request)
         : await genererBufferPdfResultatExamen(dossierId, examenId.trim(), request);
 
-    if (!buffer || buffer.length < 100) {
+    if (!pdf || pdf.buffer.length < 100) {
       return NextResponse.json(
         { erreur: "Résultat introuvable ou PDF vide." },
         { status: 404 }
       );
     }
 
-    const multi = examIds.length > 1;
-    const filename = nomFichierResultat(examenId.trim(), multi);
-
-    return new NextResponse(new Uint8Array(buffer), {
+    return new NextResponse(new Uint8Array(pdf.buffer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="${filename}"`,
+        "Content-Disposition": `inline; filename="${pdf.nomFichier}"`,
       },
     });
   } catch (e) {

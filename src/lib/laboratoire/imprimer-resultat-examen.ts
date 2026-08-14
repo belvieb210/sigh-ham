@@ -1,13 +1,9 @@
-const ID_OVERLAY_PDF = "sigh-overlay-pdf-resultat-labo";
+import {
+  extraireNomFichierContentDisposition,
+  nomFichierResultatPdf,
+} from "@/lib/laboratoire/pdf-resultats/nom-fichier-resultat-pdf";
 
-function sanitiserNomFichier(texte: string): string {
-  return texte
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
-}
+const ID_OVERLAY_PDF = "sigh-overlay-pdf-resultat-labo";
 
 function estAppareilMobile(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -267,11 +263,17 @@ export async function imprimerResultatExamenLaboratoire(
       return { ok: false, erreur: "pdf_vide" };
     }
 
-    const patient = sanitiserNomFichier(options.numeroPatient ?? "");
-    const examen = sanitiserNomFichier(options.libelleExamen ?? options.examenId);
-    const nomFichier = patient
-      ? `resultat-${examen}-${patient}.pdf`
-      : `resultat-${examen}.pdf`;
+    const nbExamens = options.examenIds?.length ?? 1;
+    const nomFichierApi = extraireNomFichierContentDisposition(
+      response.headers.get("Content-Disposition")
+    );
+    const nomFichier =
+      nomFichierApi ??
+      nomFichierResultatPdf({
+        numeroPatient: options.numeroPatient ?? "",
+        nbExamens,
+        libelleExamen: options.libelleExamen ?? options.examenId,
+      });
 
     afficherApercuPdf(blob, nomFichier);
     return { ok: true };

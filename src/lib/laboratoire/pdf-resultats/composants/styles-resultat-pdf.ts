@@ -168,8 +168,8 @@ export const stylesResultatPdf = StyleSheet.create({
     marginBottom: 4,
   },
   signatureImage: {
-    width: 80,
-    height: 24,
+    width: 110,
+    height: 36,
     objectFit: "contain",
     marginVertical: 4,
   },

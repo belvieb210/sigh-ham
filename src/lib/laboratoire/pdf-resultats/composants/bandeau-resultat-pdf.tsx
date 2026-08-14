@@ -71,7 +71,9 @@ export function BandeauPatientResultatPdf({
 
   return (
     <View style={stylesResultatPdf.bandeauPatient}>
-      <Image src={avatarPath} style={stylesResultatPdf.bandeauAvatar} />
+      <View style={stylesResultatPdf.bandeauAvatarWrap}>
+        <Image src={avatarPath} style={stylesResultatPdf.bandeauAvatar} />
+      </View>
       <View style={stylesResultatPdf.bandeauContenu}>
         <LigneBandeau
           labelG="NOM"

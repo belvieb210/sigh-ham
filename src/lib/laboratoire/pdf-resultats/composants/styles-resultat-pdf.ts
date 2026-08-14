@@ -9,6 +9,9 @@ export const COULEURS_RESULTAT_PDF = {
   bordureTableau: "#c8d2e6",
 };
 
+/** Hauteur commune avatar / QR dans le bandeau patient. */
+export const TAILLE_BANDEAU_LATERAL_PDF = 72;
+
 export const stylesResultatPdf = StyleSheet.create({
   page: {
     fontFamily: "Roboto",
@@ -32,14 +35,19 @@ export const stylesResultatPdf = StyleSheet.create({
     marginBottom: 8,
     minHeight: 96,
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
+  },
+  bandeauAvatarWrap: {
+    width: TAILLE_BANDEAU_LATERAL_PDF,
+    height: TAILLE_BANDEAU_LATERAL_PDF,
+    marginRight: 8,
+    justifyContent: "center",
+    alignItems: "center",
   },
   bandeauAvatar: {
-    width: 52,
-    height: 68,
+    width: TAILLE_BANDEAU_LATERAL_PDF,
+    height: TAILLE_BANDEAU_LATERAL_PDF,
     objectFit: "contain",
-    marginRight: 8,
-    marginTop: 2,
   },
   bandeauContenu: {
     flex: 1,
@@ -47,14 +55,14 @@ export const stylesResultatPdf = StyleSheet.create({
     minWidth: 0,
   },
   bandeauQrWrap: {
-    width: 76,
+    width: TAILLE_BANDEAU_LATERAL_PDF + 4,
+    height: TAILLE_BANDEAU_LATERAL_PDF,
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 2,
   },
   bandeauQr: {
-    width: 72,
-    height: 72,
+    width: TAILLE_BANDEAU_LATERAL_PDF,
+    height: TAILLE_BANDEAU_LATERAL_PDF,
     objectFit: "contain",
   },
   bandeauLigne: {

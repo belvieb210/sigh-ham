@@ -1,6 +1,7 @@
 /** Types de widget de saisie pour un paramètre de laboratoire. */
 export type TypeSaisieParametre =
   | "texte"
+  | "date"
   | "flag_valeur"
   | "select"
   | "select_autres"
@@ -47,6 +48,7 @@ export function normaliserConfigSaisie(
 
   const typesValides: TypeSaisieParametre[] = [
     "texte",
+    "date",
     "flag_valeur",
     "select",
     "select_autres",

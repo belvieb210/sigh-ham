@@ -1,12 +1,10 @@
-import {
-  OPTION_AUTRES,
-  type ConfigSaisieParametre,
-  avecOptionAutres,
-  normaliserConfigSaisie,
-} from "@/lib/laboratoire/config-saisie-parametre";
+import type { ConfigSaisieParametre } from "@/lib/laboratoire/config-saisie-parametre";
+import { normaliserConfigSaisie } from "@/lib/laboratoire/config-saisie-parametre";
+import { optionsSaisieDepuisModaux } from "@/lib/laboratoire/options-saisie-modaux";
 
 const FORMULAIRES_FLAG_VALEUR = new Set([
   "examForm",
+  "bilansAnalyses",
   "bilans_azotes",
   "bilirubi",
   "ionogramme",
@@ -17,8 +15,15 @@ const FORMULAIRES_FLAG_VALEUR = new Set([
   "hematologie",
   "coagulation",
   "nfs",
-  "bilansAnalyses",
+  "nfl",
   "fluide",
+  "reticulocyte",
+  "hb_hct",
+  "valeur_absolu_eosinophiles",
+  "micro_albuminurie",
+  "glycemie_gestationnelle",
+  "surveillance_prostatique",
+  "electrophorese",
 ]);
 
 const FORMULAIRES_RESULTAT_VALEUR = new Set([
@@ -27,95 +32,14 @@ const FORMULAIRES_RESULTAT_VALEUR = new Set([
   "salmonella",
   "malaria",
   "malariaTDR",
-]);
-
-const FORMULAIRES_SELECT_AUTRES = new Set([
-  "urinesRoutines",
-  "sellesRoutine",
-  "rivalta",
-  "sangOcculte",
-  "sedimentUrinaire",
-  "microbiologie",
-  "coproculture",
-  "frottis_secretion",
+  "trypanosomiase",
 ]);
 
 const FORMULAIRES_DESCRIPTION = new Set(["histopathologie", "chargeViral"]);
 
-const OPTIONS_NEGATIF_POSITIF = avecOptionAutres(["Négatif", "Positif"]);
-
-const OPTIONS_URINES: Record<string, string[]> = {
-  COULEUR: avecOptionAutres([
-    "Jaune citrin",
-    "Jaune pâle",
-    "Jaune foncé",
-    "Rouge",
-    "Brun",
-    "Vert",
-    "Noir",
-  ]),
-  ASPECT: avecOptionAutres([
-    "Clair",
-    "Trouble",
-    "Turbide",
-    "Opalescent",
-    "Purulent",
-  ]),
-  PH: avecOptionAutres(["5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9"]),
-  DENSITE: avecOptionAutres([
-    "1005",
-    "1010",
-    "1015",
-    "1020",
-    "1025",
-    "1030",
-    "1035",
-  ]),
-  PROTEINES: OPTIONS_NEGATIF_POSITIF,
-  GLUCOSE: OPTIONS_NEGATIF_POSITIF,
-  ACETONE: OPTIONS_NEGATIF_POSITIF,
-  BILIRUBINE: OPTIONS_NEGATIF_POSITIF,
-  UROBILINOGENE: OPTIONS_NEGATIF_POSITIF,
-  NITRITES: OPTIONS_NEGATIF_POSITIF,
-  LEUCOCYTES: OPTIONS_NEGATIF_POSITIF,
-  SANG: OPTIONS_NEGATIF_POSITIF,
-  HEMOGLOBINE: OPTIONS_NEGATIF_POSITIF,
-};
-
-const OPTIONS_SELLES = avecOptionAutres([
-  "Formées",
-  "Molles",
-  "Liquides",
-  "Pâteuses",
-  "Grumeleuses",
-]);
-
-const OPTIONS_SEROLOGIE = avecOptionAutres([
-  "Négatif",
-  "Positif",
-  "Douteux",
-  "Non réactif",
-  "Réactif",
-]);
-
-function optionsParNomParametre(
-  formulaire: string | null | undefined,
-  nomParametre: string
-): string[] {
-  const cle = nomParametre.trim().toUpperCase();
-  if (formulaire === "urinesRoutines" || formulaire === "sedimentUrinaire") {
-    return OPTIONS_URINES[cle] ?? OPTIONS_NEGATIF_POSITIF;
-  }
-  if (formulaire === "sellesRoutine") {
-    if (cle.includes("CONSISTANCE") || cle.includes("ASPECT")) {
-      return OPTIONS_SELLES;
-    }
-    return OPTIONS_NEGATIF_POSITIF;
-  }
-  if (FORMULAIRES_RESULTAT_VALEUR.has(formulaire ?? "")) {
-    return OPTIONS_SEROLOGIE;
-  }
-  return OPTIONS_NEGATIF_POSITIF;
+function estNomDate(nom: string): boolean {
+  const u = nom.trim().toUpperCase();
+  return /^DATE(\s|$| DE| D')/.test(u);
 }
 
 function infererConfigDepuisFormulaire(
@@ -124,6 +48,13 @@ function infererConfigDepuisFormulaire(
 ): ConfigSaisieParametre {
   const f = formulaire ?? "";
 
+  const depuisModaux = optionsSaisieDepuisModaux(f, nomParametre);
+  if (depuisModaux) return depuisModaux;
+
+  if (estNomDate(nomParametre)) {
+    return { typeSaisie: "date" };
+  }
+
   if (FORMULAIRES_DESCRIPTION.has(f)) {
     return { typeSaisie: "description" };
   }
@@ -131,16 +62,8 @@ function infererConfigDepuisFormulaire(
   if (FORMULAIRES_RESULTAT_VALEUR.has(f)) {
     return {
       typeSaisie: "resultat_valeur",
-      options: optionsParNomParametre(f, nomParametre),
       libelleSecondaire: "Valeur / Titre",
       placeholderSecondaire: "Titre ou valeur",
-    };
-  }
-
-  if (FORMULAIRES_SELECT_AUTRES.has(f)) {
-    return {
-      typeSaisie: "select_autres",
-      options: optionsParNomParametre(f, nomParametre),
     };
   }
 
@@ -157,7 +80,7 @@ export type ParametrePourConfigSaisie = {
   typeExamen?: { formulaire?: string | null } | null;
 };
 
-/** Résout la config effective : BDD puis inférence par formulaire. */
+/** Résout la config effective : BDD puis modaux.php puis inférence. */
 export function resoudreConfigSaisieParametre(
   parametre: ParametrePourConfigSaisie
 ): ConfigSaisieParametre {
@@ -169,12 +92,16 @@ export function resoudreConfigSaisieParametre(
   return infererConfigDepuisFormulaire(formulaire, nom);
 }
 
-/** Valeur affichée dans le select « Autres » : stocke OPTION_AUTRES en valeur principale. */
+/** @deprecated Utiliser OPTION_AUTRES depuis config-saisie-parametre */
+export { OPTION_AUTRES } from "@/lib/laboratoire/config-saisie-parametre";
+
+/** Valeur affichée dans le select « Autres ». */
 export function valeurSelectAutres(
   valeur: string,
   valeurSecondaire: string | null | undefined
 ): string {
-  if (valeurSecondaire?.trim()) return OPTION_AUTRES;
+  if (valeurSecondaire?.trim()) return "Autres";
+  if (valeur.trim().toLowerCase() === "autres") return "Autres";
   return valeur;
 }
 
@@ -183,9 +110,9 @@ export function persisterSelectAutres(
   selection: string,
   preciser: string
 ): { valeur: string; valeurSecondaire: string | null } {
-  if (selection === OPTION_AUTRES) {
+  if (selection === "Autres" || selection.toLowerCase() === "autres") {
     return {
-      valeur: OPTION_AUTRES,
+      valeur: "Autres",
       valeurSecondaire: preciser.trim() || null,
     };
   }

@@ -1,0 +1,2370 @@
+/** Généré depuis modaux.php — node scripts/extraire-options-modaux.mjs */
+import type { ConfigSaisieParametre } from "@/lib/laboratoire/config-saisie-parametre";
+import { avecOptionAutres } from "@/lib/laboratoire/config-saisie-parametre";
+
+export type EntreeOptionsSaisie = ConfigSaisieParametre;
+
+export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
+  string,
+  Record<string, EntreeOptionsSaisie>
+> = {
+  "examForm": {},
+  "bilansAnalyses": {},
+  "ionogramme": {
+    "SODIUM": {
+      "typeSaisie": "flag_valeur"
+    },
+    "POTASSIUM": {
+      "typeSaisie": "flag_valeur"
+    },
+    "CHLORIDE": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "spot_urines": {
+    "SODIUM": {
+      "typeSaisie": "flag_valeur"
+    },
+    "POTASSIUM": {
+      "typeSaisie": "flag_valeur"
+    },
+    "CHLORIDE": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "ptt": {
+    "PROTEINE TOTALES": {
+      "typeSaisie": "flag_valeur"
+    },
+    "ALBUMINE": {
+      "typeSaisie": "flag_valeur"
+    },
+    "GLOBULINE": {
+      "typeSaisie": "flag_valeur"
+    },
+    "RAPPORT ALBU/GLOBU": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "bilans_azotes": {
+    "UREE": {
+      "typeSaisie": "flag_valeur"
+    },
+    "CREATININE": {
+      "typeSaisie": "flag_valeur"
+    },
+    "ACIDE URIQUE": {
+      "typeSaisie": "flag_valeur"
+    },
+    "RAPPORT UREE/CREATININE": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "profilLipidique": {
+    "TOTAL CHOLESTEROL": {
+      "typeSaisie": "flag_valeur"
+    },
+    "HDL CHOLESTEROL": {
+      "typeSaisie": "flag_valeur"
+    },
+    "TRIGLYCERIDE": {
+      "typeSaisie": "flag_valeur"
+    },
+    "LDL CHOLESTEROL": {
+      "typeSaisie": "flag_valeur"
+    },
+    "RAPPORT CHOL/HDL": {
+      "typeSaisie": "flag_valeur"
+    },
+    "RAPPORT LDL/HDL": {
+      "typeSaisie": "flag_valeur"
+    },
+    "VLDL": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "bilirubi": {
+    "BILIRUBINE TOTAL": {
+      "typeSaisie": "flag_valeur"
+    },
+    "BILIRUBINE DIRECT": {
+      "typeSaisie": "flag_valeur"
+    },
+    "BILIRUBINE INDIRECT": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "serology": {
+    "RESULTAT:": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    }
+  },
+  "salmonella": {
+    "IGG SALMONELLA TYPHI": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    },
+    "IGM SALMONELLA TYPHI": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    }
+  },
+  "widal": {
+    "S TYPHI AG O": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    },
+    "S TYPHI AG H": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    },
+    "S PARATYPHI AG BH": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    },
+    "S PARATYPHI AG AH": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    }
+  },
+  "sedimentUrinaire": {
+    "COULEUR": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Incolore",
+        "Jaune clair",
+        "Jaune",
+        "Jaune foncé",
+        "Ambre",
+        "Rougeâtre",
+        "Rose",
+        "Brun",
+        "Noir",
+        "Autres"
+      ]
+    },
+    "APPARENCES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Claire",
+        "Légèrement trouble",
+        "Trouble",
+        "Très trouble",
+        "Autres"
+      ]
+    },
+    "LEUCOCYTES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "CELLULE EPITHELIALE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "GLOBULE ROUGE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "LEVURES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Présent",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    },
+    "CRISTAUX": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Present",
+        "+",
+        "++",
+        "+++",
+        "++++",
+        "Autres"
+      ]
+    },
+    "CILINDRE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Hyalin",
+        "Granuleux",
+        "Hématoïde",
+        "Circoïde",
+        "Ciré",
+        "Leucocytaire",
+        "Autres"
+      ]
+    },
+    "BACTERIES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Peu",
+        "Modéré",
+        "Nombreux",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    },
+    "AUTRES": {
+      "typeSaisie": "select",
+      "options": [
+        "Absent"
+      ]
+    }
+  },
+  "urinesRoutines": {
+    "COULEUR": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Incolore",
+        "Jaune clair",
+        "Jaune",
+        "Jaune foncé",
+        "Ambre",
+        "Orange",
+        "Rouge pale",
+        "Rouge foncé",
+        "Rose",
+        "Brun",
+        "Blanchâtre",
+        "Autres"
+      ]
+    },
+    "APPARENCES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Claire",
+        "Légèrement trouble",
+        "Trouble",
+        "Très trouble",
+        "Autres"
+      ]
+    },
+    "PH": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "4.5",
+        "5.0",
+        "5.5",
+        "6.0",
+        "6.5",
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.5",
+        "Autres"
+      ]
+    },
+    "GRAVITE SPECIFIQUE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "1.005",
+        "1.010",
+        "1.015",
+        "1.020",
+        "1.025",
+        "1.030",
+        "Autres"
+      ]
+    },
+    "GLUCOSURIE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Traces",
+        "+",
+        "++",
+        "+++",
+        "++++",
+        "Autres"
+      ]
+    },
+    "PROTEINURIE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Traces",
+        "+",
+        "++",
+        "+++",
+        "++++",
+        "Autres"
+      ]
+    },
+    "NITRATE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    },
+    "KETONE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Traces",
+        "+",
+        "++",
+        "+++",
+        "++++",
+        "Autres"
+      ]
+    },
+    "BILIRUBINE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Traces",
+        "+",
+        "++",
+        "+++",
+        "++++",
+        "Autres"
+      ]
+    },
+    "UROBILIRINE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Traces",
+        "+",
+        "++",
+        "+++",
+        "++++",
+        "Autres"
+      ]
+    },
+    "LEUCOCYTES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "CELLULE EPITHELIALE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "GLOBULE ROUGE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "LEVURES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Présent",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    },
+    "CRISTAUX": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Present",
+        "+",
+        "++",
+        "+++",
+        "++++",
+        "Autres"
+      ]
+    },
+    "CILINDRE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Hyalin",
+        "Granuleux",
+        "Hématoïde",
+        "Circoïde",
+        "Ciré",
+        "Leucocytaire",
+        "Autres"
+      ]
+    },
+    "BACTERIES": {
+      "typeSaisie": "select",
+      "options": [
+        "Négatif",
+        "Peu",
+        "Modéré",
+        "Nombreux",
+        "+",
+        "++",
+        "+++"
+      ]
+    },
+    "AUTRES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Présent",
+        "Autres"
+      ]
+    }
+  },
+  "sellesRoutine": {
+    "COULEUR": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Jaune",
+        "Brun",
+        "Noir",
+        "Gris",
+        "Pâle",
+        "Verdâtre",
+        "Autres"
+      ]
+    },
+    "ODEUR": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Fecal",
+        "Nauséabond",
+        "Putride",
+        "Acide",
+        "Soufrée",
+        "Autres"
+      ]
+    },
+    "MUCUS": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Présence",
+        "Peu",
+        "Modéré",
+        "Nombreux",
+        "Autres"
+      ]
+    },
+    "CONSISTANCE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Dures",
+        "Solide Morceau dechiquetés",
+        "Pâteuse",
+        "Molle",
+        "Liquide",
+        "Diarrhéique",
+        "Autres"
+      ]
+    },
+    "SANG VISIBLE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Présent",
+        "Autres"
+      ]
+    },
+    "LEUCOCYTES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "3-5",
+        "5-10",
+        "10-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "GLOBULE ROUGE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "3-5",
+        "5-10",
+        "10-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "MACROPHAGES": {
+      "typeSaisie": "select",
+      "options": [
+        "Absent",
+        "Présent"
+      ]
+    },
+    "KYSTE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Antemoeba coli",
+        "Antemoeba histolytica",
+        "Giardia lambia",
+        "Autres"
+      ]
+    },
+    "LARVE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Anguillule",
+        "Ankylostome",
+        "Strongyloides",
+        "Autres"
+      ]
+    },
+    "LEVURE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Bourgeonnante",
+        "Bourgeonnantes +",
+        "Bourgeonnantes ++",
+        "Bourgeonnantes +++",
+        "Non bourgeonnante ++++",
+        "Non bourgeonnante",
+        "Non bourgeonnante +",
+        "Non bourgeonnante ++",
+        "Non bourgeonnante +++",
+        "Autres"
+      ]
+    },
+    "CRISTAUX CHARCOT-LEYDEN": {
+      "typeSaisie": "select",
+      "options": [
+        "Absent",
+        "Présent"
+      ]
+    },
+    "TROPHOZOITES": {
+      "typeSaisie": "select",
+      "options": [
+        "Absent",
+        "Présent"
+      ]
+    },
+    "OVULES": {
+      "typeSaisie": "select",
+      "options": [
+        "Absent",
+        "Présent"
+      ]
+    },
+    "PARASITE ADULTE": {
+      "typeSaisie": "select",
+      "options": [
+        "Absent",
+        "Présent"
+      ]
+    },
+    "AUTRES": {
+      "typeSaisie": "select",
+      "options": [
+        "Non observé"
+      ]
+    }
+  },
+  "rivalta": {
+    "SPECIMEN": {
+      "typeSaisie": "texte"
+    },
+    "ASPECTS": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Clair",
+        "Trouble",
+        "Purulent",
+        "Hémorragique",
+        "Lactescent",
+        "Ictérique",
+        "Autres"
+      ]
+    },
+    "COULEUR": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Jaune citron",
+        "Blanchâtre",
+        "Jaune",
+        "Rose sanglante",
+        "Blanc laiteux",
+        "Autres"
+      ]
+    },
+    "RESULTAT": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Transsudat",
+        "Exsudat",
+        "Autres"
+      ]
+    }
+  },
+  "proteineBincesJones": {
+    "SPECIMEN": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Plasma",
+        "Sérum",
+        "Urine",
+        "Autres"
+      ]
+    },
+    "RESULTAT": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Traces",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    }
+  },
+  "trypanosomiase": {
+    "METHODE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "GOUTTE FRAICHE",
+        "BUFFY COAT",
+        "Autres"
+      ]
+    },
+    "SPECIMEN": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Sang",
+        "LCS",
+        "Urine",
+        "liquebiologique",
+        "Autre fluide",
+        "Autres"
+      ]
+    },
+    "RESULTAT": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    }
+  },
+  "sangOcculte": {
+    "SPECIMEN": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Selles",
+        "Vomitus",
+        "Autres"
+      ]
+    },
+    "CONSISTANCE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Dures",
+        "Solide Morceau dechiquetés",
+        "Pâteuse",
+        "Molle",
+        "Liquide",
+        "Diarrhéique",
+        "Autres"
+      ]
+    },
+    "SANG VISIBLE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Présent",
+        "Autres"
+      ]
+    },
+    "RESULTAT": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Traces",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    }
+  },
+  "malaria": {
+    "FALCIPARUM (PF)": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    },
+    "MALAIAE ET AUTRES (PAN)": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    }
+  },
+  "malariaTDR": {
+    "GOUTTE EPAISSE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NEGATIF",
+        "POSITIF",
+        "Autres"
+      ]
+    },
+    "TROPHOZOIDE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NEGATIF",
+        "+",
+        "++",
+        "+++",
+        "++++",
+        "Autres"
+      ]
+    },
+    "SCHIZONTE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NEGATIF",
+        "+",
+        "++",
+        "+++",
+        "++++",
+        "Autres"
+      ]
+    },
+    "GAMÉTOCYTE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NEGATIF",
+        "+",
+        "++",
+        "+++",
+        "++++",
+        "Autres"
+      ]
+    },
+    "ETALEMENT MINCE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON DETECTE",
+        "DETECTE",
+        "Autres"
+      ]
+    },
+    "DENSITE PARASITAIRE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "&lt;20/µl",
+        "800/µl",
+        "2800/µl",
+        "5800/µl",
+        "&gt;10001/µl",
+        "Autres"
+      ]
+    },
+    "PLASMODIUM FALCIPARUM": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON DETECTE",
+        "Autres"
+      ]
+    },
+    "PLASMODIUM MALARIAE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON DETECTE",
+        "DETECTE",
+        "Autres"
+      ]
+    },
+    "PLASMODIUM OVALE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON DETECTE",
+        "DETECTE",
+        "Autres"
+      ]
+    },
+    "PLASMODIUM VIVAX": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON DETECTE",
+        "DETECTE",
+        "Autres"
+      ]
+    }
+  },
+  "histopathologie": {
+    "SPECIMEN": {
+      "typeSaisie": "description"
+    },
+    "EXAMEN MACROSCOPIQUE": {
+      "typeSaisie": "description"
+    },
+    "EXAMEN MICROSCOPIQUE": {
+      "typeSaisie": "description"
+    },
+    "CONCLUSION": {
+      "typeSaisie": "description"
+    }
+  },
+  "chargeViral": {
+    "SPECIMEN": {
+      "typeSaisie": "description"
+    },
+    "PROCEDURE D'ESSAI": {
+      "typeSaisie": "description"
+    },
+    "RESULTAT": {
+      "typeSaisie": "description"
+    },
+    "INTERPRETATION": {
+      "typeSaisie": "description"
+    }
+  },
+  "frottis_sang": {
+    "LIGNE LEUCOCYTAIRE (GLOBULES BLANCS)": {
+      "typeSaisie": "description"
+    },
+    "LIGNE ERYTHROCYTAIRE (GLOBULES ROUGES)": {
+      "typeSaisie": "description"
+    },
+    "LIGNE THROBOCYTAIRE (PLAQUETTE)": {
+      "typeSaisie": "description"
+    }
+  },
+  "frottis_secretion": {
+    "HEURES DE COLLECTE": {
+      "typeSaisie": "texte"
+    },
+    "HEURES D'EXAMINATION": {
+      "typeSaisie": "texte"
+    },
+    "TEMPSCOMPLET": {
+      "typeSaisie": "texte"
+    },
+    "ABSTINENCE OBSERVES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Oui",
+        "Non",
+        "Autres"
+      ]
+    },
+    "PENDANT L OVULATION": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Oui",
+        "Non",
+        "Autres"
+      ]
+    },
+    "ODEUR": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Présent",
+        "Anormal",
+        "Autres"
+      ]
+    },
+    "ENCEINTE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Oui",
+        "Non",
+        "Autres"
+      ]
+    },
+    "COULEUR": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Blanc",
+        "Jaune",
+        "Vert",
+        "Gris",
+        "Brun",
+        "Transparent",
+        "Autres"
+      ]
+    },
+    "CONSISTANCE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Fluide",
+        "Mucoïde",
+        "Crémeux",
+        "Gélatineux",
+        "Autres"
+      ]
+    },
+    "SANG VISIBLE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Peu",
+        "Modéré",
+        "Abondant",
+        "Autres"
+      ]
+    },
+    "GLOBULES BLANCS": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "GLOBULES ROUGES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "CELLULES EPITHELIALES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "LEVURES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Présent",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    },
+    "CILINDRE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Hyalin",
+        "Granuleux",
+        "Hématoïde",
+        "Circoïde",
+        "Ciré",
+        "Leucocytaire",
+        "Autres"
+      ]
+    },
+    "CRISTAUX": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Present",
+        "+",
+        "++",
+        "+++",
+        "++++",
+        "Autres"
+      ]
+    },
+    "BACTERIE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Peu",
+        "Modéré",
+        "Nombreux",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    },
+    "PARASITES ADULTES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Présent",
+        "Autres"
+      ]
+    },
+    "CELLULES ANORMALES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Présent",
+        "Autres"
+      ]
+    }
+  },
+  "fluide": {
+    "SPECIMEN": {
+      "typeSaisie": "texte"
+    },
+    "COULEUR": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Blanc",
+        "Jaune",
+        "Vert",
+        "Gris",
+        "Brun",
+        "Transparent",
+        "Hémorragique",
+        "Autres"
+      ]
+    },
+    "APPARANCE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Clair",
+        "Trouble",
+        "Trouble léger",
+        "Gélatineux",
+        "Hémorragique",
+        "Autres"
+      ]
+    },
+    "VOLUME": {
+      "typeSaisie": "texte"
+    },
+    "PROTEIN": {
+      "typeSaisie": "texte"
+    },
+    "GLUCOSE": {
+      "typeSaisie": "texte"
+    },
+    "GLOBULES ROUGES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "CELLULE MESOTHELIALES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "CELLULE ANORMALES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Présent",
+        "Autres"
+      ]
+    },
+    "GLOBULES BLANCS": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "NEUTREPHILES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "EOSINEPHILES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "LYMPHOCYTE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "MONOCYTE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "MACROPHAGES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "TOTAL": {
+      "typeSaisie": "texte"
+    }
+  },
+  "nfs": {
+    "GR": {
+      "typeSaisie": "flag_valeur"
+    },
+    "HGB": {
+      "typeSaisie": "flag_valeur"
+    },
+    "HCT": {
+      "typeSaisie": "flag_valeur"
+    },
+    "VGM": {
+      "typeSaisie": "flag_valeur"
+    },
+    "TCMH": {
+      "typeSaisie": "flag_valeur"
+    },
+    "CCMH": {
+      "typeSaisie": "flag_valeur"
+    },
+    "RDW-SD": {
+      "typeSaisie": "flag_valeur"
+    },
+    "RDW-CV": {
+      "typeSaisie": "flag_valeur"
+    },
+    "PLT": {
+      "typeSaisie": "flag_valeur"
+    },
+    "MPV": {
+      "typeSaisie": "flag_valeur"
+    },
+    "PDW": {
+      "typeSaisie": "flag_valeur"
+    },
+    "PCT": {
+      "typeSaisie": "flag_valeur"
+    },
+    "P-LCR": {
+      "typeSaisie": "flag_valeur"
+    },
+    "P-LCC": {
+      "typeSaisie": "flag_valeur"
+    },
+    "GB": {
+      "typeSaisie": "flag_valeur"
+    },
+    "NEUT%": {
+      "typeSaisie": "flag_valeur"
+    },
+    "LYMPH%": {
+      "typeSaisie": "flag_valeur"
+    },
+    "MONO%": {
+      "typeSaisie": "flag_valeur"
+    },
+    "EOS%": {
+      "typeSaisie": "flag_valeur"
+    },
+    "BASO%": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "nfl": {
+    "GB": {
+      "typeSaisie": "flag_valeur"
+    },
+    "NEUT%": {
+      "typeSaisie": "flag_valeur"
+    },
+    "LYMPH%": {
+      "typeSaisie": "flag_valeur"
+    },
+    "MONO%": {
+      "typeSaisie": "flag_valeur"
+    },
+    "EOS%": {
+      "typeSaisie": "flag_valeur"
+    },
+    "BASO%": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "hematologie": {},
+  "coagulation": {},
+  "microbiologie": {
+    "DATE DE COLLECTE": {
+      "typeSaisie": "date"
+    },
+    "DATE DE TRANSMISSION": {
+      "typeSaisie": "date"
+    },
+    "DATE DE RECEPTION": {
+      "typeSaisie": "date"
+    },
+    "DATE D'EXAMINATION": {
+      "typeSaisie": "date"
+    },
+    "SPECIMEN": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Urine",
+        "Fèces",
+        "Sang",
+        "Salive",
+        "Sperme",
+        "Autres"
+      ]
+    },
+    "COULEUR": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Incolore",
+        "Jaune clair",
+        "Jaune foncé",
+        "Brun",
+        "Blanchâtre",
+        "Autres"
+      ]
+    },
+    "LEUCOCYTE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Traces",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    },
+    "CELLULE EPITHELIALE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Traces",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    },
+    "GLOBULES ROUGES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Traces",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    },
+    "CRISTAUX": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Traces",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    },
+    "CYLINDRE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Traces",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    },
+    "LEVURE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Traces",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    },
+    "CULTURE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    },
+    "DENOMBREMENT": {
+      "typeSaisie": "texte"
+    },
+    "COLORATION DE GRAM": {
+      "typeSaisie": "texte"
+    },
+    "GERME ISOLE": {
+      "typeSaisie": "texte"
+    }
+  },
+  "ziehl_nelsen": {
+    "RESULTAT_1": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NEGATIF",
+        "POSITIF +",
+        "POSITIF ++",
+        "POSITIF +++",
+        "POSITIF ++++",
+        "Autres"
+      ]
+    },
+    "RESULTAT_2": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NEGATIF",
+        "POSITIF +",
+        "POSITIF ++",
+        "POSITIF +++",
+        "POSITIF ++++",
+        "Autres"
+      ]
+    },
+    "RESULTAT_3": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NEGATIF",
+        "POSITIF +",
+        "POSITIF ++",
+        "POSITIF +++",
+        "POSITIF ++++",
+        "Autres"
+      ]
+    },
+    "DATE 1": {
+      "typeSaisie": "date"
+    },
+    "DATE 2": {
+      "typeSaisie": "date"
+    },
+    "DATE 3": {
+      "typeSaisie": "date"
+    },
+    "ECHANTILLON 1": {
+      "typeSaisie": "texte"
+    },
+    "ECHANTILLON 2": {
+      "typeSaisie": "texte"
+    },
+    "ECHANTILLON 3": {
+      "typeSaisie": "texte"
+    },
+    "ASPECT 1": {
+      "typeSaisie": "texte"
+    },
+    "ASPECT 2": {
+      "typeSaisie": "texte"
+    },
+    "ASPECT 3": {
+      "typeSaisie": "texte"
+    }
+  },
+  "coproculture": {
+    "DATE DE COLLECTE": {
+      "typeSaisie": "date"
+    },
+    "DATE DE RECEPTION": {
+      "typeSaisie": "date"
+    },
+    "DATE FINALE": {
+      "typeSaisie": "date"
+    },
+    "SOURCE DES SPECIMEN": {
+      "typeSaisie": "texte"
+    },
+    "COLORATION DE GRAM": {
+      "typeSaisie": "texte"
+    },
+    "CULTURE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    },
+    "GERME ISOLE": {
+      "typeSaisie": "texte"
+    },
+    "DENOBREMENT": {
+      "typeSaisie": "texte"
+    }
+  },
+  "hemoculture": {
+    "DATE DE COLLECTE": {
+      "typeSaisie": "date"
+    },
+    "DATE DE RECEPTION": {
+      "typeSaisie": "date"
+    },
+    "DATE FINALE": {
+      "typeSaisie": "date"
+    },
+    "SPECIMEN": {
+      "typeSaisie": "texte"
+    },
+    "QUALITE D'ECHANTILLON": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Normal",
+        "Anormal",
+        "Autres"
+      ]
+    },
+    "VOLUME": {
+      "typeSaisie": "texte"
+    },
+    "CULTURE FINALE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autres"
+      ]
+    },
+    "GRAM": {
+      "typeSaisie": "texte"
+    },
+    "DENOBREMENT": {
+      "typeSaisie": "texte"
+    },
+    "GERME ISOLE": {
+      "typeSaisie": "texte"
+    }
+  },
+  "goutte_fraiche": {
+    "SPECIMEN": {
+      "typeSaisie": "texte"
+    },
+    "RESULTAT": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "ABSENT",
+        "PRESENT",
+        "Autres"
+      ]
+    },
+    "WUCHERERIA BANCROFTI": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "ABSENT",
+        "PRESENT",
+        "Autres"
+      ]
+    },
+    "LOA LOA": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "ABSENT",
+        "PRESENT",
+        "Autres"
+      ]
+    },
+    "ONCHOCERCUS VOLVULUS": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "ABSENT",
+        "PRESENT",
+        "Autres"
+      ]
+    },
+    "DRACUNCULUS MEDINENSIS": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "ABSENT",
+        "PRESENT",
+        "Autres"
+      ]
+    },
+    "TRYPANOSOMA": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "ABSENT",
+        "PRESENT",
+        "Autres"
+      ]
+    }
+  },
+  "microfilaire": {
+    "SPECIMEN": {
+      "typeSaisie": "texte"
+    },
+    "METHODE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "SANG FRAIS",
+        "GOUTTE FRAICHE",
+        "BUFFY COAT",
+        "GOUTTE FRAICHE ET BUFFY COAT>FILM MINCE",
+        "Autres"
+      ]
+    },
+    "WUCHERERIA BANCROFTI": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON OBSERVE",
+        "OBSERVE",
+        "Autres"
+      ]
+    },
+    "FILARIOSES LYMPHATIQUES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON OBSERVE",
+        "OBSERVE",
+        "Autres"
+      ]
+    },
+    "LOA LOA": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON OBSERVE",
+        "OBSERVE",
+        "Autres"
+      ]
+    },
+    "FILARIOSES CUTANEES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON OBSERVE",
+        "OBSERVE",
+        "Autres"
+      ]
+    },
+    "ONCHOCERCUS VOLVULUS": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON OBSERVE",
+        "OBSERVE",
+        "Autres"
+      ]
+    },
+    "TROPISME OCULAIRE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON OBSERVE",
+        "OBSERVE",
+        "Autres"
+      ]
+    },
+    "DRACUNCULUS MEDINENSIS": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON OBSERVE",
+        "OBSERVE",
+        "Autres"
+      ]
+    },
+    "CHEVILLE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON OBSERVE",
+        "OBSERVE",
+        "Autres"
+      ]
+    },
+    "PIED EN GENERAL": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NON OBSERVE",
+        "OBSERVE",
+        "Autres"
+      ]
+    }
+  },
+  "groupage_sanguin": {
+    "GROUPE SANGUIN": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "A",
+        "B",
+        "AB",
+        "O",
+        "Autres"
+      ]
+    },
+    "RHESUS D": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "NEGATIF",
+        "POSITIF",
+        "Autres"
+      ]
+    },
+    "METHODES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "BETH-VINCEN(Directe)",
+        "BETH-VINCEN(Indirecte)",
+        "DIRECTE ET INDIRECTE",
+        "Autres"
+      ]
+    }
+  },
+  "spermogramme": {
+    "PERIODE D'ABSTINANCE": {
+      "typeSaisie": "texte"
+    },
+    "METHODE DE COLLECTION": {
+      "typeSaisie": "texte"
+    },
+    "COLLECTE A": {
+      "typeSaisie": "texte"
+    },
+    "SPECIMEN COMPLET": {
+      "typeSaisie": "select",
+      "options": [
+        "quantité incomplète",
+        "quantité directe",
+        "Autre"
+      ]
+    },
+    "TEMPS DE COLLECTION": {
+      "typeSaisie": "texte"
+    },
+    "TEMPS DE RECEPTION": {
+      "typeSaisie": "texte"
+    },
+    "TEMPS D'EXAMINATION": {
+      "typeSaisie": "texte"
+    },
+    "COULEUR": {
+      "typeSaisie": "select",
+      "options": [
+        "Blanche grisâtre",
+        "Blanche Jaunâtre",
+        "Blanche rougeâtre",
+        "Transparent",
+        "Jaunâtre",
+        "Rougeâtre",
+        "Autre"
+      ]
+    },
+    "VISCOSITÉ": {
+      "typeSaisie": "select",
+      "options": [
+        "Normale",
+        "Anormale",
+        "Autre"
+      ]
+    },
+    "VOLUME COLLECTE": {
+      "typeSaisie": "texte"
+    },
+    "PH": {
+      "typeSaisie": "texte"
+    },
+    "FRUCTOSE": {
+      "typeSaisie": "texte"
+    },
+    "LIQUEFACTION": {
+      "typeSaisie": "texte"
+    },
+    "CONCENTRATION DE SPERME": {
+      "typeSaisie": "texte"
+    },
+    "NUMERATION DES SPERMATOZOIDES": {
+      "typeSaisie": "texte"
+    },
+    "MOBILITE TOTALE": {
+      "typeSaisie": "texte"
+    },
+    "IMMOBILE": {
+      "typeSaisie": "texte"
+    },
+    "MOBILITE PROGRESSIVE": {
+      "typeSaisie": "texte"
+    },
+    "MOBILITE NON PROGRESSIVE": {
+      "typeSaisie": "texte"
+    },
+    "VIABILITE": {
+      "typeSaisie": "texte"
+    },
+    "FORMES NORMALES": {
+      "typeSaisie": "texte"
+    },
+    "FORMES ANORMALES": {
+      "typeSaisie": "texte"
+    },
+    "TETES ANORMALES": {
+      "typeSaisie": "texte"
+    },
+    "PIECES INTERMEDIAIRES": {
+      "typeSaisie": "texte"
+    },
+    "FLAGELLE": {
+      "typeSaisie": "texte"
+    },
+    "FORMES VIVANTES": {
+      "typeSaisie": "texte"
+    },
+    "FORMES MORTES": {
+      "typeSaisie": "texte"
+    },
+    "AGGLUTINATION": {
+      "typeSaisie": "select",
+      "options": [
+        "ABSENTE",
+        "PRESENTE",
+        "Autre"
+      ]
+    },
+    "TYPE D'AGGLUTINATION": {
+      "typeSaisie": "select",
+      "options": [
+        "Tête-à-tête",
+        "Queue-queue",
+        "Tête-queue",
+        "Mixte",
+        "Autre"
+      ]
+    },
+    "GRADE D'AGGLUTINATION": {
+      "typeSaisie": "select",
+      "options": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "Autre"
+      ]
+    },
+    "ERYTHROCYTES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "LEUCOCYTES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "CELLULE EPITHELIALE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "0-1",
+        "1-2",
+        "2-3",
+        "3-5",
+        "5-7",
+        "8-10",
+        "10-15",
+        "15-20",
+        "20-30",
+        "Nombreux (30-50)",
+        "Très nombreux(50-100)",
+        "Très nombreux (˃100)",
+        "Autres"
+      ]
+    },
+    "CRISTAUX": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "+",
+        "++",
+        "+++",
+        "++++",
+        "Autres"
+      ]
+    },
+    "BACTERIES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Négatif",
+        "Peu",
+        "Modéré",
+        "Nombreux",
+        "+",
+        "++",
+        "+++",
+        "Autres"
+      ]
+    },
+    "DEPOT DESAMORPHES": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "+",
+        "++",
+        "+++",
+        "++++",
+        "Autres"
+      ]
+    },
+    "EXPRESSION DES RESULTATS": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "Absent",
+        "Normospermie",
+        "Oligospermie",
+        "Asthenospermie",
+        "Oligoasthenospermie",
+        "Azoospermie",
+        "Hypospermie",
+        "Hyperspermie",
+        "Necrospermie",
+        "Cryptospermie",
+        "Teratospermie",
+        "Autres"
+      ]
+    }
+  },
+  "electrophorese": {
+    "NOM VARIANTE": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "HOMOZYGOTE",
+        "HETEROZYGOTE",
+        "DREPANOCYTOSE",
+        "Autres"
+      ]
+    },
+    "VARIANTE VALEUR": {
+      "typeSaisie": "select_autres",
+      "options": [
+        "AA",
+        "AS",
+        "SS",
+        "Autres"
+      ]
+    },
+    "HEMOGLOBINE A": {
+      "typeSaisie": "texte"
+    },
+    "HEMOGLOBINE A2": {
+      "typeSaisie": "texte"
+    },
+    "HEMOGLOBINE F": {
+      "typeSaisie": "texte"
+    },
+    "HEMOGLOBINE S": {
+      "typeSaisie": "texte"
+    },
+    "HEMOGLOBINE D,C,E…": {
+      "typeSaisie": "texte"
+    }
+  },
+  "micro_albuminurie": {
+    "ALBUMINURIE": {
+      "typeSaisie": "flag_valeur"
+    },
+    "CREATINURIE": {
+      "typeSaisie": "flag_valeur"
+    },
+    "RAPPORT ALBU/CREAT": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "glycemie_gestationnelle": {
+    "GLYCÉMIE À JEÛNE": {
+      "typeSaisie": "flag_valeur"
+    },
+    "GLYCÉMIE APRÈS 1 HEURE": {
+      "typeSaisie": "flag_valeur"
+    },
+    "GLYCÉMIE APRÈS 2 HEURES": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "bilans_torch": {
+    "RUBEOLE IGG": {
+      "typeSaisie": "select",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autre"
+      ]
+    },
+    "RUBEOLE IGM": {
+      "typeSaisie": "select",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autre"
+      ]
+    },
+    "CYTOMEGALOVIRUS IGG": {
+      "typeSaisie": "select",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autre"
+      ]
+    },
+    "CYTOMEGALOVIRUS IGM": {
+      "typeSaisie": "select",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autre"
+      ]
+    },
+    "HERPES SIMPLEX VIRUS TYPE-1 IGG": {
+      "typeSaisie": "select",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autre"
+      ]
+    },
+    "HERPES SIMPLEX VIRUS TYPE-2 IGM": {
+      "typeSaisie": "select",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autre"
+      ]
+    },
+    "TOXOPLASMOSE IGG": {
+      "typeSaisie": "select",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autre"
+      ]
+    },
+    "TOXOPLASMOSE IGM": {
+      "typeSaisie": "select",
+      "options": [
+        "Négatif",
+        "Positif",
+        "Autre"
+      ]
+    }
+  },
+  "surveillance_prostatique": {
+    "PSA TOTAL": {
+      "typeSaisie": "flag_valeur"
+    },
+    "PSA SPECIFIQUE": {
+      "typeSaisie": "flag_valeur"
+    },
+    "PSA LIBRE": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "temps_saignement": {
+    "TEMPS DE SAIGNEMENT": {
+      "typeSaisie": "flag_valeur"
+    },
+    "TEMPS DE COAGULATION": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "tp_inr": {
+    "PROTHROMBINE": {
+      "typeSaisie": "flag_valeur"
+    },
+    "INR": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "reticulocyte": {
+    "RET% (POURCENTAGE DE RETICULOCYTES)": {
+      "typeSaisie": "flag_valeur"
+    },
+    "RET# (NUMERATION DES RETICULOCYTES)": {
+      "typeSaisie": "flag_valeur"
+    },
+    "IRF (FRACTION DE RETICULOCYTES IMMATURES)": {
+      "typeSaisie": "flag_valeur"
+    },
+    "RET-HE (EQUIVALENT DE LA CONCENTRATION EN HEMOGLOBINE DES RETICULOCYTES)": {
+      "typeSaisie": "flag_valeur"
+    },
+    "RBC-HE (EQUIVALENCE EN HEMOGLOBINE DES RBC MATURE)": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "hb_hct": {
+    "HEMOGLOBINE": {
+      "typeSaisie": "flag_valeur"
+    },
+    "HEMATOCRITE": {
+      "typeSaisie": "flag_valeur"
+    }
+  },
+  "valeur_absolu_eosinophiles": {
+    "GLOBULES BLANCS": {
+      "typeSaisie": "flag_valeur"
+    },
+    "POURCENTAGE DES EOSINOPHILES": {
+      "typeSaisie": "flag_valeur"
+    },
+    "VALEUR ABSOLU DES EOSINOPHILES": {
+      "typeSaisie": "flag_valeur"
+    }
+  }
+};
+
+/** Alias noms paramètres catalogue ↔ modaux */
+const CLES_EQUIVALENTES: Record<string, string[]> = {
+  APPARANCE: ["APPARANCE", "APPARENCES"],
+  APPARENCES: ["APPARANCE", "APPARENCES"],
+  KETONE: ["KETONE", "ACETONE"],
+  ACETONE: ["KETONE", "ACETONE"],
+  NITRATE: ["NITRATE", "NITRITES"],
+  NITRITES: ["NITRATE", "NITRITES"],
+  "GLOBULE ROUGE": ["GLOBULE ROUGE", "GLOBULES ROUGES"],
+  "GLOBULES ROUGES": ["GLOBULE ROUGE", "GLOBULES ROUGES"],
+  "GRAVITE SPECIFIQUE": ["GRAVITE SPECIFIQUE", "DENSITE"],
+  DENSITE: ["GRAVITE SPECIFIQUE", "DENSITE"],
+};
+
+const OPTIONS_RESULTAT_ZIEHL = avecOptionAutres([
+  "NEGATIF",
+  "POSITIF +",
+  "POSITIF ++",
+  "POSITIF +++",
+  "POSITIF ++++",
+]);
+
+function clesRecherche(nom: string): string[] {
+  const n = nom.trim().toUpperCase().replace(/\s+/g, " ");
+  const eq = CLES_EQUIVALENTES[n] ?? [n];
+  return [...new Set(eq)];
+}
+
+export function optionsSaisieDepuisModaux(
+  formulaire: string | null | undefined,
+  nomParametre: string
+): EntreeOptionsSaisie | null {
+  if (!formulaire) return null;
+
+  const f = formulaire.trim();
+  const upper = nomParametre.trim().toUpperCase();
+
+  if (f === "ziehl_nelsen") {
+    if (upper === "DATE" || upper.startsWith("DATE ")) {
+      return { typeSaisie: "date" };
+    }
+    if (upper === "ECHANTILLON" || upper === "ASPECT") {
+      return { typeSaisie: "texte" };
+    }
+    if (upper === "RESULTAT" || upper.startsWith("RESULTAT")) {
+      return { typeSaisie: "select_autres", options: OPTIONS_RESULTAT_ZIEHL };
+    }
+  }
+
+  if (/^DATE(\s|$| DE| D')/.test(upper)) {
+    return { typeSaisie: "date" };
+  }
+
+  const table = OPTIONS_SAISIE_PAR_FORMULAIRE[f];
+  if (!table) return null;
+
+  for (const cle of clesRecherche(nomParametre)) {
+    if (table[cle]) return normaliserEntree(table[cle]);
+  }
+
+  for (const [k, v] of Object.entries(table)) {
+    if (k === upper || upper.includes(k) || k.includes(upper)) {
+      return normaliserEntree(v);
+    }
+  }
+
+  return null;
+}
+
+function normaliserEntree(entree: EntreeOptionsSaisie): EntreeOptionsSaisie {
+  const copie = { ...entree };
+  if (
+    (copie.typeSaisie === "select" || copie.typeSaisie === "select_autres") &&
+    copie.options
+  ) {
+    copie.options =
+      copie.typeSaisie === "select_autres"
+        ? avecOptionAutres(copie.options)
+        : [...copie.options];
+  }
+  return copie;
+}

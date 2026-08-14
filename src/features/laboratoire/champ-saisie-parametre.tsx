@@ -166,6 +166,18 @@ export function ChampSaisieParametre({
     );
   }
 
+  if (typeSaisie === "date") {
+    return (
+      <input
+        type="date"
+        className={`${inputClass} ${className}`}
+        value={valeurs.valeur}
+        disabled={disabled}
+        onChange={(e) => onChange({ valeur: e.target.value })}
+      />
+    );
+  }
+
   return (
     <input
       type="text"

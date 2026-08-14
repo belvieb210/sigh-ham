@@ -8,7 +8,7 @@ export default function LayoutSite({
   return (
     <>
       <EnTetePublic />
-      <main className="flex-1 pb-[72px] lg:pb-0">{children}</main>
+      <main className="flex-1 overflow-x-clip pb-[72px] lg:pb-0">{children}</main>
       <PiedDePagePublic />
       <NavigationMobile />
     </>

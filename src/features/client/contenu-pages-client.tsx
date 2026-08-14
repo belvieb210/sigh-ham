@@ -19,6 +19,7 @@ import {
   type ContenuAProposNormalise,
   type ValeurAPropos,
 } from "@/lib/client/normaliser-a-propos";
+import { extraireImagesFondHero } from "@/lib/client/extraire-images-fond-hero";
 import { CONTENU_A_PROPOS } from "@/constants/a-propos";
 
 interface PagePublique {
@@ -61,6 +62,32 @@ function fallbackAPropos(): ContenuAProposNormalise {
     histoire: {
       titre: CONTENU_A_PROPOS.histoire.titre,
       paragraphes: [...CONTENU_A_PROPOS.histoire.paragraphes],
+    },
+  };
+}
+
+function parseImagesFondHero(contenu: unknown): ImageVitrineItem[] {
+  return extraireImagesFondHero(contenu).map((i) => ({
+    url: i.url,
+    legende: i.alt ?? "",
+  }));
+}
+
+function contenuAvecImagesFondHero(
+  base: unknown,
+  images: ImageVitrineItem[]
+): Record<string, unknown> {
+  const root =
+    base && typeof base === "object" ? { ...(base as object) } : {};
+  const heroRaw =
+    "hero" in root && root.hero && typeof root.hero === "object"
+      ? { ...(root.hero as object) }
+      : {};
+  return {
+    ...root,
+    hero: {
+      ...heroRaw,
+      imagesFond: images.map((i) => ({ url: i.url, alt: i.legende ?? "" })),
     },
   };
 }
@@ -141,6 +168,7 @@ export function ContenuPagesClient({
     telephone: "",
   });
   const [contact, setContact] = useState<ContactBloc>({ note: "" });
+  const [imagesFondHero, setImagesFondHero] = useState<ImageVitrineItem[]>([]);
   const [contenuTexte, setContenuTexte] = useState("{}");
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -154,8 +182,14 @@ export function ContenuPagesClient({
       selection.cle === "accueil"
     )
       return "cta" as const;
-    if (selection.cle === "contact") return "contact" as const;
+    if (selection.cle === "contact" || selection.cle === "rendez-vous")
+      return "contact" as const;
     return "json" as const;
+  }, [selection]);
+
+  const afficheImagesFondHero = useMemo(() => {
+    if (!selection) return false;
+    return ["services", "campagnes", "contact", "rendez-vous"].includes(selection.cle);
   }, [selection]);
 
   const charger = useCallback(() => {
@@ -186,6 +220,7 @@ export function ContenuPagesClient({
     setAPropos(normaliserContenuAPropos(page.contenu, fallbackAPropos()));
     setCta(parseCta(page.contenu));
     setContact(parseContact(page.contenu));
+    setImagesFondHero(parseImagesFondHero(page.contenu));
   };
 
   const enregistrer = async () => {
@@ -201,9 +236,15 @@ export function ContenuPagesClient({
           selection.contenu && typeof selection.contenu === "object"
             ? { ...(selection.contenu as object) }
             : {};
-        contenu = { ...base, cta };
+        contenu = afficheImagesFondHero
+          ? contenuAvecImagesFondHero({ ...base, cta }, imagesFondHero)
+          : { ...base, cta };
       } else if (mode === "contact") {
-        contenu = { note: contact.note };
+        const base =
+          selection.contenu && typeof selection.contenu === "object"
+            ? { ...(selection.contenu as object) }
+            : {};
+        contenu = contenuAvecImagesFondHero(base, imagesFondHero);
       } else {
         try {
           contenu = JSON.parse(contenuTexte);
@@ -216,8 +257,12 @@ export function ContenuPagesClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ titre, contenu, publie }),
       });
-      const data = (await res.json()) as { message?: string };
+      const data = (await res.json()) as { message?: string; page?: PagePublique };
       if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
+      if (data.page) {
+        setSelection(data.page);
+        setImagesFondHero(parseImagesFondHero(data.page.contenu));
+      }
       charger();
     } catch (e: unknown) {
       setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
@@ -576,7 +621,24 @@ export function ContenuPagesClient({
               ) : null}
 
               {mode === "cta" ? (
-                <SectionCms titre={t("client.pages.sectionCta")}>
+                <>
+                  {afficheImagesFondHero ? (
+                    <SectionCms titre={t("client.pages.sectionHero")}>
+                      <div className="sm:col-span-2">
+                        <p className="mb-2 text-xs text-texte-secondaire">
+                          {t("client.pages.aideHeroImages")}
+                        </p>
+                        <ZoneImagesVitrine
+                          label={t("client.pages.imagesFond")}
+                          dossier="galerie"
+                          images={imagesFondHero}
+                          onChange={setImagesFondHero}
+                          onErreur={setErreur}
+                        />
+                      </div>
+                    </SectionCms>
+                  ) : null}
+                  <SectionCms titre={t("client.pages.sectionCta")}>
                   <Champ label={t("client.pages.ctaTitre")}>
                     <input
                       className={CLASSE_CHAMP_RECEPTION}
@@ -608,21 +670,31 @@ export function ContenuPagesClient({
                     </Champ>
                   </div>
                 </SectionCms>
+                </>
               ) : null}
 
               {mode === "contact" ? (
-                <SectionCms titre={t("client.pages.sectionContact")}>
-                  <div className="sm:col-span-2">
-                    <Champ label={t("client.pages.note")}>
-                      <textarea
-                        className={CLASSE_CHAMP_RECEPTION}
-                        rows={6}
-                        value={contact.note}
-                        onChange={(e) => setContact({ note: e.target.value })}
+                <>
+                  <p className="rounded-lg border border-bleu-medical/20 bg-bleu-medical-clair/50 px-4 py-3 text-sm text-texte-principal">
+                    {selection.cle === "contact"
+                      ? t("client.pages.aideHeroContact")
+                      : t("client.pages.aideHeroRdv")}
+                  </p>
+                  <SectionCms titre={t("client.pages.sectionHero")}>
+                    <div className="sm:col-span-2">
+                      <p className="mb-2 text-xs text-texte-secondaire">
+                        {t("client.pages.aideHeroImages")}
+                      </p>
+                      <ZoneImagesVitrine
+                        label={t("client.pages.imagesFond")}
+                        dossier="galerie"
+                        images={imagesFondHero}
+                        onChange={setImagesFondHero}
+                        onErreur={setErreur}
                       />
-                    </Champ>
-                  </div>
-                </SectionCms>
+                    </div>
+                  </SectionCms>
+                </>
               ) : null}
 
               {mode === "json" ? (

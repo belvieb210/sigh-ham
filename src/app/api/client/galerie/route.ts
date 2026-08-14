@@ -3,6 +3,7 @@ import {
   obtenirSessionApiClient,
   reponseNonAutoriseClient,
 } from "@/lib/auth/garde-api-client";
+import { invaliderCacheGalerie } from "@/lib/client/invalider-cache-vitrine";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -40,6 +41,7 @@ export async function POST(request: NextRequest) {
         actif: body.actif !== false,
       },
     });
+    invaliderCacheGalerie();
     return NextResponse.json({ media }, { status: 201 });
   } catch (error) {
     console.error("[POST /api/client/galerie]", error);

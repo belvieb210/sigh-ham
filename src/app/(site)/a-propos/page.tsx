@@ -3,6 +3,7 @@ import { SectionHeroAPropos } from "@/features/a-propos/sections/section-hero-a-
 import { SectionMissionVision } from "@/features/a-propos/sections/section-mission-vision";
 import { SectionImpactAPropos } from "@/features/a-propos/sections/section-impact-a-propos";
 import { SectionDirectionEquipe } from "@/features/a-propos/sections/section-direction-equipe";
+import { SectionGalerieAPropos } from "@/features/a-propos/sections/section-galerie-a-propos";
 import { SectionCertificationsBandeau } from "@/features/a-propos/sections/section-certifications-bandeau";
 import { SectionCtaAPropos } from "@/features/a-propos/sections/section-cta-a-propos";
 
@@ -24,6 +25,7 @@ export default function PageAPropos() {
       <SectionMissionVision />
       <SectionImpactAPropos />
       <SectionDirectionEquipe />
+      <SectionGalerieAPropos />
       <SectionCertificationsBandeau />
       <SectionCtaAPropos />
     </>

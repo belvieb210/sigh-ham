@@ -12,6 +12,7 @@ import { DIAPOSITIVES_HERO_ACCUEIL } from "../src/constants/hero-accueil";
 import { CONTENU_A_PROPOS } from "../src/constants/a-propos";
 import { CONTENU_SERVICES } from "../src/constants/services";
 import { CONTENU_CAMPAGNES } from "../src/constants/campagnes";
+import { CONTENU_RENDEZ_VOUS } from "../src/constants/rendez-vous";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
@@ -159,6 +160,14 @@ async function seedPages() {
         impact: CONTENU_CAMPAGNES.impact,
         parcours: CONTENU_CAMPAGNES.parcours,
         cta: CONTENU_CAMPAGNES.cta,
+      },
+    },
+    {
+      cle: "rendez-vous",
+      titre: "Rendez-vous",
+      contenu: {
+        hero: { imagesFond: [] },
+        cta: CONTENU_RENDEZ_VOUS.cta,
       },
     },
   ];

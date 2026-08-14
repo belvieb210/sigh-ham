@@ -3,6 +3,7 @@ import {
   obtenirSessionApiClient,
   reponseNonAutoriseClient,
 } from "@/lib/auth/garde-api-client";
+import { invaliderCacheGalerie } from "@/lib/client/invalider-cache-vitrine";
 import { prisma } from "@/lib/prisma";
 
 interface Ctx {
@@ -29,6 +30,7 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
         ...(body.actif != null ? { actif: Boolean(body.actif) } : {}),
       },
     });
+    invaliderCacheGalerie();
     return NextResponse.json({ media });
   } catch (error) {
     console.error("[PUT /api/client/galerie/[id]]", error);
@@ -43,6 +45,7 @@ export async function DELETE(_request: NextRequest, ctx: Ctx) {
 
   try {
     await prisma.mediaGalerie.delete({ where: { id } });
+    invaliderCacheGalerie();
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[DELETE /api/client/galerie/[id]]", error);

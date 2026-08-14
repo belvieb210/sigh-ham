@@ -170,7 +170,13 @@ export const clientEn = {
     sectionValeurs: "Values",
     sectionHistoire: "History",
     sectionCta: "Call to action",
-    sectionContact: "Contact / note",
+    sectionContact: "Contact section",
+    aideHeroImages:
+      "These images scroll in the background of the top banner on the public page. Save after adding.",
+    aideHeroContact:
+      "Contact section text comes from site translations. Only hero banner background images can be edited here.",
+    aideHeroRdv:
+      "Appointment page text comes from site translations. Images added here scroll in the hero banner on /rendez-vous.",
     typeEtablissement: "Establishment type",
     nomEtablissement: "Displayed name",
     badgeSlogan: "Slogan (badge)",
@@ -225,7 +231,21 @@ export const clientEn = {
   },
   galerie: {
     titre: "Gallery",
-    description: "Website images and media.",
+    description: "Photos displayed on the public About page.",
+    fil: "Gallery",
+    ajouterPhotos: "Add photos",
+    legende: "Caption",
+    album: "Album",
+    ordre: "Order",
+    actif: "Visible on site",
+    nouveau: "New media",
+    fichier: "Image file",
+    confirmerSuppression: "Remove this photo from the gallery?",
+    aideAffichage:
+      "Photos added here appear automatically in the “Our lab in pictures” section on the About page (/a-propos). For scrolling hero banners on Services, Campaigns or Contact, use Public pages → Hero section.",
+    enregistrement: "Saving…",
+    sansLegende: "No caption",
+    vide: "No photos in the gallery — add images above.",
   },
   messages: {
     titre: "Contact messages",

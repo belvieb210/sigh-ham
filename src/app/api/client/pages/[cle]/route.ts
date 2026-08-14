@@ -3,6 +3,7 @@ import {
   obtenirSessionApiClient,
   reponseNonAutoriseClient,
 } from "@/lib/auth/garde-api-client";
+import { invaliderCachePagePublique } from "@/lib/client/invalider-cache-vitrine";
 import { prisma } from "@/lib/prisma";
 
 interface Ctx {
@@ -52,6 +53,7 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
         ...(body.publie != null ? { publie: Boolean(body.publie) } : {}),
       },
     });
+    invaliderCachePagePublique(cle);
     return NextResponse.json({ page });
   } catch (error) {
     console.error("[PUT /api/client/pages/[cle]]", error);

@@ -99,10 +99,13 @@ function CarteMembreEquipe({
 function CarrouselAgentsService({
   titreService,
   membres,
+  categorie,
 }: {
   titreService: string;
   membres: Membre[];
+  categorie: string;
 }) {
+  const masquerCoordonnees = categorie === "MEDECIN_EXTERNE";
   const [index, setIndex] = useState(0);
   const pause = useRef(false);
 
@@ -185,13 +188,13 @@ function CarrouselAgentsService({
                 </p>
               ) : null}
               <div className="mt-3 space-y-1 text-xs text-texte-secondaire">
-                {membre.telephone ? (
+                {!masquerCoordonnees && membre.telephone ? (
                   <p className="flex items-center gap-2">
                     <Phone className="h-3.5 w-3.5 text-bleu-medical" />
                     {membre.telephone}
                   </p>
                 ) : null}
-                {membre.email ? (
+                {!masquerCoordonnees && membre.email ? (
                   <p className="flex items-center gap-2">
                     <Mail className="h-3.5 w-3.5 text-bleu-medical" />
                     {membre.email}
@@ -354,6 +357,7 @@ export function SectionDirectionEquipe() {
             {groupes.map(([categorie, agents]) => (
               <CarrouselAgentsService
                 key={categorie}
+                categorie={categorie}
                 titreService={LIBELLES_CATEGORIE[categorie] ?? categorie}
                 membres={agents}
               />

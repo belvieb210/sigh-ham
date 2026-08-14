@@ -81,11 +81,11 @@ export function SectionCoordonneesContact() {
   return (
     <section
       id="coordonnees-contact"
-      className="section-coordonnees relative overflow-hidden bg-[#0f172a] py-12 sm:py-16 lg:py-20"
+      className="section-coordonnees relative overflow-x-clip overflow-y-visible bg-[#0f172a] py-12 sm:py-16 lg:py-20"
       aria-labelledby="titre-coordonnees"
     >
       <div
-        className="pointer-events-none absolute -left-32 top-0 h-64 w-64 rounded-full bg-bleu-medical/10 blur-3xl"
+        className="pointer-events-none absolute left-0 top-0 h-64 w-64 -translate-x-1/4 rounded-full bg-bleu-medical/10 blur-3xl"
         aria-hidden="true"
       />
 

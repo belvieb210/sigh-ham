@@ -12,6 +12,7 @@ import { CONTENU_RENDEZ_VOUS } from "@/constants/rendez-vous";
 import { CONTENU_SERVICES } from "@/constants/services";
 import { useCampagnes } from "@/hooks/use-campagnes";
 import { normaliserContenuAPropos } from "@/lib/client/normaliser-a-propos";
+import { extraireImagesFondHero } from "@/lib/client/extraire-images-fond-hero";
 import type { PagesFr } from "@/locales/pages/fr";
 
 function usePages(): PagesFr {
@@ -24,9 +25,24 @@ function usePages(): PagesFr {
   }, [i18n, langue]);
 }
 
+function useImagesFondHeroPage(cle: string) {
+  const { data } = useQuery({
+    queryKey: ["public", "pages", cle, "images-fond"],
+    queryFn: async () => {
+      const res = await fetch(`/api/public/pages/${cle}`);
+      if (!res.ok) return [];
+      const json = (await res.json()) as { page?: { contenu?: unknown } };
+      return extraireImagesFondHero(json.page?.contenu);
+    },
+    staleTime: 0,
+  });
+  return data ?? [];
+}
+
 export function useContenuContact() {
   const pages = usePages();
   const contact = pages.contact;
+  const imagesFond = useImagesFondHeroPage("contact");
 
   return useMemo(
     () => ({
@@ -35,6 +51,7 @@ export function useContenuContact() {
         titre: contact.hero.titre,
         titreAccent: contact.hero.titreAccent,
         description: contact.hero.description,
+        imagesFond,
         statistiques: [
           {
             valeur: CONTENU_CONTACT.hero.statistiques[0].valeur,
@@ -94,13 +111,14 @@ export function useContenuContact() {
         telephone: CONTENU_CONTACT.cta.telephone,
       },
     }),
-    [contact]
+    [contact, imagesFond]
   );
 }
 
 export function useContenuRendezVous() {
   const pages = usePages();
   const rdv = pages.rendezVous;
+  const imagesFond = useImagesFondHeroPage("rendez-vous");
 
   return useMemo(
     () => ({
@@ -109,6 +127,7 @@ export function useContenuRendezVous() {
         titre: rdv.hero.titre,
         titreAccent: rdv.hero.titreAccent,
         description: rdv.hero.description,
+        imagesFond,
         statistiques: [
           {
             valeur: CONTENU_RENDEZ_VOUS.hero.statistiques[0].valeur,
@@ -180,13 +199,14 @@ export function useContenuRendezVous() {
         },
       },
     }),
-    [rdv]
+    [rdv, imagesFond]
   );
 }
 
 export function useContenuServices() {
   const pages = usePages();
   const services = pages.services;
+  const imagesFond = useImagesFondHeroPage("services");
   const { data: servicesDb } = useQuery({
     queryKey: ["public", "services-vitrine"],
     queryFn: async () => {
@@ -220,6 +240,7 @@ export function useContenuServices() {
         titre: services.hero.titre,
         titreAccent: services.hero.titreAccent,
         description: services.hero.description,
+        imagesFond,
         statistiques: [
           {
             valeur: CONTENU_SERVICES.hero.statistiques[0].valeur,
@@ -357,13 +378,14 @@ export function useContenuServices() {
         telephone: CONTENU_SERVICES.cta.telephone,
       },
     }),
-    [services, servicesDb]
+    [services, servicesDb, imagesFond]
   );
 }
 
 export function useContenuCampagnes() {
   const pages = usePages();
   const campagnes = pages.campagnes;
+  const imagesFond = useImagesFondHeroPage("campagnes");
 
   return useMemo(
     () => ({
@@ -372,6 +394,7 @@ export function useContenuCampagnes() {
         titre: campagnes.hero.titre,
         titreAccent: campagnes.hero.titreAccent,
         description: campagnes.hero.description,
+        imagesFond,
         statistiques: [
           {
             valeur: CONTENU_CAMPAGNES.hero.statistiques[0].valeur,
@@ -432,7 +455,7 @@ export function useContenuCampagnes() {
       },
       items: campagnes.items,
     }),
-    [campagnes]
+    [campagnes, imagesFond]
   );
 }
 

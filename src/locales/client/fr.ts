@@ -172,7 +172,13 @@ export const clientFr = {
     sectionValeurs: "Valeurs",
     sectionHistoire: "Histoire",
     sectionCta: "Appel à l'action",
-    sectionContact: "Coordonnées / note",
+    sectionContact: "Section coordonnées",
+    aideHeroImages:
+      "Ces images défilent en arrière-plan du bandeau en haut de la page publique. Enregistrez après ajout.",
+    aideHeroContact:
+      "Les textes « Nos coordonnées » viennent des traductions du site. Seules les images de fond du bandeau hero sont modifiables ici.",
+    aideHeroRdv:
+      "Les textes de la page Rendez-vous viennent des traductions du site. Les images ajoutées ici défilent en arrière-plan du bandeau sur /rendez-vous.",
     typeEtablissement: "Type d'établissement",
     nomEtablissement: "Nom affiché",
     badgeSlogan: "Slogan (badge)",
@@ -227,7 +233,21 @@ export const clientFr = {
   },
   galerie: {
     titre: "Galerie",
-    description: "Images et médias du site.",
+    description: "Photos affichées sur la page À propos du site public.",
+    fil: "Galerie",
+    ajouterPhotos: "Ajouter des photos",
+    legende: "Légende",
+    album: "Album",
+    ordre: "Ordre",
+    actif: "Visible sur le site",
+    nouveau: "Nouveau média",
+    fichier: "Fichier image",
+    confirmerSuppression: "Supprimer cette photo de la galerie ?",
+    aideAffichage:
+      "Les photos ajoutées ici s'affichent automatiquement dans la section « Notre laboratoire en images » sur la page À propos (/a-propos). Pour les bannières défilantes des pages Services, Campagnes ou Contact, utilisez Pages publiques → section Hero.",
+    enregistrement: "Enregistrement en cours…",
+    sansLegende: "Sans légende",
+    vide: "Aucune photo dans la galerie — ajoutez des images ci-dessus.",
   },
   messages: {
     titre: "Messages contact",

@@ -81,6 +81,35 @@ export async function chargerPagePublique(cle: string) {
   return null;
 }
 
+export type GalerieMediaPublic = {
+  id: string;
+  url: string;
+  legende?: string;
+  album: string;
+  ordre: number;
+};
+
+export async function chargerGaleriePublique(): Promise<GalerieMediaPublic[]> {
+  try {
+    const rows = await prisma.mediaGalerie.findMany({
+      where: { actif: true },
+      orderBy: [{ album: "asc" }, { ordre: "asc" }, { createdAt: "asc" }],
+    });
+    return rows
+      .filter((m) => m.url && !m.url.startsWith("/images/"))
+      .map((m) => ({
+        id: m.id,
+        url: m.url,
+        legende: m.legende ?? undefined,
+        album: m.album,
+        ordre: m.ordre,
+      }));
+  } catch (error) {
+    console.error("[contenu-public] galerie DB:", error);
+  }
+  return [];
+}
+
 export type ServiceVitrinePublic = {
   id: string;
   slug: string;

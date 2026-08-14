@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Plus, UserCog } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
+import { ChampMotDePasse } from "@/components/ui/champ-mot-de-passe";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 
 type CompteMedecinExterneClient = {
@@ -138,8 +139,14 @@ export function GestionComptesMedecinsExternesClient() {
               <input className={CLASSE_CHAMP_RECEPTION} value={form.identifiant} disabled={Boolean(form.id)} onChange={(e) => maj("identifiant", e.target.value)} placeholder="email@exemple.com" />
             </div>
             <div>
-              <label className={CLASSE_LABEL_RECEPTION}>{form.id ? "Nouveau mot de passe (optionnel)" : "Mot de passe *"}</label>
-              <input type="password" className={CLASSE_CHAMP_RECEPTION} value={form.motDePasse} onChange={(e) => maj("motDePasse", e.target.value)} autoComplete="new-password" />
+              <ChampMotDePasse
+                id="mdp-externe"
+                variant="reception"
+                label={form.id ? "Nouveau mot de passe (optionnel)" : "Mot de passe *"}
+                value={form.motDePasse}
+                onChange={(e) => maj("motDePasse", e.target.value)}
+                autoComplete="new-password"
+              />
             </div>
             <div>
               <label className={CLASSE_LABEL_RECEPTION}>Prénom *</label>
@@ -332,8 +339,14 @@ export function GestionComptesEgliseClient() {
               <input className={CLASSE_CHAMP_RECEPTION} value={form.identifiant} disabled={Boolean(form.id)} onChange={(e) => maj("identifiant", e.target.value)} placeholder="email@exemple.com" />
             </div>
             <div>
-              <label className={CLASSE_LABEL_RECEPTION}>{form.id ? "Nouveau mot de passe (optionnel)" : "Mot de passe *"}</label>
-              <input type="password" className={CLASSE_CHAMP_RECEPTION} value={form.motDePasse} onChange={(e) => maj("motDePasse", e.target.value)} autoComplete="new-password" />
+              <ChampMotDePasse
+                id="mdp-eglise"
+                variant="reception"
+                label={form.id ? "Nouveau mot de passe (optionnel)" : "Mot de passe *"}
+                value={form.motDePasse}
+                onChange={(e) => maj("motDePasse", e.target.value)}
+                autoComplete="new-password"
+              />
             </div>
             <div>
               <label className={CLASSE_LABEL_RECEPTION}>Prénom *</label>

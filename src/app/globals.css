@@ -23,11 +23,13 @@
 
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-white text-texte-principal antialiased;
     font-family: var(--font-sans);
+    overflow-x: hidden;
   }
 }
 

@@ -2,14 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Images, Loader2, Plus, Trash2 } from "lucide-react";
+import { Images, Loader2, Trash2 } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
+import { ImageVitrine } from "@/components/ui/image-vitrine";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import {
   MiseEnPageClient,
   type UtilisateurClient,
 } from "@/features/client/mise-en-page-client";
-import { televerserFichierClient } from "@/features/client/televerser-fichier-client";
+import {
+  ZoneImagesVitrine,
+  type ImageVitrineItem,
+} from "@/features/client/zone-images-vitrine";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 
 interface MediaGalerie {
@@ -22,15 +26,6 @@ interface MediaGalerie {
   actif: boolean;
 }
 
-const FORM_VIDE: Omit<MediaGalerie, "id"> = {
-  url: "",
-  type: "image",
-  legende: "",
-  album: "general",
-  ordre: 0,
-  actif: true,
-};
-
 export function ContenuGalerieClient({
   utilisateur,
 }: {
@@ -38,11 +33,11 @@ export function ContenuGalerieClient({
 }) {
   const { t } = useTranslation();
   const [liste, setListe] = useState<MediaGalerie[]>([]);
-  const [form, setForm] = useState<Omit<MediaGalerie, "id"> & { id?: string }>(FORM_VIDE);
-  const [modeForm, setModeForm] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
-  const [uploadEnCours, setUploadEnCours] = useState(false);
+  const [uploadKey, setUploadKey] = useState(0);
+  const [editionId, setEditionId] = useState<string | null>(null);
+  const [legendeEdit, setLegendeEdit] = useState("");
 
   const charger = useCallback(() => {
     fetch("/api/client/galerie")
@@ -63,25 +58,49 @@ export function ContenuGalerieClient({
     charger();
   }, [charger]);
 
-  const majChamp = <K extends keyof typeof form>(
-    cle: K,
-    valeur: (typeof form)[K]
-  ) => setForm((prev) => ({ ...prev, [cle]: valeur }));
-
-  const enregistrer = async () => {
+  const ajouterPhotos = async (images: ImageVitrineItem[]) => {
+    if (images.length === 0) return;
     setEnCours(true);
     setErreur(null);
     try {
-      const url = form.id ? `/api/client/galerie/${form.id}` : "/api/client/galerie";
-      const res = await fetch(url, {
-        method: form.id ? "PUT" : "POST",
+      let ordreBase = liste.length;
+      for (const img of images) {
+        const res = await fetch("/api/client/galerie", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            url: img.url,
+            legende: img.legende ?? "",
+            album: "general",
+            ordre: ordreBase,
+            actif: true,
+          }),
+        });
+        const data = (await res.json()) as { message?: string };
+        if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
+        ordreBase += 1;
+      }
+      setUploadKey((k) => k + 1);
+      charger();
+    } catch (e: unknown) {
+      setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
+    } finally {
+      setEnCours(false);
+    }
+  };
+
+  const enregistrerLegende = async (id: string) => {
+    setEnCours(true);
+    setErreur(null);
+    try {
+      const res = await fetch(`/api/client/galerie/${id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ legende: legendeEdit }),
       });
       const data = (await res.json()) as { message?: string };
       if (!res.ok) throw new Error(data.message ?? t("client.common.erreur"));
-      setModeForm(false);
-      setForm(FORM_VIDE);
+      setEditionId(null);
       charger();
     } catch (e: unknown) {
       setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
@@ -105,18 +124,6 @@ export function ContenuGalerieClient({
     }
   };
 
-  const uploadImage = async (fichier: File) => {
-    setUploadEnCours(true);
-    try {
-      const url = await televerserFichierClient(fichier, "galerie");
-      majChamp("url", url);
-    } catch (e: unknown) {
-      setErreur(e instanceof Error ? e.message : t("client.common.erreur"));
-    } finally {
-      setUploadEnCours(false);
-    }
-  };
-
   return (
     <MiseEnPageClient
       utilisateur={utilisateur}
@@ -134,146 +141,114 @@ export function ContenuGalerieClient({
           ]}
         />
 
+        <p className="rounded-lg border border-bleu-medical/20 bg-bleu-medical-clair/50 px-4 py-3 text-sm text-texte-principal">
+          {t("client.galerie.aideAffichage")}
+        </p>
+
         {erreur ? (
           <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {erreur}
           </p>
         ) : null}
 
-        <div className="flex justify-end">
-          <Bouton
-            variante="primaire"
-            taille="petit"
-            onClick={() => {
-              setForm(FORM_VIDE);
-              setModeForm(true);
+        <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
+          <ZoneImagesVitrine
+            key={uploadKey}
+            label={t("client.galerie.ajouterPhotos")}
+            dossier="galerie"
+            images={[]}
+            max={24}
+            onChange={(images) => {
+              void ajouterPhotos(images);
             }}
-          >
-            <Plus className="h-4 w-4" />
-            {t("client.galerie.nouveau")}
-          </Bouton>
+            onErreur={setErreur}
+          />
+          {enCours ? (
+            <p className="mt-2 flex items-center gap-2 text-xs text-texte-secondaire">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              {t("client.galerie.enregistrement")}
+            </p>
+          ) : null}
         </div>
-
-        {modeForm ? (
-          <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("client.galerie.fichier")}
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={uploadEnCours}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) void uploadImage(f);
-                    }}
-                  />
-                  {uploadEnCours ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-bleu-medical" />
-                  ) : null}
-                </div>
-                <input
-                  className={`${CLASSE_CHAMP_RECEPTION} mt-2`}
-                  value={form.url}
-                  onChange={(e) => majChamp("url", e.target.value)}
-                  placeholder="URL"
-                />
-              </div>
-              <div>
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("client.galerie.legende")}
-                </label>
-                <input
-                  className={CLASSE_CHAMP_RECEPTION}
-                  value={form.legende ?? ""}
-                  onChange={(e) => majChamp("legende", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("client.galerie.album")}
-                </label>
-                <input
-                  className={CLASSE_CHAMP_RECEPTION}
-                  value={form.album}
-                  onChange={(e) => majChamp("album", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("client.galerie.ordre")}
-                </label>
-                <input
-                  type="number"
-                  className={CLASSE_CHAMP_RECEPTION}
-                  value={form.ordre}
-                  onChange={(e) => majChamp("ordre", Number(e.target.value))}
-                />
-              </div>
-              <div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={form.actif}
-                    onChange={(e) => majChamp("actif", e.target.checked)}
-                  />
-                  {t("client.galerie.actif")}
-                </label>
-              </div>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <Bouton variante="primaire" taille="petit" onClick={enregistrer} disabled={enCours}>
-                {t("client.common.enregistrer")}
-              </Bouton>
-              <Bouton variante="contour" taille="petit" onClick={() => setModeForm(false)}>
-                {t("client.common.annuler")}
-              </Bouton>
-            </div>
-          </div>
-        ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {liste.map((m) => (
             <div
               key={m.id}
-              className="rounded-xl border border-gris-bordure bg-white p-3 shadow-sm"
+              className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm"
             >
-              {m.url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+              <div className="relative aspect-[4/3] bg-gris-tres-clair">
+                <ImageVitrine
                   src={m.url}
                   alt={m.legende ?? ""}
-                  className="mb-2 h-36 w-full rounded-lg object-cover"
+                  fill
+                  className="object-cover"
                 />
-              ) : null}
-              <p className="truncate text-sm font-medium text-texte-principal">
-                {m.legende || m.album}
-              </p>
-              <div className="mt-2 flex gap-2">
-                <Bouton
-                  variante="contour"
-                  taille="petit"
-                  onClick={() => {
-                    setForm({ ...m, legende: m.legende ?? "" });
-                    setModeForm(true);
-                  }}
-                >
-                  {t("client.common.modifier")}
-                </Bouton>
-                <Bouton
-                  variante="danger"
-                  taille="petit"
-                  onClick={() => void supprimer(m.id)}
-                  disabled={enCours}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Bouton>
+              </div>
+              <div className="space-y-2 p-3">
+                {editionId === m.id ? (
+                  <>
+                    <label className={CLASSE_LABEL_RECEPTION}>
+                      {t("client.galerie.legende")}
+                    </label>
+                    <input
+                      className={CLASSE_CHAMP_RECEPTION}
+                      value={legendeEdit}
+                      onChange={(e) => setLegendeEdit(e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <Bouton
+                        variante="primaire"
+                        taille="petit"
+                        onClick={() => void enregistrerLegende(m.id)}
+                        disabled={enCours}
+                      >
+                        {t("client.common.enregistrer")}
+                      </Bouton>
+                      <Bouton
+                        variante="contour"
+                        taille="petit"
+                        onClick={() => setEditionId(null)}
+                      >
+                        {t("client.common.annuler")}
+                      </Bouton>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="truncate text-sm font-medium text-texte-principal">
+                      {m.legende || t("client.galerie.sansLegende")}
+                    </p>
+                    <div className="flex gap-2">
+                      <Bouton
+                        variante="contour"
+                        taille="petit"
+                        onClick={() => {
+                          setEditionId(m.id);
+                          setLegendeEdit(m.legende ?? "");
+                        }}
+                      >
+                        {t("client.common.modifier")}
+                      </Bouton>
+                      <Bouton
+                        variante="danger"
+                        taille="petit"
+                        onClick={() => void supprimer(m.id)}
+                        disabled={enCours}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Bouton>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           ))}
+          {liste.length === 0 ? (
+            <p className="col-span-full rounded-xl border border-dashed border-gris-bordure px-4 py-10 text-center text-sm text-texte-secondaire">
+              {t("client.galerie.vide")}
+            </p>
+          ) : null}
         </div>
       </div>
     </MiseEnPageClient>

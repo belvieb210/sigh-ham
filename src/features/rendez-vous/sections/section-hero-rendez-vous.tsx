@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -9,32 +8,30 @@ import {
   Phone,
 } from "lucide-react";
 import { IMAGE_HERO_RENDEZ_VOUS } from "@/constants/images";
+import { CarrouselFondSectionHero } from "@/components/ui/carrousel-fond-section-hero";
 import { INFORMATIONS_HOPITAL } from "@/constants/navigation";
 import { Bouton } from "@/components/ui/bouton";
 import { useContenuRendezVous } from "@/hooks/use-contenu-page";
 
 export function SectionHeroRendezVous() {
   const { hero } = useContenuRendezVous();
+  const imagesFond =
+    hero.imagesFond.length > 0
+      ? hero.imagesFond
+      : [{ url: IMAGE_HERO_RENDEZ_VOUS, alt: "Rendez-vous HAM Laboratoire" }];
 
   return (
     <section
       className="section-hero-rendez-vous relative overflow-hidden"
       aria-labelledby="titre-rdv-hero"
     >
-      <div className="absolute inset-0" aria-hidden="true">
-        <Image
-          src={IMAGE_HERO_RENDEZ_VOUS}
-          alt=""
-          fill
-          priority
-          className="object-cover"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a]/95 via-[#1a4d7c]/90 to-[#2d2a6e]/85" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA0KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
-      </div>
+      <CarrouselFondSectionHero
+        images={imagesFond}
+        gradientClassName="bg-gradient-to-r from-[#0f172a]/95 via-[#1a4d7c]/90 to-[#2d2a6e]/85"
+        altFallback="Rendez-vous HAM Laboratoire"
+      />
 
-      <div className="conteneur-principal relative py-14 sm:py-16 lg:py-20">
+      <div className="conteneur-principal relative z-10 py-14 sm:py-16 lg:py-20">
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
           <motion.div
             initial={{ opacity: 0, y: 24 }}

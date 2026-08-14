@@ -19,8 +19,8 @@ export async function genererQrCodeDataUrl(contenu: string): Promise<string | nu
   try {
     return await QRCode.toDataURL(contenu, {
       type: "image/png",
-      width: 220,
-      margin: 1,
+      width: 280,
+      margin: 2,
       errorCorrectionLevel: "L",
       color: { dark: "#000000", light: "#ffffff" },
     });

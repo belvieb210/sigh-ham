@@ -1,4 +1,4 @@
-import { Document, Page } from "@react-pdf/renderer";
+import { Document, Page, View } from "@react-pdf/renderer";
 import {
   EnTeteResultatPdfServeur,
   PiedResultatPdfServeur,
@@ -9,20 +9,27 @@ import { SignatureValidationPdf } from "@/lib/laboratoire/pdf-resultats/composan
 import { stylesResultatPdf } from "@/lib/laboratoire/pdf-resultats/composants/styles-resultat-pdf";
 import type { DonneesResultatExamenPdf } from "@/lib/laboratoire/pdf-resultats/types";
 
+type PropsAssetsPdf = {
+  logoPath: string;
+  signaturePath?: string;
+  avatarHomme: string;
+  avatarFemme: string;
+};
+
 export function DocumentResultatExamenPdf({
   donnees,
   logoPath,
   signaturePath,
-}: {
+  avatarHomme,
+  avatarFemme,
+}: PropsAssetsPdf & {
   donnees: DonneesResultatExamenPdf;
-  logoPath: string;
-  signaturePath?: string;
 }) {
   const annexes = donnees.examen.piecesJointes ?? [];
 
   return (
     <Document>
-      <Page size="A4" style={stylesResultatPdf.page}>
+      <Page size="A4" style={stylesResultatPdf.page} wrap>
         <EnTeteResultatPdfServeur
           logoPath={logoPath}
           lignesBadge={["RAPPORT DE", "RÉSULTATS"]}
@@ -31,6 +38,8 @@ export function DocumentResultatExamenPdf({
           donnees={donnees}
           signaturePath={signaturePath}
           afficherSignature
+          avatarHomme={avatarHomme}
+          avatarFemme={avatarFemme}
         />
         <PiedResultatPdfServeur />
       </Page>
@@ -43,46 +52,58 @@ export function DocumentResultatExamenPdf({
   );
 }
 
-/** PDF multi-examens — signature unique en fin de document (port generateMultiExamPDF). */
+/** PDF multi-examens — examens à la suite, signature + légende en fin de document. */
 export function DocumentResultatsMultiExamensPdf({
   pages,
   logoPath,
   signaturePath,
-}: {
+  avatarHomme,
+  avatarFemme,
+}: PropsAssetsPdf & {
   pages: DonneesResultatExamenPdf[];
-  logoPath: string;
-  signaturePath?: string;
 }) {
+  if (!pages.length) return null;
+
+  const premier = pages[0]!;
+
   return (
     <Document>
-      {pages.map((donnees) => {
-        const annexes = donnees.examen.piecesJointes ?? [];
-        const examenId = donnees.examen.examenId;
-        return [
-          <Page key={`${examenId}-corps`} size="A4" style={stylesResultatPdf.page}>
-            <EnTeteResultatPdfServeur
-              logoPath={logoPath}
-              lignesBadge={["RAPPORT DE", "RÉSULTATS"]}
-            />
-            <ContenuExamenResultatPdf donnees={donnees} afficherSignature={false} />
-            <PiedResultatPdfServeur />
-          </Page>,
-          <PagesAnnexeResultatPdf
-            key={`${examenId}-annexes`}
-            piecesJointes={annexes}
-            libelleExamen={donnees.examen.libelle}
-            logoPath={logoPath}
-          />,
-        ];
-      })}
-      <Page key="signature-finale" size="A4" style={stylesResultatPdf.page}>
+      <Page size="A4" style={stylesResultatPdf.page} wrap>
         <EnTeteResultatPdfServeur
           logoPath={logoPath}
           lignesBadge={["RAPPORT DE", "RÉSULTATS"]}
         />
-        <SignatureValidationPdf signaturePath={signaturePath} />
+        <ContenuExamenResultatPdf
+          donnees={premier}
+          afficherSignature={false}
+          afficherBandeau
+          avatarHomme={avatarHomme}
+          avatarFemme={avatarFemme}
+        />
+        {pages.slice(1).map((donnees) => (
+          <View key={donnees.examen.examenId} style={stylesResultatPdf.blocExamen}>
+            <ContenuExamenResultatPdf
+              donnees={donnees}
+              afficherSignature={false}
+              afficherBandeau={false}
+            />
+          </View>
+        ))}
+        <SignatureValidationPdf signaturePath={signaturePath} afficherLegende />
         <PiedResultatPdfServeur />
       </Page>
+      {pages.flatMap((donnees) => {
+        const annexes = donnees.examen.piecesJointes ?? [];
+        if (!annexes.length) return [];
+        return (
+          <PagesAnnexeResultatPdf
+            key={`ann-${donnees.examen.examenId}`}
+            piecesJointes={annexes}
+            libelleExamen={donnees.examen.libelle}
+            logoPath={logoPath}
+          />
+        );
+      })}
     </Document>
   );
 }

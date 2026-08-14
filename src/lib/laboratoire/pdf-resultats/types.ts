@@ -23,11 +23,14 @@ export interface DonneesPatientResultatPdf {
   dossierId: string;
   numeroEnregistrement: string;
   numeroPatient: string;
+  /** N° transfert PAT (ex. PAT-202600001) — affiché comme ID patient. */
+  numeroTransfert: string | null;
   nom: string;
   prenom: string;
   sexe: string | null;
   age: number | null;
   telephone: string | null;
+  adresse: string | null;
   medecinDemandeur?: string | null;
   cnomMedecin?: string | null;
   /** QR reçu facture (data URL PNG) — bandeau patient. */

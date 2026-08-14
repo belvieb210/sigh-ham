@@ -23,5 +23,7 @@ export function cheminsAssetsPdfServeur() {
   return {
     logo: join(pub, "images", "logo-ham-laboratoire.png"),
     signature: join(pub, "images", "signature-ham.png"),
+    avatarHomme: join(pub, "images", "avatar-patient-homme.png"),
+    avatarFemme: join(pub, "images", "avatar-patient-femme.png"),
   };
 }

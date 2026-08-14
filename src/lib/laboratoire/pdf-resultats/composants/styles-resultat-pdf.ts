@@ -22,37 +22,64 @@ export const stylesResultatPdf = StyleSheet.create({
   bandeauPatient: {
     borderWidth: 1,
     borderColor: COULEURS_RESULTAT_PDF.noir,
-    padding: 6,
+    padding: 8,
     marginBottom: 8,
-    minHeight: 70,
+    minHeight: 96,
     flexDirection: "row",
     alignItems: "flex-start",
   },
+  bandeauAvatar: {
+    width: 52,
+    height: 68,
+    objectFit: "contain",
+    marginRight: 8,
+    marginTop: 2,
+  },
   bandeauContenu: {
     flex: 1,
-    paddingRight: 34,
+    paddingRight: 6,
+    minWidth: 0,
+  },
+  bandeauQrWrap: {
+    width: 76,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 2,
   },
   bandeauQr: {
-    width: 28,
-    height: 20,
+    width: 72,
+    height: 72,
     objectFit: "contain",
-    marginTop: 4,
   },
   bandeauLigne: {
     flexDirection: "row",
-    marginBottom: 2,
+    marginBottom: 3,
   },
   bandeauCol: {
     width: "50%",
     flexDirection: "row",
-    fontSize: 9,
+    fontSize: 8.5,
+    paddingRight: 4,
   },
   bandeauLabel: {
     fontWeight: "bold",
-    width: 72,
+    width: 76,
+    textTransform: "uppercase",
   },
   bandeauValeur: {
     flex: 1,
+    minWidth: 0,
+  },
+  bandeauAdresseLigne: {
+    flexDirection: "row",
+    marginTop: 2,
+    fontSize: 8.5,
+  },
+  bandeauAdresseValeur: {
+    flex: 1,
+    minWidth: 0,
+    lineHeight: 1.25,
+    fontSize: 8,
   },
   bandeauTitreExamen: {
     backgroundColor: COULEURS_RESULTAT_PDF.bandeauTitre,
@@ -125,6 +152,20 @@ export const stylesResultatPdf = StyleSheet.create({
     marginTop: 10,
     marginBottom: 4,
   },
+  validationBloc: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginTop: 4,
+  },
+  validationGauche: {
+    flex: 1,
+    paddingRight: 8,
+    minWidth: 0,
+  },
+  validationLegende: {
+    width: "42%",
+    minWidth: 180,
+  },
   validationLigne: {
     flexDirection: "row",
     fontSize: 9,
@@ -138,9 +179,20 @@ export const stylesResultatPdf = StyleSheet.create({
   },
   validationFin: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 4,
+    marginTop: 6,
     fontSize: 9,
+  },
+  validationFinLigne: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 8,
+  },
+  validationFinCentre: {
+    width: 36,
+    textAlign: "center",
+    fontWeight: "bold",
   },
   annexeNomFichier: {
     fontSize: 9,
@@ -156,5 +208,46 @@ export const stylesResultatPdf = StyleSheet.create({
     maxWidth: "92%",
     maxHeight: 620,
     objectFit: "contain",
+  },
+  legendeBox: {
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 4,
+    padding: 6,
+    marginBottom: 0,
+    marginTop: 10,
+    backgroundColor: "#fafafa",
+  },
+  legendeTitre: {
+    fontSize: 9,
+    fontWeight: "bold",
+    color: "#6d28d9",
+    marginBottom: 6,
+  },
+  legendeLigne: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 3,
+  },
+  legendePastille: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 2,
+    marginRight: 6,
+  },
+  legendeTexte: {
+    flex: 1,
+    fontSize: 8,
+    lineHeight: 1.3,
+    color: COULEURS_RESULTAT_PDF.gris,
+  },
+  legendeLabel: {
+    fontWeight: "bold",
+    color: COULEURS_RESULTAT_PDF.noir,
+  },
+  blocExamen: {
+    marginBottom: 8,
+    marginTop: 2,
   },
 });

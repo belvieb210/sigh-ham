@@ -4,6 +4,10 @@ import type {
   DonneesPatientResultatPdf,
 } from "@/lib/laboratoire/pdf-resultats/types";
 import { stylesResultatPdf } from "@/lib/laboratoire/pdf-resultats/composants/styles-resultat-pdf";
+import {
+  idPatientAffichePdf,
+  resoudreAvatarPatientPdf,
+} from "@/lib/laboratoire/pdf-resultats/utilitaires-patient-pdf";
 
 function formaterDate(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -13,8 +17,6 @@ function formaterDate(iso: string | null | undefined): string {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   });
 }
 
@@ -43,20 +45,33 @@ function LigneBandeau({
   );
 }
 
-/** Bandeau patient (port renderPatientInfo PHP) + QR facture à droite. */
+/** Bandeau patient (avatar, infos, QR) — aligné maquettes Picture2/3. */
 export function BandeauPatientResultatPdf({
   patient,
   examen,
+  avatarHomme,
+  avatarFemme,
 }: {
   patient: DonneesPatientResultatPdf;
   examen: DonneesExamenResultatPdf;
+  avatarHomme: string;
+  avatarFemme: string;
 }) {
-  const nomComplet = `${patient.nom} ${patient.prenom}`.trim();
-  const age = patient.age != null ? `${patient.age} ans` : "—";
-  const medecin = patient.medecinDemandeur ?? "—";
+  const nomComplet = `${patient.nom} ${patient.prenom}`.trim().toUpperCase();
+  const age =
+    patient.age != null ? `${patient.age} ANS` : "—";
+  const medecin = (patient.medecinDemandeur ?? "—").toUpperCase();
+  const cnom = (patient.cnomMedecin?.trim() || "NON SPÉCIFIÉ").toUpperCase();
+  const sexe = (patient.sexe ?? "—").toUpperCase();
+  const avatarPath = resoudreAvatarPatientPdf(
+    patient.sexe,
+    avatarHomme,
+    avatarFemme
+  );
 
   return (
     <View style={stylesResultatPdf.bandeauPatient}>
+      <Image src={avatarPath} style={stylesResultatPdf.bandeauAvatar} />
       <View style={stylesResultatPdf.bandeauContenu}>
         <LigneBandeau
           labelG="NOM"
@@ -65,10 +80,10 @@ export function BandeauPatientResultatPdf({
           valD={patient.telephone ?? "—"}
         />
         <LigneBandeau
-          labelG="ID PATIENT"
-          valG={patient.numeroEnregistrement}
+          labelG="N° PATIENT"
+          valG={idPatientAffichePdf(patient)}
           labelD="SEXE"
-          valD={patient.sexe ?? "—"}
+          valD={sexe}
         />
         <LigneBandeau
           labelG="DATE D'ANALYSE"
@@ -77,14 +92,22 @@ export function BandeauPatientResultatPdf({
           valD={age}
         />
         <LigneBandeau
-          labelG="MEDECIN"
+          labelG="DOCTEUR"
           valG={medecin}
           labelD="CNOM"
-          valD={patient.cnomMedecin ?? "—"}
+          valD={cnom}
         />
+        <View style={stylesResultatPdf.bandeauAdresseLigne}>
+          <Text style={stylesResultatPdf.bandeauLabel}>ADRESSE</Text>
+          <Text style={stylesResultatPdf.bandeauAdresseValeur}>
+            {patient.adresse?.trim() || "—"}
+          </Text>
+        </View>
       </View>
       {patient.qrCodeDataUrl ? (
-        <Image src={patient.qrCodeDataUrl} style={stylesResultatPdf.bandeauQr} />
+        <View style={stylesResultatPdf.bandeauQrWrap}>
+          <Image src={patient.qrCodeDataUrl} style={stylesResultatPdf.bandeauQr} />
+        </View>
       ) : null}
     </View>
   );

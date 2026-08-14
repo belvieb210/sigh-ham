@@ -96,16 +96,29 @@ export function ContenuExamenResultatPdf({
   donnees,
   signaturePath,
   afficherSignature = true,
+  afficherBandeau = true,
+  avatarHomme,
+  avatarFemme,
 }: {
   donnees: DonneesResultatExamenPdf;
   signaturePath?: string;
   afficherSignature?: boolean;
+  afficherBandeau?: boolean;
+  avatarHomme?: string;
+  avatarFemme?: string;
 }) {
   const { examen, patient } = donnees;
 
   return (
     <View>
-      <BandeauPatientResultatPdf patient={patient} examen={examen} />
+      {afficherBandeau && avatarHomme && avatarFemme ? (
+        <BandeauPatientResultatPdf
+          patient={patient}
+          examen={examen}
+          avatarHomme={avatarHomme}
+          avatarFemme={avatarFemme}
+        />
+      ) : null}
       <TitreExamenResultatPdf libelle={examen.libelle} specimen={examen.specimen} />
 
       <CorpsResultatExamen donnees={donnees} />
@@ -114,7 +127,7 @@ export function ContenuExamenResultatPdf({
       <CommentaireGlobalPdf texte={examen.commentaireGlobal} />
       <DescriptionExamenPdf texte={examen.description} />
       {afficherSignature ? (
-        <SignatureValidationPdf signaturePath={signaturePath} />
+        <SignatureValidationPdf signaturePath={signaturePath} afficherLegende />
       ) : null}
     </View>
   );

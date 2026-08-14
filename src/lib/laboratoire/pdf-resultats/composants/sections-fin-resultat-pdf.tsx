@@ -1,4 +1,5 @@
 import { Image, Text, View } from "@react-pdf/renderer";
+import { LegendeInterpretationPdf } from "@/lib/laboratoire/pdf-resultats/composants/legende-interpretation-pdf";
 import { stylesResultatPdf } from "@/lib/laboratoire/pdf-resultats/composants/styles-resultat-pdf";
 
 export function DescriptionExamenPdf({ texte }: { texte?: string | null }) {
@@ -24,9 +25,11 @@ export function CommentaireGlobalPdf({ texte }: { texte?: string | null }) {
 export function SignatureValidationPdf({
   signaturePath,
   dateValidation,
+  afficherLegende = true,
 }: {
   signaturePath?: string;
   dateValidation?: string;
+  afficherLegende?: boolean;
 }) {
   const date =
     dateValidation ??
@@ -39,24 +42,31 @@ export function SignatureValidationPdf({
     });
 
   return (
-    <View>
-      <Text style={stylesResultatPdf.validationTitre}>VALIDATION</Text>
-      <View style={stylesResultatPdf.validationLigne}>
-        <Text style={{ width: "50%" }}>Biologiste responsable:</Text>
-        <Text style={{ width: "50%" }}>Date: {date}</Text>
+    <View style={stylesResultatPdf.validationBloc}>
+      <View style={stylesResultatPdf.validationGauche}>
+        <Text style={stylesResultatPdf.validationTitre}>VALIDATION</Text>
+        <View style={stylesResultatPdf.validationLigne}>
+          <Text style={{ width: "50%" }}>Biologiste responsable:</Text>
+          <Text style={{ width: "50%" }}>Date: {date}</Text>
+        </View>
+        {signaturePath ? (
+          <Image src={signaturePath} style={stylesResultatPdf.signatureImage} />
+        ) : null}
+        <View style={stylesResultatPdf.validationFin}>
+          <Text style={stylesResultatPdf.validationFinLigne}>
+            ________________________________________
+          </Text>
+          <Text style={stylesResultatPdf.validationFinCentre}>FIN</Text>
+          <Text style={stylesResultatPdf.validationFinLigne}>
+            ________________________________________
+          </Text>
+        </View>
       </View>
-      {signaturePath ? (
-        <Image src={signaturePath} style={stylesResultatPdf.signatureImage} />
+      {afficherLegende ? (
+        <View style={stylesResultatPdf.validationLegende}>
+          <LegendeInterpretationPdf />
+        </View>
       ) : null}
-      <View style={stylesResultatPdf.validationFin}>
-        <Text style={{ width: "40%", textAlign: "center" }}>
-          ________________________________________
-        </Text>
-        <Text style={{ width: "10%", textAlign: "center" }}>FIN</Text>
-        <Text style={{ width: "40%", textAlign: "center" }}>
-          ________________________________________
-        </Text>
-      </View>
     </View>
   );
 }

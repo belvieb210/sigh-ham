@@ -26,6 +26,7 @@ import type {
   PieceJointeResultatPdf,
 } from "@/lib/laboratoire/pdf-resultats/types";
 import { mapperResultatsPrismaVersPdf } from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
+import { formaterAdressePatientPdf } from "@/lib/laboratoire/pdf-resultats/utilitaires-patient-pdf";
 
 function formaterNomPrescripteur(
   prenom: string,
@@ -159,16 +160,29 @@ export async function chargerDonneesResultatExamenPdf(
 
   const qrCodeDataUrl = await resoudreQrFactureDossier(dossierId, request);
 
+  const transfertCourant = await prisma.transfert.findFirst({
+    where: { dossierId },
+    orderBy: { emisLe: "desc" },
+    select: { numeroTransfert: true },
+  });
+
   return {
     patient: {
       dossierId,
       numeroEnregistrement: patient.numeroPatient,
       numeroPatient: patient.numeroPatient,
+      numeroTransfert: transfertCourant?.numeroTransfert ?? null,
       nom: patient.nom,
       prenom: patient.prenom,
       sexe: patient.sexe,
       age: calculerAge(patient.dateNaissance?.toISOString() ?? null),
       telephone: patient.telephone,
+      adresse: formaterAdressePatientPdf({
+        adresse: patient.adresse,
+        ville: patient.ville,
+        province: patient.province,
+        pays: patient.pays,
+      }),
       medecinDemandeur,
       cnomMedecin,
       qrCodeDataUrl,

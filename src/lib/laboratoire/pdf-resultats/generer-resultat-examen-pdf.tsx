@@ -23,13 +23,15 @@ export async function genererBufferPdfResultatExamen(
   if (!donnees) return null;
 
   enregistrerPolicesPdfServeur();
-  const { logo, signature } = cheminsAssetsPdfServeur();
+  const { logo, signature, avatarHomme, avatarFemme } = cheminsAssetsPdfServeur();
 
   const instance = pdf(
     <DocumentResultatExamenPdf
       donnees={donnees}
       logoPath={logo}
       signaturePath={signature}
+      avatarHomme={avatarHomme}
+      avatarFemme={avatarFemme}
     />
   );
 
@@ -51,13 +53,15 @@ export async function genererBufferPdfResultatsMultiExamens(
   if (!pages.length) return null;
 
   enregistrerPolicesPdfServeur();
-  const { logo, signature } = cheminsAssetsPdfServeur();
+  const { logo, signature, avatarHomme, avatarFemme } = cheminsAssetsPdfServeur();
 
   const instance = pdf(
     <DocumentResultatsMultiExamensPdf
       pages={pages}
       logoPath={logo}
       signaturePath={signature}
+      avatarHomme={avatarHomme}
+      avatarFemme={avatarFemme}
     />
   );
 

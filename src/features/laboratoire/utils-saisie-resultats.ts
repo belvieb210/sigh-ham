@@ -204,17 +204,17 @@ export const COULEURS_INDICATEUR: Record<
 > = {
   bas: {
     dot: "bg-sky-500",
-    input: "border-sky-300 bg-sky-50/40 focus:border-sky-500 focus:ring-sky-200",
+    input: "border-sky-400 bg-sky-50/60 focus:border-sky-500 focus:ring-sky-200",
     text: "text-sky-700",
   },
   normal: {
     dot: "bg-emerald-500",
-    input: "border-emerald-300 bg-emerald-50/40 focus:border-emerald-500 focus:ring-emerald-200",
+    input: "border-emerald-400 bg-emerald-50/60 focus:border-emerald-500 focus:ring-emerald-200",
     text: "text-emerald-700",
   },
   eleve: {
     dot: "bg-rose-500",
-    input: "border-rose-300 bg-rose-50/40 focus:border-rose-500 focus:ring-rose-200",
+    input: "border-rose-400 bg-rose-50/60 focus:border-rose-500 focus:ring-rose-200",
     text: "text-rose-700",
   },
   non_requis: {
@@ -224,12 +224,12 @@ export const COULEURS_INDICATEUR: Record<
   },
   vide: {
     dot: "bg-transparent border border-slate-200",
-    input: "border-violet-200 bg-violet-50/30 focus:border-violet-400 focus:ring-violet-100",
-    text: "text-slate-400",
+    input: "border-slate-300 bg-white focus:border-violet-500 focus:ring-violet-200",
+    text: "text-slate-600",
   },
   saisi: {
     dot: "bg-violet-500",
-    input: "border-violet-300 bg-violet-50/50 focus:border-violet-500 focus:ring-violet-200",
-    text: "text-violet-700",
+    input: "border-slate-300 bg-white focus:border-violet-500 focus:ring-violet-200",
+    text: "text-slate-900",
   },
 };

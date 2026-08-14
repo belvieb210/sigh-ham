@@ -30,7 +30,10 @@ type Props = {
 };
 
 const DEFAULT_FIELD =
-  "rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm w-full min-w-0 outline-none ring-0 transition-colors focus:ring-2";
+  "rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm w-full min-w-0 min-h-[2.25rem] outline-none ring-0 transition-colors focus:ring-2 text-slate-900";
+
+const FIELD_BASE =
+  "rounded-lg border px-2 py-1.5 text-sm w-full min-w-0 min-h-[2.25rem] outline-none ring-0 transition-colors focus:ring-2 text-slate-900";
 
 const OPTIONS_RESULTAT_DEFAUT = avecOptionAutres(["Négatif", "Positif"]);
 
@@ -43,10 +46,7 @@ export function ChampSaisieParametre({
   className = "",
 }: Props) {
   const field = fieldClassName
-    ? cn(
-        "rounded-lg px-2 py-1.5 text-sm w-full min-w-0 outline-none ring-0 transition-colors focus:ring-2",
-        fieldClassName
-      )
+    ? cn(FIELD_BASE, "bg-white", fieldClassName)
     : DEFAULT_FIELD;
   const { typeSaisie, options = [], libelleSecondaire, placeholderSecondaire } =
     config;

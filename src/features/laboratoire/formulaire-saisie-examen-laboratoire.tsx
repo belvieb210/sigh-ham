@@ -28,6 +28,8 @@ import {
 import type { ConfigSaisieParametre } from "@/lib/laboratoire/config-saisie-parametre";
 import { ChampSaisieParametre } from "@/features/laboratoire/champ-saisie-parametre";
 import { cn } from "@/lib/utils";
+import type { MetaCalculsFormulaire } from "@/lib/laboratoire/calculs-automatiques";
+import { estChampCalculeAutomatique } from "@/lib/laboratoire/calculs-automatiques";
 
 const MAX_REMARQUE = 500;
 const MAX_FICHIER_OCTETS = 5 * 1024 * 1024;
@@ -59,6 +61,7 @@ export type EtatExamenForm = {
   orientationAnalyse: IdOrientationStatutAnalyse | null;
   formulaire: string | null;
   parametres: ParametreEtat[];
+  calculsMeta?: MetaCalculsFormulaire | null;
 };
 
 type FichierJoint = {
@@ -125,6 +128,45 @@ function LegendeItem({
       <span className={cn("h-2 w-2 rounded-full", couleur)} />
       {label}
     </span>
+  );
+}
+
+function BandeauTotalCalcul({ meta }: { meta: MetaCalculsFormulaire }) {
+  if (meta.sommes.length === 0) return null;
+
+  return (
+    <div className="mb-4 space-y-2">
+      {meta.sommes.map((somme) => {
+        const couleurs = {
+          vide: "border-slate-200 bg-slate-50 text-slate-600",
+          incomplet: "border-amber-300 bg-amber-50 text-amber-900",
+          ok: "border-emerald-300 bg-emerald-50 text-emerald-900",
+          depasse: "border-rose-300 bg-rose-50 text-rose-900",
+        }[somme.statut];
+
+        const suffixe =
+          somme.statut === "depasse"
+            ? " — Total > 100 % : corrigez les valeurs"
+            : somme.statut === "incomplet"
+              ? " (Total < 100 %)"
+              : somme.statut === "ok"
+                ? " ✓"
+                : "";
+
+        return (
+          <div
+            key={somme.id}
+            className={cn(
+              "rounded-lg border px-3 py-2 text-sm font-medium",
+              couleurs
+            )}
+          >
+            {somme.label} : {somme.total.toFixed(1)} % / {somme.cible} %
+            {suffixe}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -288,6 +330,8 @@ export function FormulaireSaisieExamenLaboratoire({
           </div>
         </div>
 
+        {examen.calculsMeta && <BandeauTotalCalcul meta={examen.calculsMeta} />}
+
         <div className="overflow-hidden rounded-xl border border-slate-200">
           <table className="w-full table-fixed text-sm">
             <thead>
@@ -324,6 +368,11 @@ export function FormulaireSaisieExamenLaboratoire({
                   );
                   const styles = COULEURS_INDICATEUR[statut];
                   const commentaireOuvert = commentairesOuverts.has(p.id);
+                  const estCalcule = estChampCalculeAutomatique(
+                    examen.formulaire,
+                    examen.parametres,
+                    p.nom
+                  );
 
                   return (
                     <Fragment key={p.id}>
@@ -342,7 +391,7 @@ export function FormulaireSaisieExamenLaboratoire({
                         <td className="px-2 py-2 sm:px-3 sm:py-3">
                           <ChampSaisieParametre
                             config={configSaisie}
-                            disabled={champsDesactives || p.nonRequis}
+                            disabled={champsDesactives || p.nonRequis || estCalcule}
                             fieldClassName={styles.input}
                             valeurs={{
                               valeur: p.valeur,
@@ -619,7 +668,9 @@ export function FormulaireSaisieExamenLaboratoire({
               </button>
               <button
                 type="button"
-                disabled={sauvegardeEnCours}
+                disabled={
+                  sauvegardeEnCours || examen.calculsMeta?.bloqueVerification === true
+                }
                 onClick={onValider}
                 className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-violet-700 disabled:opacity-50"
               >

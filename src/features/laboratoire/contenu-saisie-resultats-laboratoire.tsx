@@ -27,6 +27,10 @@ import type {
 } from "@/lib/laboratoire/saisie-resultats-types";
 import { televerserPieceJointeLaboratoire } from "@/features/laboratoire/televerser-piece-jointe-laboratoire";
 import { cn } from "@/lib/utils";
+import {
+  appliquerCalculsAutomatiques,
+  validerCalculsPourVerification,
+} from "@/lib/laboratoire/calculs-automatiques";
 
 interface PropsContenuSaisieResultatsLaboratoire {
   utilisateur: UtilisateurLaboratoire;
@@ -41,26 +45,37 @@ type FichierJoint = {
   mimeType?: string;
 };
 
+function appliquerCalculsSurExamen(ex: EtatExamenForm): EtatExamenForm {
+  const resultat = appliquerCalculsAutomatiques(ex.formulaire, ex.parametres);
+  return {
+    ...ex,
+    parametres: resultat.parametres,
+    calculsMeta: resultat.meta,
+  };
+}
+
 function clonerEtat(saisie: SaisieResultatsDto): EtatExamenForm[] {
-  return saisie.examens.map((ex) => ({
-    id: ex.id,
-    code: ex.code,
-    libelle: ex.libelle,
-    categorie: ex.categorie,
-    prix: ex.prix,
-    statut: ex.statut,
-    orientationAnalyse: ex.orientationAnalyse,
-    formulaire: ex.formulaire,
-    remarque: ex.remarque ?? "",
-    parametres: ex.parametres.map((p) => ({
-      ...p,
-      valeur: p.valeur,
-      flag: p.flag,
-      valeurSecondaire: p.valeurSecondaire,
-      nonRequis: p.nonRequis,
-      commentaire: p.commentaire ?? "",
-    })),
-  }));
+  return saisie.examens.map((ex) =>
+    appliquerCalculsSurExamen({
+      id: ex.id,
+      code: ex.code,
+      libelle: ex.libelle,
+      categorie: ex.categorie,
+      prix: ex.prix,
+      statut: ex.statut,
+      orientationAnalyse: ex.orientationAnalyse,
+      formulaire: ex.formulaire,
+      remarque: ex.remarque ?? "",
+      parametres: ex.parametres.map((p) => ({
+        ...p,
+        valeur: p.valeur,
+        flag: p.flag,
+        valeurSecondaire: p.valeurSecondaire,
+        nonRequis: p.nonRequis,
+        commentaire: p.commentaire ?? "",
+      })),
+    })
+  );
 }
 
 function genererIdParametrePerso() {
@@ -202,16 +217,13 @@ export function ContenuSaisieResultatsLaboratoire({
     >
   ) => {
     setExamens((prev) =>
-      prev.map((ex) =>
-        ex.id !== examenId
-          ? ex
-          : {
-              ...ex,
-              parametres: ex.parametres.map((p) =>
-                p.id !== parametreId ? p : { ...p, ...patch }
-              ),
-            }
-      )
+      prev.map((ex) => {
+        if (ex.id !== examenId) return ex;
+        const parametres = ex.parametres.map((p) =>
+          p.id !== parametreId ? p : { ...p, ...patch }
+        );
+        return appliquerCalculsSurExamen({ ...ex, parametres });
+      })
     );
   };
 
@@ -259,6 +271,18 @@ export function ContenuSaisieResultatsLaboratoire({
     passerSuivant?: boolean;
   }) => {
     if (!examenOuvert) return;
+
+    if (options.action === "verifier") {
+      const erreurCalcul = validerCalculsPourVerification(
+        examenOuvert.formulaire,
+        examenOuvert.parametres
+      );
+      if (erreurCalcul) {
+        setErreur(erreurCalcul);
+        return;
+      }
+    }
+
     setSauvegardeEnCours(true);
     setMessage(null);
     setErreur(null);

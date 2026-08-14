@@ -16,6 +16,7 @@ import { trierParametresParFormulaire } from "@/lib/laboratoire/ordre-parametres
 import { calculerFlagDepuisParametre } from "@/lib/laboratoire/indicateur-resultat";
 import { estValeurAutres } from "@/lib/laboratoire/config-saisie-parametre";
 import { resoudreConfigSaisieParametre } from "@/lib/laboratoire/resoudre-config-saisie-parametre";
+import { validerCalculsPourVerification } from "@/lib/laboratoire/calculs-automatiques";
 import type {
   ActionEnregistrementResultat,
   LigneResultatSaisie,
@@ -188,6 +189,23 @@ export async function enregistrerResultatsExamen(
       if (valeurVide || autresSansPreciser) {
         throw new Error(`Le paramètre « ${cat.nom} » est requis.`);
       }
+    }
+  }
+
+  if (exigerParametres) {
+    const parametresPourCalcul = input.lignes.map((ligne) => {
+      const cat = catalogue.get(ligne.parametreTypeExamenId)!;
+      return {
+        nom: cat.nom,
+        valeur: ligne.valeur,
+      };
+    });
+    const erreurCalcul = validerCalculsPourVerification(
+      examen.typeExamen.formulaire,
+      parametresPourCalcul
+    );
+    if (erreurCalcul) {
+      throw new Error(erreurCalcul);
     }
   }
 

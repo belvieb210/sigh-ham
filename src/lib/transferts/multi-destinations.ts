@@ -1,6 +1,7 @@
 import "server-only";
 import type { CodeSalle, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { prochainNumeroTransfert } from "@/lib/reception/numeros";
 
 /**
  * Inscrit le patient dans une ou plusieurs salles de destination.
@@ -173,16 +174,20 @@ export async function synchroniserTransfertsEnAttente(params: {
       transfertIds.push(existant.id);
       continue;
     }
-    const cree = await prisma.transfert.create({
-      data: {
-        dossierId: params.dossierId,
-        passageId: params.passageId,
-        salleOrigineId: params.salleOrigineId,
-        salleDestinationId: dest.salleId,
-        emetteurId: params.agentId,
-        statut: "EN_ATTENTE",
-        motif: `${params.motifPrefixe} → ${dest.nom}`,
-      },
+    const cree = await prisma.$transaction(async (tx) => {
+      const numeroTransfert = await prochainNumeroTransfert(tx);
+      return tx.transfert.create({
+        data: {
+          numeroTransfert,
+          dossierId: params.dossierId,
+          passageId: params.passageId,
+          salleOrigineId: params.salleOrigineId,
+          salleDestinationId: dest.salleId,
+          emetteurId: params.agentId,
+          statut: "EN_ATTENTE",
+          motif: `${params.motifPrefixe} → ${dest.nom}`,
+        },
+      });
     });
     transfertIds.push(cree.id);
     destinationsCreees.push({ code: dest.code, nom: dest.nom, transfertId: cree.id });

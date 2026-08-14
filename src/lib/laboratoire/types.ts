@@ -26,9 +26,9 @@ export interface PatientFileLaboratoire {
   numeroOrdre: number;
   provenance: string;
   medecinResponsable: string | null;
-  /** N° transfert (ex. PAT-2026-0008) */
-  numeroTransfert: string;
-  /** N° enregistrement / dossier (ex. 20260804008) */
+  /** N° transfert (ex. PAT-202600001) — change à chaque orientation. */
+  numeroTransfert: string | null;
+  /** N° permanent patient (ex. 20260902012). */
   numeroEnregistrement: string;
   heureTransfert: string | null;
   heureEnregistrement: string | null;

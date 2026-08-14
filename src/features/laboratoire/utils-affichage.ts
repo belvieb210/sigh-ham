@@ -89,14 +89,14 @@ export function statutsAnalyseDistincts(
   return [...ids];
 }
 
-/** N° enregistrement (ex. 20260804008) */
+/** N° permanent patient (ex. 20260804008) */
 export function numeroEnregistrementLaboratoire(p: PatientFileLaboratoire) {
-  return p.numeroEnregistrement || p.numeroDossier;
+  return p.numeroEnregistrement || p.numeroPatient;
 }
 
-/** N° transfert (ex. PAT-2026-0008) */
+/** N° transfert annuel (ex. PAT-202600001) */
 export function codeTransfertLaboratoire(p: PatientFileLaboratoire) {
-  return p.numeroTransfert || p.numeroPatient;
+  return p.numeroTransfert ?? "—";
 }
 
 /** Tri décroissant par date d'arrivée (les plus récents en premier). */

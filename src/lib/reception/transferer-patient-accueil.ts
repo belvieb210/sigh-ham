@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import {
   genererNumeroEnregistrementVisite,
   genererNumerosPatient,
+  prochainNumeroTransfert,
 } from "@/lib/reception/numeros";
 import {
   parserDonneesEnregistrement,
@@ -586,6 +587,7 @@ export async function transfererPatientAccueil(
 
     const transfert = await tx.transfert.create({
       data: {
+        numeroTransfert: await prochainNumeroTransfert(tx),
         dossierId,
         passageId,
         salleOrigineId: salleOrigine.id,

@@ -146,8 +146,8 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
         transfert?.salleOrigine?.code ||
         "—",
       medecinResponsable: enreg?.medecinResponsable?.trim() || null,
-      numeroTransfert: patient.numeroPatient,
-      numeroEnregistrement: dossier.numeroDossier,
+      numeroTransfert: transfert?.numeroTransfert ?? null,
+      numeroEnregistrement: patient.numeroPatient,
       heureTransfert: transfert?.emisLe?.toISOString() ?? file.arriveLe.toISOString(),
       heureEnregistrement: enreg?.enregistreLe?.toISOString() ?? null,
       enregistrePar: formaterNom(enreg?.agent?.prenom, enreg?.agent?.nom),

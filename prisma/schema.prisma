@@ -492,6 +492,8 @@ model Passage {
 
 model Transfert {
   id                 String          @id @default(cuid())
+  /** N° transfert annuel (ex. PAT-202600001) — unique par orientation / facturation. */
+  numeroTransfert    String?         @unique @map("numero_transfert")
   dossierId          String          @map("dossier_id")
   dossier            DossierPatient  @relation(fields: [dossierId], references: [id])
   passageId          String?         @map("passage_id")

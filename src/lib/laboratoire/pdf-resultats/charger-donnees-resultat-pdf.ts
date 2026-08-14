@@ -162,7 +162,7 @@ export async function chargerDonneesResultatExamenPdf(
   return {
     patient: {
       dossierId,
-      numeroEnregistrement: examen.dossier.numeroDossier,
+      numeroEnregistrement: patient.numeroPatient,
       numeroPatient: patient.numeroPatient,
       nom: patient.nom,
       prenom: patient.prenom,

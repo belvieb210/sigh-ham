@@ -99,7 +99,7 @@ export async function obtenirPatientPourFormulaire(
 
   return {
     numeroPatient: patient.numeroPatient,
-    numeroEnregistrement: dossier?.numeroDossier ?? patient.numeroPatient,
+    numeroEnregistrement: patient.numeroPatient,
     dossierId: dossier?.id,
     typeVisite: enregistrement?.typeVisite ?? "ancien",
     nom: patient.nom,

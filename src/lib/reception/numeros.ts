@@ -10,26 +10,54 @@ function extraireSequence(numero: string, prefixe: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** PAT-2026-0001 — numéro patient (inchangé) */
-async function prochainNumeroPatient(tx: ClientTransaction): Promise<string> {
-  const annee = new Date().getFullYear();
-  const base = `PAT-${annee}-`;
+/**
+ * N° permanent patient : YYYYMMDD + compteur annuel.
+ * Ex. 20260902012 — attribué une seule fois à la création du patient.
+ */
+async function prochainNumeroPatientPermanent(
+  tx: ClientTransaction,
+  date = new Date()
+): Promise<string> {
+  const annee = date.getFullYear();
+  const debutAnnee = new Date(annee, 0, 1);
+  const finAnnee = new Date(annee + 1, 0, 1);
 
-  const dernier = await tx.patient.findFirst({
-    where: { numeroPatient: { startsWith: base } },
-    orderBy: { numeroPatient: "desc" },
-    select: { numeroPatient: true },
+  const dejaEnregistres = await tx.enregistrementReception.count({
+    where: {
+      enregistreLe: { gte: debutAnnee, lt: finAnnee },
+    },
   });
 
-  const seq = dernier ? extraireSequence(dernier.numeroPatient, base) + 1 : 1;
-  return `${base}${String(seq).padStart(4, "0")}`;
+  const sequence = dejaEnregistres + 1;
+  return `${formaterDateEnregistrement(date)}${formaterCompteurAnnuel(sequence)}`;
 }
 
 /**
- * N° d'enregistrement : YYYYMMDD + compteur annuel sans limite.
- * Ex. 1er patient le 01/01/2027 → 20270101001
- * Ex. 13 245e de l'année → 2027031513245 (date du jour + séquence)
- * Le compteur repart à 001 chaque 1er janvier (nouvelle année).
+ * N° de transfert annuel : PAT-YYYY + séquence sur 6 chiffres.
+ * Ex. PAT-202600001, PAT-202600002 — nouveau à chaque transfert.
+ */
+export async function prochainNumeroTransfert(
+  tx: ClientTransaction,
+  date = new Date()
+): Promise<string> {
+  const annee = date.getFullYear();
+  const prefix = `PAT-${annee}`;
+
+  const dernier = await tx.transfert.findFirst({
+    where: { numeroTransfert: { startsWith: prefix } },
+    orderBy: { numeroTransfert: "desc" },
+    select: { numeroTransfert: true },
+  });
+
+  const seq = dernier?.numeroTransfert
+    ? extraireSequence(dernier.numeroTransfert, prefix) + 1
+    : 1;
+
+  return `${prefix}${String(seq).padStart(6, "0")}`;
+}
+
+/**
+ * N° d'enregistrement dossier (visite) : YYYYMMDD + compteur annuel.
  */
 function formaterDateEnregistrement(date: Date): string {
   const y = date.getFullYear();
@@ -65,12 +93,10 @@ export async function genererNumeroEnregistrementVisite(tx: ClientTransaction) {
   return prochainNumeroEnregistrement(tx);
 }
 
+/** Nouveau patient : n° permanent + 1er dossier (même n° à la première visite). */
 export async function genererNumerosPatient(tx: ClientTransaction) {
-  const [numeroPatient, numeroEnregistrement] = await Promise.all([
-    prochainNumeroPatient(tx),
-    prochainNumeroEnregistrement(tx),
-  ]);
-  return { numeroPatient, numeroEnregistrement };
+  const numeroPatient = await prochainNumeroPatientPermanent(tx);
+  return { numeroPatient, numeroEnregistrement: numeroPatient };
 }
 
 export async function apercuNumerosPatient() {

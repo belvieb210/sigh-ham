@@ -108,10 +108,16 @@ export async function chargerSaisieResultats(
 
   const patient = dossier.patient;
 
+  const transfertCourant = await prisma.transfert.findFirst({
+    where: { dossierId },
+    orderBy: { emisLe: "desc" },
+    select: { numeroTransfert: true },
+  });
+
   return {
     dossierId: dossier.id,
-    numeroEnregistrement: dossier.numeroDossier,
-    numeroTransfert: patient.numeroPatient,
+    numeroEnregistrement: patient.numeroPatient,
+    numeroTransfert: transfertCourant?.numeroTransfert ?? null,
     prenom: patient.prenom,
     nom: patient.nom,
     sexe: patient.sexe,

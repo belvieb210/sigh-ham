@@ -13,7 +13,6 @@ import {
 import type { ResultatPatientPublic } from "@/lib/resultats-public/types";
 import { formaterMontantCaisse } from "@/features/caisse/utils-format";
 import { useContenuResultats } from "@/hooks/use-contenu-resultats";
-import { cn } from "@/lib/utils";
 
 function formaterDate(iso: string | null) {
   if (!iso) return "—";
@@ -81,9 +80,9 @@ export function VisionneuseResultatsPatient({
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="flex flex-col overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-          <div className="flex items-center justify-between gap-2 border-b border-gris-bordure px-3 py-2.5">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-stretch">
+        <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
+          <div className="flex shrink-0 items-center justify-between gap-2 border-b border-gris-bordure px-3 py-2.5">
             <div className="flex min-w-0 items-center gap-2">
               <FileText className="h-4 w-4 shrink-0 text-bleu-medical" />
               <span className="truncate text-xs font-bold uppercase tracking-widest text-texte-secondaire">
@@ -91,7 +90,7 @@ export function VisionneuseResultatsPatient({
               </span>
             </div>
           </div>
-          <div className="relative min-h-[420px] flex-1 bg-slate-100">
+          <div className="relative min-h-[480px] flex-1 bg-slate-100">
             {chargement && !erreurPdf && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-white/80">
                 <Loader2 className="h-6 w-6 animate-spin text-bleu-medical" />
@@ -101,7 +100,7 @@ export function VisionneuseResultatsPatient({
               </div>
             )}
             {erreurPdf ? (
-              <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 px-4 text-center">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-4 text-center">
                 <p className="text-xs text-red-600">{visionneuse.erreurPdf}</p>
                 <a
                   href={urlPdf}
@@ -117,7 +116,7 @@ export function VisionneuseResultatsPatient({
                 key={urlPdf}
                 title={resultat.nomFichier}
                 src={urlPdf}
-                className="h-[min(72vh,720px)] w-full border-0 bg-white"
+                className="absolute inset-0 h-full w-full border-0 bg-white"
                 onLoad={() => setChargement(false)}
                 onError={() => {
                   setChargement(false);

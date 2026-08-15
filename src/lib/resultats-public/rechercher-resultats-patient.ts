@@ -48,9 +48,27 @@ function formaterNomPrescripteur(prenom: string, nom: string): string | null {
   return /^dr\.?\s/i.test(complet) ? complet : `Dr ${complet}`;
 }
 
+const LIBELLES_LIGNE_NON_EXAMEN = new Set([
+  "remise",
+  "frais divers",
+  "avance",
+  "acompte",
+]);
+
+/** Exclut remises, frais administratifs et lignes à montant négatif ou nul. */
+function estLigneFactureExamen(ligne: {
+  libelle: string;
+  montant: number;
+}): boolean {
+  const lib = normaliserLibelleFacture(ligne.libelle);
+  if (LIBELLES_LIGNE_NON_EXAMEN.has(lib)) return false;
+  if (ligne.montant <= 0) return false;
+  return true;
+}
+
 /** Examens rattachés à cette facture (lignes facture ↔ dossier). */
 function classerExamensFacture(
-  lignesFacture: { libelle: string }[],
+  lignesFacture: { libelle: string; montant: number }[],
   examensDossier: {
     id: string;
     statut: string;
@@ -64,8 +82,10 @@ function classerExamensFacture(
     aResultats: boolean;
   }[]
 ) {
+  const lignesExamens = lignesFacture.filter(estLigneFactureExamen);
+
   const libellesFacture = new Set(
-    lignesFacture.map((l) => normaliserLibelleFacture(l.libelle))
+    lignesExamens.map((l) => normaliserLibelleFacture(l.libelle))
   );
 
   const surFacture = examensDossier.filter((ex) =>
@@ -79,7 +99,7 @@ function classerExamensFacture(
   const libellesCouvert = new Set(
     surFacture.map((ex) => normaliserLibelleFacture(ex.libelle))
   );
-  for (const ligne of lignesFacture) {
+  for (const ligne of lignesExamens) {
     const cle = normaliserLibelleFacture(ligne.libelle);
     const dejaCouvert = [...libellesCouvert].some(
       (l) => l === cle || l.includes(cle) || cle.includes(l)
@@ -166,7 +186,10 @@ export async function rechercherResultatsPatientPublic(input: {
   }));
 
   const { approuves, exclus } = classerExamensFacture(
-    facture.lignes,
+    facture.lignes.map((l) => ({
+      libelle: l.libelle,
+      montant: Number(l.montant),
+    })),
     examensBruts
   );
 

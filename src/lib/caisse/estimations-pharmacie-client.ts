@@ -9,7 +9,35 @@ function decimal(v: { toNumber?: () => number } | number | string) {
   return Number(v) || 0;
 }
 
-/** Ventes pharmacie transmises à la caisse (clients walk-in) — affichées comme estimations. */
+async function dossiersVisiblesCaisse(dossierIds: string[]) {
+  if (dossierIds.length === 0) return new Set<string>();
+
+  const [filesCaisse, transfertsCaisse] = await Promise.all([
+    prisma.fileAttente.findMany({
+      where: {
+        serviLe: null,
+        salle: { code: "CAISSE" },
+        passage: { dossierId: { in: dossierIds } },
+      },
+      select: { passage: { select: { dossierId: true } } },
+    }),
+    prisma.transfert.findMany({
+      where: {
+        dossierId: { in: dossierIds },
+        salleDestination: { code: "CAISSE" },
+        statut: { in: ["ACCEPTE", "EN_TRAITEMENT", "TERMINE"] },
+      },
+      select: { dossierId: true },
+    }),
+  ]);
+
+  const visibles = new Set<string>();
+  for (const f of filesCaisse) visibles.add(f.passage.dossierId);
+  for (const t of transfertsCaisse) visibles.add(t.dossierId);
+  return visibles;
+}
+
+/** Ventes pharmacie transmises — visibles à la caisse uniquement après confirmation du transfert. */
 export async function listerEstimationsPharmacieClientPourCaisse() {
   const ventes = await prisma.ventePharmacie.findMany({
     where: {
@@ -26,8 +54,13 @@ export async function listerEstimationsPharmacieClientPourCaisse() {
     take: 80,
   });
 
-  return ventes
-    .filter((v) => estClientWalkInPharmacie(v.dossier.numeroDossier))
+  const clients = ventes.filter((v) =>
+    estClientWalkInPharmacie(v.dossier.numeroDossier)
+  );
+  const visibles = await dossiersVisiblesCaisse(clients.map((v) => v.dossierId));
+
+  return clients
+    .filter((v) => visibles.has(v.dossierId))
     .map((v) => ({
       id: `vente-ph-${v.id}`,
       dossierId: v.dossierId,

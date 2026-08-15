@@ -3,31 +3,28 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { reserverNumerosTransfert } from "@/lib/reception/numeros";
 
-async function inscrireFileAttenteCaisse(
+async function inscrireFileAttentePharmacie(
   tx: Prisma.TransactionClient,
   passageId: string,
-  salleCaisseId: string
+  sallePharmacieId: string
 ) {
-  const existante = await tx.fileAttente.findUnique({ where: { passageId } });
-  if (existante) {
-    return tx.fileAttente.update({
-      where: { passageId },
-      data: {
-        salleId: salleCaisseId,
-        serviLe: null,
-        arriveLe: new Date(),
-      },
-    });
-  }
+  const existante = await tx.fileAttente.findFirst({
+    where: {
+      passageId,
+      salleId: sallePharmacieId,
+      serviLe: null,
+    },
+  });
+  if (existante) return existante;
 
   const ordreMax = await tx.fileAttente.aggregate({
-    where: { salleId: salleCaisseId, serviLe: null },
+    where: { salleId: sallePharmacieId, serviLe: null },
     _max: { numeroOrdre: true },
   });
 
   return tx.fileAttente.create({
     data: {
-      salleId: salleCaisseId,
+      salleId: sallePharmacieId,
       passageId,
       numeroOrdre: (ordreMax._max.numeroOrdre ?? 0) + 1,
     },
@@ -35,75 +32,56 @@ async function inscrireFileAttenteCaisse(
 }
 
 /**
- * Inscrit le patient à la caisse après transmission d'une vente pharmacie.
- * Fonctionne pour les clients walk-in (sans file pharmacie) et les patients en file.
- * Le transfert pharmacie → caisse est confirmé automatiquement (facture à encaisser).
+ * Après création de la facture vente : inscrit le client en file pharmacie
+ * et crée un transfert PHARMACIE → CAISSE en EN_ATTENTE (confirmation sur /pharmacie/transferts).
+ * La caisse ne voit le client qu'après confirmation du transfert.
  */
-export async function inscrirePatientVentePharmacieVersCaisse(
+export async function preparerTransfertVentePharmacieVersCaisse(
   pharmacienId: string,
-  dossierId: string
+  dossierId: string,
+  tx?: Prisma.TransactionClient
 ) {
-  const [sallePharmacie, salleCaisse] = await Promise.all([
-    prisma.salle.findUnique({ where: { code: "PHARMACIE" } }),
-    prisma.salle.findUnique({ where: { code: "CAISSE" } }),
-  ]);
-  if (!sallePharmacie || !salleCaisse) {
-    throw new Error("Salles pharmacie ou caisse introuvables.");
-  }
+  const run = async (client: Prisma.TransactionClient) => {
+    const [sallePharmacie, salleCaisse] = await Promise.all([
+      client.salle.findUnique({ where: { code: "PHARMACIE" } }),
+      client.salle.findUnique({ where: { code: "CAISSE" } }),
+    ]);
+    if (!sallePharmacie || !salleCaisse) {
+      throw new Error("Salles pharmacie ou caisse introuvables.");
+    }
 
-  return prisma.$transaction(async (tx) => {
-    let passage = await tx.passage.findFirst({
+    const filePharmacieExistante = await client.fileAttente.findFirst({
       where: {
-        dossierId,
-        statut: { not: "ANNULE" },
-        fileAttente: {
-          is: {
-            serviLe: null,
-            salle: { code: "PHARMACIE" },
-          },
-        },
+        serviLe: null,
+        salleId: sallePharmacie.id,
+        passage: { dossierId, statut: { not: "ANNULE" } },
       },
-      orderBy: { createdAt: "desc" },
-      include: { fileAttente: true },
+      include: { passage: true },
+      orderBy: { arriveLe: "desc" },
     });
 
+    let passage = filePharmacieExistante?.passage ?? null;
+
     if (!passage) {
-      passage = await tx.passage.findFirst({
+      passage = await client.passage.findFirst({
         where: { dossierId, statut: { not: "ANNULE" } },
         orderBy: { createdAt: "desc" },
-        include: { fileAttente: true },
       });
     }
 
     if (!passage) {
-      passage = await tx.passage.create({
+      passage = await client.passage.create({
         data: {
           dossierId,
           statut: "EN_ATTENTE",
           motif: "Vente pharmacie → encaissement caisse",
         },
-        include: { fileAttente: true },
       });
     }
 
-    const filePharmacie = await tx.fileAttente.findFirst({
-      where: {
-        passageId: passage.id,
-        salleId: sallePharmacie.id,
-        serviLe: null,
-      },
-    });
+    await inscrireFileAttentePharmacie(client, passage.id, sallePharmacie.id);
 
-    if (filePharmacie) {
-      await tx.fileAttente.update({
-        where: { id: filePharmacie.id },
-        data: { serviLe: new Date() },
-      });
-    }
-
-    await inscrireFileAttenteCaisse(tx, passage.id, salleCaisse.id);
-
-    let transfert = await tx.transfert.findFirst({
+    const transfertExistant = await client.transfert.findFirst({
       where: {
         dossierId,
         passageId: passage.id,
@@ -114,18 +92,19 @@ export async function inscrirePatientVentePharmacieVersCaisse(
       orderBy: { emisLe: "desc" },
     });
 
+    let transfert = transfertExistant;
+
     if (transfert?.statut === "EN_ATTENTE") {
-      transfert = await tx.transfert.update({
+      transfert = await client.transfert.update({
         where: { id: transfert.id },
         data: {
-          statut: "ACCEPTE",
-          recepteurId: pharmacienId,
-          accepteLe: new Date(),
+          motif: "Facture vente pharmacie → encaissement caisse",
+          emetteurId: pharmacienId,
         },
       });
     } else if (!transfert) {
-      const [numeroTransfert] = await reserverNumerosTransfert(tx, 1);
-      transfert = await tx.transfert.create({
+      const [numeroTransfert] = await reserverNumerosTransfert(client, 1);
+      transfert = await client.transfert.create({
         data: {
           numeroTransfert,
           dossierId,
@@ -133,27 +112,31 @@ export async function inscrirePatientVentePharmacieVersCaisse(
           salleOrigineId: sallePharmacie.id,
           salleDestinationId: salleCaisse.id,
           emetteurId: pharmacienId,
-          recepteurId: pharmacienId,
-          statut: "ACCEPTE",
-          accepteLe: new Date(),
+          statut: "EN_ATTENTE",
           motif: "Facture vente pharmacie → encaissement caisse",
         },
       });
     }
 
-    await tx.passage.update({
+    await client.passage.update({
       where: { id: passage.id },
       data: {
         statut: "EN_ATTENTE",
-        motif: "Encaissement caisse (vente pharmacie)",
+        motif: "Vente pharmacie — confirmer transfert caisse",
       },
     });
 
-    await tx.dossierPatient.update({
+    await client.dossierPatient.update({
       where: { id: dossierId },
       data: { statut: "EN_COURS" },
     });
 
-    return { transfertId: transfert.id, passageId: passage.id };
-  });
+    return { transfertId: transfert!.id, passageId: passage.id };
+  };
+
+  if (tx) return run(tx);
+  return prisma.$transaction(run);
 }
+
+/** @deprecated Utiliser preparerTransfertVentePharmacieVersCaisse */
+export const inscrirePatientVentePharmacieVersCaisse = preparerTransfertVentePharmacieVersCaisse;

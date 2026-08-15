@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     if (corps.action === "transmettre" && corps.venteId) {
       const r = await transmettreVenteACaisse(session.utilisateur.id, corps.venteId);
       return NextResponse.json({
-        message: `Facture ${r.facture.numeroFacture} transmise à la caisse.`,
+        message: `Facture ${r.facture.numeroFacture} créée. Confirmez le transfert vers la caisse dans Patients.`,
         facture: r.facture,
         vente: r.vente,
       });

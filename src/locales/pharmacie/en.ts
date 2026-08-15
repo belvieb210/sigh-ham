@@ -212,7 +212,8 @@ export const pharmacieEn = {
     creerTransmettre: "Create and send to cashier",
     transmettre: "Send to cashier",
     transmise: "Sale sent to cashier.",
-    transmiseFacture: "Invoice {{numero}} created and patient registered at cashier.",
+    transmiseFacture:
+      "Invoice {{numero}} created. Confirm the transfer to cashier in Patients.",
     remettre: "Dispense (FEFO)",
     prenom: "First name",
     nom: "Last name",

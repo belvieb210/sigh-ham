@@ -1,7 +1,6 @@
 import "server-only";
 import { calculerAge } from "@/features/caisse/utils-format";
 import { prisma } from "@/lib/prisma";
-import { listerPatientsFileAttenteSalle } from "@/lib/transferts/visibilite-salle";
 import type { PatientFilePharmacie, StatsPharmacieJour } from "@/lib/pharmacie/types";
 
 const COULEURS_ORIENTATION: Record<string, string> = {
@@ -61,7 +60,31 @@ function debutJourLocal(d = new Date()) {
 }
 
 export async function listerPatientsPharmacie(): Promise<PatientFilePharmacie[]> {
-  const files = await listerPatientsFileAttenteSalle("PHARMACIE");
+  const files = await prisma.fileAttente.findMany({
+    where: {
+      salle: { code: "PHARMACIE" },
+      serviLe: null,
+    },
+    include: {
+      passage: {
+        include: {
+          dossier: {
+            include: {
+              patient: true,
+            },
+          },
+          transferts: {
+            orderBy: { emisLe: "desc" },
+            include: {
+              salleOrigine: { select: { code: true, nom: true } },
+              salleDestination: { select: { code: true, nom: true } },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { numeroOrdre: "asc" },
+  });
   const dossierIds = files.map((f) => f.passage.dossier.id);
 
   const transfertsSortants =
@@ -96,7 +119,10 @@ export async function listerPatientsPharmacie(): Promise<PatientFilePharmacie[]>
   const resultats = files.map((file) => {
     const dossier = file.passage.dossier;
     const patient = dossier.patient;
-    const transfert = file.passage.transferts[0];
+    const transfertEntrant = file.passage.transferts.find(
+      (t) => t.salleDestination.code === "PHARMACIE"
+    );
+    const transfert = transfertEntrant ?? file.passage.transferts[0];
     const sortants = sortantParDossier.get(dossier.id) ?? [];
     const sortant = sortants[0];
     const enRecuperation = sortants.some(

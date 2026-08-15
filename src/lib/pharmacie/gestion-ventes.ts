@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { debiterLotsFefo } from "@/lib/pharmacie/stock-fefo";
-import { inscrirePatientVentePharmacieVersCaisse } from "@/lib/pharmacie/orienter-vente-pharmacie-caisse";
+import { preparerTransfertVentePharmacieVersCaisse } from "@/lib/pharmacie/orienter-vente-pharmacie-caisse";
 
 function decimal(n: { toNumber?: () => number } | number | null | undefined) {
   if (n == null) return 0;
@@ -115,17 +115,14 @@ export async function transmettreVenteACaisse(
       },
     });
 
+    await preparerTransfertVentePharmacieVersCaisse(
+      pharmacienId,
+      vente.dossierId,
+      tx
+    );
+
     return { facture, vente: maj };
   });
-
-  try {
-    await inscrirePatientVentePharmacieVersCaisse(pharmacienId, vente.dossierId);
-  } catch (error) {
-    console.error("[transmettreVenteACaisse] inscription caisse", error);
-    throw new Error(
-      "Facture créée mais impossible d'inscrire le patient à la caisse. Contactez l'administrateur."
-    );
-  }
 
   return resultat;
 }

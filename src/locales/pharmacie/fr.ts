@@ -212,7 +212,8 @@ export const pharmacieFr = {
     enregistrerClient: "Enregistrer le client",
     creerTransmettre: "Créer et transmettre à la caisse",
     transmise: "Vente transmise à la caisse.",
-    transmiseFacture: "Facture {{numero}} créée et patient inscrit à la caisse.",
+    transmiseFacture:
+      "Facture {{numero}} créée. Confirmez le transfert vers la caisse dans Patients.",
     transmettre: "Transmettre à la caisse",
     remettre: "Remettre (FEFO)",
     prenom: "Prénom",

@@ -23,7 +23,7 @@ async function prochaineSequenceAnnuellePatient(
   tx: ClientTransaction,
   date = new Date()
 ): Promise<number> {
-  await tx.$queryRaw`SELECT pg_advisory_xact_lock(8822015)`;
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(8822015)`;
 
   const annee = date.getFullYear();
   const prefixAnnee = String(annee);
@@ -64,7 +64,7 @@ async function prochainNumeroClientPharmacie(
   tx: ClientTransaction,
   date = new Date()
 ): Promise<string> {
-  await tx.$queryRaw`SELECT pg_advisory_xact_lock(8822016)`;
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(8822016)`;
 
   const prefixDate = formaterDateEnregistrement(date);
   const prefixPh = `PH-${prefixDate}`;

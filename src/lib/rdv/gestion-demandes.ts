@@ -107,6 +107,8 @@ export async function creerDemandeRdvDepuisFormulaire(input: {
   dateNaissance?: string;
   motif?: string;
   premiereVisite?: boolean;
+  medecinId?: string;
+  medecinNom?: string;
 }): Promise<{ demande: DemandeRdvDto; reference: string }> {
   const { prenom, nom } = splitNomComplet(input.nomComplet);
   const dateSouhaitee = combinerDateCreneau(input.date, input.creneau);
@@ -130,6 +132,9 @@ export async function creerDemandeRdvDepuisFormulaire(input: {
             : null,
           premiereVisite: input.premiereVisite ?? null,
           dateSouhaitee,
+          notes: input.medecinNom?.trim()
+            ? `Médecin souhaité : ${input.medecinNom.trim()}${input.medecinId ? ` (ref. ${input.medecinId})` : ""}`
+            : null,
           source: "SITE_PUBLIC",
           statut: "DEMANDE",
         },

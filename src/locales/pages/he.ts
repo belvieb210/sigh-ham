@@ -1,6 +1,7 @@
 /** תרגומים HE — תוכן דפים (למעט דף הבית שב-locales/he.ts) */
 
 import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+import { extensionFormRdvMedecinEn } from "./fragments/extension-form-rdv-medecin-en";
 
 export const pagesHe = {
   contact: {
@@ -139,7 +140,7 @@ export const pagesHe = {
       voirCarte: "צפייה במפה →",
     },
     form: {
-      etapes: ["שירות", "תאריך ושעה", "הפרטים שלכם", "אישור"],
+      etapes: ["שירות", "תאריך ושעה", "הפרטים שלכם", "Doctor", "אישור"],
       typeTitre: "איזה סוג שירות אתם צריכים?",
       typeSousTitre: "בחרו את השירות המתאים לצרכים שלכם",
       dateTitre: "בחרו תאריך ומועד",
@@ -168,6 +169,10 @@ export const pagesHe = {
       date: "תאריך",
       heure: "שעה",
       patient: "מטופל",
+      medecinTitre: extensionFormRdvMedecinEn.medecinTitre,
+      medecinSousTitre: extensionFormRdvMedecinEn.medecinSousTitre,
+      sansPreference: extensionFormRdvMedecinEn.sansPreference,
+      medecin: extensionFormRdvMedecinEn.medecin,
       autreRdv: "קביעת תור נוסף",
       sansRdv: "אפשר גם ללא תור",
     },

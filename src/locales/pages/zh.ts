@@ -1,6 +1,7 @@
 /** 中文翻译 — 页面内容（首页内容已在 locales/zh.ts 中） */
 
 import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+import { extensionFormRdvMedecinEn } from "./fragments/extension-form-rdv-medecin-en";
 
 export const pagesZh = {
   contact: {
@@ -139,7 +140,7 @@ export const pagesZh = {
       voirCarte: "查看地图 →",
     },
     form: {
-      etapes: ["服务", "日期与时间", "您的信息", "确认"],
+      etapes: ["服务", "日期与时间", "您的信息", "Doctor", "确认"],
       typeTitre: "您需要哪种服务？",
       typeSousTitre: "请选择符合您需求的服务",
       dateTitre: "选择日期和时间段",
@@ -168,6 +169,10 @@ export const pagesZh = {
       date: "日期",
       heure: "时间",
       patient: "患者",
+      medecinTitre: extensionFormRdvMedecinEn.medecinTitre,
+      medecinSousTitre: extensionFormRdvMedecinEn.medecinSousTitre,
+      sansPreference: extensionFormRdvMedecinEn.sansPreference,
+      medecin: extensionFormRdvMedecinEn.medecin,
       autreRdv: "再次预约",
       sansRdv: "可无需预约",
     },

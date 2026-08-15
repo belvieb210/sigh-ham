@@ -4,12 +4,14 @@ import {
   reponseNonAutoriseClient,
 } from "@/lib/auth/garde-api-client";
 import { prisma } from "@/lib/prisma";
+import { assurerPagesPubliquesCms } from "@/lib/client/assurer-pages-publiques-cms";
 
 export async function GET() {
   const session = await obtenirSessionApiClient();
   if (!session) return reponseNonAutoriseClient();
 
   try {
+    await assurerPagesPubliquesCms();
     const pages = await prisma.pagePublique.findMany({
       orderBy: { cle: "asc" },
     });

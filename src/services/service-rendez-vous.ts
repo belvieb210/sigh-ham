@@ -99,6 +99,8 @@ export async function soumettreReservationRendezVous(
       dateNaissance: donnees.dateNaissance,
       motif: donnees.motif,
       premiereVisite: donnees.premiereVisite,
+      medecinId: donnees.medecinId,
+      medecinNom: donnees.medecinNom,
       consentement: donnees.consentement,
     }),
   });

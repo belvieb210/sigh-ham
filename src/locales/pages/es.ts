@@ -1,6 +1,7 @@
 /** Traducciones ES — contenido de páginas (excluye inicio ya en locales/es.ts) */
 
 import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+import { extensionFormRdvMedecinEn } from "./fragments/extension-form-rdv-medecin-en";
 
 export const pagesEs = {
   contact: {
@@ -139,7 +140,7 @@ export const pagesEs = {
       voirCarte: "Ver mapa →",
     },
     form: {
-      etapes: ["Servicio", "Fecha y hora", "Sus datos", "Confirmación"],
+      etapes: ["Servicio", "Fecha y hora", "Sus datos", "Doctor", "Confirmación"],
       typeTitre: "¿Qué tipo de servicio necesita?",
       typeSousTitre: "Seleccione el servicio que se adapte a sus necesidades",
       dateTitre: "Elija una fecha y franja horaria",
@@ -168,6 +169,10 @@ export const pagesEs = {
       date: "Fecha",
       heure: "Hora",
       patient: "Paciente",
+      medecinTitre: extensionFormRdvMedecinEn.medecinTitre,
+      medecinSousTitre: extensionFormRdvMedecinEn.medecinSousTitre,
+      sansPreference: extensionFormRdvMedecinEn.sansPreference,
+      medecin: extensionFormRdvMedecinEn.medecin,
       autreRdv: "Reservar otra cita",
       sansRdv: "Posible sin cita previa",
     },

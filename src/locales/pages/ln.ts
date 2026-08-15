@@ -1,6 +1,7 @@
 /** Traductions LN — contenu ya ba pages (libanda ya accueil ezali déjà na locales/ln.ts) */
 
 import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+import { extensionFormRdvMedecinEn } from "./fragments/extension-form-rdv-medecin-en";
 
 export const pagesLn = {
   contact: {
@@ -139,7 +140,7 @@ export const pagesLn = {
       voirCarte: "Talá carte →",
     },
     form: {
-      etapes: ["Prestation", "Date & heure", "Ba infos na bino", "Confirmation"],
+      etapes: ["Prestation", "Date & heure", "Ba infos na bino", "Doctor", "Confirmation"],
       typeTitre: "Prestation ya ndenge nini ozali kolinga ?",
       typeSousTitre: "Pona service oyo ekokani na besoin na bino",
       dateTitre: "Pona date mpe créneau",
@@ -168,6 +169,10 @@ export const pagesLn = {
       date: "Date",
       heure: "Heure",
       patient: "Patient",
+      medecinTitre: extensionFormRdvMedecinEn.medecinTitre,
+      medecinSousTitre: extensionFormRdvMedecinEn.medecinSousTitre,
+      sansPreference: extensionFormRdvMedecinEn.sansPreference,
+      medecin: extensionFormRdvMedecinEn.medecin,
       autreRdv: "Zwa rendez-vous mosusu",
       sansRdv: "Sans RDV ekoki",
     },

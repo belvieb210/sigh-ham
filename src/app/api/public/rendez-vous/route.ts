@@ -13,6 +13,8 @@ export async function POST(request: NextRequest) {
       dateNaissance?: string;
       motif?: string;
       premiereVisite?: boolean;
+      medecinId?: string;
+      medecinNom?: string;
       consentement?: boolean;
     };
 
@@ -50,6 +52,8 @@ export async function POST(request: NextRequest) {
       dateNaissance: body.dateNaissance,
       motif: body.motif,
       premiereVisite: body.premiereVisite,
+      medecinId: body.medecinId,
+      medecinNom: body.medecinNom,
     });
 
     return NextResponse.json({ succes: true, reference }, { status: 201 });

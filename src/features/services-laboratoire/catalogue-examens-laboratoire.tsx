@@ -1,9 +1,11 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Filter,
   Loader2,
@@ -17,6 +19,10 @@ import { Bouton } from "@/components/ui/bouton";
 import { INFORMATIONS_HOPITAL } from "@/constants/navigation";
 import { useContenuServicesLaboratoire } from "@/hooks/use-contenu-page";
 import { useExamensPublic } from "@/hooks/use-examens-public";
+import {
+  useColonnesGrilleExamens,
+  useTaillePageExamens,
+} from "@/hooks/use-pagination-examens";
 import {
   formaterDelaiExamenPublic,
   formaterPrixExamenPublic,
@@ -240,6 +246,13 @@ export function CatalogueExamensLaboratoire() {
   const [examenSelectionne, setExamenSelectionne] = useState<ExamenPublic | null>(
     null
   );
+  const [pageCourante, setPageCourante] = useState(1);
+  const colonnes = useColonnesGrilleExamens();
+  const taillePage = useTaillePageExamens(colonnes);
+
+  useEffect(() => {
+    setPageCourante(1);
+  }, [recherche, categorieActive, serviceActif, tri, taillePage]);
 
   const categories = useMemo(() => {
     const comptes = new Map<string, number>();
@@ -271,6 +284,13 @@ export function CatalogueExamensLaboratoire() {
         tri,
       }),
     [examens, recherche, categorieActive, serviceActif, tri]
+  );
+
+  const nombrePages = Math.max(1, Math.ceil(examensFiltres.length / taillePage));
+  const pageEffective = Math.min(pageCourante, nombrePages);
+  const examensPage = examensFiltres.slice(
+    (pageEffective - 1) * taillePage,
+    pageEffective * taillePage
   );
 
   const titreListe =
@@ -438,15 +458,52 @@ export function CatalogueExamensLaboratoire() {
                 {catalogue.aucunResultat}
               </p>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {examensFiltres.map((examen) => (
-                  <CarteExamen
-                    key={examen.id}
-                    examen={examen}
-                    onDetails={setExamenSelectionne}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {examensPage.map((examen) => (
+                    <CarteExamen
+                      key={examen.id}
+                      examen={examen}
+                      onDetails={setExamenSelectionne}
+                    />
+                  ))}
+                </div>
+
+                {nombrePages > 1 ? (
+                  <nav
+                    className="mt-6 flex flex-col items-center justify-between gap-3 rounded-xl border border-gris-bordure bg-white px-4 py-3 sm:flex-row"
+                    aria-label="Pagination du catalogue"
+                  >
+                    <p className="text-xs text-texte-secondaire">
+                      Page {pageEffective} sur {nombrePages} ·{" "}
+                      {examensFiltres.length} examen
+                      {examensFiltres.length > 1 ? "s" : ""}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={pageEffective <= 1}
+                        onClick={() => setPageCourante((p) => Math.max(1, p - 1))}
+                        className="inline-flex items-center gap-1 rounded-lg border border-gris-bordure px-3 py-1.5 text-sm font-semibold text-texte-principal transition-colors hover:bg-gris-tres-clair disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Précédent
+                      </button>
+                      <button
+                        type="button"
+                        disabled={pageEffective >= nombrePages}
+                        onClick={() =>
+                          setPageCourante((p) => Math.min(nombrePages, p + 1))
+                        }
+                        className="inline-flex items-center gap-1 rounded-lg border border-gris-bordure px-3 py-1.5 text-sm font-semibold text-texte-principal transition-colors hover:bg-gris-tres-clair disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Suivant
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </nav>
+                ) : null}
+              </>
             )}
           </div>
         </div>

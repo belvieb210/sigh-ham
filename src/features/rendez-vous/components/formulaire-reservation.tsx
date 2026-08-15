@@ -16,7 +16,9 @@ import { Bouton } from "@/components/ui/bouton";
 import { CarteTypePrestation } from "@/features/rendez-vous/components/carte-type-prestation";
 import { BarreProgressionReservation } from "@/features/rendez-vous/components/barre-progression-reservation";
 import { useContenuRendezVous } from "@/hooks/use-contenu-page";
+import { useMedecinsVitrinePublic } from "@/hooks/use-medecins-vitrine-public";
 import { useSchemaReservationRendezVous } from "@/hooks/use-schemas-validation";
+import { AvatarUtilisateur } from "@/components/ui/avatar-utilisateur";
 import { estLangueSupportee } from "@/lib/i18n-config";
 import { formaterDateAffichage, obtenirLocaleDate } from "@/lib/locale-date";
 import type { IdTypePrestation } from "@/constants/rendez-vous";
@@ -37,6 +39,8 @@ export function FormulaireReservation() {
   const { t, i18n } = useTranslation();
   const schemaReservationRendezVous = useSchemaReservationRendezVous();
   const { form, typesPrestation } = useContenuRendezVous();
+  const { data: medecins = [], isLoading: medecinsChargement } =
+    useMedecinsVitrinePublic();
   const localeDate = obtenirLocaleDate(
     estLangueSupportee(i18n.language) ? i18n.language : "fr"
   );
@@ -128,7 +132,7 @@ export function FormulaireReservation() {
       const reponse = await soumettreReservationRendezVous(resultat.data);
       if (reponse.succes && reponse.reference) {
         setReference(reponse.reference);
-        setEtape(4);
+        setEtape(5);
       }
     } catch {
       setMessageErreur(t("messages.erreurGenerique"));
@@ -451,9 +455,92 @@ export function FormulaireReservation() {
           </motion.div>
         )}
 
-        {etape === 4 && reference && (
+        {etape === 4 && (
           <motion.div
             key="etape-4"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2 }}
+          >
+            <h3 className="text-lg font-bold text-[#2d2a6e]">
+              {form.medecinTitre}
+            </h3>
+            <p className="mt-1 text-sm text-texte-secondaire">
+              {form.medecinSousTitre}
+            </p>
+
+            <div className="mt-6 space-y-3">
+              <button
+                type="button"
+                onClick={() => {
+                  mettreAJour("medecinId", "");
+                  mettreAJour("medecinNom", "");
+                }}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all",
+                  !donnees.medecinId
+                    ? "border-bleu-medical bg-bleu-medical-clair/50 ring-2 ring-bleu-medical/20"
+                    : "border-gris-bordure bg-white hover:border-bleu-medical/30"
+                )}
+              >
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gris-tres-clair text-bleu-medical">
+                  <User className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-semibold text-texte-principal">
+                  {form.sansPreference}
+                </span>
+              </button>
+
+              {medecinsChargement ? (
+                <p className="text-sm text-texte-secondaire">
+                  Chargement des médecins…
+                </p>
+              ) : (
+                medecins.map((medecin) => {
+                  const nomComplet = `Dr ${medecin.prenom} ${medecin.nom}`;
+                  const selectionne = donnees.medecinId === medecin.id;
+                  return (
+                    <button
+                      key={medecin.id}
+                      type="button"
+                      onClick={() => {
+                        mettreAJour("medecinId", medecin.id);
+                        mettreAJour("medecinNom", nomComplet);
+                      }}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all",
+                        selectionne
+                          ? "border-bleu-medical bg-bleu-medical-clair/50 ring-2 ring-bleu-medical/20"
+                          : "border-gris-bordure bg-white hover:border-bleu-medical/30"
+                      )}
+                    >
+                      <AvatarUtilisateur
+                        prenom={medecin.prenom}
+                        nom={medecin.nom}
+                        photoUrl={medecin.photoUrl}
+                        taille="md"
+                        forme="rond"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold text-texte-principal">
+                          {nomComplet}
+                        </span>
+                        <span className="block truncate text-xs text-texte-secondaire">
+                          {medecin.specialite}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {etape === 5 && reference && (
+          <motion.div
+            key="etape-5"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
@@ -496,6 +583,12 @@ export function FormulaireReservation() {
                   <dd className="font-semibold">{donnees.creneau}</dd>
                 </div>
                 <div className="flex justify-between gap-4">
+                  <dt className="text-texte-secondaire">{form.medecin}</dt>
+                  <dd className="font-semibold text-right">
+                    {donnees.medecinNom?.trim() || form.sansPreference}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
                   <dt className="text-texte-secondaire">{form.patient}</dt>
                   <dd className="font-semibold text-right">{donnees.nomComplet}</dd>
                 </div>
@@ -513,7 +606,7 @@ export function FormulaireReservation() {
         )}
       </AnimatePresence>
 
-      {etape < 4 && (
+      {etape < 5 && (
         <div className="mt-8 flex flex-col-reverse gap-3 border-t border-gris-bordure pt-6 sm:flex-row sm:justify-between">
           {etape > 1 ? (
             <Bouton
@@ -529,7 +622,7 @@ export function FormulaireReservation() {
             <div />
           )}
 
-          {etape < 3 ? (
+          {etape < 4 ? (
             <Bouton
               type="button"
               onClick={allerSuivant}

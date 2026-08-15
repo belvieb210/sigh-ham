@@ -69,6 +69,8 @@ export function useSchemaReservationRendezVous() {
         dateNaissance: z.string().optional(),
         motif: z.string().max(500, t("validation.motifMax")).optional(),
         premiereVisite: z.boolean().optional(),
+        medecinId: z.string().optional(),
+        medecinNom: z.string().optional(),
         consentement: z.literal(true, {
           errorMap: () => ({
             message: t("validation.consentementRequis"),

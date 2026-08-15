@@ -155,7 +155,7 @@ export const clientEn = {
   },
   pages: {
     titre: "Public pages",
-    description: "Copy and images for About, Home, Services, Contact, Campaigns.",
+    description: "Copy and images for About, Home, Services, Contact, Campaigns, Appointments and Lab exams.",
     fil: "Pages",
     vide: "No pages yet.",
     titreChamp: "Page title",

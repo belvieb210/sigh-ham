@@ -157,7 +157,7 @@ export const clientFr = {
   pages: {
     titre: "Pages publiques",
     description:
-      "Textes et images des pages À propos, Accueil, Services, Contact, Campagnes.",
+      "Textes et images des pages À propos, Accueil, Services, Contact, Campagnes, Rendez-vous et Examens laboratoire.",
     fil: "Pages",
     vide: "Aucune page enregistrée.",
     titreChamp: "Titre de la page",

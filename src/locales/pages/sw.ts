@@ -1,6 +1,7 @@
 /** Translations SW — page content (excluding home already in locales/sw.ts) */
 
 import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+import { extensionFormRdvMedecinEn } from "./fragments/extension-form-rdv-medecin-en";
 
 export const pagesSw = {
   contact: {
@@ -139,7 +140,7 @@ export const pagesSw = {
       voirCarte: "Angalia ramani →",
     },
     form: {
-      etapes: ["Huduma", "Tarehe na muda", "Maelezo yako", "Uthibitisho"],
+      etapes: ["Huduma", "Tarehe na muda", "Maelezo yako", "Doctor", "Uthibitisho"],
       typeTitre: "Unahitaji aina gani ya huduma?",
       typeSousTitre: "Chagua huduma inayolingana na mahitaji yako",
       dateTitre: "Chagua tarehe na muda",
@@ -168,6 +169,10 @@ export const pagesSw = {
       date: "Tarehe",
       heure: "Muda",
       patient: "Mgonjwa",
+      medecinTitre: extensionFormRdvMedecinEn.medecinTitre,
+      medecinSousTitre: extensionFormRdvMedecinEn.medecinSousTitre,
+      sansPreference: extensionFormRdvMedecinEn.sansPreference,
+      medecin: extensionFormRdvMedecinEn.medecin,
       autreRdv: "Hifadhi miadi nyingine",
       sansRdv: "Kuja bila miadi kunawezekana",
     },

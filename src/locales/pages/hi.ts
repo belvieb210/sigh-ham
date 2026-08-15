@@ -1,6 +1,7 @@
 /** Translations HI — page content (excluding home already in locales/hi.ts) */
 
 import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+import { extensionFormRdvMedecinEn } from "./fragments/extension-form-rdv-medecin-en";
 
 export const pagesHi = {
   contact: {
@@ -139,7 +140,7 @@ export const pagesHi = {
       voirCarte: "नक्शा देखें →",
     },
     form: {
-      etapes: ["सेवा", "तारीख और समय", "आपका विवरण", "पुष्टि"],
+      etapes: ["सेवा", "तारीख और समय", "आपका विवरण", "Doctor", "पुष्टि"],
       typeTitre: "आपको किस प्रकार की सेवा चाहिए?",
       typeSousTitre: "अपनी आवश्यकताओं के अनुसार सेवा चुनें",
       dateTitre: "तारीख और समय स्लॉट चुनें",
@@ -168,6 +169,10 @@ export const pagesHi = {
       date: "तारीख",
       heure: "समय",
       patient: "रोगी",
+      medecinTitre: extensionFormRdvMedecinEn.medecinTitre,
+      medecinSousTitre: extensionFormRdvMedecinEn.medecinSousTitre,
+      sansPreference: extensionFormRdvMedecinEn.sansPreference,
+      medecin: extensionFormRdvMedecinEn.medecin,
       autreRdv: "एक और अपॉइंटमेंट बुक करें",
       sansRdv: "बिना अपॉइंटमेंट आना संभव",
     },

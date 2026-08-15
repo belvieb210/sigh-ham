@@ -1,6 +1,8 @@
+import { formaterMontantCaisse } from "@/features/caisse/utils-format";
+
+/** Tarifs catalogue vitrine — montants en USD (comme en caisse / admin). */
 export function formaterPrixExamenPublic(prix: number): string {
-  const arrondi = Math.round(prix);
-  return `${arrondi.toLocaleString("fr-FR")} FC`;
+  return formaterMontantCaisse(prix, "USD");
 }
 
 export function formaterDelaiExamenPublic(delaiHeures: number): string {

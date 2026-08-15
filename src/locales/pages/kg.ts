@@ -1,6 +1,7 @@
 /** Traductions KG — makanda ya ba pages (libanda ya ebandeli kele déjà na locales/kg.ts) */
 
 import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+import { extensionFormRdvMedecinEn } from "./fragments/extension-form-rdv-medecin-en";
 
 export const pagesKg = {
   contact: {
@@ -139,7 +140,7 @@ export const pagesKg = {
       voirCarte: "Tala carte →",
     },
     form: {
-      etapes: ["Prestation", "Date & heure", "Ba infos na beno", "Confirmation"],
+      etapes: ["Prestation", "Date & heure", "Ba infos na beno", "Doctor", "Confirmation"],
       typeTitre: "Prestation ya ndenge nini beno ke linga ?",
       typeSousTitre: "Pona service oyo ekokani na besoin na beno",
       dateTitre: "Pona date mpe créneau",
@@ -168,6 +169,10 @@ export const pagesKg = {
       date: "Date",
       heure: "Heure",
       patient: "Patient",
+      medecinTitre: extensionFormRdvMedecinEn.medecinTitre,
+      medecinSousTitre: extensionFormRdvMedecinEn.medecinSousTitre,
+      sansPreference: extensionFormRdvMedecinEn.sansPreference,
+      medecin: extensionFormRdvMedecinEn.medecin,
       autreRdv: "Zwa rendez-vous mosusu",
       sansRdv: "Sans RDV ke koka",
     },

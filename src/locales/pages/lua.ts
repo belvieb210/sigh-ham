@@ -1,6 +1,7 @@
 /** Traductions LUA — makanda ya ba pages (libanda ya munda kele déjà na locales/lua.ts) */
 
 import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+import { extensionFormRdvMedecinEn } from "./fragments/extension-form-rdv-medecin-en";
 
 export const pagesLua = {
   contact: {
@@ -139,7 +140,7 @@ export const pagesLua = {
       voirCarte: "Tala carte →",
     },
     form: {
-      etapes: ["Prestation", "Date & heure", "Ba infos bwa bwe", "Confirmation"],
+      etapes: ["Prestation", "Date & heure", "Ba infos bwa bwe", "Doctor", "Confirmation"],
       typeTitre: "Prestation ya ndenge nini bwe ke linga ?",
       typeSousTitre: "Pona service oyo ekokani na besoin bwa bwe",
       dateTitre: "Pona date ne créneau",
@@ -168,6 +169,10 @@ export const pagesLua = {
       date: "Date",
       heure: "Heure",
       patient: "Patient",
+      medecinTitre: extensionFormRdvMedecinEn.medecinTitre,
+      medecinSousTitre: extensionFormRdvMedecinEn.medecinSousTitre,
+      sansPreference: extensionFormRdvMedecinEn.sansPreference,
+      medecin: extensionFormRdvMedecinEn.medecin,
       autreRdv: "Zwa rendez-vous mosusu",
       sansRdv: "Sans RDV ke koka",
     },

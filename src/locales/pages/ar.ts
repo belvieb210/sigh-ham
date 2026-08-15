@@ -1,6 +1,7 @@
 /** ترجمات عربية — محتوى الصفحات (باستثناء الرئيسية الموجودة في locales/ar.ts) */
 
 import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+import { extensionFormRdvMedecinEn } from "./fragments/extension-form-rdv-medecin-en";
 
 export const pagesAr = {
   contact: {
@@ -139,7 +140,7 @@ export const pagesAr = {
       voirCarte: "عرض الخريطة ←",
     },
     form: {
-      etapes: ["الخدمة", "التاريخ والوقت", "بياناتكم", "التأكيد"],
+      etapes: ["الخدمة", "التاريخ والوقت", "بياناتكم", "Doctor", "التأكيد"],
       typeTitre: "ما نوع الخدمة التي تحتاجونها؟",
       typeSousTitre: "اختاروا الخدمة المناسبة لاحتياجاتكم",
       dateTitre: "اختاروا تاريخاً وموعداً",
@@ -168,6 +169,10 @@ export const pagesAr = {
       date: "التاريخ",
       heure: "الوقت",
       patient: "المريض",
+      medecinTitre: extensionFormRdvMedecinEn.medecinTitre,
+      medecinSousTitre: extensionFormRdvMedecinEn.medecinSousTitre,
+      sansPreference: extensionFormRdvMedecinEn.sansPreference,
+      medecin: extensionFormRdvMedecinEn.medecin,
       autreRdv: "حجز موعد آخر",
       sansRdv: "ممكن دون موعد مسبق",
     },

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import { filtrerOrientationsMedecinsExternes } from "@/constants/medecins-externes";
+import { filtrerOrientationsEglise } from "@/constants/eglise";
 import {
   Search,
   Printer,
@@ -69,7 +70,9 @@ export function ActionsRapidesReception({
     ];
     const codes = espace.prefixeApi.includes("medecins-externes")
       ? filtrerOrientationsMedecinsExternes(brutes)
-      : brutes;
+      : espace.prefixeApi.includes("eglise")
+        ? filtrerOrientationsEglise(brutes)
+        : brutes;
     if (codes.length === 0) {
       setErreur(t("reception.actions.destinationRequise"));
       setMessage(null);

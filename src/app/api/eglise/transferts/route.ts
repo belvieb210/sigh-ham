@@ -3,6 +3,7 @@ import { obtenirSessionApiEglise } from "@/lib/auth/garde-api-eglise";
 import { listerPatientsTransferesEglise } from "@/lib/eglise/lister-patients";
 import { assurerDossierPrenuptial } from "@/lib/eglise/pack-prenuptial";
 import { reorienterPatientDepuisEglise } from "@/lib/eglise/reorienter-patient";
+import { filtrerOrientationsEglise } from "@/constants/eglise";
 import { nettoyerFilesAttenteNonConfirmees } from "@/lib/transferts/visibilite-salle";
 import {
   parserDonneesTransfert,
@@ -19,14 +20,15 @@ const OPTIONS_EGLISE = {
 };
 
 function extraireOrientations(body: unknown): string[] {
-  if (!body || typeof body !== "object") return [];
+  if (!body || typeof body !== "object") return ["CAISSE"];
   const b = body as { orientations?: string[]; orientation?: string };
-  return [
+  const brutes = [
     ...new Set(
       (b.orientations?.filter(Boolean) ??
         (b.orientation?.trim() ? [b.orientation.trim()] : [])) as string[]
     ),
   ];
+  return filtrerOrientationsEglise(brutes);
 }
 
 function extrairePrenuptial(body: Record<string, unknown>) {
@@ -103,12 +105,14 @@ export async function POST(request: NextRequest) {
         orientation?: string;
         orientations?: string[];
       };
-      const orientations = [
-        ...new Set(
-          (corps.orientations?.filter(Boolean) ??
-            (corps.orientation?.trim() ? [corps.orientation.trim()] : [])) as string[]
-        ),
-      ];
+      let orientations = filtrerOrientationsEglise(
+        [
+          ...new Set(
+            (corps.orientations?.filter(Boolean) ??
+              (corps.orientation?.trim() ? [corps.orientation.trim()] : [])) as string[]
+          ),
+        ]
+      );
 
       if (orientations.length === 0) {
         const donnees = parserDonneesTransfertManuel(body);
@@ -116,7 +120,7 @@ export async function POST(request: NextRequest) {
         if (erreur) {
           return NextResponse.json({ message: erreur }, { status: 400 });
         }
-        orientations.push(donnees.orientation!);
+        orientations = filtrerOrientationsEglise([donnees.orientation!]);
       }
 
       let dossierId = corps.dossierId?.trim() || "";

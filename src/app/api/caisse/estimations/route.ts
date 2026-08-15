@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { obtenirSessionApiCaisse } from "@/lib/auth/garde-api-caisse";
 import { listerEstimationsPourCaisse } from "@/lib/eglise/estimations-convention";
+import { listerEstimationsPharmacieClientPourCaisse } from "@/lib/caisse/estimations-pharmacie-client";
 
 export async function GET() {
   const session = await obtenirSessionApiCaisse();
@@ -9,7 +10,11 @@ export async function GET() {
   }
 
   try {
-    const estimations = await listerEstimationsPourCaisse();
+    const [convention, pharmacieClient] = await Promise.all([
+      listerEstimationsPourCaisse(),
+      listerEstimationsPharmacieClientPourCaisse(),
+    ]);
+    const estimations = [...pharmacieClient, ...convention];
     const totaux = estimations.reduce(
       (acc, e) => ({
         totalPatients: acc.totalPatients + e.totalPatientUsd,

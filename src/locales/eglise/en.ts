@@ -117,6 +117,24 @@ export const egliseEn = {
     dejaEmis: "Certificate already issued",
     succes: "Certificate generated.",
   },
+  examensDisponibles: {
+    titre: "Available exams",
+    description:
+      "Validated results (Dr approved) for premarital files in the convention service.",
+    fil: "Available exams",
+    sousTitreListe: "{{count}} patient(s) shown",
+    vide: "No Dr-approved exams for your patients at this time.",
+    erreur: "Unable to load available exams.",
+    imprimerTous: "Print results",
+    imprimerSelection: "Print ({{count}})",
+    factureTitre: "Invoice exams",
+    examensDisponiblesFacture: "{{count}} available",
+    examensEnAttente: "{{count}} pending",
+    examensEnAttenteInfo:
+      "These exams are on the invoice but results are not yet validated (Dr approved).",
+    tousExamensDisponibles: "All exams on this invoice are available.",
+    erreurDetail: "Unable to load invoice details.",
+  },
   erreurs: {
     chargementPatients: "Unable to load patients.",
   },

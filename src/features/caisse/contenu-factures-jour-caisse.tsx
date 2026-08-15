@@ -25,6 +25,7 @@ import {
   formaterMontantCaisse,
   initiales,
 } from "@/features/caisse/utils-format";
+import { BadgeTypePersonneCaisse } from "@/features/caisse/badge-type-personne-caisse";
 import { imprimerEtiquettesTubesFacture } from "@/lib/caisse/imprimer-etiquettes-tubes";
 import { imprimerRecuCaisseThermique } from "@/lib/caisse/imprimer-recu-thermique";
 import type { FactureResumeJour } from "@/lib/caisse/types";
@@ -404,15 +405,22 @@ export function ContenuFacturesJourCaisse({
                               </span>
                             </td>
                             <td className="px-2 py-1.5">
-                              <p className="font-semibold text-texte-principal">
-                                {f.prenom} {f.nom}
+                              <p className="flex flex-wrap items-center gap-1.5 font-semibold text-texte-principal">
+                                <span>
+                                  {f.prenom} {f.nom}
+                                </span>
+                                <BadgeTypePersonneCaisse estClientWalkIn={f.estClientWalkIn} />
                               </p>
                               <p className="text-xs text-texte-secondaire">
                                 ID: {f.numeroPatient}
                               </p>
                             </td>
                             <td className="px-2 py-1.5 font-semibold text-texte-principal">
-                              {t("caisse.factures.nbExamens", { count: nb })}
+                              {f.estClientWalkIn
+                                ? t("caisse.facturation.nbMedicaments", {
+                                    count: f.nombreLignes || nb,
+                                  })
+                                : t("caisse.factures.nbExamens", { count: nb })}
                             </td>
                             <td className="px-2 py-1.5 text-right font-bold tabular-nums text-texte-principal">
                               {formaterMontantCaisse(f.montantTotal, f.devise)}

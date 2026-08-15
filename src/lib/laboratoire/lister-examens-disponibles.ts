@@ -2,6 +2,10 @@ import "server-only";
 import { patientCorrespondPageStatut, trierPatientsParArriveeDesc } from "@/features/laboratoire/utils-affichage";
 import { listerPatientsLaboratoire } from "@/lib/laboratoire/lister-patients-laboratoire";
 import { prisma } from "@/lib/prisma";
+import {
+  chargerDossiersAccueilEglise,
+  chargerDossiersVisiteEglise,
+} from "@/lib/reception/mapper-visite-patient";
 
 /** Patients avec au moins un examen Dr approuve (résultats validés). */
 export async function listerPatientsExamensDisponibles() {
@@ -27,5 +31,21 @@ export async function listerPatientsExamensDisponiblesMedecinExterne(
     select: { id: true },
   });
   const idsAutorises = new Set(dossiersAutorises.map((d) => d.id));
+  return tous.filter((p) => idsAutorises.has(p.dossierId));
+}
+
+/** Examens disponibles limités aux dossiers prénuptiaux / service Église. */
+export async function listerPatientsExamensDisponiblesEglise() {
+  const tous = await listerPatientsExamensDisponibles();
+  if (tous.length === 0) return [];
+
+  const [accueil, visites] = await Promise.all([
+    chargerDossiersAccueilEglise(),
+    chargerDossiersVisiteEglise(),
+  ]);
+  const idsAutorises = new Set([
+    ...accueil.map((d) => d.id),
+    ...visites.map((d) => d.id),
+  ]);
   return tous.filter((p) => idsAutorises.has(p.dossierId));
 }

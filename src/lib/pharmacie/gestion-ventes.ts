@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import { reorienterPatientDepuisPharmacie } from "@/lib/pharmacie/reorienter-patient-pharmacie";
 import { debiterLotsFefo } from "@/lib/pharmacie/stock-fefo";
+import { inscrirePatientVentePharmacieVersCaisse } from "@/lib/pharmacie/orienter-vente-pharmacie-caisse";
 
 function decimal(n: { toNumber?: () => number } | number | null | undefined) {
   if (n == null) return 0;
@@ -11,7 +11,9 @@ function decimal(n: { toNumber?: () => number } | number | null | undefined) {
 }
 
 async function prochainNumeroFacture() {
-  const n = await prisma.facture.count();
+  const n = await prisma.facture.count({
+    where: { numeroFacture: { startsWith: "FAC-PH-" } },
+  });
   return `FAC-PH-${String(n + 1).padStart(6, "0")}`;
 }
 
@@ -117,11 +119,12 @@ export async function transmettreVenteACaisse(
   });
 
   try {
-    await reorienterPatientDepuisPharmacie(pharmacienId, vente.dossierId, [
-      "CAISSE",
-    ]);
-  } catch {
-    /* patient peut ne pas être en file pharmacie (vente directe hors file) */
+    await inscrirePatientVentePharmacieVersCaisse(pharmacienId, vente.dossierId);
+  } catch (error) {
+    console.error("[transmettreVenteACaisse] inscription caisse", error);
+    throw new Error(
+      "Facture créée mais impossible d'inscrire le patient à la caisse. Contactez l'administrateur."
+    );
   }
 
   return resultat;

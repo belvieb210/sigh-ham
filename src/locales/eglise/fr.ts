@@ -117,6 +117,24 @@ export const egliseFr = {
     dejaEmis: "Certificat déjà émis",
     succes: "Certificat généré.",
   },
+  examensDisponibles: {
+    titre: "Examens disponibles",
+    description:
+      "Résultats validés (Dr approuve) pour les dossiers prénuptiaux du service conventionné.",
+    fil: "Examens disponibles",
+    sousTitreListe: "{{count}} patient(s) affiché(s)",
+    vide: "Aucun examen Dr approuve pour vos patients pour le moment.",
+    erreur: "Impossible de charger les examens disponibles.",
+    imprimerTous: "Imprimer les résultats",
+    imprimerSelection: "Imprimer ({{count}})",
+    factureTitre: "Examens de la facture",
+    examensDisponiblesFacture: "{{count}} disponible(s)",
+    examensEnAttente: "{{count}} en attente",
+    examensEnAttenteInfo:
+      "Ces examens figurent sur la facture mais les résultats ne sont pas encore validés (Dr approuve).",
+    tousExamensDisponibles: "Tous les examens de cette facture sont disponibles.",
+    erreurDetail: "Impossible de charger le détail de la facture.",
+  },
   erreurs: {
     chargementPatients: "Impossible de charger les patients.",
   },

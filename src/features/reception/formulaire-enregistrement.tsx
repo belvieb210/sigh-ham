@@ -22,6 +22,7 @@ import {
   ORIENTATIONS_RECEPTION,
 } from "@/constants/reception";
 import { ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES } from "@/constants/medecins-externes";
+import { ORIENTATIONS_RAPIDES_EGLISE } from "@/constants/eglise";
 import { useTraductionsReception } from "@/hooks/use-traductions-reception";
 import { ZonePhotoPatient } from "@/features/reception/zone-photo-patient";
 import { SelectionExamensInitiaux } from "@/features/reception/selection-examens-initiaux";
@@ -182,13 +183,20 @@ export const FormulaireEnregistrement = forwardRef<
   const motifEstAutre = motifPrincipal === "autre";
   const champsEglise = Boolean(espace.afficherChampsEglise);
   const estMedecinsExternes = espace.prefixeApi.includes("medecins-externes");
+  const estEglise = espace.prefixeApi.includes("eglise");
   const orientationsWizard = estMedecinsExternes
     ? ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES.map((o) => ({
         value: o.value,
         label: o.label,
         desc: o.description,
       }))
-    : ORIENTATIONS_RECEPTION;
+    : estEglise
+      ? ORIENTATIONS_RAPIDES_EGLISE.map((o) => ({
+          value: o.value,
+          label: o.label,
+          desc: o.description,
+        }))
+      : ORIENTATIONS_RECEPTION;
 
   const majFormulaire = useCallback(
     (champ: keyof EtatFormulairePatient, valeur: string) => {

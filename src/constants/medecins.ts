@@ -5,22 +5,17 @@ import {
   Home,
   Users,
   Stethoscope,
-  FlaskConical,
   Pill,
-  BedDouble,
   CalendarPlus,
-  History,
   Settings,
   MessageSquare,
   Bell,
   UserCircle,
   ClipboardList,
   FileText,
-  FolderOpen,
   NotebookPen,
   ArrowRightLeft,
   BarChart3,
-  ScrollText,
   CalendarDays,
 } from "lucide-react";
 
@@ -29,7 +24,6 @@ export type CleBadgeMedecins =
   | "fileAttente"
   | "patientsDuJour"
   | "ordonnances"
-  | "examens"
   | "patientsTransferes";
 
 export const NAVIGATION_MEDECINS = {
@@ -50,11 +44,6 @@ export const NAVIGATION_MEDECINS = {
       badge: "patientsDuJour" as CleBadgeMedecins,
     },
     {
-      href: "/sigh/medecins/dossiers",
-      id: "dossiersPatients",
-      icone: FolderOpen,
-    },
-    {
       href: "/sigh/medecins/consultation",
       id: "consultation",
       icone: Stethoscope,
@@ -64,12 +53,6 @@ export const NAVIGATION_MEDECINS = {
       id: "ordonnances",
       icone: Pill,
       badge: "ordonnances" as CleBadgeMedecins,
-    },
-    {
-      href: "/sigh/medecins/examens",
-      id: "demandesExamens",
-      icone: FlaskConical,
-      badge: "examens" as CleBadgeMedecins,
     },
     {
       href: "/sigh/medecins/notes",
@@ -88,11 +71,6 @@ export const NAVIGATION_MEDECINS = {
       icone: CalendarPlus,
     },
     {
-      href: "/sigh/medecins/historique",
-      id: "historique",
-      icone: History,
-    },
-    {
       href: "/sigh/medecins/rapports",
       id: "rapports",
       icone: BarChart3,
@@ -104,19 +82,9 @@ export const NAVIGATION_MEDECINS = {
   ],
   parametres: [
     {
-      href: "/sigh/medecins/modeles-ordonnance",
-      id: "modelesOrdonnance",
-      icone: ScrollText,
-    },
-    {
       href: "/sigh/medecins/parametres",
       id: "parametresConsultation",
       icone: Settings,
-    },
-    {
-      href: "/sigh/medecins/hospitalisations",
-      id: "hospitalisations",
-      icone: BedDouble,
     },
     { href: "/sigh/medecins/profil", id: "profil", icone: UserCircle },
   ],

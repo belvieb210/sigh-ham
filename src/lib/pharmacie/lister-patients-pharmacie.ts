@@ -93,7 +93,7 @@ export async function listerPatientsPharmacie(): Promise<PatientFilePharmacie[]>
     sortantParDossier.set(t.dossierId, liste);
   }
 
-  return files.map((file) => {
+  const resultats = files.map((file) => {
     const dossier = file.passage.dossier;
     const patient = dossier.patient;
     const transfert = file.passage.transferts[0];
@@ -146,6 +146,100 @@ export async function listerPatientsPharmacie(): Promise<PatientFilePharmacie[]>
       numeroOrdre: file.numeroOrdre,
     };
   });
+
+  const ids = new Set(resultats.map((p) => p.dossierId));
+  const ordonnances = await listerOrdonnancesEnAttentePharmacie(ids);
+  return [...resultats, ...ordonnances].sort(
+    (a, b) => new Date(b.arriveeLe).getTime() - new Date(a.arriveeLe).getTime()
+  );
+}
+
+/** Ordonnances en attente avec transfert vers pharmacie non encore confirmé à l'origine. */
+async function listerOrdonnancesEnAttentePharmacie(
+  dossierIdsDejaPresents: Set<string>
+): Promise<PatientFilePharmacie[]> {
+  const ordonnances = await prisma.ordonnance.findMany({
+    where: {
+      statut: { in: ["EN_ATTENTE", "PARTIELLEMENT_DELIVREE"] },
+      lignes: { some: {} },
+      dossierId: { notIn: [...dossierIdsDejaPresents] },
+    },
+    include: {
+      dossier: { include: { patient: true } },
+      lignes: { include: { medicament: true } },
+    },
+    orderBy: { prescritLe: "desc" },
+    take: 40,
+  });
+
+  if (ordonnances.length === 0) return [];
+
+  const dossierIds = ordonnances.map((o) => o.dossierId);
+  const transferts = await prisma.transfert.findMany({
+    where: {
+      dossierId: { in: dossierIds },
+      salleDestination: { code: "PHARMACIE" },
+      statut: { in: ["EN_ATTENTE", "ACCEPTE", "EN_TRAITEMENT"] },
+    },
+    include: {
+      salleOrigine: { select: { code: true, nom: true } },
+    },
+    orderBy: { emisLe: "desc" },
+  });
+
+  const transfertParDossier = new Map<string, (typeof transferts)[number]>();
+  for (const t of transferts) {
+    if (!transfertParDossier.has(t.dossierId)) {
+      transfertParDossier.set(t.dossierId, t);
+    }
+  }
+
+  const resultats: PatientFilePharmacie[] = [];
+
+  for (const o of ordonnances) {
+    const t = transfertParDossier.get(o.dossierId);
+    if (!t) continue;
+
+    const patient = o.dossier.patient;
+    const provenance =
+      t.salleOrigine?.nom?.trim() || t.salleOrigine?.code || "Médecin";
+    const enAttenteConfirmation = t.statut === "EN_ATTENTE";
+
+    resultats.push({
+      cleListe: `ord-${o.id}`,
+      dossierId: o.dossierId,
+      passageId: t.passageId ?? "",
+      numeroPatient: patient.numeroPatient,
+      numeroDossier: o.dossier.numeroDossier,
+      nomComplet: `${patient.prenom} ${patient.nom}`.trim(),
+      prenom: patient.prenom,
+      nom: patient.nom,
+      telephone: patient.telephone ?? "—",
+      age: calculerAge(patient.dateNaissance?.toISOString() ?? null),
+      sexe: patient.sexe ?? null,
+      motif: `Ordonnance (${o.lignes.length} médicament(s))`,
+      provenance,
+      orientation: enAttenteConfirmation ? "En attente confirmation" : "Pharmacie",
+      orientationCouleur: enAttenteConfirmation
+        ? "bg-orange-100 text-orange-800"
+        : "bg-emerald-100 text-emerald-800",
+      codeSalleDestination: "PHARMACIE",
+      codesSalleDestination: ["PHARMACIE"],
+      statut: enAttenteConfirmation ? "À confirmer (origine)" : "Ordonnance reçue",
+      statutCouleur: enAttenteConfirmation
+        ? "bg-orange-100 text-orange-800"
+        : "bg-emerald-100 text-emerald-800",
+      heure: formaterHeure(o.prescritLe.toISOString()),
+      arriveeLe: o.prescritLe.toISOString(),
+      transfertId: t.id,
+      transfertSortantId: null,
+      statutTransfertSortant: null,
+      enRecuperation: false,
+      numeroOrdre: 9999,
+    });
+  }
+
+  return resultats;
 }
 
 export async function obtenirStatsPharmacie(): Promise<StatsPharmacieJour> {

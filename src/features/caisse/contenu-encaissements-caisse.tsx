@@ -19,6 +19,7 @@ import {
 import { MiseEnPageCaisse, type UtilisateurCaisse } from "@/features/caisse/mise-en-page-caisse";
 import { ResumeRapportCaisse } from "@/features/caisse/resume-rapport-caisse";
 import { formaterHeure, formaterMontantCaisse } from "@/features/caisse/utils-format";
+import { BadgeTypePersonneCaisse } from "@/features/caisse/badge-type-personne-caisse";
 import type { RapportCaissePayload } from "@/lib/caisse/types";
 import { cn } from "@/lib/utils";
 
@@ -215,7 +216,10 @@ export function ContenuEncaissementsCaisse({ utilisateur }: Props) {
                             </Link>
                           </td>
                           <td className="px-2 py-1.5 font-medium text-texte-principal">
-                            {l.patient}
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span>{l.patient}</span>
+                              <BadgeTypePersonneCaisse estClientWalkIn={l.estClientWalkIn} />
+                            </div>
                           </td>
                           <td className="px-2 py-1.5 text-texte-secondaire">
                             {t(`caisse.modesPaiement.${l.mode}`)}

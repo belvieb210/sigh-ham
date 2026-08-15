@@ -17,6 +17,7 @@ import {
   ORIENTATIONS_RAPIDES,
 } from "@/constants/reception";
 import { filtrerOrientationsMedecinsExternes } from "@/constants/medecins-externes";
+import { filtrerOrientationsEglise } from "@/constants/eglise";
 import { useOrientationRapide } from "@/features/reception/contexte-orientation-rapide";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import type { DonneesFormulairePatient } from "@/lib/reception/types";
@@ -159,10 +160,13 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       const brutes = [...new Set(codesSalle.filter(Boolean))];
       const codes = espace.prefixeApi.includes("medecins-externes")
         ? filtrerOrientationsMedecinsExternes(brutes)
-        : brutes;
+        : espace.prefixeApi.includes("eglise")
+          ? filtrerOrientationsEglise(brutes)
+          : brutes;
       if (codes.length === 0) {
         setMessagePanneau(
-          espace.prefixeApi.includes("medecins-externes")
+          espace.prefixeApi.includes("medecins-externes") ||
+            espace.prefixeApi.includes("eglise")
             ? "La destination autorisée est la Caisse."
             : "Sélectionnez au moins une destination."
         );

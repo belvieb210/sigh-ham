@@ -154,6 +154,8 @@ export async function listerPatientsTransfertsCaisse(): Promise<{
       facturationComplete: p.facturationComplete,
       provenance: p.provenance,
       medecinResponsable: p.medecinResponsable,
+      estClientWalkIn: p.estClientWalkIn,
+      nombreMedicaments: p.nombreMedicaments,
     };
   });
 

@@ -35,7 +35,11 @@ export async function POST(request: Request) {
 
     if (corps.action === "transmettre" && corps.venteId) {
       const r = await transmettreVenteACaisse(session.utilisateur.id, corps.venteId);
-      return NextResponse.json({ message: "Transmise à la caisse.", ...r });
+      return NextResponse.json({
+        message: `Facture ${r.facture.numeroFacture} transmise à la caisse.`,
+        facture: r.facture,
+        vente: r.vente,
+      });
     }
     if (corps.action === "delivrer" && corps.venteId) {
       const d = await delivrerVente(session.utilisateur.id, corps.venteId);

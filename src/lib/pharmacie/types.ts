@@ -64,6 +64,22 @@ export interface TopMedicamentPharmacie {
   quantite: number;
 }
 
+export interface RapportVentesPharmacie {
+  depuis: string;
+  jusqua: string;
+  nombreVentes: number;
+  chiffreAffaires: number;
+  topProduits: { nom: string; quantite: number; montant: number }[];
+  flopProduits: { nom: string; quantite: number; montant: number }[];
+  ventes: {
+    numero: string;
+    client: string;
+    statut: string;
+    montant: number;
+    creeLe: string;
+  }[];
+}
+
 export interface ApercuDashboardPharmacie {
   stats: StatsPharmacieJour;
   ordonnancesRecentes: OrdonnanceDashboardPharmacie[];

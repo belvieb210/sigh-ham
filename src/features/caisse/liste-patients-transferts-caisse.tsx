@@ -25,6 +25,7 @@ import {
 import { MenuActionsTransfertCaisse } from "@/features/caisse/menu-actions-transfert-caisse";
 import { ModaleExamensCaisse } from "@/features/caisse/modale-examens-caisse";
 import { formaterMontantCaisse } from "@/features/caisse/utils-format";
+import { BadgeTypePersonneCaisse } from "@/features/caisse/badge-type-personne-caisse";
 import type { PatientTransfertCaisse, StatsTransfertsCaisse } from "@/lib/caisse/types";
 import { cn } from "@/lib/utils";
 
@@ -388,10 +389,18 @@ export function ListePatientsTransfertsCaisse() {
                       </td>
                       <td className="px-2 py-1.5">
                         <span className="block font-semibold text-texte-principal">
-                          {p.nomComplet}
+                          <span className="inline-flex flex-wrap items-center gap-1.5">
+                            {p.nomComplet}
+                            <BadgeTypePersonneCaisse estClientWalkIn={p.estClientWalkIn} />
+                          </span>
                         </span>
                         <span className="block text-[11px] text-texte-secondaire">
-                          {p.nombreExamens} examen(s) · {formaterMontantCaisse(p.montantEstime)}
+                          {p.estClientWalkIn
+                            ? t("caisse.facturation.nbMedicaments", {
+                                count: p.nombreMedicaments,
+                              })
+                            : `${p.nombreExamens} examen(s)`}{" "}
+                          · {formaterMontantCaisse(p.montantEstime)}
                         </span>
                       </td>
                       <td className="hidden px-2 py-1.5 text-texte-secondaire md:table-cell">

@@ -6,6 +6,7 @@ import {
   estNumeroFacturePharmacie,
   evaluerEtatFacturationDual,
 } from "@/lib/caisse/etat-facturation-dual";
+import { estClientWalkInPharmacie } from "@/lib/pharmacie/client-walk-in";
 import type { PatientFileCaisse, StatsCaisseJour } from "@/lib/caisse/types";
 
 function decimalVersNombre(valeur: { toNumber?: () => number } | number | string): number {
@@ -62,22 +63,18 @@ async function reintegrerPatientsCaisseNonConfirmes() {
   });
 }
 
-interface FacturesDossier {
-  examens: {
-    statut: StatutFacture;
-    montantTotal: number;
-    montantPaye: number;
-    modeFacture: string | null;
-  } | null;
-  pharmacie: {
-    statut: StatutFacture;
-    montantTotal: number;
-    montantPaye: number;
-    modeFacture: string | null;
-  } | null;
+interface ResumeFacture {
+  statut: StatutFacture;
+  montantTotal: number;
+  montantPaye: number;
+  modeFacture: string | null;
+  nbLignes: number;
 }
 
-type ResumeFacture = NonNullable<FacturesDossier["examens"]>;
+interface FacturesDossier {
+  examens: ResumeFacture | null;
+  pharmacie: ResumeFacture | null;
+}
 
 function prioriteStatutFacture(statut: StatutFacture): number {
   if (statut === "PAYEE") return 4;
@@ -169,6 +166,7 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       include: {
         paiements: { orderBy: { payeLe: "desc" }, take: 1 },
         ventePharmacie: { select: { id: true } },
+        lignes: { select: { id: true } },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -198,6 +196,7 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       montantTotal: decimalVersNombre(f.montantTotal),
       montantPaye: decimalVersNombre(f.montantPaye),
       modeFacture: extraireModeFacture(f.paiements[0]?.reference),
+      nbLignes: f.lignes.length,
     };
     if (estPh) {
       courant.pharmacie = retenirMeilleureFacture(courant.pharmacie, resume);
@@ -232,7 +231,12 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       examens: null,
       pharmacie: null,
     };
-    const aDesMedicaments = dossiersAvecMedicaments.has(dossier.id);
+    const aDesMedicaments =
+      dossiersAvecMedicaments.has(dossier.id) || Boolean(facs.pharmacie);
+    const estClientWalkIn = estClientWalkInPharmacie(dossier.numeroDossier);
+    const nombreMedicaments =
+      facs.pharmacie?.nbLignes ??
+      (aDesMedicaments && examens.length === 0 ? 1 : 0);
 
     const etat = evaluerEtatFacturationDual({
       nombreExamens: examens.length,
@@ -273,6 +277,8 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       arriveeLe: file.arriveLe.toISOString(),
       numeroOrdre: file.numeroOrdre,
       nombreExamens: examens.length,
+      nombreMedicaments,
+      estClientWalkIn,
       montantEstime: etat.facturationComplete
         ? 0
         : facActive

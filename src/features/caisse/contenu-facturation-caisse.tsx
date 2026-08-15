@@ -41,6 +41,7 @@ import {
 } from "@/features/caisse/utils-format";
 import { RechercheAjoutExamenCaisse } from "@/features/caisse/recherche-ajout-examen-caisse";
 import { imprimerFacturePharmacieCaisse } from "@/lib/caisse/imprimer-facture-pharmacie";
+import { BadgeTypePersonneCaisse } from "@/features/caisse/badge-type-personne-caisse";
 import { ChampDateNaissance } from "@/features/reception/champ-date-naissance";
 import { cn } from "@/lib/utils";
 import type {
@@ -300,7 +301,10 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
 
   /** File caisse : patients avec facturation examens et/ou pharmacie incomplète */
   const fileSansFacture = useMemo(
-    () => file.filter((p) => !p.facturationComplete),
+    () =>
+      file.filter(
+        (p) => !p.facturationComplete && p.statutFacture !== "PAYEE"
+      ),
     [file]
   );
 
@@ -1008,13 +1012,22 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                             {index + 1}
                           </td>
                           <td className="px-2 py-1.5 font-semibold text-texte-principal">
-                            {p.prenom} {p.nom}
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span>
+                                {p.prenom} {p.nom}
+                              </span>
+                              <BadgeTypePersonneCaisse estClientWalkIn={p.estClientWalkIn} />
+                            </div>
                           </td>
                           <td className="hidden px-2 py-1.5 text-texte-secondaire sm:table-cell">
                             {p.provenance}
                           </td>
                           <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">
-                            {p.nombreExamens}
+                            {p.estClientWalkIn
+                              ? t("caisse.facturation.nbMedicaments", {
+                                  count: p.nombreMedicaments,
+                                })
+                              : p.nombreExamens}
                           </td>
                           <td className="px-2 py-1.5 font-semibold text-texte-principal">
                             {formaterMontantCaisse(
@@ -1077,6 +1090,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                     <h2 className="text-xl font-bold text-texte-principal">
                       {dossier.prenom} {dossier.nom}
                     </h2>
+                    <BadgeTypePersonneCaisse estClientWalkIn={dossier.estClientWalkIn} />
                     <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
                       {dossier.facturationDual.facturationComplete
                         ? t("caisse.facturation.paye")
@@ -1743,13 +1757,22 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                               {index + 1}
                             </td>
                             <td className="px-2 py-1.5 font-semibold text-texte-principal">
-                              {p.prenom} {p.nom}
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span>
+                                  {p.prenom} {p.nom}
+                                </span>
+                                <BadgeTypePersonneCaisse estClientWalkIn={p.estClientWalkIn} />
+                              </div>
                             </td>
                             <td className="hidden px-2 py-1.5 text-texte-secondaire sm:table-cell">
                               {p.provenance}
                             </td>
                             <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">
-                              {p.nombreExamens}
+                              {p.estClientWalkIn
+                                ? t("caisse.facturation.nbMedicaments", {
+                                    count: p.nombreMedicaments,
+                                  })
+                                : p.nombreExamens}
                             </td>
                             <td className="px-2 py-1.5 font-semibold text-texte-principal">
                               {formaterMontantCaisse(

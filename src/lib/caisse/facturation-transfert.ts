@@ -77,9 +77,15 @@ export async function dossierEstFacturePayeePourTransfert(
     }
   }
 
+  const aDesMedicaments =
+    Boolean(ordonnanceMedicaments) ||
+    factures.some(
+      (f) => Boolean(f.ventePharmacie) || estNumeroFacturePharmacie(f.numeroFacture)
+    );
+
   const etat = evaluerEtatFacturationDual({
     nombreExamens: dossier.examensLaboratoire.length,
-    aDesMedicaments: Boolean(ordonnanceMedicaments),
+    aDesMedicaments,
     statutFactureExamens: statutExamens,
     statutFacturePharmacie: statutPharmacie,
     enFile: true,

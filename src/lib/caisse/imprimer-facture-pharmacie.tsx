@@ -5,6 +5,7 @@ import {
   type DonneesDevisEstimation,
 } from "@/features/reception/devis-estimation-pdf";
 import type { DossierFacturationCaisse } from "@/lib/caisse/types";
+import { estClientWalkInPharmacie } from "@/lib/pharmacie/client-walk-in";
 
 export async function imprimerFacturePharmacieCaisse(
   dossier: DossierFacturationCaisse,
@@ -16,6 +17,8 @@ export async function imprimerFacturePharmacieCaisse(
   if (!lignes.length) return false;
 
   enregistrerPolicesPdf();
+
+  const estClient = estClientWalkInPharmacie(dossier.numeroDossier);
 
   const donnees: DonneesDevisEstimation = {
     examens: [],
@@ -33,12 +36,12 @@ export async function imprimerFacturePharmacieCaisse(
     agentNom: options?.agentNom,
     remise: options?.remise ?? 0,
     labels: {
-      titreTicket: "FACTURE PHARMACIE",
+      titreTicket: estClient ? "FACTURE CLIENT PHARMACIE" : "FACTURE PHARMACIE",
       numero: "N°",
       date: "Date",
-      patient: "Patient",
+      patient: estClient ? "Client" : "Patient",
       telephone: "Téléphone",
-      medecin: "Prescripteur",
+      medecin: estClient ? "Pharmacien" : "Prescripteur",
       description: "Médicament",
       prix: "Montant (Fc)",
       total: "Total médicaments",

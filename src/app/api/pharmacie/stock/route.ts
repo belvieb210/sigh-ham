@@ -38,7 +38,12 @@ export async function GET(request: Request) {
       });
     }
     if (type === "rapport-ventes") {
-      const rapport = await rapportVentesPharmacie();
+      const depuisParam = url.searchParams.get("depuis");
+      const jusquaParam = url.searchParams.get("jusqua");
+      const rapport = await rapportVentesPharmacie({
+        depuis: depuisParam ? new Date(depuisParam) : undefined,
+        jusqua: jusquaParam ? new Date(jusquaParam) : undefined,
+      });
       if (url.searchParams.get("format") === "csv") {
         const csv = exporterCsv(
           ["numero", "client", "statut", "montant", "date"],

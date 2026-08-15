@@ -32,6 +32,7 @@ const TYPES_CAISSE = [
   { value: "", label: "Toutes sources" },
   { value: "CONVENTION_EGLISE", label: "Service conventionné" },
   { value: "MEDECIN_EXTERNE", label: "Médecin externe" },
+  { value: "PHARMACIE_CLIENT", label: "Client pharmacie" },
 ];
 
 export function FormulaireFiltresEstimations({

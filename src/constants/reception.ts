@@ -50,9 +50,6 @@ export const NAVIGATION_RECEPTION = {
   ],
   parametres: [
     { href: "/sigh/reception/profil", id: "profil", icone: UserCircle },
-    { href: "/sigh/reception/motifs", id: "motifsVisite", icone: ClipboardList },
-    { href: "/sigh/reception/examens", id: "examensInitiaux", icone: FlaskConical },
-    { href: "/sigh/reception/utilisateurs", id: "utilisateurs", icone: UserCog },
     { href: "/sigh/reception/parametres", id: "parametres", icone: Settings },
   ],
 } as const;

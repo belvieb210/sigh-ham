@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ContenuStockPharmacie } from "@/features/pharmacie/contenu-stock-pharmacie";
+import { ContenuRapportsPharmacie } from "@/features/pharmacie/contenu-rapports-pharmacie";
 import { verifierAccesPharmacie } from "@/lib/auth/garde-salle";
 import { propsUtilisateurPharmacie } from "@/lib/auth/props-utilisateur-pharmacie";
 
@@ -12,9 +12,8 @@ export default async function Page() {
   const utilisateur = await verifierAccesPharmacie();
 
   return (
-    <ContenuStockPharmacie
+    <ContenuRapportsPharmacie
       utilisateur={propsUtilisateurPharmacie(utilisateur)}
-      vue="rapports"
     />
   );
 }

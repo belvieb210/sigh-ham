@@ -12,7 +12,8 @@ export async function obtenirSessionApiLaboratoireOuCaisse() {
     utilisateurPeutAccederSalle("LABORATOIRE", role) ||
     utilisateurPeutAccederSalle("CAISSE", role) ||
     utilisateurPeutAccederSalle("RECEPTION", role) ||
-    utilisateurPeutAccederSalle("MEDECINS_EXTERNES", role)
+    utilisateurPeutAccederSalle("MEDECINS_EXTERNES", role) ||
+    utilisateurPeutAccederSalle("EGLISE", role)
   ) {
     return session;
   }

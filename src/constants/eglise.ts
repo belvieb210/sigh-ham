@@ -10,12 +10,9 @@ import {
   ClipboardList,
   FlaskConical,
   Settings,
-  UserCog,
   UserCircle,
   MessageSquare,
   Bell,
-  FileText,
-  Award,
 } from "lucide-react";
 import { ORIENTATIONS_RAPIDES } from "@/constants/reception";
 import type { CodeSalle } from "@/generated/prisma/client";
@@ -40,8 +37,6 @@ export const NAVIGATION_EGLISE = {
   ],
   eglise: [
     { href: "/sigh/eglise/estimations", id: "estimations", icone: ClipboardList },
-    { href: "/sigh/eglise/rapports", id: "rapports", icone: FileText },
-    { href: "/sigh/eglise/certificats", id: "certificats", icone: Award },
   ],
   communication: [
     {
@@ -57,13 +52,6 @@ export const NAVIGATION_EGLISE = {
   ],
   parametres: [
     { href: "/sigh/eglise/profil", id: "profil", icone: UserCircle },
-    { href: "/sigh/eglise/motifs", id: "motifsVisite", icone: ClipboardList },
-    {
-      href: "/sigh/eglise/examens-initiaux",
-      id: "examensInitiaux",
-      icone: FlaskConical,
-    },
-    { href: "/sigh/eglise/utilisateurs", id: "utilisateurs", icone: UserCog },
     { href: "/sigh/eglise/parametres", id: "parametres", icone: Settings },
   ],
 } as const;
@@ -75,10 +63,22 @@ export const NAVIGATION_BASSE_EGLISE = [
   { href: "/sigh/eglise/transferts", id: "transferes", icone: ArrowRightLeft },
 ] as const;
 
-export const ORIENTATIONS_RAPIDES_EGLISE = ORIENTATIONS_RAPIDES;
-
-export const CODES_ORIENTATION_EGLISE: CodeSalle[] = ORIENTATIONS_RAPIDES.map(
-  (o) => o.value as CodeSalle
+export const ORIENTATIONS_RAPIDES_EGLISE = ORIENTATIONS_RAPIDES.filter(
+  (o) => o.value === "CAISSE"
 );
+
+export const CODES_ORIENTATION_EGLISE: CodeSalle[] = ["CAISSE"];
+
+export function filtrerOrientationsEglise(orientations: string[]): CodeSalle[] {
+  const codes = [
+    ...new Set(
+      orientations
+        .map((o) => o.trim())
+        .filter((o) => o === "CAISSE") as CodeSalle[]
+    ),
+  ];
+  if (codes.length === 0) return ["CAISSE"];
+  return codes;
+}
 
 export const EVENEMENT_EGLISE_PATIENTS_MODIFIES = "sigh:eglise-patients-modifies";

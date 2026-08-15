@@ -55,7 +55,6 @@ export function MiseEnPageMedecins({
             fileAttente: data.stats.patientsEnFile ?? 0,
             patientsDuJour: data.stats.consultationsAujourdhui ?? 0,
             ordonnances: data.stats.ordonnancesAujourdhui ?? 0,
-            examens: data.stats.examensAujourdhui ?? 0,
             patientsTransferes: data.stats.patientsTransferesCaisse ?? 0,
           });
         }

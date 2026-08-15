@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { Check, ClipboardList } from "lucide-react";
+import { BadgeTypePersonneCaisse } from "@/features/caisse/badge-type-personne-caisse";
 import {
   MiseEnPageCaisse,
   type UtilisateurCaisse,
@@ -25,12 +27,14 @@ const PAR_PAGE = 15;
 
 interface EstimationCaisse {
   id: string;
+  dossierId?: string;
   numeroPatient: string;
   nomComplet: string;
-  typeEstimation: "CONVENTION_EGLISE" | "MEDECIN_EXTERNE";
+  typeEstimation: "CONVENTION_EGLISE" | "MEDECIN_EXTERNE" | "PHARMACIE_CLIENT";
   libelleSource: string | null;
   nomConvention: string | null;
   totalPatientUsd: number;
+  montantCdf?: number;
   honoraireUsd: number;
   honorairePct: number;
   emetteurNom: string;
@@ -39,14 +43,27 @@ interface EstimationCaisse {
   traiteLe: string | null;
   traiteParNom: string | null;
   statut: string;
+  numeroFacture?: string | null;
+  nbMedicaments?: number;
+  estClientWalkIn?: boolean;
 }
 
 function formaterUsd(n: number) {
   return `$ ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function formaterCdf(n: number) {
+  return `${n.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} FC`;
+}
+
 function libelleType(type: EstimationCaisse["typeEstimation"]) {
-  return type === "MEDECIN_EXTERNE" ? "Médecin externe" : "Service conventionné";
+  if (type === "MEDECIN_EXTERNE") return "Médecin externe";
+  if (type === "PHARMACIE_CLIENT") return "Client pharmacie";
+  return "Service conventionné";
+}
+
+function estEstimationPharmacieClient(e: EstimationCaisse) {
+  return e.typeEstimation === "PHARMACIE_CLIENT";
 }
 
 export function ContenuEstimationsCaisse({
@@ -192,26 +209,52 @@ export function ContenuEstimationsCaisse({
         ) : panneau ? (
           <div className="space-y-4 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
             <h2 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-              Récapitulatif honoraires
+              {estEstimationPharmacieClient(panneau)
+                ? "Vente client pharmacie"
+                : "Récapitulatif honoraires"}
             </h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-semibold">{panneau.nomComplet}</p>
+              <BadgeTypePersonneCaisse estClientWalkIn={panneau.estClientWalkIn ?? estEstimationPharmacieClient(panneau)} />
+            </div>
             <p className="text-xs text-texte-secondaire">Émetteur</p>
             <p className="text-sm font-semibold">{panneau.emetteurNom}</p>
             <p className="text-xs text-texte-secondaire">
               Source : {libelleType(panneau.typeEstimation)}
             </p>
-            <p className="text-xs text-texte-secondaire">
-              {panneau.typeEstimation === "MEDECIN_EXTERNE"
-                ? `Médecin : ${panneau.libelleSource || "—"}`
-                : `Convention : ${panneau.nomConvention || panneau.libelleSource || "—"}`}
-            </p>
+            {estEstimationPharmacieClient(panneau) ? (
+              <>
+                <p className="text-xs text-texte-secondaire">
+                  Facture : {panneau.numeroFacture ?? "—"}
+                </p>
+                <p className="text-xs text-texte-secondaire">
+                  {panneau.nbMedicaments ?? 0} médicament(s)
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-texte-secondaire">
+                {panneau.typeEstimation === "MEDECIN_EXTERNE"
+                  ? `Médecin : ${panneau.libelleSource || "—"}`
+                  : `Convention : ${panneau.nomConvention || panneau.libelleSource || "—"}`}
+              </p>
+            )}
             <hr />
-            <p className="text-sm">
-              Total patient : <strong>{formaterUsd(panneau.totalPatientUsd)}</strong>
-            </p>
-            <p className="text-sm text-emerald-700">
-              Honoraires dus ({panneau.honorairePct} %) :{" "}
-              <strong>{formaterUsd(panneau.honoraireUsd)}</strong>
-            </p>
+            {estEstimationPharmacieClient(panneau) ? (
+              <p className="text-sm">
+                Montant :{" "}
+                <strong>{formaterCdf(panneau.montantCdf ?? 0)}</strong>
+              </p>
+            ) : (
+              <>
+                <p className="text-sm">
+                  Total patient : <strong>{formaterUsd(panneau.totalPatientUsd)}</strong>
+                </p>
+                <p className="text-sm text-emerald-700">
+                  Honoraires dus ({panneau.honorairePct} %) :{" "}
+                  <strong>{formaterUsd(panneau.honoraireUsd)}</strong>
+                </p>
+              </>
+            )}
             <p className="text-xs text-texte-secondaire">
               Statut : {panneau.statut.replace("_", " ")}
             </p>
@@ -221,15 +264,25 @@ export function ContenuEstimationsCaisse({
                 {panneau.traiteParNom ? ` par ${panneau.traiteParNom}` : ""}
               </p>
             )}
-            <a
-              href={`/api/caisse/estimations/${panneau.id}`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex w-full justify-center rounded-lg bg-bleu-medical px-3 py-2 text-sm text-white"
-            >
-              Voir le PDF
-            </a>
-            {panneau.statut === "ENVOYEE_CAISSE" && (
+            {estEstimationPharmacieClient(panneau) && panneau.dossierId ? (
+              <Link
+                href={`/sigh/caisse/facturation?dossier=${panneau.dossierId}`}
+                className="inline-flex w-full justify-center rounded-lg bg-bleu-medical px-3 py-2 text-sm text-white"
+              >
+                Encaisser à la facturation
+              </Link>
+            ) : (
+              <a
+                href={`/api/caisse/estimations/${panneau.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex w-full justify-center rounded-lg bg-bleu-medical px-3 py-2 text-sm text-white"
+              >
+                Voir le PDF
+              </a>
+            )}
+            {!estEstimationPharmacieClient(panneau) &&
+              panneau.statut === "ENVOYEE_CAISSE" && (
               <Bouton
                 taille="petit"
                 className="w-full bg-emerald-600 hover:bg-emerald-700"
@@ -333,7 +386,12 @@ export function ContenuEstimationsCaisse({
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-medium">{e.nomComplet}</div>
+                      <div className="flex flex-wrap items-center gap-1.5 font-medium">
+                        {e.nomComplet}
+                        <BadgeTypePersonneCaisse
+                          estClientWalkIn={e.estClientWalkIn ?? estEstimationPharmacieClient(e)}
+                        />
+                      </div>
                       <div className="text-xs text-texte-secondaire">{e.numeroPatient}</div>
                     </td>
                     <td className="px-4 py-3">
@@ -343,10 +401,22 @@ export function ContenuEstimationsCaisse({
                       </div>
                     </td>
                     <td className="px-4 py-3">{e.emetteurNom}</td>
-                    <td className="px-4 py-3">{formaterUsd(e.totalPatientUsd)}</td>
                     <td className="px-4 py-3">
-                      {formaterUsd(e.honoraireUsd)}{" "}
-                      <span className="text-xs text-texte-secondaire">({e.honorairePct} %)</span>
+                      {estEstimationPharmacieClient(e)
+                        ? formaterCdf(e.montantCdf ?? 0)
+                        : formaterUsd(e.totalPatientUsd)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {estEstimationPharmacieClient(e) ? (
+                        "—"
+                      ) : (
+                        <>
+                          {formaterUsd(e.honoraireUsd)}{" "}
+                          <span className="text-xs text-texte-secondaire">
+                            ({e.honorairePct} %)
+                          </span>
+                        </>
+                      )}
                     </td>
                     <td className="px-4 py-3">{e.statut.replace("_", " ")}</td>
                   </tr>

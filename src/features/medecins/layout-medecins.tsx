@@ -72,7 +72,7 @@ function LiensNavigation({
   };
 
   const couleurBadge = (id: string) => {
-    if (id === "fileAttente" || id === "demandesExamens") {
+    if (id === "fileAttente") {
       return "bg-amber-500 text-white";
     }
     if (id === "patientsDuJour" || id === "ordonnances" || id === "patientsTransferes") {

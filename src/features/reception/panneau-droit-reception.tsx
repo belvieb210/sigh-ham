@@ -8,7 +8,14 @@ import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import { useOrientationRapide } from "@/features/reception/contexte-orientation-rapide";
 import { useSelectionTransfertOptionnel } from "@/features/reception/contexte-selection-transfert";
 import { useEspaceApi } from "@/features/reception/contexte-espace-api";
-import { ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES } from "@/constants/medecins-externes";
+import {
+  ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES,
+  filtrerOrientationsMedecinsExternes,
+} from "@/constants/medecins-externes";
+import {
+  ORIENTATIONS_RAPIDES_EGLISE,
+  filtrerOrientationsEglise,
+} from "@/constants/eglise";
 import { cn } from "@/lib/utils";
 
 interface PropsPanneauDroit {
@@ -120,6 +127,8 @@ function BlocOrientation({
   const { t } = useTranslation();
   const espace = useEspaceApi();
   const estMedecinsExternes = espace.prefixeApi.includes("medecins-externes");
+  const estEglise = espace.prefixeApi.includes("eglise");
+  const transfertCaisseUniquement = estMedecinsExternes || estEglise;
   const {
     orientation,
     orientations,
@@ -136,11 +145,15 @@ function BlocOrientation({
       </h2>
       {variante === "transferts" && selection ? (
         <MessageAideOrientation selection={selection} />
-      ) : estMedecinsExternes ? (
+      ) : transfertCaisseUniquement ? (
         <p className="mb-2 text-xs text-texte-secondaire">
-          {t("medecinsExternes.panneau.aideOrientationCaisse", {
-            defaultValue: "Transfert vers la Caisse uniquement.",
-          })}
+          {estEglise
+            ? t("eglise.panneau.aideOrientationCaisse", {
+                defaultValue: "Transfert vers la Caisse uniquement.",
+              })
+            : t("medecinsExternes.panneau.aideOrientationCaisse", {
+                defaultValue: "Transfert vers la Caisse uniquement.",
+              })}
         </p>
       ) : (
         <p className="mb-2 text-xs text-texte-secondaire">
@@ -153,9 +166,15 @@ function BlocOrientation({
         orientations={orientations}
         onOrientationChange={onOrientationChange}
         onOrientationsChange={onOrientationsChange}
-        multiple={!estMedecinsExternes}
+        multiple={!transfertCaisseUniquement}
         desactive={desactiveOrientation}
-        options={estMedecinsExternes ? ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES : undefined}
+        options={
+          estMedecinsExternes
+            ? ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES
+            : estEglise
+              ? ORIENTATIONS_RAPIDES_EGLISE
+              : undefined
+        }
       />
       {selection?.messagePanneau && (
         <MessageResultatOrientation message={selection.messagePanneau} />

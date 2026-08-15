@@ -7,6 +7,7 @@ import {
   preparerFacturePharmacieDossier,
 } from "@/lib/caisse/facturation-pharmacie";
 import { reorienterPatientDepuisCaisse } from "@/lib/caisse/reorienter-patient-caisse";
+import { estClientWalkInPharmacie } from "@/lib/pharmacie/client-walk-in";
 import { creerTokenRecuFacture } from "@/lib/caisse/token-recu-public";
 import { evaluerEtatFacturationDual } from "@/lib/caisse/etat-facturation-dual";
 import type {
@@ -296,6 +297,7 @@ export async function obtenirDossierFacturation(
     telephone: dossier.patient.telephone,
     sexe: dossier.patient.sexe ?? null,
     dateNaissance: dossier.patient.dateNaissance?.toISOString() ?? null,
+    estClientWalkIn: estClientWalkInPharmacie(dossier.numeroDossier),
     statutAttente,
     fileAttenteId: fileAttente?.id ?? null,
     transfertId: transfert?.id ?? null,
@@ -892,6 +894,7 @@ export async function listerFacturesDuJour(): Promise<FactureResumeJour[]> {
       approuvee: Boolean(f.approuveeLe),
       approuveeLe: f.approuveeLe?.toISOString() ?? null,
       isPharmacie: Boolean(f.ventePharmacie) || f.numeroFacture.startsWith("FAC-PH-"),
+      estClientWalkIn: estClientWalkInPharmacie(f.dossier.numeroDossier),
     };
   });
 }

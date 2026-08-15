@@ -6,7 +6,7 @@ export interface EstimationFiltrable {
   emetteurNom?: string;
   libelleSource?: string | null;
   nomConvention?: string | null;
-  typeEstimation?: "CONVENTION_EGLISE" | "MEDECIN_EXTERNE";
+  typeEstimation?: "CONVENTION_EGLISE" | "MEDECIN_EXTERNE" | "PHARMACIE_CLIENT";
 }
 
 export interface FiltresEstimations {

@@ -1,6 +1,7 @@
 import "server-only";
 import type { ModePaiement, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { estClientWalkInPharmacie } from "@/lib/pharmacie/client-walk-in";
 import type {
   AgregatsRapportCaisse,
   ComparaisonRapportCaisse,
@@ -370,6 +371,7 @@ export async function genererRapportCaisse(
       numeroFacture: p.facture.numeroFacture,
       dossierId: p.facture.dossierId,
       patient: `${p.facture.dossier.patient.prenom} ${p.facture.dossier.patient.nom}`,
+      estClientWalkIn: estClientWalkInPharmacie(p.facture.dossier.numeroDossier),
       mode: p.mode,
       caissier: formaterCaissier(p.caissier.prenom, p.caissier.nom),
       caissierId: p.caissierId,

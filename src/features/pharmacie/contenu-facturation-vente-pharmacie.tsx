@@ -266,6 +266,7 @@ export function ContenuFacturationVentePharmacie({
       const data = (await res.json()) as {
         message?: string;
         vente?: { id: string };
+        facture?: { numeroFacture?: string };
       };
       if (!res.ok) throw new Error(data.message ?? t("pharmacie.common.erreur"));
 
@@ -275,9 +276,17 @@ export function ContenuFacturationVentePharmacie({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "transmettre", venteId: data.vente.id }),
         });
-        const td = (await tr.json()) as { message?: string };
+        const td = (await tr.json()) as {
+          message?: string;
+          facture?: { numeroFacture?: string };
+        };
         if (!tr.ok) throw new Error(td.message ?? t("pharmacie.common.erreur"));
-        setMessage(td.message ?? t("pharmacie.vente.transmise"));
+        setMessage(
+          td.message ??
+            t("pharmacie.vente.transmiseFacture", {
+              numero: td.facture?.numeroFacture ?? "—",
+            })
+        );
       }
 
       retourListe();

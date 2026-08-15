@@ -27,6 +27,8 @@ export interface PatientFileCaisse {
   arriveeLe: string;
   numeroOrdre: number;
   nombreExamens: number;
+  nombreMedicaments: number;
+  estClientWalkIn: boolean;
   montantEstime: number;
   factureOuverte: boolean;
   /** Statut facture si établie */
@@ -104,6 +106,7 @@ export interface DossierFacturationCaisse {
   telephone: string | null;
   sexe: string | null;
   dateNaissance: string | null;
+  estClientWalkIn: boolean;
   statutAttente: "EN_ATTENTE_PAIEMENT" | "PAYE" | "HORS_FILE";
   fileAttenteId: string | null;
   transfertId: string | null;
@@ -203,6 +206,8 @@ export interface PatientTransfertCaisse {
   facturationComplete?: boolean;
   provenance: string;
   medecinResponsable: string | null;
+  estClientWalkIn: boolean;
+  nombreMedicaments: number;
 }
 
 export interface StatsTransfertsCaisse {
@@ -262,6 +267,8 @@ export interface FactureResumeJour {
   approuveeLe: string | null;
   /** Facture liée à une vente pharmacie */
   isPharmacie: boolean;
+  /** Client walk-in pharmacie (dossier PH-*) */
+  estClientWalkIn: boolean;
 }
 
 /** Étiquette tube labo (code-barres) */
@@ -332,6 +339,7 @@ export interface LigneLedgerRapport {
   numeroFacture: string;
   dossierId: string;
   patient: string;
+  estClientWalkIn: boolean;
   mode: ModePaiement;
   caissier: string;
   caissierId: string;

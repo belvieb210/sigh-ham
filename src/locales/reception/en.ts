@@ -94,6 +94,24 @@ export const receptionEn = {
     modifierPatient: "Edit patient",
     supprimerPatient: "Delete permanently",
   },
+  examensDisponibles: {
+    titre: "Available exams",
+    description:
+      "Results validated by the biologist (Dr approved), ready to print from reception.",
+    fil: "Available exams",
+    sousTitreListe: "{{count}} patient(s) shown",
+    vide: "No Dr-approved exams available at the moment.",
+    erreur: "Unable to load available exams.",
+    imprimerTous: "Print results",
+    imprimerSelection: "Print ({{count}})",
+    factureTitre: "Invoice exams",
+    examensDisponiblesFacture: "{{count}} available",
+    examensEnAttente: "{{count}} pending",
+    examensEnAttenteInfo:
+      "These exams are on the invoice but results are not yet validated (Dr approved).",
+    tousExamensDisponibles: "All exams on this invoice are available.",
+    erreurDetail: "Unable to load invoice details.",
+  },
   pages: {
     accueil: { titre: "Reception home" },
     nouveau: {
@@ -123,7 +141,8 @@ export const receptionEn = {
     },
     examensDisponibles: {
       titre: "Available exams",
-      description: "Browse the catalogue of exams available at reception.",
+      description:
+        "View and print results validated by the biologist (Dr approved).",
       fil: "Available exams",
     },
     recherche: {

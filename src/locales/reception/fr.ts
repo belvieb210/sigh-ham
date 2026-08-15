@@ -93,6 +93,24 @@ export const receptionFr = {
     modifierPatient: "Modifier le patient",
     supprimerPatient: "Supprimer définitivement",
   },
+  examensDisponibles: {
+    titre: "Examens disponibles",
+    description:
+      "Résultats validés par le biologiste (Dr approuve), prêts à être imprimés depuis la réception.",
+    fil: "Examens disponibles",
+    sousTitreListe: "{{count}} patient(s) affiché(s)",
+    vide: "Aucun examen Dr approuve disponible pour le moment.",
+    erreur: "Impossible de charger les examens disponibles.",
+    imprimerTous: "Imprimer les résultats",
+    imprimerSelection: "Imprimer ({{count}})",
+    factureTitre: "Examens de la facture",
+    examensDisponiblesFacture: "{{count}} disponible(s)",
+    examensEnAttente: "{{count}} en attente",
+    examensEnAttenteInfo:
+      "Ces examens figurent sur la facture mais les résultats ne sont pas encore validés (Dr approuve).",
+    tousExamensDisponibles: "Tous les examens de cette facture sont disponibles.",
+    erreurDetail: "Impossible de charger le détail de la facture.",
+  },
   pages: {
     accueil: {
       titre: "Accueil réception",
@@ -124,7 +142,8 @@ export const receptionFr = {
     },
     examensDisponibles: {
       titre: "Examens disponibles",
-      description: "Consultez le catalogue des examens disponibles à la réception.",
+      description:
+        "Consultez et imprimez les résultats validés par le biologiste (Dr approuve).",
       fil: "Examens disponibles",
     },
     recherche: {

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { obtenirSessionApiCaisse } from "@/lib/auth/garde-api-caisse";
+import { obtenirSessionApiReception } from "@/lib/auth/garde-api-reception";
 import { listerPatientsExamensDisponibles } from "@/lib/laboratoire/lister-examens-disponibles";
 
 /**
- * GET /api/caisse/examens-disponibles
+ * GET /api/reception/examens-disponibles
  * Patients avec au moins un examen Dr approuve (résultats validés par le biologiste).
  */
 export async function GET() {
-  const session = await obtenirSessionApiCaisse();
+  const session = await obtenirSessionApiReception();
   if (!session) {
     return NextResponse.json({ erreur: "Non autorisé." }, { status: 401 });
   }
@@ -16,7 +16,7 @@ export async function GET() {
     const patients = await listerPatientsExamensDisponibles();
     return NextResponse.json({ patients });
   } catch (e) {
-    console.error("[api/caisse/examens-disponibles]", e);
+    console.error("[api/reception/examens-disponibles]", e);
     return NextResponse.json(
       { erreur: "Impossible de charger les examens disponibles." },
       { status: 500 }

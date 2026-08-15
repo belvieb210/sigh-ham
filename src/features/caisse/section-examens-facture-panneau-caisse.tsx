@@ -13,10 +13,19 @@ export type DetailExamensFacture = {
 
 interface PropsSectionExamensFacturePanneauCaisse {
   dossierId: string | null;
+  /** ex. `/api/caisse/examens-disponibles` ou `/api/reception/examens-disponibles` */
+  prefixeApi?: string;
+  /** ex. `caisse.examensDisponibles` ou `reception.examensDisponibles` */
+  prefixeCle?: string;
 }
+
+const PREFIXE_API_DEFAUT = "/api/caisse/examens-disponibles";
+const PREFIXE_CLE_DEFAUT = "caisse.examensDisponibles";
 
 export function SectionExamensFacturePanneauCaisse({
   dossierId,
+  prefixeApi = PREFIXE_API_DEFAUT,
+  prefixeCle = PREFIXE_CLE_DEFAUT,
 }: PropsSectionExamensFacturePanneauCaisse) {
   const { t } = useTranslation();
   const [detail, setDetail] = useState<DetailExamensFacture | null>(null);
@@ -33,7 +42,7 @@ export function SectionExamensFacturePanneauCaisse({
     setErreur(null);
     try {
       const res = await fetch(
-        `/api/caisse/examens-disponibles/${encodeURIComponent(dossierId)}`
+        `${prefixeApi}/${encodeURIComponent(dossierId)}`
       );
       const data = (await res.json()) as {
         detail?: DetailExamensFacture;
@@ -41,17 +50,17 @@ export function SectionExamensFacturePanneauCaisse({
       };
       if (!res.ok) {
         setDetail(null);
-        setErreur(data.erreur ?? t("caisse.examensDisponibles.erreurDetail"));
+        setErreur(data.erreur ?? t(`${prefixeCle}.erreurDetail`));
         return;
       }
       setDetail(data.detail ?? null);
     } catch {
       setDetail(null);
-      setErreur(t("caisse.examensDisponibles.erreurDetail"));
+      setErreur(t(`${prefixeCle}.erreurDetail`));
     } finally {
       setChargement(false);
     }
-  }, [dossierId, t]);
+  }, [dossierId, prefixeApi, prefixeCle, t]);
 
   useEffect(() => {
     void charger();
@@ -64,7 +73,7 @@ export function SectionExamensFacturePanneauCaisse({
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
           <h2 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-            {t("caisse.examensDisponibles.factureTitre")}
+            {t(`${prefixeCle}.factureTitre`)}
           </h2>
           {detail?.numeroFacture ? (
             <p className="mt-1 flex items-center gap-1.5 font-mono text-[11px] text-texte-secondaire">
@@ -86,7 +95,7 @@ export function SectionExamensFacturePanneauCaisse({
           {detail.examensDisponibles.length > 0 ? (
             <div>
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-                {t("caisse.examensDisponibles.examensDisponiblesFacture", {
+                {t(`${prefixeCle}.examensDisponiblesFacture`, {
                   count: detail.examensDisponibles.length,
                 })}
               </p>
@@ -107,12 +116,12 @@ export function SectionExamensFacturePanneauCaisse({
           {detail.examensEnAttente.length > 0 ? (
             <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3">
               <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
-                {t("caisse.examensDisponibles.examensEnAttente", {
+                {t(`${prefixeCle}.examensEnAttente`, {
                   count: detail.examensEnAttente.length,
                 })}
               </p>
               <p className="mb-2 text-[11px] leading-relaxed text-amber-900/80">
-                {t("caisse.examensDisponibles.examensEnAttenteInfo")}
+                {t(`${prefixeCle}.examensEnAttenteInfo`)}
               </p>
               <ul className="space-y-1.5">
                 {detail.examensEnAttente.map((ex) => (
@@ -128,7 +137,7 @@ export function SectionExamensFacturePanneauCaisse({
             </div>
           ) : (
             <p className="text-xs text-texte-secondaire">
-              {t("caisse.examensDisponibles.tousExamensDisponibles")}
+              {t(`${prefixeCle}.tousExamensDisponibles`)}
             </p>
           )}
         </div>

@@ -266,6 +266,24 @@ export const medecinsExternesEn = {
     envoyerCaisse: "Send to cashier",
     importerPdf: "Upload PDF",
   },
+  examensDisponibles: {
+    titre: "Available exams",
+    description:
+      "Validated results (Dr approved) for your registered and transferred patients.",
+    fil: "Available exams",
+    sousTitreListe: "{{count}} patient(s) shown",
+    vide: "No Dr-approved exams for your patients at the moment.",
+    erreur: "Unable to load available exams.",
+    imprimerTous: "Print results",
+    imprimerSelection: "Print ({{count}})",
+    factureTitre: "Invoice exams",
+    examensDisponiblesFacture: "{{count}} available",
+    examensEnAttente: "{{count}} pending",
+    examensEnAttenteInfo:
+      "These exams are on the invoice but results are not yet validated (Dr approved).",
+    tousExamensDisponibles: "All exams on this invoice are available.",
+    erreurDetail: "Unable to load invoice details.",
+  },
 };
 
 export type MedecinsExternesEn = typeof medecinsExternesEn;

@@ -2,7 +2,7 @@ import "server-only";
 import { lireSessionDepuisCookie } from "@/lib/auth/session";
 import { utilisateurPeutAccederSalle } from "@/lib/auth/redirections";
 
-/** Session autorisée pour consulter / imprimer les PDF résultats (labo, caisse, réception). */
+/** Session autorisée pour consulter / imprimer les PDF résultats (labo, caisse, réception, médecins externes). */
 export async function obtenirSessionApiLaboratoireOuCaisse() {
   const session = await lireSessionDepuisCookie();
   if (!session) return null;
@@ -11,7 +11,8 @@ export async function obtenirSessionApiLaboratoireOuCaisse() {
   if (
     utilisateurPeutAccederSalle("LABORATOIRE", role) ||
     utilisateurPeutAccederSalle("CAISSE", role) ||
-    utilisateurPeutAccederSalle("RECEPTION", role)
+    utilisateurPeutAccederSalle("RECEPTION", role) ||
+    utilisateurPeutAccederSalle("MEDECINS_EXTERNES", role)
   ) {
     return session;
   }

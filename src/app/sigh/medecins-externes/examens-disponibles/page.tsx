@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ContenuPageMedecinsExternesAvenir } from "@/features/medecins-externes/contenu-page-avenir-me";
+import { ContenuExamensDisponiblesMedecinsExternes } from "@/features/medecins-externes/contenu-examens-disponibles-medecins-externes";
 import { verifierAccesMedecinsExternes } from "@/lib/auth/garde-salle";
 import { propsUtilisateurMedecinsExternes } from "@/lib/auth/props-utilisateur-medecins-externes";
 
@@ -8,12 +8,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function Page() {
+export default async function PageExamensDisponiblesMedecinsExternes() {
   const utilisateur = await verifierAccesMedecinsExternes();
   return (
-    <ContenuPageMedecinsExternesAvenir
+    <ContenuExamensDisponiblesMedecinsExternes
       utilisateur={propsUtilisateurMedecinsExternes(utilisateur)}
-      page="examensDisponibles"
     />
   );
 }

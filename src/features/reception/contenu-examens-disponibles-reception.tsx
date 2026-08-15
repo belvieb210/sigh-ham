@@ -23,7 +23,7 @@ import { LignesTableauDrApprouve } from "@/features/laboratoire/lignes-tableau-d
 import {
   examensPourPageStatut,
   libellesExamensDemandes,
-  numeroEnregistrementLaboratoire,
+  numeroPermanentPatientLaboratoire,
   patientCorrespondPageStatut,
   trierPatientsParArriveeDesc,
 } from "@/features/laboratoire/utils-affichage";
@@ -253,9 +253,9 @@ export function ContenuExamensDisponiblesReception({
     }
     telechargerCsv(
       `reception-examens-disponibles-${new Date().toISOString().slice(0, 10)}.csv`,
-      ["numeroEnregistrement", "nom", "prenom", "service", "statut", "examens"],
+      ["numeroPatient", "nom", "prenom", "service", "statut", "examens"],
       cibles.map((p) => [
-        numeroEnregistrementLaboratoire(p),
+        numeroPermanentPatientLaboratoire(p),
         p.nom,
         p.prenom,
         p.provenance || p.orientation,
@@ -422,6 +422,7 @@ export function ContenuExamensDisponiblesReception({
                       onImprimerExamensSelectionnes={(examens) =>
                         void imprimerExamensDrApprouve(p, examens)
                       }
+                      varianteNumero="salle"
                     />
                   ))}
                 </tbody>

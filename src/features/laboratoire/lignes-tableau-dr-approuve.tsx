@@ -10,6 +10,7 @@ import {
 import {
   examensPourPageStatut,
   numeroEnregistrementLaboratoire,
+  numeroPermanentPatientLaboratoire,
 } from "@/features/laboratoire/utils-affichage";
 import type { ExamenFileLaboratoire, PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,8 @@ interface PropsLignesTableauDrApprouve {
   onSelectionnerTousExamensPatient: (examens: ExamenFileLaboratoire[]) => void;
   onImprimerExamensSelectionnes: (examens: ExamenFileLaboratoire[]) => void;
   onContextMenu?: (e: React.MouseEvent) => void;
+  /** Labo : PAT-… ; autres salles : N° permanent */
+  varianteNumero?: "labo" | "salle";
 }
 
 export function LignesTableauDrApprouve({
@@ -44,6 +47,7 @@ export function LignesTableauDrApprouve({
   onSelectionnerTousExamensPatient,
   onImprimerExamensSelectionnes,
   onContextMenu,
+  varianteNumero = "labo",
 }: PropsLignesTableauDrApprouve) {
   const { t } = useTranslation();
   const examensDrApprouve = examensPourPageStatut(patient.examens, "DR_APPROUVE");
@@ -78,7 +82,9 @@ export function LignesTableauDrApprouve({
           />
         </td>
         <td className="px-2 py-1.5 font-mono text-[11px] font-semibold text-bleu-medical">
-          {numeroEnregistrementLaboratoire(patient)}
+          {varianteNumero === "labo"
+            ? numeroEnregistrementLaboratoire(patient)
+            : numeroPermanentPatientLaboratoire(patient)}
         </td>
         <td className="px-2 py-1.5">
           <p className="truncate text-xs font-semibold leading-tight">

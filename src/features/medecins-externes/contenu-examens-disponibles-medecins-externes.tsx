@@ -28,30 +28,41 @@ import {
   trierPatientsParArriveeDesc,
 } from "@/features/laboratoire/utils-affichage";
 import {
-  PanneauExamensDisponiblesCaisse,
-  SectionsMobileExamensDisponiblesCaisse,
-} from "@/features/caisse/panneau-examens-disponibles-caisse";
-import { MiseEnPageCaisse, type UtilisateurCaisse } from "@/features/caisse/mise-en-page-caisse";
+  MiseEnPageMedecinsExternes,
+  type UtilisateurMedecinsExternes,
+} from "@/features/medecins-externes/mise-en-page-medecins-externes";
+import {
+  PanneauExamensDisponiblesMedecinsExternes,
+  SectionsMobileExamensDisponiblesMedecinsExternes,
+} from "@/features/medecins-externes/panneau-examens-disponibles-medecins-externes";
+import {
+  ESPACE_API_MEDECINS_EXTERNES,
+  FournisseurEspaceApi,
+  useEspaceApi,
+} from "@/features/reception/contexte-espace-api";
+import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
 import { imprimerResultatExamenLaboratoire } from "@/lib/laboratoire/imprimer-resultat-examen";
 import type { ExamenFileLaboratoire, PatientFileLaboratoire } from "@/lib/laboratoire/types";
 
-const CHEMIN_BASE = "/sigh/caisse/examens-disponibles";
 const PAR_PAGE = 30;
 const PAGE_STATUT = "DR_APPROUVE" as const;
+const CLE = "medecinsExternes.examensDisponibles";
 
-interface PropsContenuExamensDisponiblesCaisse {
-  utilisateur: UtilisateurCaisse;
+interface PropsContenuExamensDisponiblesMedecinsExternes {
+  utilisateur: UtilisateurMedecinsExternes;
 }
 
-export function ContenuExamensDisponiblesCaisse({
+function CorpsExamensDisponiblesMedecinsExternes({
   utilisateur,
-}: PropsContenuExamensDisponiblesCaisse) {
+}: PropsContenuExamensDisponiblesMedecinsExternes) {
   const { t } = useTranslation();
+  const espace = useEspaceApi();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const dossierUrl = searchParams.get("dossier");
+  const cheminBase = `${espace.cheminBase}/examens-disponibles`;
 
   const [patients, setPatients] = useState<PatientFileLaboratoire[]>([]);
   const [chargement, setChargement] = useState(true);
@@ -75,23 +86,23 @@ export function ContenuExamensDisponiblesCaisse({
     setChargement(true);
     setErreur(null);
     try {
-      const res = await fetch("/api/caisse/examens-disponibles");
+      const res = await fetch(`${espace.prefixeApi}/examens-disponibles`);
       const data = (await res.json()) as {
         patients?: PatientFileLaboratoire[];
         erreur?: string;
       };
       if (!res.ok) {
-        setErreur(data.erreur ?? t("caisse.examensDisponibles.erreur"));
+        setErreur(data.erreur ?? t(`${CLE}.erreur`));
         setPatients([]);
         return;
       }
       setPatients(data.patients ?? []);
     } catch {
-      setErreur(t("caisse.examensDisponibles.erreur"));
+      setErreur(t(`${CLE}.erreur`));
     } finally {
       setChargement(false);
     }
-  }, [t]);
+  }, [espace.prefixeApi, t]);
 
   useEffect(() => {
     void charger();
@@ -133,7 +144,7 @@ export function ContenuExamensDisponiblesCaisse({
   const selectionner = (dossierId: string) => {
     setSelectionId(dossierId);
     setMessageAction(null);
-    router.replace(`${CHEMIN_BASE}?dossier=${dossierId}`, { scroll: false });
+    router.replace(`${cheminBase}?dossier=${dossierId}`, { scroll: false });
   };
 
   const basculerDeveloppementPatient = (dossierId: string) => {
@@ -246,7 +257,7 @@ export function ContenuExamensDisponiblesCaisse({
       return;
     }
     telechargerCsv(
-      `caisse-examens-disponibles-${new Date().toISOString().slice(0, 10)}.csv`,
+      `medecins-externes-examens-disponibles-${new Date().toISOString().slice(0, 10)}.csv`,
       ["numeroPatient", "nom", "prenom", "service", "statut", "examens"],
       cibles.map((p) => [
         numeroPermanentPatientLaboratoire(p),
@@ -272,177 +283,180 @@ export function ContenuExamensDisponiblesCaisse({
   };
 
   return (
-    <MiseEnPageCaisse
+    <MiseEnPageMedecinsExternes
       utilisateur={utilisateur}
-      titre={t("caisse.examensDisponibles.titre")}
-      sousTitre={t("caisse.examensDisponibles.description")}
-      panneauDroit={<PanneauExamensDisponiblesCaisse {...propsPanneau} />}
+      titre={t(`${CLE}.titre`)}
+      sousTitre={t(`${CLE}.description`)}
+      panneauDroit={<PanneauExamensDisponiblesMedecinsExternes {...propsPanneau} />}
     >
       <div className="mx-auto w-full max-w-[1280px] space-y-4">
-        <div>
-          <p className="text-xs text-texte-secondaire">
-            {t("caisse.common.caisse")} &gt; {t("caisse.examensDisponibles.fil")}
-          </p>
-          <div className="mt-1 flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 text-bleu-medical" />
-            <h2 className="text-xl font-bold text-texte-principal sm:text-2xl">
-              {t("caisse.examensDisponibles.titre")}
-            </h2>
-          </div>
-          <p className="mt-1 text-sm text-texte-secondaire">
-            {t("caisse.examensDisponibles.description")}
-          </p>
+      <EnTetePageReception
+        icone={ClipboardList}
+        titre={t(`${CLE}.titre`)}
+        description={t(`${CLE}.description`)}
+        fil={[
+          { label: t(espace.cleFilRacine), href: espace.cheminBase },
+          { label: t(`${CLE}.fil`) },
+        ]}
+      />
+
+      <BarreFiltresLaboratoire
+        idPrefix="filtre-me-examens-disponibles"
+        titre={t("laboratoire.orientationsStatut.DR_APPROUVE.label")}
+        sousTitre={
+          examensCoches.size > 0
+            ? t("laboratoire.drApprouve.sousTitreSelectionExamens", {
+                count: filtres.length,
+                selection: examensCoches.size,
+              })
+            : t(`${CLE}.sousTitreListe`, { count: filtres.length })
+        }
+        filtresOuverts={filtresOuverts}
+        onToggle={() => setFiltresOuverts((o) => !o)}
+        brouillon={brouillonFiltres}
+        onChangeBrouillon={setBrouillonFiltres}
+        appliques={filtresAppliques}
+        onRechercher={() => {
+          setFiltresAppliques(brouillonFiltres);
+          setFiltresOuverts(false);
+        }}
+        onReinitialiser={() => {
+          setBrouillonFiltres(FILTRES_LABORATOIRE_VIDES);
+          setFiltresAppliques(FILTRES_LABORATOIRE_VIDES);
+        }}
+        actionsApresFiltre={
+          <BoutonsOutilsListeLaboratoire
+            toutSelectionne={toutSelectionne}
+            onSelectionnerTout={basculerSelectionTout}
+            onExporter={exporterSelection}
+          />
+        }
+      />
+
+      {erreur && (
+        <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          {erreur}
+        </p>
+      )}
+      {messageAction && (
+        <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800">
+          {messageAction}
+        </p>
+      )}
+
+      {chargement ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-bleu-medical" />
         </div>
-
-        <BarreFiltresLaboratoire
-          idPrefix="filtre-caisse-examens-disponibles"
-          titre={t("laboratoire.orientationsStatut.DR_APPROUVE.label")}
-          sousTitre={
-            examensCoches.size > 0
-              ? t("laboratoire.drApprouve.sousTitreSelectionExamens", {
-                  count: filtres.length,
-                  selection: examensCoches.size,
-                })
-              : t("caisse.examensDisponibles.sousTitreListe", {
-                  count: filtres.length,
-                })
-          }
-          filtresOuverts={filtresOuverts}
-          onToggle={() => setFiltresOuverts((o) => !o)}
-          brouillon={brouillonFiltres}
-          onChangeBrouillon={setBrouillonFiltres}
-          appliques={filtresAppliques}
-          onRechercher={() => {
-            setFiltresAppliques(brouillonFiltres);
-            setFiltresOuverts(false);
-          }}
-          onReinitialiser={() => {
-            setBrouillonFiltres(FILTRES_LABORATOIRE_VIDES);
-            setFiltresAppliques(FILTRES_LABORATOIRE_VIDES);
-          }}
-          actionsApresFiltre={
-            <BoutonsOutilsListeLaboratoire
-              toutSelectionne={toutSelectionne}
-              onSelectionnerTout={basculerSelectionTout}
-              onExporter={exporterSelection}
-            />
-          }
-        />
-
-        {erreur && (
-          <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {erreur}
-          </p>
-        )}
-        {messageAction && (
-          <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800">
-            {messageAction}
-          </p>
-        )}
-
-        {chargement ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-bleu-medical" />
-          </div>
-        ) : !filtres.length ? (
-          <p className="rounded-xl border border-gris-bordure bg-white px-4 py-12 text-center text-sm text-texte-secondaire">
-            {t("caisse.examensDisponibles.vide")}
-          </p>
-        ) : (
-          <>
-            <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-              <table className="tableau-liste-labo">
-                <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-texte-secondaire">
-                  <tr>
-                    <th className="w-8 px-1.5 py-1.5">
-                      <CaseCocheLigne
-                        coche={
-                          filtres.length > 0 &&
-                          filtres.every((p) => idsCoches.has(p.dossierId))
-                        }
-                        onChange={(coche) => {
-                          setIdsCoches((prev) => {
-                            const next = new Set(prev);
-                            for (const p of filtres) {
-                              if (coche) next.add(p.dossierId);
-                              else next.delete(p.dossierId);
-                            }
-                            return next;
-                          });
-                        }}
-                        ariaLabel={t("laboratoire.selection.tout")}
-                      />
-                    </th>
-                    <th className="px-2 py-1.5 font-semibold">
-                      {t("laboratoire.patients.colonnes.enregistrement")}
-                    </th>
-                    <th className="px-2 py-1.5 font-semibold">
-                      {t("laboratoire.patients.colonnes.patient")}
-                    </th>
-                    <th className="hidden px-2 py-1.5 font-semibold lg:table-cell">
-                      {t("laboratoire.patients.colonnes.service")}
-                    </th>
-                    <th className="px-2 py-1.5 font-semibold">
-                      {t("laboratoire.patients.colonnes.examensDemandes")}
-                    </th>
-                    <th className="w-[72px] px-2 py-1.5 font-semibold">
-                      {t("laboratoire.patients.colonnes.statut")}
-                    </th>
-                    <th className="w-[72px] px-1.5 py-1.5 font-semibold">
-                      {t("laboratoire.patients.colonnes.actions")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gris-bordure">
-                  {pageData.itemsPage.map((p) => (
-                    <LignesTableauDrApprouve
-                      key={p.dossierId}
-                      patient={p}
-                      selectionne={selectionId === p.dossierId}
-                      developpe={dossiersDeveloppes.has(p.dossierId)}
-                      patientCoche={idsCoches.has(p.dossierId)}
-                      examensCoches={examensCoches}
-                      onSelectionnerPatient={() => selectionner(p.dossierId)}
-                      onBasculerCochePatient={(coche) => {
+      ) : !filtres.length ? (
+        <p className="rounded-xl border border-gris-bordure bg-white px-4 py-12 text-center text-sm text-texte-secondaire">
+          {t(`${CLE}.vide`)}
+        </p>
+      ) : (
+        <>
+          <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
+            <table className="tableau-liste-labo">
+              <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-texte-secondaire">
+                <tr>
+                  <th className="w-8 px-1.5 py-1.5">
+                    <CaseCocheLigne
+                      coche={
+                        filtres.length > 0 &&
+                        filtres.every((p) => idsCoches.has(p.dossierId))
+                      }
+                      onChange={(coche) => {
                         setIdsCoches((prev) => {
                           const next = new Set(prev);
-                          if (coche) next.add(p.dossierId);
-                          else next.delete(p.dossierId);
+                          for (const p of filtres) {
+                            if (coche) next.add(p.dossierId);
+                            else next.delete(p.dossierId);
+                          }
                           return next;
                         });
                       }}
-                      onBasculerDeveloppement={() =>
-                        basculerDeveloppementPatient(p.dossierId)
-                      }
-                      onBasculerCocheExamen={basculerCocheExamen}
-                      onSelectionnerTousExamensPatient={(examens) =>
-                        selectionnerTousExamensPatient(p, examens)
-                      }
-                      onImprimerExamensSelectionnes={(examens) =>
-                        void imprimerExamensDrApprouve(p, examens)
-                      }
-                      varianteNumero="salle"
+                      ariaLabel={t("laboratoire.selection.tout")}
                     />
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </th>
+                  <th className="px-2 py-1.5 font-semibold">
+                    {t("laboratoire.patients.colonnes.enregistrement")}
+                  </th>
+                  <th className="px-2 py-1.5 font-semibold">
+                    {t("laboratoire.patients.colonnes.patient")}
+                  </th>
+                  <th className="hidden px-2 py-1.5 font-semibold lg:table-cell">
+                    {t("laboratoire.patients.colonnes.service")}
+                  </th>
+                  <th className="px-2 py-1.5 font-semibold">
+                    {t("laboratoire.patients.colonnes.examensDemandes")}
+                  </th>
+                  <th className="w-[72px] px-2 py-1.5 font-semibold">
+                    {t("laboratoire.patients.colonnes.statut")}
+                  </th>
+                  <th className="w-[72px] px-1.5 py-1.5 font-semibold">
+                    {t("laboratoire.patients.colonnes.actions")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gris-bordure">
+                {pageData.itemsPage.map((p) => (
+                  <LignesTableauDrApprouve
+                    key={p.dossierId}
+                    patient={p}
+                    selectionne={selectionId === p.dossierId}
+                    developpe={dossiersDeveloppes.has(p.dossierId)}
+                    patientCoche={idsCoches.has(p.dossierId)}
+                    examensCoches={examensCoches}
+                    onSelectionnerPatient={() => selectionner(p.dossierId)}
+                    onBasculerCochePatient={(coche) => {
+                      setIdsCoches((prev) => {
+                        const next = new Set(prev);
+                        if (coche) next.add(p.dossierId);
+                        else next.delete(p.dossierId);
+                        return next;
+                      });
+                    }}
+                    onBasculerDeveloppement={() =>
+                      basculerDeveloppementPatient(p.dossierId)
+                    }
+                    onBasculerCocheExamen={basculerCocheExamen}
+                    onSelectionnerTousExamensPatient={(examens) =>
+                      selectionnerTousExamensPatient(p, examens)
+                    }
+                    onImprimerExamensSelectionnes={(examens) =>
+                      void imprimerExamensDrApprouve(p, examens)
+                    }
+                    varianteNumero="salle"
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-            <PaginationListe
-              page={pageData.pageCourante}
-              totalPages={pageData.totalPages}
-              totalItems={filtres.length}
-              parPage={PAR_PAGE}
-              onChange={setPage}
-              labelPrec={t("laboratoire.pagination.prec")}
-              labelSuiv={t("laboratoire.pagination.suiv")}
-              className="rounded-xl border border-gris-bordure bg-white"
-            />
-          </>
-        )}
+          <PaginationListe
+            page={pageData.pageCourante}
+            totalPages={pageData.totalPages}
+            totalItems={filtres.length}
+            parPage={PAR_PAGE}
+            onChange={setPage}
+            labelPrec={t("laboratoire.pagination.prec")}
+            labelSuiv={t("laboratoire.pagination.suiv")}
+            className="rounded-xl border border-gris-bordure bg-white"
+          />
+        </>
+      )}
 
-        <SectionsMobileExamensDisponiblesCaisse {...propsPanneau} />
+      <SectionsMobileExamensDisponiblesMedecinsExternes {...propsPanneau} />
       </div>
-    </MiseEnPageCaisse>
+    </MiseEnPageMedecinsExternes>
+  );
+}
+
+export function ContenuExamensDisponiblesMedecinsExternes(
+  props: PropsContenuExamensDisponiblesMedecinsExternes
+) {
+  return (
+    <FournisseurEspaceApi espace={ESPACE_API_MEDECINS_EXTERNES}>
+      <CorpsExamensDisponiblesMedecinsExternes {...props} />
+    </FournisseurEspaceApi>
   );
 }

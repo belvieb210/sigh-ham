@@ -12,6 +12,8 @@ import {
 
 interface PropsResumePatientLaboratoire {
   patient: PatientFileLaboratoire | null;
+  /** Labo : affiche le N° transfert (PAT-…). Autres salles : N° permanent seulement. */
+  variante?: "labo" | "salle";
 }
 
 function Ligne({
@@ -31,7 +33,10 @@ function Ligne({
   );
 }
 
-export function ResumePatientLaboratoire({ patient }: PropsResumePatientLaboratoire) {
+export function ResumePatientLaboratoire({
+  patient,
+  variante = "labo",
+}: PropsResumePatientLaboratoire) {
   const { t, i18n } = useTranslation();
 
   const formaterDateHeure = (iso: string | null | undefined) => {
@@ -77,7 +82,9 @@ export function ResumePatientLaboratoire({ patient }: PropsResumePatientLaborato
         {patient.nom} {patient.prenom}
       </p>
       <p className="font-mono text-xs text-texte-secondaire">
-        {codeTransfertLaboratoire(patient)}
+        {variante === "labo"
+          ? codeTransfertLaboratoire(patient)
+          : numeroPermanentPatientLaboratoire(patient)}
       </p>
       <dl className="mt-4 w-full space-y-2 text-left text-xs">
         <Ligne
@@ -98,10 +105,12 @@ export function ResumePatientLaboratoire({ patient }: PropsResumePatientLaborato
           label={t("laboratoire.panneau.examens")}
           valeur={String(patient.nombreExamens)}
         />
-        <Ligne
-          label={t("laboratoire.panneau.numeroEnregistrement")}
-          valeur={numeroEnregistrementLaboratoire(patient)}
-        />
+        {variante === "labo" ? (
+          <Ligne
+            label={t("laboratoire.panneau.numeroEnregistrement")}
+            valeur={numeroEnregistrementLaboratoire(patient)}
+          />
+        ) : null}
         <Ligne
           label={t("laboratoire.panneau.numeroTransfert")}
           valeur={numeroPermanentPatientLaboratoire(patient)}

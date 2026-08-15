@@ -39,7 +39,7 @@ export function PanneauExamensDisponiblesCaisse({
         <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
           {t("laboratoire.panneau.resumePatient")}
         </h2>
-        <ResumePatientLaboratoire patient={patient} />
+        <ResumePatientLaboratoire patient={patient} variante="salle" />
       </section>
 
       <SectionExamensFacturePanneauCaisse dossierId={patient?.dossierId ?? null} />

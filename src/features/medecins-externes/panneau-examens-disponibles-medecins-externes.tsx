@@ -7,7 +7,7 @@ import { SectionExamensFacturePanneauCaisse } from "@/features/caisse/section-ex
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import { cn } from "@/lib/utils";
 
-interface PropsPanneauExamensDisponiblesReception {
+interface PropsPanneauExamensDisponiblesMedecinsExternes {
   patient: PatientFileLaboratoire | null;
   nbExamensSelectionnes: number;
   peutImprimer: boolean;
@@ -16,22 +16,22 @@ interface PropsPanneauExamensDisponiblesReception {
   impressionEnCours?: boolean;
 }
 
-export function PanneauExamensDisponiblesReception({
+export function PanneauExamensDisponiblesMedecinsExternes({
   patient,
   nbExamensSelectionnes,
   peutImprimer,
   onRechercher,
   onImprimer,
   impressionEnCours = false,
-}: PropsPanneauExamensDisponiblesReception) {
+}: PropsPanneauExamensDisponiblesMedecinsExternes) {
   const { t } = useTranslation();
 
   const libelleImprimer =
     nbExamensSelectionnes > 0
-      ? t("reception.examensDisponibles.imprimerSelection", {
+      ? t("medecinsExternes.examensDisponibles.imprimerSelection", {
           count: nbExamensSelectionnes,
         })
-      : t("reception.examensDisponibles.imprimerTous");
+      : t("medecinsExternes.examensDisponibles.imprimerTous");
 
   return (
     <aside className="flex w-full min-w-0 shrink-0 flex-col gap-4">
@@ -44,8 +44,8 @@ export function PanneauExamensDisponiblesReception({
 
       <SectionExamensFacturePanneauCaisse
         dossierId={patient?.dossierId ?? null}
-        prefixeApi="/api/reception/examens-disponibles"
-        prefixeCle="reception.examensDisponibles"
+        prefixeApi="/api/medecins-externes/examens-disponibles"
+        prefixeCle="medecinsExternes.examensDisponibles"
       />
 
       <section className="min-w-0 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
@@ -85,13 +85,12 @@ export function PanneauExamensDisponiblesReception({
   );
 }
 
-/** Version empilée sous le tableau (mobile / tablette) */
-export function SectionsMobileExamensDisponiblesReception(
-  props: PropsPanneauExamensDisponiblesReception
+export function SectionsMobileExamensDisponiblesMedecinsExternes(
+  props: PropsPanneauExamensDisponiblesMedecinsExternes
 ) {
   return (
     <div className="xl:hidden">
-      <PanneauExamensDisponiblesReception {...props} />
+      <PanneauExamensDisponiblesMedecinsExternes {...props} />
     </div>
   );
 }

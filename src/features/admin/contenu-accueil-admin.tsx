@@ -9,6 +9,7 @@ import {
   BarChart3,
   MessageSquare,
   ScrollText,
+  ShieldAlert,
   Users,
 } from "lucide-react";
 import {
@@ -105,10 +106,16 @@ export function ContenuAccueilAdmin({
       desc: t("admin.raccourcis.parametresDesc"),
     },
     {
-      href: "/sigh/admin/messagerie",
-      icone: MessageSquare,
-      titre: t("admin.raccourcis.messagerie"),
-      desc: t("admin.raccourcis.messagerieDesc"),
+      href: "/sigh/admin/moderation",
+      icone: ShieldAlert,
+      titre: t("admin.raccourcis.moderation"),
+      desc: t("admin.raccourcis.moderationDesc"),
+    },
+    {
+      href: "/sigh/admin/paquets-bilans",
+      icone: Activity,
+      titre: t("admin.raccourcis.paquetsBilans"),
+      desc: t("admin.raccourcis.paquetsBilansDesc"),
     },
   ];
 

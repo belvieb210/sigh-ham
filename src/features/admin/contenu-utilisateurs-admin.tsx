@@ -11,6 +11,7 @@ import { EnTetePageReception } from "@/features/reception/en-tete-page-reception
 import { Bouton } from "@/components/ui/bouton";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import { EVENEMENT_ADMIN_UTILISATEURS_MODIFIES } from "@/constants/admin";
+import { estRoleGereParServiceClient } from "@/constants/admin-utilisateurs";
 
 interface RoleOption {
   id: string;
@@ -28,6 +29,8 @@ interface UtilisateurItem {
   nom: string;
   telephone: string | null;
   statut: "ACTIF" | "INACTIF" | "SUSPENDU";
+  messagerieBloquee?: boolean;
+  notesAdmin?: string | null;
   derniereConnexion: string | null;
   role: RoleOption;
 }
@@ -43,6 +46,8 @@ const FORM_VIDE: {
   roleId: string;
   motDePasse: string;
   statut: "ACTIF" | "INACTIF" | "SUSPENDU";
+  messagerieBloquee: boolean;
+  notesAdmin: string;
 } = {
   identifiant: "",
   email: "",
@@ -52,6 +57,8 @@ const FORM_VIDE: {
   roleId: "",
   motDePasse: "",
   statut: "ACTIF",
+  messagerieBloquee: false,
+  notesAdmin: "",
 };
 
 export function ContenuUtilisateursAdmin({
@@ -133,6 +140,8 @@ export function ContenuUtilisateursAdmin({
       roleId: u.role.id,
       motDePasse: "",
       statut: u.statut,
+      messagerieBloquee: u.messagerieBloquee ?? false,
+      notesAdmin: u.notesAdmin ?? "",
     });
     setMessage(null);
     setErreur(null);
@@ -164,6 +173,8 @@ export function ContenuUtilisateursAdmin({
             telephone: form.telephone || null,
             roleId: form.roleId,
             statut: form.statut,
+            messagerieBloquee: form.messagerieBloquee,
+            notesAdmin: form.notesAdmin || null,
             motDePasse: form.motDePasse || undefined,
           }),
         });
@@ -287,11 +298,21 @@ export function ContenuUtilisateursAdmin({
                         <p className="text-[10px] text-texte-secondaire">
                           {u.role.salle?.nom ?? u.role.code}
                         </p>
+                        {estRoleGereParServiceClient(u.role.code) && (
+                          <span className="mt-1 inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-800">
+                            {t("admin.utilisateurs.serviceClient")}
+                          </span>
+                        )}
                       </td>
                       <td className="px-3 py-2.5">
                         <span className="rounded-full bg-gris-tres-clair px-2 py-0.5 text-xs font-medium">
                           {u.statut}
                         </span>
+                        {u.messagerieBloquee && (
+                          <span className="ml-1 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-800">
+                            {t("admin.utilisateurs.messagerieBloquee")}
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -391,7 +412,14 @@ export function ContenuUtilisateursAdmin({
                       setForm((f) => ({ ...f, roleId: e.target.value }))
                     }
                   >
-                    {roles.map((r) => (
+                    {roles
+                      .filter(
+                        (r) =>
+                          !modeCreation ||
+                          (!estRoleGereParServiceClient(r.code) &&
+                            r.code !== "SUPER_ADMIN")
+                      )
+                      .map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.nom}
                         {r.salle ? ` (${r.salle.nom})` : ""}
@@ -419,6 +447,29 @@ export function ContenuUtilisateursAdmin({
                       </option>
                     ))}
                   </select>
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.messagerieBloquee}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, messagerieBloquee: e.target.checked }))
+                    }
+                  />
+                  {t("admin.utilisateurs.champs.messagerieBloquee")}
+                </label>
+                <div>
+                  <label className={CLASSE_LABEL_RECEPTION}>
+                    {t("admin.utilisateurs.champs.notesAdmin")}
+                  </label>
+                  <textarea
+                    className={CLASSE_CHAMP_RECEPTION}
+                    rows={2}
+                    value={form.notesAdmin}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, notesAdmin: e.target.value }))
+                    }
+                  />
                 </div>
                 <div>
                   <label className={CLASSE_LABEL_RECEPTION}>

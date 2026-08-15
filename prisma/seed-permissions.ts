@@ -77,6 +77,30 @@ export const CATALOGUE_PERMISSIONS: {
     module: "ADMIN",
   },
   {
+    code: "admin.moderation.read",
+    nom: "Modération messagerie",
+    description: "Consulter et modérer conversations et messages",
+    module: "ADMIN",
+  },
+  {
+    code: "admin.moderation.write",
+    nom: "Actions de modération",
+    description: "Bloquer, restaurer, avertir les utilisateurs",
+    module: "ADMIN",
+  },
+  {
+    code: "admin.paquets.read",
+    nom: "Paquets bilans",
+    description: "Consulter les paquets d'examens",
+    module: "ADMIN",
+  },
+  {
+    code: "admin.paquets.write",
+    nom: "Gérer les paquets bilans",
+    description: "Créer et modifier les paquets bilans",
+    module: "ADMIN",
+  },
+  {
     code: "messagerie.diffusion",
     nom: "Diffusion institutionnelle",
     description: "Envoyer un message à tous les services",

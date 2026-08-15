@@ -351,6 +351,9 @@ model Utilisateur {
   role              Role              @relation(fields: [roleId], references: [id])
   medecinExterneId  String?           @unique @map("medecin_externe_id")
   medecinExterne    MedecinExterne?   @relation(fields: [medecinExterneId], references: [id])
+  /** Accès messagerie suspendu par l'administration */
+  messagerieBloquee Boolean           @default(false) @map("messagerie_bloquee")
+  notesAdmin        String?           @map("notes_admin") @db.Text
   derniereConnexion DateTime?         @map("derniere_connexion")
   createdAt         DateTime          @default(now()) @map("created_at")
   updatedAt         DateTime          @updatedAt @map("updated_at")
@@ -390,6 +393,8 @@ model Utilisateur {
   mouvementsStock          MouvementStock[]
   achatsPharmacie          AchatPharmacie[]        @relation("AchatPharmacien")
   retoursPharmacie         RetourPharmacie[]       @relation("RetourPharmacien")
+  avertissementsRecus      ModerationAvertissement[] @relation("AvertissementDestinataire")
+  avertissementsEmis       ModerationAvertissement[] @relation("AvertissementEmetteur")
 
   @@map("utilisateurs")
 }
@@ -815,8 +820,39 @@ model TypeExamen {
 
   parametres ParametreTypeExamen[]
   examens    ExamenLaboratoire[]
+  paquetsBilan PaquetBilanExamen[]
 
   @@map("types_examen")
+}
+
+/// Regroupement d'examens facturés comme un seul bilan (prix forfaitaire).
+model PaquetBilan {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  libelle     String
+  description String?  @db.Text
+  prix        Decimal  @db.Decimal(12, 2)
+  actif       Boolean  @default(true)
+  ordre       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  examens PaquetBilanExamen[]
+
+  @@map("paquets_bilans")
+}
+
+model PaquetBilanExamen {
+  id            String      @id @default(cuid())
+  paquetBilanId String      @map("paquet_bilan_id")
+  paquetBilan   PaquetBilan @relation(fields: [paquetBilanId], references: [id], onDelete: Cascade)
+  typeExamenId  String      @map("type_examen_id")
+  typeExamen    TypeExamen  @relation(fields: [typeExamenId], references: [id], onDelete: Restrict)
+  ordre         Int         @default(0)
+
+  @@unique([paquetBilanId, typeExamenId])
+  @@index([typeExamenId])
+  @@map("paquets_bilans_examens")
 }
 
 model ParametreTypeExamen {
@@ -1311,6 +1347,15 @@ model Conversation {
   dossier         DossierPatient?  @relation(fields: [dossierId], references: [id])
   epingle         Boolean          @default(false)
   archivee        Boolean          @default(false)
+  /** Bloquée par l'administration (modération) */
+  bloquee         Boolean          @default(false)
+  bloqueeLe       DateTime?        @map("bloquee_le")
+  bloqueeParId    String?          @map("bloquee_par_id")
+  bloqueeRaison   String?          @map("bloquee_raison")
+  /** Groupe supprimé (soft delete admin) */
+  supprimee       Boolean          @default(false)
+  supprimeeLe     DateTime?        @map("supprimee_le")
+  supprimeeParId  String?          @map("supprimee_par_id")
   photoUrl        String?          @map("photo_url")
   createurId      String?          @map("createur_id")
   createur        Utilisateur?     @relation("ConversationCreateur", fields: [createurId], references: [id])
@@ -1361,6 +1406,15 @@ model Message {
   modifieLe        DateTime?       @map("modifie_le")
   supprime         Boolean         @default(false)
   supprimeLe       DateTime?       @map("supprime_le")
+  /** Contenu conservé pour revue admin après suppression */
+  contenuArchive   String?         @map("contenu_archive") @db.Text
+  bloque           Boolean         @default(false)
+  bloqueLe         DateTime?       @map("bloque_le")
+  bloqueParId      String?         @map("bloque_par_id")
+  bloqueRaison     String?         @map("bloque_raison")
+  signale          Boolean         @default(false)
+  signaleRaison    String?         @map("signale_raison")
+  avertissementEnvoye Boolean      @default(false) @map("avertissement_envoye")
   envoyeLe         DateTime        @default(now()) @map("envoye_le")
 
   lectures      MessageLu[]
@@ -1385,6 +1439,10 @@ model PieceJointe {
   url        String
   bucket     String?
   cleStockage String?        @map("cle_stockage")
+  supprimee   Boolean        @default(false)
+  supprimeeLe DateTime?      @map("supprimee_le")
+  signalee    Boolean        @default(false)
+  signaleRaison String?      @map("signalee_raison")
   envoyeLe   DateTime        @default(now()) @map("envoye_le")
 
   @@index([messageId])
@@ -1424,6 +1482,24 @@ model PresenceUtilisateur {
   dernierPing   DateTime       @default(now()) @map("dernier_ping")
 
   @@map("presences_utilisateurs")
+}
+
+/// Avertissement envoyé par un administrateur à un utilisateur (modération messagerie).
+model ModerationAvertissement {
+  id             String      @id @default(cuid())
+  destinataireId String      @map("destinataire_id")
+  destinataire   Utilisateur @relation("AvertissementDestinataire", fields: [destinataireId], references: [id], onDelete: Cascade)
+  emetteurId     String      @map("emetteur_id")
+  emetteur       Utilisateur @relation("AvertissementEmetteur", fields: [emetteurId], references: [id], onDelete: Cascade)
+  messageId      String?     @map("message_id")
+  conversationId String?     @map("conversation_id")
+  contenu        String      @db.Text
+  lu             Boolean     @default(false)
+  creeLe         DateTime    @default(now()) @map("cree_le")
+
+  @@index([destinataireId, lu])
+  @@index([creeLe])
+  @@map("moderation_avertissements")
 }
 
 model MessageLu {

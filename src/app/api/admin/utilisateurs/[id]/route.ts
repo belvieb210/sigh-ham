@@ -48,6 +48,12 @@ export async function PATCH(
             : (body.telephone as string | null),
         roleId: body.roleId != null ? String(body.roleId) : undefined,
         statut: body.statut as StatutUtilisateur | undefined,
+        messagerieBloquee:
+          body.messagerieBloquee != null ? Boolean(body.messagerieBloquee) : undefined,
+        notesAdmin:
+          body.notesAdmin === undefined
+            ? undefined
+            : (body.notesAdmin as string | null),
         motDePasse:
           body.motDePasse != null && String(body.motDePasse).length > 0
             ? String(body.motDePasse)

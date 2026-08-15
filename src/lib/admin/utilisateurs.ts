@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { hasherMotDePasse } from "@/lib/auth/mot-de-passe";
 import { enregistrerAudit } from "@/lib/admin/audit";
 import { lireParametre } from "@/lib/admin/parametres";
+import { estRoleGereParServiceClient } from "@/constants/admin-utilisateurs";
 
 const selectPublic = {
   id: true,
@@ -14,6 +15,8 @@ const selectPublic = {
   telephone: true,
   photoUrl: true,
   statut: true,
+  messagerieBloquee: true,
+  notesAdmin: true,
   derniereConnexion: true,
   createdAt: true,
   updatedAt: true,
@@ -109,7 +112,12 @@ export async function creerUtilisateurAdmin(
     throw new Error("Prénom et nom requis.");
   }
 
-  await assertRoleAssignable(data.roleId, acteur.role.code);
+  const role = await assertRoleAssignable(data.roleId, acteur.role.code);
+  if (estRoleGereParServiceClient(role.code)) {
+    throw new Error(
+      "Ce rôle est géré par le service client (médecins externes / Église). Utilisez le module Service client pour créer ce compte."
+    );
+  }
   const exigerFort =
     (await lireParametre("securite.exigerMotDePasseFort", "true")) === "true";
   validerMotDePasse(data.motDePasse, exigerFort);
@@ -164,6 +172,8 @@ export async function mettreAJourUtilisateurAdmin(
     roleId?: string;
     statut?: StatutUtilisateur;
     motDePasse?: string;
+    messagerieBloquee?: boolean;
+    notesAdmin?: string | null;
   }
 ) {
   const cible = await prisma.utilisateur.findUnique({
@@ -181,7 +191,15 @@ export async function mettreAJourUtilisateurAdmin(
   }
 
   if (data.roleId) {
-    await assertRoleAssignable(data.roleId, acteur.role.code);
+    const role = await assertRoleAssignable(data.roleId, acteur.role.code);
+    if (
+      estRoleGereParServiceClient(role.code) &&
+      cible.role.code !== role.code
+    ) {
+      throw new Error(
+        "Impossible d'attribuer ce rôle depuis l'administration. Compte réservé au service client."
+      );
+    }
   }
 
   if (data.motDePasse) {
@@ -205,6 +223,12 @@ export async function mettreAJourUtilisateurAdmin(
       ...(data.statut ? { statut: data.statut } : {}),
       ...(data.motDePasse
         ? { motDePasseHash: await hasherMotDePasse(data.motDePasse) }
+        : {}),
+      ...(data.messagerieBloquee !== undefined
+        ? { messagerieBloquee: data.messagerieBloquee }
+        : {}),
+      ...(data.notesAdmin !== undefined
+        ? { notesAdmin: data.notesAdmin?.trim() || null }
         : {}),
     },
     select: selectPublic,

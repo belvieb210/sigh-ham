@@ -26,12 +26,28 @@ export async function envoyerMessage(
       conversationId_utilisateurId: { conversationId, utilisateurId },
     },
     include: {
-      conversation: { select: { patientId: true } },
+      conversation: { select: { patientId: true, bloquee: true } },
     },
   });
 
   if (!participation || participation.conversation.patientId !== null) {
     throw new Error("CONVERSATION_INACCESSIBLE");
+  }
+
+  if (participation.conversation.bloquee) {
+    throw new Error("CONVERSATION_BLOQUEE");
+  }
+
+  const expediteur = await prisma.utilisateur.findUnique({
+    where: { id: utilisateurId },
+    select: { messagerieBloquee: true, statut: true },
+  });
+  if (
+    !expediteur ||
+    expediteur.statut !== "ACTIF" ||
+    expediteur.messagerieBloquee
+  ) {
+    throw new Error("MESSAGERIE_BLOQUEE");
   }
 
   const mentions = contenu ? await resoudreMentions(contenu) : [];

@@ -1,5 +1,4 @@
 import "server-only";
-import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { genererNumerosClientPharmacie } from "@/lib/reception/numeros";
 
@@ -18,12 +17,25 @@ function normaliserSexe(v?: string) {
   return null;
 }
 
-function estErreurNumeroPatientDuplique(error: unknown) {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2002" &&
-    String(error.meta?.target ?? "").includes("numero_patient")
-  );
+function estErreurUniquePrisma(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const e = error as {
+    code?: unknown;
+    meta?: { target?: unknown };
+    message?: unknown;
+    cause?: unknown;
+  };
+  const cible = Array.isArray(e.meta?.target)
+    ? e.meta.target.map(String).join(",")
+    : String(e.meta?.target ?? "");
+  const message = String(e.message ?? "");
+  if (e.code === "P2002") return true;
+  if (/unique constraint failed/i.test(message)) return true;
+  if (/numero_patient|numeroPatient/i.test(cible) && /unique/i.test(message)) {
+    return true;
+  }
+  if (e.cause && e.cause !== error) return estErreurUniquePrisma(e.cause);
+  return false;
 }
 
 /** Client walk-in pharmacie → Patient + Dossier */
@@ -46,35 +58,38 @@ export async function creerClientPharmacie(data: {
 
   for (let tentative = 0; tentative < 5; tentative++) {
     try {
-      return await prisma.$transaction(async (tx) => {
-        const { numeroPatient, numeroEnregistrement } =
-          await genererNumerosClientPharmacie(tx);
+      return await prisma.$transaction(
+        async (tx) => {
+          const { numeroPatient, numeroEnregistrement } =
+            await genererNumerosClientPharmacie(tx);
 
-        const patient = await tx.patient.create({
-          data: {
-            numeroPatient,
-            prenom,
-            nom,
-            telephone: data.telephone?.trim() || null,
-            adresse: data.adresse?.trim() || null,
-            sexe: normaliserSexe(data.sexe) ?? "AUTRE",
-            dateNaissance: age != null ? dateNaissanceDepuisAge(age) : null,
-          },
-        });
+          const patient = await tx.patient.create({
+            data: {
+              numeroPatient,
+              prenom,
+              nom,
+              telephone: data.telephone?.trim() || null,
+              adresse: data.adresse?.trim() || null,
+              sexe: normaliserSexe(data.sexe) ?? "AUTRE",
+              dateNaissance: age != null ? dateNaissanceDepuisAge(age) : null,
+            },
+          });
 
-        const dossier = await tx.dossierPatient.create({
-          data: {
-            numeroDossier: `PH-${numeroEnregistrement}`,
-            patientId: patient.id,
-            motifOuverture: "Vente pharmacie",
-          },
-        });
+          const dossier = await tx.dossierPatient.create({
+            data: {
+              numeroDossier: numeroEnregistrement,
+              patientId: patient.id,
+              motifOuverture: "Vente pharmacie",
+            },
+          });
 
-        return { patient, dossier };
-      });
+          return { patient, dossier };
+        },
+        { timeout: 15000 }
+      );
     } catch (error) {
-      if (estErreurNumeroPatientDuplique(error) && tentative < 4) continue;
-      if (estErreurNumeroPatientDuplique(error)) {
+      if (estErreurUniquePrisma(error) && tentative < 4) continue;
+      if (estErreurUniquePrisma(error)) {
         throw new Error(
           "Impossible d'attribuer un numéro client unique. Réessayez dans quelques secondes."
         );

@@ -36,9 +36,9 @@ function ContenuPanneau({
           <p className="mt-3 text-sm font-semibold text-texte-principal">
             {client?.nomComplet ?? t("pharmacie.panneau.aucunPatient")}
           </p>
-          {client?.numeroPatient && (
+          {client?.numeroDossier && (
             <p className="mt-0.5 font-mono text-[11px] text-texte-secondaire">
-              {client.numeroPatient}
+              {client.numeroDossier}
             </p>
           )}
         </div>

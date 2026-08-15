@@ -29,6 +29,7 @@ interface EstimationCaisse {
   id: string;
   dossierId?: string;
   numeroPatient: string;
+  numeroDossier?: string;
   nomComplet: string;
   typeEstimation: "CONVENTION_EGLISE" | "MEDECIN_EXTERNE" | "PHARMACIE_CLIENT";
   libelleSource: string | null;
@@ -392,7 +393,11 @@ export function ContenuEstimationsCaisse({
                           estClientWalkIn={e.estClientWalkIn ?? estEstimationPharmacieClient(e)}
                         />
                       </div>
-                      <div className="text-xs text-texte-secondaire">{e.numeroPatient}</div>
+                      <div className="text-xs text-texte-secondaire">
+                        {e.estClientWalkIn || estEstimationPharmacieClient(e)
+                          ? e.numeroDossier ?? e.numeroPatient
+                          : e.numeroPatient}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div>{libelleType(e.typeEstimation)}</div>

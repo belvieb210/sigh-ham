@@ -151,7 +151,7 @@ export async function creerEtTransmettreVenteACaisse(
   if (venteEnCours) {
     throw new Error(
       venteEnCours.facture?.numeroFacture
-        ? `Une facture (${venteEnCours.facture.numeroFacture}) est déjà transmise pour ce client. Confirmez le transfert dans Patients.`
+        ? `Une facture (${venteEnCours.facture.numeroFacture}) est déjà transmise pour ce client. Confirmez le transfert vers la caisse.`
         : "Cette vente a déjà été transmise à la caisse."
     );
   }

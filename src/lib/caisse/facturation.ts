@@ -7,7 +7,7 @@ import {
   preparerFacturePharmacieDossier,
 } from "@/lib/caisse/facturation-pharmacie";
 import { reorienterPatientDepuisCaisse } from "@/lib/caisse/reorienter-patient-caisse";
-import { estClientWalkInPharmacie } from "@/lib/pharmacie/client-walk-in";
+import { estClientWalkInPharmacie, numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 import { creerTokenRecuFacture } from "@/lib/caisse/token-recu-public";
 import { evaluerEtatFacturationDual } from "@/lib/caisse/etat-facturation-dual";
 import type {
@@ -290,7 +290,10 @@ export async function obtenirDossierFacturation(
 
   return {
     dossierId: dossier.id,
-    numeroPatient: dossier.patient.numeroPatient,
+    numeroPatient: numeroIdentitePersonne(
+      dossier.numeroDossier,
+      dossier.patient.numeroPatient
+    ),
     numeroDossier: dossier.numeroDossier,
     prenom: dossier.patient.prenom,
     nom: dossier.patient.nom,
@@ -876,7 +879,10 @@ export async function listerFacturesDuJour(): Promise<FactureResumeJour[]> {
       patient: `${f.dossier.patient.prenom} ${f.dossier.patient.nom}`,
       prenom: f.dossier.patient.prenom,
       nom: f.dossier.patient.nom,
-      numeroPatient: f.dossier.patient.numeroPatient,
+      numeroPatient: numeroIdentitePersonne(
+        f.dossier.numeroDossier,
+        f.dossier.patient.numeroPatient
+      ),
       numeroDossier: f.dossier.numeroDossier,
       telephone: f.dossier.patient.telephone,
       dateNaissance: f.dossier.patient.dateNaissance?.toISOString() ?? null,

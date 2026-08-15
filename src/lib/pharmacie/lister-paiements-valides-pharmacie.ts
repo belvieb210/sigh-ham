@@ -1,5 +1,6 @@
 import "server-only";
 import { calculerAge } from "@/features/caisse/utils-format";
+import { numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 import { prisma } from "@/lib/prisma";
 
 function decimal(n: { toNumber?: () => number } | number | null | undefined) {
@@ -78,7 +79,7 @@ export async function listerPaiementsValidesPharmacie(): Promise<PaiementValideP
       numero: v.numero,
       dossierId: v.dossierId,
       numeroDossier: v.dossier.numeroDossier,
-      numeroPatient: patient.numeroPatient,
+      numeroPatient: numeroIdentitePersonne(v.dossier.numeroDossier, patient.numeroPatient),
       prenom: patient.prenom,
       nom: patient.nom,
       nomComplet: `${patient.prenom} ${patient.nom}`.trim(),

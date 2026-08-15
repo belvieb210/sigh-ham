@@ -412,7 +412,8 @@ export function ContenuFacturesJourCaisse({
                                 <BadgeTypePersonneCaisse estClientWalkIn={f.estClientWalkIn} />
                               </p>
                               <p className="text-xs text-texte-secondaire">
-                                ID: {f.numeroPatient}
+                                ID:{" "}
+                                {f.estClientWalkIn ? f.numeroDossier : f.numeroPatient}
                               </p>
                             </td>
                             <td className="px-2 py-1.5 font-semibold text-texte-principal">

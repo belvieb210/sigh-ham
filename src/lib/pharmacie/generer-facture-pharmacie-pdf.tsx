@@ -8,6 +8,7 @@ import {
   cheminsAssetsPdfServeur,
   enregistrerPolicesPdfServeur,
 } from "@/lib/pdf/assets-pdf-serveur";
+import { estClientWalkInPharmacie } from "@/lib/pharmacie/client-walk-in";
 import { prisma } from "@/lib/prisma";
 
 function decimal(n: { toNumber?: () => number } | number | null | undefined) {
@@ -40,6 +41,7 @@ export async function genererPdfFacturePharmacieVente(
   if (!vente.lignes.length) return null;
 
   const patient = vente.dossier.patient;
+  const estClient = estClientWalkInPharmacie(vente.dossier.numeroDossier);
   const numeroFacture =
     vente.facture?.numeroFacture ?? vente.numero ?? vente.dossier.numeroDossier;
   const dateEmission =
@@ -90,7 +92,9 @@ export async function genererPdfFacturePharmacieVente(
     nomPatient: patient.nom,
     prenomPatient: patient.prenom,
     telephonePatient: patient.telephone ?? undefined,
-    numeroEnregistrement: numeroFacture,
+    numeroEnregistrement: estClient
+      ? vente.dossier.numeroDossier
+      : numeroFacture,
     dateEnregistrement: new Date(dateEmission).toLocaleDateString("fr-FR", {
       day: "2-digit",
       month: "2-digit",
@@ -99,17 +103,17 @@ export async function genererPdfFacturePharmacieVente(
     agentNom: pharmacienNom,
     remise: remiseFacture,
     labels: {
-      titreTicket: "FACTURE PHARMACIE",
+      titreTicket: estClient ? "FACTURE CLIENT PHARMACIE" : "FACTURE PHARMACIE",
       numero: "N°",
       date: "Date",
-      patient: "Patient",
+      patient: estClient ? "Client" : "Patient",
       telephone: "Téléphone",
-      medecin: "Prescripteur",
+      medecin: estClient ? "Pharmacien" : "Prescripteur",
       description: "Médicament",
       prix: "Montant (Fc)",
       total: "Total médicaments",
       genereLe: "Émis le",
-      agent: "Pharmacien",
+      agent: estClient ? "Caissier" : "Pharmacien",
     },
   };
 

@@ -1,6 +1,7 @@
 import "server-only";
 import { calculerAge } from "@/features/caisse/utils-format";
 import { listerPatientsPharmacie } from "@/lib/pharmacie/lister-patients-pharmacie";
+import { numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 import { prisma } from "@/lib/prisma";
 
 export interface ClientVentePharmacie {
@@ -115,7 +116,7 @@ export async function listerClientsVentePharmacie(): Promise<ClientVentePharmaci
     map.set(o.dossierId, {
       dossierId: o.dossierId,
       numeroDossier: o.dossier.numeroDossier,
-      numeroPatient: patient.numeroPatient,
+      numeroPatient: numeroIdentitePersonne(o.dossier.numeroDossier, patient.numeroPatient),
       prenom: patient.prenom,
       nom: patient.nom,
       nomComplet: `${patient.prenom} ${patient.nom}`.trim(),
@@ -139,7 +140,7 @@ export async function listerClientsVentePharmacie(): Promise<ClientVentePharmaci
     map.set(d.id, {
       dossierId: d.id,
       numeroDossier: d.numeroDossier,
-      numeroPatient: patient.numeroPatient,
+      numeroPatient: numeroIdentitePersonne(d.numeroDossier, patient.numeroPatient),
       prenom: patient.prenom,
       nom: patient.nom,
       nomComplet: `${patient.prenom} ${patient.nom}`.trim(),

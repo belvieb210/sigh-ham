@@ -30,7 +30,11 @@ export async function GET(request: Request, context: ContexteRoute) {
   const urlRecu = `${origin}${cheminRecuPublic(token)}`;
   const html = await construireHtmlTicketThermique(detail, urlRecu, {
     sansQrCode: detail.isPharmacie,
-    titreRecu: detail.isPharmacie ? "FACTURE PHARMACIE" : undefined,
+    titreRecu: detail.estClientWalkIn
+      ? "FACTURE CLIENT PHARMACIE"
+      : detail.isPharmacie
+        ? "FACTURE PHARMACIE"
+        : undefined,
     urlResultats: `${origin}/resultats`,
   });
 

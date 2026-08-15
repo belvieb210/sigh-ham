@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import { estClientWalkInPharmacie } from "@/lib/pharmacie/client-walk-in";
+import { estClientWalkInPharmacie, numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 
 function decimal(v: { toNumber?: () => number } | number | string) {
   if (typeof v === "number") return v;
@@ -64,7 +64,10 @@ export async function listerEstimationsPharmacieClientPourCaisse() {
     .map((v) => ({
       id: `vente-ph-${v.id}`,
       dossierId: v.dossierId,
-      numeroPatient: v.dossier.patient.numeroPatient,
+      numeroPatient: numeroIdentitePersonne(
+        v.dossier.numeroDossier,
+        v.dossier.patient.numeroPatient
+      ),
       numeroDossier: v.dossier.numeroDossier,
       nomComplet: `${v.dossier.patient.prenom} ${v.dossier.patient.nom}`.trim(),
       typeEstimation: "PHARMACIE_CLIENT" as const,

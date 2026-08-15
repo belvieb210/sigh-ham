@@ -2,6 +2,10 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { estNumeroFacturePharmacie } from "@/lib/caisse/etat-facturation-dual";
 import {
+  estClientWalkInPharmacie,
+  numeroIdentitePersonne,
+} from "@/lib/pharmacie/client-walk-in";
+import {
   resoudreFactureExamensPourQr,
   resoudreFacturePharmaciePourQr,
 } from "@/lib/caisse/resoudre-facture-qr-dossier";
@@ -46,6 +50,7 @@ export interface DetailRecuPublic {
     montant: number;
   }>;
   isPharmacie: boolean;
+  estClientWalkIn: boolean;
 }
 
 function decimalVersNombre(valeur: { toNumber?: () => number } | number | string): number {
@@ -126,6 +131,8 @@ export async function chargerRecuPublicParToken(
         montant: decimalVersNombre(l.montant),
       })) ?? [];
 
+  const estClientWalkIn = estClientWalkInPharmacie(facture.dossier.numeroDossier);
+
   return {
     factureId: facture.id,
     numeroFacture: facture.numeroFacture,
@@ -139,7 +146,10 @@ export async function chargerRecuPublicParToken(
     patient: {
       prenom: facture.dossier.patient.prenom,
       nom: facture.dossier.patient.nom,
-      numeroPatient: facture.dossier.patient.numeroPatient,
+      numeroPatient: numeroIdentitePersonne(
+        facture.dossier.numeroDossier,
+        facture.dossier.patient.numeroPatient
+      ),
       telephone: facture.dossier.patient.telephone,
       dateNaissance: facture.dossier.patient.dateNaissance?.toISOString() ?? null,
       sexe: facture.dossier.patient.sexe ?? null,
@@ -158,6 +168,7 @@ export async function chargerRecuPublicParToken(
     examens,
     lignesMedicaments: lignesMedicaments.length > 0 ? lignesMedicaments : undefined,
     isPharmacie: estNumeroFacturePharmacie(facture.numeroFacture),
+    estClientWalkIn,
   };
 }
 

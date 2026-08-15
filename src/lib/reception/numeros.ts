@@ -11,18 +11,76 @@ async function prochainNumeroPatientPermanent(
   tx: ClientTransaction,
   date = new Date()
 ): Promise<string> {
+  const sequence = await prochaineSequenceAnnuellePatient(tx, date);
+  return `${formaterDateEnregistrement(date)}${formaterCompteurAnnuel(sequence)}`;
+}
+
+/**
+ * Prochaine séquence annuelle hospitalière (patients réception uniquement).
+ * Les clients pharmacie (PH-*) ont leur propre compteur.
+ */
+async function prochaineSequenceAnnuellePatient(
+  tx: ClientTransaction,
+  date = new Date()
+): Promise<number> {
+  await tx.$queryRaw`SELECT pg_advisory_xact_lock(8822015)`;
+
   const annee = date.getFullYear();
+  const prefixAnnee = String(annee);
   const debutAnnee = new Date(annee, 0, 1);
   const finAnnee = new Date(annee + 1, 0, 1);
 
+  const patients = await tx.patient.findMany({
+    where: { numeroPatient: { startsWith: prefixAnnee } },
+    select: { numeroPatient: true },
+  });
   const dejaEnregistres = await tx.enregistrementReception.count({
     where: {
       enregistreLe: { gte: debutAnnee, lt: finAnnee },
     },
   });
 
-  const sequence = dejaEnregistres + 1;
-  return `${formaterDateEnregistrement(date)}${formaterCompteurAnnuel(sequence)}`;
+  let maxSeq = 0;
+  for (const p of patients) {
+    if (p.numeroPatient.startsWith("PH-")) continue;
+    const seq = extraireSequenceAnnuelle(p.numeroPatient, annee);
+    if (seq != null) maxSeq = Math.max(maxSeq, seq);
+  }
+
+  return Math.max(maxSeq, dejaEnregistres) + 1;
+}
+
+/** Format YYYYMMDD + séquence (ex. 20260815012 → 12). */
+function extraireSequenceAnnuelle(numeroPatient: string, annee: number): number | null {
+  const m = /^(\d{4})(\d{4})(\d+)$/.exec(numeroPatient);
+  if (!m) return null;
+  if (Number.parseInt(m[1], 10) !== annee) return null;
+  const n = Number.parseInt(m[3], 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** N° client walk-in pharmacie : PH-YYYYMMDD + séquence du jour. */
+async function prochainNumeroClientPharmacie(
+  tx: ClientTransaction,
+  date = new Date()
+): Promise<string> {
+  await tx.$queryRaw`SELECT pg_advisory_xact_lock(8822016)`;
+
+  const prefixDate = formaterDateEnregistrement(date);
+  const prefixPh = `PH-${prefixDate}`;
+
+  const dossiers = await tx.dossierPatient.findMany({
+    where: { numeroDossier: { startsWith: prefixPh } },
+    select: { numeroDossier: true },
+  });
+
+  let maxSeq = 0;
+  for (const d of dossiers) {
+    const n = Number.parseInt(d.numeroDossier.slice(prefixPh.length), 10);
+    if (Number.isFinite(n)) maxSeq = Math.max(maxSeq, n);
+  }
+
+  return `${prefixPh}${formaterCompteurAnnuel(maxSeq + 1)}`;
 }
 
 /**
@@ -99,39 +157,24 @@ export async function genererNumeroEnregistrementVisite(tx: ClientTransaction) {
   return prochainNumeroEnregistrement(tx);
 }
 
-/** Nouveau patient : n° permanent + 1er dossier (même n° à la première visite). */
-export async function genererNumerosPatient(tx: ClientTransaction) {
-  const numeroPatient = await prochainNumeroPatientPermanent(tx);
+/** Nouveau patient hospitalier : n° permanent + 1er dossier (même n° à la première visite). */
+export async function genererNumerosPatient(
+  tx: ClientTransaction,
+  date = new Date()
+) {
+  const numeroPatient = await prochainNumeroPatientPermanent(tx, date);
   return { numeroPatient, numeroEnregistrement: numeroPatient };
 }
 
 /**
- * Numéros pour client walk-in pharmacie : alignés sur la réception mais
- * basés sur les patients existants du jour (évite les collisions car la
- * pharmacie ne crée pas d'enregistrement réception).
+ * Client walk-in pharmacie : série PH-YYYYMMDD### indépendante des patients hospitaliers.
  */
 export async function genererNumerosClientPharmacie(
   tx: ClientTransaction,
   date = new Date()
 ) {
-  const prefix = formaterDateEnregistrement(date);
-  const receptionNum = await prochainNumeroPatientPermanent(tx, date);
-  const receptionSeq = Number.parseInt(receptionNum.slice(prefix.length), 10) || 0;
-
-  const patients = await tx.patient.findMany({
-    where: { numeroPatient: { startsWith: prefix } },
-    select: { numeroPatient: true },
-  });
-
-  let maxSeq = 0;
-  for (const p of patients) {
-    const n = Number.parseInt(p.numeroPatient.slice(prefix.length), 10);
-    if (Number.isFinite(n)) maxSeq = Math.max(maxSeq, n);
-  }
-
-  const sequence = Math.max(maxSeq, receptionSeq) + 1;
-  const numeroPatient = `${prefix}${formaterCompteurAnnuel(sequence)}`;
-  return { numeroPatient, numeroEnregistrement: numeroPatient };
+  const numeroDossier = await prochainNumeroClientPharmacie(tx, date);
+  return { numeroPatient: numeroDossier, numeroEnregistrement: numeroDossier };
 }
 
 export async function apercuNumerosPatient() {

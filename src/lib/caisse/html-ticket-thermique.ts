@@ -62,6 +62,16 @@ export async function construireHtmlTicketThermique(
     .trim()
     .toUpperCase();
 
+  const libellePersonne = detail.estClientWalkIn ? "Client" : "Patient";
+  const libelleNumero = detail.estClientWalkIn ? "N° client" : "N° patient";
+  const titreRecu =
+    options?.titreRecu ??
+    (detail.estClientWalkIn
+      ? "FACTURE CLIENT PHARMACIE"
+      : detail.isPharmacie
+        ? "FACTURE PHARMACIE"
+        : "RECU DE CAISSE");
+
   const haut: string[] = [
     centrerLigne(L.ligne1),
     centrerLigne(L.ligne2),
@@ -73,14 +83,14 @@ export async function construireHtmlTicketThermique(
     centrerLigne(L.sloganLigne2),
     "",
     SEPARATEUR_ETOILES,
-    centrerLigne(options?.titreRecu ?? "RECU DE CAISSE"),
+    centrerLigne(titreRecu),
     SEPARATEUR_ETOILES,
     "",
     `Receipt #: ${detail.numeroFacture}`,
     `Date: ${formaterDateHeure(detail.emiseLe)}`,
-    `Patient: ${nom}`,
+    `${libellePersonne}: ${nom}`,
     `Tel: ${detail.patient.telephone?.trim() || "—"}`,
-    `N° patient: ${detail.patient.numeroPatient}`,
+    `${libelleNumero}: ${detail.patient.numeroPatient}`,
     "",
     ligneDeuxColonnes("Description", "Prix"),
   ];

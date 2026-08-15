@@ -1,6 +1,7 @@
 import "server-only";
 import { calculerAge } from "@/features/caisse/utils-format";
 import { obtenirSectionPharmacieDossier } from "@/lib/caisse/facturation-pharmacie";
+import { numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 import { prisma } from "@/lib/prisma";
 import type { StatutVentePharmacie } from "@/generated/prisma/client";
 
@@ -117,7 +118,7 @@ export async function obtenirDossierVentePharmacie(
   return {
     dossierId: dossier.id,
     numeroDossier: dossier.numeroDossier,
-    numeroPatient: patient.numeroPatient,
+    numeroPatient: numeroIdentitePersonne(dossier.numeroDossier, patient.numeroPatient),
     prenom: patient.prenom,
     nom: patient.nom,
     nomComplet: `${patient.prenom} ${patient.nom}`.trim(),

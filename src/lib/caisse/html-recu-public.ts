@@ -124,6 +124,7 @@ export function construireDocumentHtmlRecuPublic(
   const reste = Math.max(0, detail.montantTotal - detail.montantPaye);
   const libellePaye =
     reste > 0 || detail.modeFacture === "AVANCE" ? "Avance" : "Payé";
+  const libellePersonne = detail.estClientWalkIn ? "Client" : "Patient";
   const nom = echapper(`${detail.patient.prenom} ${detail.patient.nom}`.trim());
   const numeroFacture = echapper(detail.numeroFacture);
   const ticketPath = `${cheminRecuPublic(options.token)}/ticket`;
@@ -391,7 +392,7 @@ export function construireDocumentHtmlRecuPublic(
     <section class="card">
       <div class="card-head">
         <div>
-          <p class="label">Patient</p>
+          <p class="label">${libellePersonne}</p>
           <h2 class="name">${nom}</h2>
           <p class="sub">${echapper(detail.patient.numeroPatient)}</p>
         </div>
@@ -413,7 +414,7 @@ export function construireDocumentHtmlRecuPublic(
     </section>
 
     <section class="card">
-      <p class="label">Examens &amp; prestations</p>
+      <p class="label">${detail.isPharmacie ? "Médicaments" : "Examens &amp; prestations"}</p>
       <p class="sub" style="margin-bottom:8px">Liés à cette facture uniquement</p>
       <ul class="list">${lignesHtml}</ul>
       ${

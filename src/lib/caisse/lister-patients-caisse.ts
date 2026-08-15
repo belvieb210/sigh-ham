@@ -6,7 +6,7 @@ import {
   estNumeroFacturePharmacie,
   evaluerEtatFacturationDual,
 } from "@/lib/caisse/etat-facturation-dual";
-import { estClientWalkInPharmacie } from "@/lib/pharmacie/client-walk-in";
+import { estClientWalkInPharmacie, numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 import type { PatientFileCaisse, StatsCaisseJour } from "@/lib/caisse/types";
 
 function decimalVersNombre(valeur: { toNumber?: () => number } | number | string): number {
@@ -266,7 +266,7 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       passageId: file.passageId,
       transfertId: transfert?.id ?? "",
       dossierId: dossier.id,
-      numeroPatient: patient.numeroPatient,
+      numeroPatient: numeroIdentitePersonne(dossier.numeroDossier, patient.numeroPatient),
       numeroDossier: dossier.numeroDossier,
       prenom: patient.prenom,
       nom: patient.nom,

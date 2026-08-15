@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { SectionHeroResultats } from "@/features/resultats/sections/section-hero-resultats";
 import { SectionConsultationResultats } from "@/features/resultats/sections/section-consultation-resultats";
 
 export const metadata: Metadata = {
@@ -14,10 +13,5 @@ export const metadata: Metadata = {
 };
 
 export default function PageResultats() {
-  return (
-    <>
-      <SectionHeroResultats />
-      <SectionConsultationResultats />
-    </>
-  );
+  return <SectionConsultationResultats />;
 }

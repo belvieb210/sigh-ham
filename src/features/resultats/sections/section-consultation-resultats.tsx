@@ -16,6 +16,7 @@ export function SectionConsultationResultats() {
   const [prenom, setPrenom] = useState("");
   const [numeroPatient, setNumeroPatient] = useState("");
   const [numeroFacture, setNumeroFacture] = useState("");
+  const [telephone, setTelephone] = useState("");
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [resultat, setResultat] = useState<ResultatPatientPublic | null>(null);
@@ -34,7 +35,7 @@ export function SectionConsultationResultats() {
       const res = await fetch("/api/public/resultats/rechercher", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nom, prenom, numeroPatient, numeroFacture }),
+        body: JSON.stringify({ nom, prenom, numeroPatient, numeroFacture, telephone }),
       });
       const data = (await res.json()) as {
         resultat?: ResultatPatientPublic;
@@ -59,7 +60,7 @@ export function SectionConsultationResultats() {
   return (
     <section
       id="consultation-resultats"
-      className="bg-gris-tres-clair py-14 sm:py-16 lg:py-20"
+      className="bg-gris-tres-clair py-10 sm:py-12 lg:py-14"
     >
       <div className="conteneur-principal">
         <motion.div
@@ -150,6 +151,20 @@ export function SectionConsultationResultats() {
                       onChange={(e) => setNumeroFacture(e.target.value)}
                       placeholder={form.numeroFactureAide}
                       className="w-full rounded-xl border border-gris-bordure px-4 py-2.5 font-mono text-sm uppercase outline-none ring-bleu-medical/20 focus:border-bleu-medical focus:ring-2"
+                    />
+                  </label>
+                  <label className="block text-sm sm:col-span-2">
+                    <span className="mb-1.5 block font-medium text-texte-principal">
+                      {form.telephone}
+                    </span>
+                    <input
+                      type="tel"
+                      required
+                      value={telephone}
+                      onChange={(e) => setTelephone(e.target.value)}
+                      placeholder={form.telephoneAide}
+                      className="w-full rounded-xl border border-gris-bordure px-4 py-2.5 text-sm outline-none ring-bleu-medical/20 focus:border-bleu-medical focus:ring-2"
+                      autoComplete="tel"
                     />
                   </label>
                 </div>

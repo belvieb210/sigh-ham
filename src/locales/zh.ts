@@ -21,6 +21,7 @@ const zh: { translation: TraductionsSite } = {
       campagnes: "活动",
       contact: "联系我们",
       rendezVous: "预约",
+      resultats: "Results available",
     },
     common: {
       seConnecter: "登录",

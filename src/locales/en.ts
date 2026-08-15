@@ -21,6 +21,7 @@ const en: { translation: TraductionsSite } = {
       campagnes: "Campaigns",
       contact: "Contact",
       rendezVous: "Appointments",
+      resultats: "Results available",
     },
     common: {
       seConnecter: "Sign in",

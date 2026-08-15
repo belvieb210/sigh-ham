@@ -42,6 +42,8 @@ export interface OptionsTicketThermique {
   sansQrCode?: boolean;
   /** Titre centré sous les étoiles (défaut : RECU DE CAISSE). */
   titreRecu?: string;
+  /** URL du portail résultats patients (message sous le QR). */
+  urlResultats?: string;
 }
 
 export async function construireHtmlTicketThermique(
@@ -78,6 +80,7 @@ export async function construireHtmlTicketThermique(
     `Date: ${formaterDateHeure(detail.emiseLe)}`,
     `Patient: ${nom}`,
     `Tel: ${detail.patient.telephone?.trim() || "—"}`,
+    `N° patient: ${detail.patient.numeroPatient}`,
     "",
     ligneDeuxColonnes("Description", "Prix"),
   ];
@@ -127,10 +130,17 @@ export async function construireHtmlTicketThermique(
   const hautHtml = haut.map(echapperHtml).join("\n");
   const basHtml = bas.map(echapperHtml).join("\n");
   const ref = echapperHtml(`#${detail.numeroFacture}#`);
+  const urlResultats = options?.urlResultats?.trim();
+  const messageResultats = urlResultats
+    ? `<p class="qr-resultats">${echapperHtml(
+        "Résultats approuvés disponibles en ligne :"
+      )}<br /><strong>${echapperHtml(urlResultats)}</strong></p>`
+    : "";
   const qrBlock = qrDataUrl
     ? `<div class="qr-block">
         <img class="qr" src="${qrDataUrl}" width="168" height="168" alt="QR code reçu" />
         <p class="qr-ref">${ref}</p>
+        ${messageResultats}
       </div>`
     : "";
 
@@ -162,6 +172,20 @@ export async function construireHtmlTicketThermique(
       font-weight: 700;
       letter-spacing: 0.02em;
       font-family: "Courier New", Courier, monospace;
+    }
+    .qr-resultats {
+      margin: 10px 8px 0;
+      font-size: 10px;
+      line-height: 1.35;
+      font-family: "Courier New", Courier, monospace;
+      text-align: center;
+      white-space: normal;
+    }
+    .qr-resultats strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 10px;
+      word-break: break-all;
     }
     .toolbar {
       position: sticky; top: 0; display: flex; justify-content: space-between; gap: 8px;

@@ -20,6 +20,7 @@ export interface TraductionsSite {
     campagnes: string;
     contact: string;
     rendezVous: string;
+    resultats: string;
   };
   common: {
     seConnecter: string;

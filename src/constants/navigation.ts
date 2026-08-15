@@ -7,6 +7,7 @@ export const LIENS_NAVIGATION = [
   { etiquette: "À propos", href: "/a-propos" },
   { etiquette: "Services", href: "/services" },
   { etiquette: "Campagnes", href: "/campagnes" },
+  { etiquette: "Résultats disponibles", href: "/resultats" },
   { etiquette: "Contact", href: "/contact" },
 ] as const;
 
@@ -145,7 +146,7 @@ export const ACCES_RAPIDES = [
   },
   {
     id: "resultats",
-    titre: "Résultats d'examens",
+    titre: "Résultats disponibles",
     sousTitre: "Consultables en ligne",
     href: "/resultats",
     icone: "resultats" as const,

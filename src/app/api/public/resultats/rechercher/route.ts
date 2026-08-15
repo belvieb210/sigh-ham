@@ -8,6 +8,7 @@ export async function POST(request: NextRequest) {
       prenom?: string;
       numeroPatient?: string;
       numeroFacture?: string;
+      telephone?: string;
     };
 
     const resultat = await rechercherResultatsPatientPublic({
@@ -15,6 +16,7 @@ export async function POST(request: NextRequest) {
       prenom: body.prenom?.trim() ?? "",
       numeroPatient: body.numeroPatient?.trim() ?? "",
       numeroFacture: body.numeroFacture?.trim() ?? "",
+      telephone: body.telephone?.trim() ?? "",
     });
 
     if (!resultat) {

@@ -21,6 +21,7 @@ const fr: { translation: TraductionsSite } = {
       campagnes: "Campagnes",
       contact: "Contact",
       rendezVous: "Rendez-vous",
+      resultats: "Résultats disponibles",
     },
     common: {
       seConnecter: "Se connecter",
@@ -80,7 +81,7 @@ const fr: { translation: TraductionsSite } = {
       accesRapide: {
         rdv: { titre: "Prise de rendez-vous", sousTitre: "En ligne 24h/24" },
         resultats: {
-          titre: "Résultats d'examens",
+          titre: "Résultats disponibles",
           sousTitre: "Consultables en ligne",
         },
         paiement: { titre: "Paiement sécurisé", sousTitre: "En ligne" },

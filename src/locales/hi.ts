@@ -21,6 +21,7 @@ const hi: { translation: TraductionsSite } = {
       campagnes: "अभियान",
       contact: "संपर्क",
       rendezVous: "अपॉइंटमेंट",
+      resultats: "Results available",
     },
     common: {
       seConnecter: "साइन इन",

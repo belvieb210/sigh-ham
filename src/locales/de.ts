@@ -21,6 +21,7 @@ const de: { translation: TraductionsSite } = {
       campagnes: "Kampagnen",
       contact: "Kontakt",
       rendezVous: "Termine",
+      resultats: "Results available",
     },
     common: {
       seConnecter: "Anmelden",

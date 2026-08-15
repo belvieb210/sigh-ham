@@ -12,6 +12,7 @@ const CLES_NAV: Record<string, string> = {
   "/campagnes": "nav.campagnes",
   "/contact": "nav.contact",
   "/rendez-vous": "nav.rendezVous",
+  "/resultats": "nav.resultats",
 };
 
 /** Liens de navigation traduits selon la langue active */

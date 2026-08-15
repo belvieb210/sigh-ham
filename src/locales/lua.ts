@@ -22,6 +22,7 @@ const lua: { translation: TraductionsSite } = {
       campagnes: "Ba campagnes",
       contact: "Bokomi",
       rendezVous: "Rendez-vous",
+      resultats: "Results available",
     },
     common: {
       seConnecter: "Kota",

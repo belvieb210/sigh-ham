@@ -21,6 +21,7 @@ const sw: { translation: TraductionsSite } = {
       campagnes: "Kampeni",
       contact: "Wasiliana",
       rendezVous: "Miadi",
+      resultats: "Results available",
     },
     common: {
       seConnecter: "Ingia",

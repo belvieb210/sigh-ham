@@ -22,6 +22,7 @@ const ln: { translation: TraductionsSite } = {
       campagnes: "Campagnes",
       contact: "Bokomi",
       rendezVous: "Rendez-vous",
+      resultats: "Results available",
     },
     common: {
       seConnecter: "Kota",

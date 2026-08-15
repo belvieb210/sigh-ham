@@ -7,6 +7,7 @@ import { nomFichierResultatPdf } from "@/lib/laboratoire/pdf-resultats/nom-fichi
 import {
   normaliserIdentite,
   normaliserLibelleFacture,
+  telephonesCorrespondent,
 } from "@/lib/resultats-public/normaliser-identite";
 import { creerTokenResultatPublic } from "@/lib/resultats-public/token-resultat-public";
 import type { ResultatPatientPublic } from "@/lib/resultats-public/types";
@@ -36,13 +37,17 @@ export async function rechercherResultatsPatientPublic(input: {
   prenom: string;
   numeroPatient: string;
   numeroFacture: string;
+  telephone: string;
 }): Promise<ResultatPatientPublic | null> {
   const nom = input.nom.trim();
   const prenom = input.prenom.trim();
   const numeroPatient = input.numeroPatient.trim();
   const numeroFacture = input.numeroFacture.trim();
+  const telephone = input.telephone.trim();
 
-  if (!nom || !prenom || !numeroPatient || !numeroFacture) return null;
+  if (!nom || !prenom || !numeroPatient || !numeroFacture || !telephone) {
+    return null;
+  }
 
   const facture = await prisma.facture.findUnique({
     where: { numeroFacture },
@@ -74,6 +79,9 @@ export async function rechercherResultatsPatientPublic(input: {
   if (patient.numeroPatient.trim() !== numeroPatient) return null;
   if (normaliserIdentite(patient.nom) !== normaliserIdentite(nom)) return null;
   if (normaliserIdentite(patient.prenom) !== normaliserIdentite(prenom)) {
+    return null;
+  }
+  if (!telephonesCorrespondent(telephone, patient.telephone)) {
     return null;
   }
 

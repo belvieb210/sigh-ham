@@ -21,6 +21,7 @@ const ar: { translation: TraductionsSite } = {
       campagnes: "الحملات",
       contact: "اتصل بنا",
       rendezVous: "المواعيد",
+      resultats: "Results available",
     },
     common: {
       seConnecter: "تسجيل الدخول",

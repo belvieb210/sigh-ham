@@ -31,6 +31,7 @@ export async function GET(request: Request, context: ContexteRoute) {
   const html = await construireHtmlTicketThermique(detail, urlRecu, {
     sansQrCode: detail.isPharmacie,
     titreRecu: detail.isPharmacie ? "FACTURE PHARMACIE" : undefined,
+    urlResultats: `${origin}/resultats`,
   });
 
   return new NextResponse(html, {

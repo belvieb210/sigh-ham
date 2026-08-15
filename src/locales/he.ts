@@ -21,6 +21,7 @@ const he: { translation: TraductionsSite } = {
       campagnes: "קמפיינים",
       contact: "יצירת קשר",
       rendezVous: "תורים",
+      resultats: "Results available",
     },
     common: {
       seConnecter: "התחברות",

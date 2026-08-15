@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { obtenirSessionApiLaboratoire } from "@/lib/auth/garde-api-laboratoire";
+import { obtenirSessionApiLaboratoireOuCaisse } from "@/lib/auth/garde-api-laboratoire-ou-caisse";
 import {
   genererBufferPdfResultatExamen,
   genererBufferPdfResultatsMultiExamens,
@@ -10,7 +10,7 @@ interface Ctx {
 }
 
 export async function GET(request: NextRequest, ctx: Ctx) {
-  const session = await obtenirSessionApiLaboratoire();
+  const session = await obtenirSessionApiLaboratoireOuCaisse();
   if (!session) {
     return NextResponse.json({ erreur: "Non autorisé." }, { status: 401 });
   }

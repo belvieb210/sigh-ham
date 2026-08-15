@@ -612,6 +612,17 @@ export const caisseEn = {
     titre: "Coming soon",
     description: "This section will be available soon.",
   },
+  examensDisponibles: {
+    titre: "Available exams",
+    description:
+      "Results validated by the biologist (Dr approved), ready to print from the cashier desk.",
+    fil: "Available exams",
+    sousTitreListe: "{{count}} patient(s) displayed",
+    vide: "No Dr-approved exams available at the moment.",
+    erreur: "Unable to load available exams.",
+    imprimerTous: "Print results",
+    imprimerSelection: "Print ({{count}})",
+  },
   pages: {
     messagerie: {
       titre: "Messaging",

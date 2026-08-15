@@ -612,6 +612,17 @@ export const caisseFr = {
     titre: "Bientôt disponible",
     description: "Cette section sera disponible prochainement.",
   },
+  examensDisponibles: {
+    titre: "Examens disponibles",
+    description:
+      "Résultats validés par le biologiste (Dr approuve), prêts à être imprimés depuis la caisse.",
+    fil: "Examens disponibles",
+    sousTitreListe: "{{count}} patient(s) affiché(s)",
+    vide: "Aucun examen Dr approuve disponible pour le moment.",
+    erreur: "Impossible de charger les examens disponibles.",
+    imprimerTous: "Imprimer les résultats",
+    imprimerSelection: "Imprimer ({{count}})",
+  },
   pages: {
     messagerie: {
       titre: "Messagerie",

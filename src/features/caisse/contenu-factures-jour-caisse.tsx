@@ -42,7 +42,8 @@ interface PropsContenuFacturesJourCaisse {
   variante?: VarianteFacturesCaisse;
 }
 
-const PAR_PAGE = 5;
+const PAR_PAGE_FACTURES = 15;
+const PAR_PAGE_IMPRESSION = 30;
 
 function statutAffiche(fac: FactureResumeJour) {
   if (fac.statut === "PAYEE") return "payee" as const;
@@ -76,6 +77,7 @@ export function ContenuFacturesJourCaisse({
 }: PropsContenuFacturesJourCaisse) {
   const { t } = useTranslation();
   const modeImpression = variante === "impression";
+  const parPage = modeImpression ? PAR_PAGE_IMPRESSION : PAR_PAGE_FACTURES;
   const titreKey = modeImpression
     ? "caisse.impressionFacture.titre"
     : "caisse.factures.titre";
@@ -218,10 +220,10 @@ export function ContenuFacturesJourCaisse({
 
   const nbFiltresActifs = compterFiltresActifs(filtresAppliques);
 
-  const totalPages = Math.max(1, Math.ceil(facturesFiltrees.length / PAR_PAGE));
+  const totalPages = Math.max(1, Math.ceil(facturesFiltrees.length / parPage));
   const pageCourante = Math.min(page, totalPages);
-  const debut = (pageCourante - 1) * PAR_PAGE;
-  const facturesPage = facturesFiltrees.slice(debut, debut + PAR_PAGE);
+  const debut = (pageCourante - 1) * parPage;
+  const facturesPage = facturesFiltrees.slice(debut, debut + parPage);
 
   useEffect(() => {
     setPage(1);
@@ -525,7 +527,7 @@ export function ContenuFacturesJourCaisse({
                   <p>
                     {t("caisse.factures.pagination", {
                       debut: facturesFiltrees.length === 0 ? 0 : debut + 1,
-                      fin: Math.min(debut + PAR_PAGE, facturesFiltrees.length),
+                      fin: Math.min(debut + parPage, facturesFiltrees.length),
                       total: facturesFiltrees.length,
                     })}
                   </p>

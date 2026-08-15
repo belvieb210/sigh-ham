@@ -4,13 +4,19 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { EVENEMENT_INFIRMIERS_PATIENTS_MODIFIES, ORIENTATIONS_RAPIDES_INFIRMIERS } from "@/constants/infirmiers";
 import { useOrientationInfirmiers } from "@/features/infirmiers/contexte-orientation-infirmiers";
 import type { PatientFileInfirmiers } from "@/lib/infirmiers/types";
+import {
+  creerDebounce,
+  orienterPatientsEnSerie,
+} from "@/features/transferts/utilitaires-orientation-lot";
 
 export interface ResumePatientInfirmiers {
   initiales: string;
@@ -65,6 +71,7 @@ export function FournisseurSelectionInfirmiers({ children }: { children: ReactNo
   const [dossiersCoches, setDossiersCoches] = useState<string[]>([]);
   const [modificationEnCours, setModificationEnCours] = useState(false);
   const [messagePanneau, setMessagePanneau] = useState<string | null>(null);
+  const verrouOrientationRef = useRef(false);
 
   const selectionnerPatient = useCallback(
     (patient: PatientFileInfirmiers) => {
@@ -113,7 +120,7 @@ export function FournisseurSelectionInfirmiers({ children }: { children: ReactNo
 
   const viderCoches = useCallback(() => setDossiersCoches([]), []);
 
-  const demanderOrientations = useCallback(
+  const appliquerOrientationsInfirmiers = useCallback(
     async (codesSalle: string[]) => {
       const codes = codesSalle.filter((c) => c !== "INFIRMIERS");
       if (codes.length === 0) {
@@ -128,20 +135,21 @@ export function FournisseurSelectionInfirmiers({ children }: { children: ReactNo
             ? [patientSelectionne.dossierId]
             : [];
 
-      if (cibles.length === 0 || modificationEnCours) {
-        if (cibles.length === 0) {
-          setMessagePanneau("Sélectionnez au moins un patient.");
-        }
+      if (cibles.length === 0) {
+        setMessagePanneau("Sélectionnez au moins un patient.");
         return;
       }
 
+      if (verrouOrientationRef.current) return;
+      verrouOrientationRef.current = true;
       definirOrientations(codes);
       setModificationEnCours(true);
       setMessagePanneau(null);
 
       try {
-        const resultats = await Promise.allSettled(
-          cibles.map(async (dossierId) => {
+        const { ok, echecs, resultats, premierEchec } = await orienterPatientsEnSerie(
+          cibles,
+          async (dossierId) => {
             const res = await fetch("/api/infirmiers/transferts", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -155,31 +163,14 @@ export function FournisseurSelectionInfirmiers({ children }: { children: ReactNo
             };
             if (!res.ok) throw new Error(data.message ?? "Orientation impossible.");
             return data;
-          })
+          }
         );
 
-        const ok = resultats.filter((r) => r.status === "fulfilled").length;
-        const echecs = resultats.length - ok;
         if (ok === 0) {
-          const premier = resultats.find((r) => r.status === "rejected") as
-            | PromiseRejectedResult
-            | undefined;
-          throw new Error(
-            premier?.reason instanceof Error
-              ? premier.reason.message
-              : "Orientation impossible."
-          );
+          throw premierEchec ?? new Error("Orientation impossible.");
         }
 
-        const premierOk = (
-          resultats.find((r) => r.status === "fulfilled") as
-            | PromiseFulfilledResult<{
-                salleDestination?: string;
-                codesSalle?: string[];
-                transfertId?: string;
-              }>
-            | undefined
-        )?.value;
+        const premierOk = resultats[0];
 
         const codesFinal = premierOk?.codesSalle ?? codes;
         const label =
@@ -231,16 +222,29 @@ export function FournisseurSelectionInfirmiers({ children }: { children: ReactNo
           definirOrientation(patientSelectionne.codeSalleDestination);
         }
       } finally {
+        verrouOrientationRef.current = false;
         setModificationEnCours(false);
       }
     },
-    [
-      dossiersCoches,
-      patientSelectionne,
-      modificationEnCours,
-      definirOrientation,
-      definirOrientations,
-    ]
+    [dossiersCoches, patientSelectionne, definirOrientation, definirOrientations]
+  );
+
+  const debounceOrientationRef = useRef<ReturnType<
+    typeof creerDebounce<(codes: string[]) => void>
+  > | null>(null);
+
+  useEffect(() => {
+    debounceOrientationRef.current = creerDebounce((codes: string[]) => {
+      void appliquerOrientationsInfirmiers(codes);
+    }, 400);
+    return () => debounceOrientationRef.current?.annuler();
+  }, [appliquerOrientationsInfirmiers]);
+
+  const demanderOrientations = useCallback(
+    async (codesSalle: string[]) => {
+      debounceOrientationRef.current?.(codesSalle);
+    },
+    []
   );
 
   const demanderOrientation = useCallback(

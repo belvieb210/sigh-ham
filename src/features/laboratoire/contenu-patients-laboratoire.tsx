@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
@@ -51,6 +51,10 @@ import type {
 } from "@/lib/laboratoire/types";
 import { cheminSaisieResultats } from "@/lib/laboratoire/saisie-resultats-types";
 import { cn } from "@/lib/utils";
+import {
+  creerDebounce,
+  orienterPatientsEnSerie,
+} from "@/features/transferts/utilitaires-orientation-lot";
 
 interface PropsContenuPatientsLaboratoire {
   utilisateur: UtilisateurLaboratoire;
@@ -77,6 +81,10 @@ export function ContenuPatientsLaboratoire({
   const [selectionId, setSelectionId] = useState<string | null>(dossierUrl);
   const [orientations, setOrientations] = useState<string[]>([]);
   const [orientationEnCours, setOrientationEnCours] = useState(false);
+  const verrouOrientationRef = useRef(false);
+  const debounceOrientationRef = useRef<ReturnType<
+    typeof creerDebounce<(ids: string[]) => void>
+  > | null>(null);
   const [idsCoches, setIdsCoches] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<DetailPatientLaboratoire | null>(null);
   const [chargementDetail, setChargementDetail] = useState(false);
@@ -155,59 +163,76 @@ export function ContenuPatientsLaboratoire({
     });
   };
 
-  const changerOrientations = async (ids: string[]) => {
-    const idsAOrienter =
-      idsCoches.size > 0
-        ? [...idsCoches]
-        : selectionId
-          ? [selectionId]
-          : [];
-    if (idsAOrienter.length === 0 || orientationEnCours) return;
-    if (ids.length === 0) {
-      setMessageAction(t("laboratoire.transferts.selectionnerDestination"));
-      return;
-    }
-    setOrientations(ids);
-    setMessageAction(null);
-    setOrientationEnCours(true);
-    try {
-      const resultats = await Promise.allSettled(
-        idsAOrienter.map(async (dossierId) => {
-          const res = await fetch("/api/laboratoire/transferts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ dossierId, orientations: ids }),
-          });
-          const data = (await res.json()) as { message?: string };
-          if (!res.ok) {
-            throw new Error(
-              data.message ?? t("laboratoire.transferts.erreurOrientation")
-            );
-          }
-          return data;
-        })
-      );
-      const ok = resultats.filter((r) => r.status === "fulfilled").length;
-      const echecs = resultats.length - ok;
-      if (ok === 0) {
-        setMessageAction(t("laboratoire.transferts.erreurOrientation"));
-        await charger();
+  const appliquerOrientationsLabo = useCallback(
+    async (ids: string[]) => {
+      const idsAOrienter =
+        idsCoches.size > 0
+          ? [...idsCoches]
+          : selectionId
+            ? [selectionId]
+            : [];
+      if (idsAOrienter.length === 0 || verrouOrientationRef.current) return;
+      if (ids.length === 0) {
+        setMessageAction(t("laboratoire.transferts.selectionnerDestination"));
         return;
       }
-      setMessageAction(
-        echecs > 0
-          ? t("laboratoire.transferts.orienteLotPartiel", { ok, echecs })
-          : idsAOrienter.length > 1
-            ? t("laboratoire.transferts.orienteLotOk", { count: ok })
-            : t("laboratoire.transferts.orienteOk")
-      );
-      setIdsCoches(new Set());
-      await charger();
-    } catch {
-      setMessageAction(t("laboratoire.transferts.erreurOrientation"));
-    } finally {
-      setOrientationEnCours(false);
-    }
+      setOrientations(ids);
+      setMessageAction(null);
+      verrouOrientationRef.current = true;
+      setOrientationEnCours(true);
+      try {
+        const { ok, echecs, premierEchec } = await orienterPatientsEnSerie(
+          idsAOrienter,
+          async (dossierId) => {
+            const res = await fetch("/api/laboratoire/transferts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ dossierId, orientations: ids }),
+            });
+            const data = (await res.json()) as { message?: string };
+            if (!res.ok) {
+              throw new Error(
+                data.message ?? t("laboratoire.transferts.erreurOrientation")
+              );
+            }
+            return data;
+          }
+        );
+        if (ok === 0) {
+          setMessageAction(
+            premierEchec?.message ?? t("laboratoire.transferts.erreurOrientation")
+          );
+          await charger();
+          return;
+        }
+        setMessageAction(
+          echecs > 0
+            ? t("laboratoire.transferts.orienteLotPartiel", { ok, echecs })
+            : idsAOrienter.length > 1
+              ? t("laboratoire.transferts.orienteLotOk", { count: ok })
+              : t("laboratoire.transferts.orienteOk")
+        );
+        setIdsCoches(new Set());
+        await charger();
+      } catch {
+        setMessageAction(t("laboratoire.transferts.erreurOrientation"));
+      } finally {
+        verrouOrientationRef.current = false;
+        setOrientationEnCours(false);
+      }
+    },
+    [idsCoches, selectionId, t, charger]
+  );
+
+  useEffect(() => {
+    debounceOrientationRef.current = creerDebounce((ids: string[]) => {
+      void appliquerOrientationsLabo(ids);
+    }, 400);
+    return () => debounceOrientationRef.current?.annuler();
+  }, [appliquerOrientationsLabo]);
+
+  const changerOrientations = (ids: string[]) => {
+    debounceOrientationRef.current?.(ids);
   };
 
   const ouvrirDetail = useCallback(
@@ -363,10 +388,11 @@ export function ContenuPatientsLaboratoire({
     onOrientationChange: () => undefined,
     orientations,
     onOrientationsChange: (ids: string[]) => {
-      if (orientationEnCours) return;
-      void changerOrientations(ids);
+      if (orientationEnCours || verrouOrientationRef.current) return;
+      changerOrientations(ids);
     },
-    peutOrienter: Boolean(patientSelectionne) || idsCoches.size > 0,
+    peutOrienter:
+      (Boolean(patientSelectionne) || idsCoches.size > 0) && !orientationEnCours,
     aideOrientation:
       idsCoches.size > 1
         ? t("laboratoire.panneau.aideOrientationLotPatients", {

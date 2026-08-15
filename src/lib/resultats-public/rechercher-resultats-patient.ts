@@ -1,12 +1,11 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
-import { lireOrientationAnalyseDepuisNotes } from "@/constants/laboratoire-orientations";
 import { calculerAge } from "@/features/caisse/utils-format";
+import { classerExamensFacture } from "@/lib/laboratoire/classer-examens-facture";
 import { nomFichierResultatPdf } from "@/lib/laboratoire/pdf-resultats/nom-fichier-resultat-pdf";
 import {
   normaliserIdentite,
-  normaliserLibelleFacture,
   telephonesCorrespondent,
 } from "@/lib/resultats-public/normaliser-identite";
 import { creerTokenResultatPublic } from "@/lib/resultats-public/token-resultat-public";
@@ -18,106 +17,10 @@ export type {
   ResultatEnAttentePublic,
 } from "@/lib/resultats-public/types";
 
-function libellesFactureCorrespondent(
-  libelleExamen: string,
-  libellesFacture: Set<string>
-): boolean {
-  if (libellesFacture.size === 0) return true;
-  const ex = normaliserLibelleFacture(libelleExamen);
-  for (const lf of libellesFacture) {
-    if (ex === lf || ex.includes(lf) || lf.includes(ex)) return true;
-  }
-  return false;
-}
-
-function estExamenApprouve(ex: {
-  statut: string;
-  notes: string | null;
-  aResultats: boolean;
-}): boolean {
-  return (
-    ex.statut === "TERMINE" &&
-    lireOrientationAnalyseDepuisNotes(ex.notes) === "DR_APPROUVE" &&
-    ex.aResultats
-  );
-}
-
 function formaterNomPrescripteur(prenom: string, nom: string): string | null {
   const complet = `${prenom} ${nom}`.trim();
   if (!complet) return null;
   return /^dr\.?\s/i.test(complet) ? complet : `Dr ${complet}`;
-}
-
-const LIBELLES_LIGNE_NON_EXAMEN = new Set([
-  "remise",
-  "frais divers",
-  "avance",
-  "acompte",
-]);
-
-/** Exclut remises, frais administratifs et lignes à montant négatif ou nul. */
-function estLigneFactureExamen(ligne: {
-  libelle: string;
-  montant: number;
-}): boolean {
-  const lib = normaliserLibelleFacture(ligne.libelle);
-  if (LIBELLES_LIGNE_NON_EXAMEN.has(lib)) return false;
-  if (ligne.montant <= 0) return false;
-  return true;
-}
-
-/** Examens rattachés à cette facture (lignes facture ↔ dossier). */
-function classerExamensFacture(
-  lignesFacture: { libelle: string; montant: number }[],
-  examensDossier: {
-    id: string;
-    statut: string;
-    libelle: string;
-    notes: string | null;
-    resultatLe: Date | null;
-    prescripteur: {
-      prenom: string;
-      nom: string;
-    } | null;
-    aResultats: boolean;
-  }[]
-) {
-  const lignesExamens = lignesFacture.filter(estLigneFactureExamen);
-
-  const libellesFacture = new Set(
-    lignesExamens.map((l) => normaliserLibelleFacture(l.libelle))
-  );
-
-  const surFacture = examensDossier.filter((ex) =>
-    libellesFactureCorrespondent(ex.libelle, libellesFacture)
-  );
-
-  const approuves = surFacture.filter(estExamenApprouve);
-  const exclus = surFacture.filter((ex) => !estExamenApprouve(ex));
-
-  // Lignes facture sans examen laboratoire correspondant → en attente
-  const libellesCouvert = new Set(
-    surFacture.map((ex) => normaliserLibelleFacture(ex.libelle))
-  );
-  for (const ligne of lignesExamens) {
-    const cle = normaliserLibelleFacture(ligne.libelle);
-    const dejaCouvert = [...libellesCouvert].some(
-      (l) => l === cle || l.includes(cle) || cle.includes(l)
-    );
-    if (!dejaCouvert) {
-      exclus.push({
-        id: `ligne-${cle}`,
-        statut: "PRESCRIT",
-        libelle: ligne.libelle,
-        notes: null,
-        resultatLe: null,
-        prescripteur: null,
-        aResultats: false,
-      });
-    }
-  }
-
-  return { approuves, exclus, libellesFacture };
 }
 
 export async function rechercherResultatsPatientPublic(input: {
@@ -185,7 +88,7 @@ export async function rechercherResultatsPatientPublic(input: {
     aResultats: ex.resultats.length > 0,
   }));
 
-  const { approuves, exclus } = classerExamensFacture(
+  const { approuves, enAttente } = classerExamensFacture(
     facture.lignes.map((l) => ({
       libelle: l.libelle,
       montant: Number(l.montant),
@@ -193,7 +96,7 @@ export async function rechercherResultatsPatientPublic(input: {
     examensBruts
   );
 
-  const examensEnAttente = exclus.map((ex) => ({ libelle: ex.libelle }));
+  const examensEnAttente = enAttente.map((ex) => ({ libelle: ex.libelle }));
 
   if (approuves.length === 0) {
     if (examensEnAttente.length > 0) {
@@ -220,7 +123,9 @@ export async function rechercherResultatsPatientPublic(input: {
     examIds,
   });
 
-  const premierPrescripteur = approuves.find((ex) => ex.prescripteur)?.prescripteur;
+  const premierPrescripteur = approuves
+    .map((ex) => examensBruts.find((b) => b.id === ex.id)?.prescripteur)
+    .find(Boolean);
   const prescripteur = premierPrescripteur
     ? formaterNomPrescripteur(
         premierPrescripteur.prenom,
@@ -229,7 +134,7 @@ export async function rechercherResultatsPatientPublic(input: {
     : null;
 
   const datesResultat = approuves
-    .map((ex) => ex.resultatLe)
+    .map((ex) => examensBruts.find((b) => b.id === ex.id)?.resultatLe)
     .filter((d): d is Date => d instanceof Date);
   const dateAnalyse =
     datesResultat.length > 0
@@ -273,11 +178,14 @@ export async function rechercherResultatsPatientPublic(input: {
         devise: facture.devise,
         emiseLe: facture.emiseLe?.toISOString() ?? null,
       },
-      examens: approuves.map((ex) => ({
-        id: ex.id,
-        libelle: ex.libelle,
-        resultatLe: ex.resultatLe?.toISOString() ?? null,
-      })),
+      examens: approuves.map((ex) => {
+        const brut = examensBruts.find((b) => b.id === ex.id);
+        return {
+          id: ex.id,
+          libelle: ex.libelle,
+          resultatLe: brut?.resultatLe?.toISOString() ?? null,
+        };
+      }),
       examensExclus: examensEnAttente,
       prescripteur,
       dateAnalyse,

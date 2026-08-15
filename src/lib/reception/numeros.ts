@@ -26,13 +26,15 @@ async function prochainNumeroPatientPermanent(
 }
 
 /**
- * N° de transfert annuel : PAT + année + séquence sur 5 chiffres.
- * Ex. PAT-202600001, PAT-202600002 — repart à PAT-202700001 en 2027.
+ * Réserve une plage de numéros PAT-YYYY##### sans collision (dans une transaction).
  */
-export async function prochainNumeroTransfert(
+export async function reserverNumerosTransfert(
   tx: ClientTransaction,
+  count: number,
   date = new Date()
-): Promise<string> {
+): Promise<string[]> {
+  if (count <= 0) return [];
+
   const annee = date.getFullYear();
   const debutAnnee = new Date(annee, 0, 1);
   const finAnnee = new Date(annee + 1, 0, 1);
@@ -41,8 +43,23 @@ export async function prochainNumeroTransfert(
     where: { emisLe: { gte: debutAnnee, lt: finAnnee } },
   });
 
-  const seq = dejaCetteAnnee + 1;
-  return `PAT-${annee}${String(seq).padStart(5, "0")}`;
+  const numeros: string[] = [];
+  for (let i = 0; i < count; i++) {
+    numeros.push(`PAT-${annee}${String(dejaCetteAnnee + 1 + i).padStart(5, "0")}`);
+  }
+  return numeros;
+}
+
+/**
+ * N° de transfert annuel : PAT + année + séquence sur 5 chiffres.
+ * Ex. PAT-202600001, PAT-202600002 — repart à PAT-202700001 en 2027.
+ */
+export async function prochainNumeroTransfert(
+  tx: ClientTransaction,
+  date = new Date()
+): Promise<string> {
+  const [numero] = await reserverNumerosTransfert(tx, 1, date);
+  return numero!;
 }
 
 /**

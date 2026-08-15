@@ -1,7 +1,7 @@
 import "server-only";
 import type { CodeSalle, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { prochainNumeroTransfert } from "@/lib/reception/numeros";
+import { reserverNumerosTransfert } from "@/lib/reception/numeros";
 
 /**
  * Inscrit le patient dans une ou plusieurs salles de destination.
@@ -134,6 +134,7 @@ export async function assurerFileAttenteDestination(
 
 /**
  * Synchronise les transferts EN_ATTENTE sortants : crée les manquants, supprime les désélectionnés.
+ * Toute l'opération est atomique (une transaction).
  */
 export async function synchroniserTransfertsEnAttente(params: {
   agentId: string;
@@ -143,40 +144,53 @@ export async function synchroniserTransfertsEnAttente(params: {
   destinations: { salleId: string; code: CodeSalle; nom: string }[];
   motifPrefixe: string;
 }) {
-  const existants = await prisma.transfert.findMany({
-    where: {
-      dossierId: params.dossierId,
-      passageId: params.passageId,
-      salleOrigineId: params.salleOrigineId,
-      statut: "EN_ATTENTE",
-    },
-  });
-
-  const idsCibles = new Set(params.destinations.map((d) => d.salleId));
-  const aSupprimer = existants.filter((t) => !idsCibles.has(t.salleDestinationId));
-
-  if (aSupprimer.length > 0) {
-    await prisma.transfert.deleteMany({
-      where: { id: { in: aSupprimer.map((t) => t.id) } },
+  const resultat = await prisma.$transaction(async (tx) => {
+    const existants = await tx.transfert.findMany({
+      where: {
+        dossierId: params.dossierId,
+        passageId: params.passageId,
+        salleOrigineId: params.salleOrigineId,
+        statut: "EN_ATTENTE",
+      },
     });
-  }
 
-  const restants = existants.filter((t) => idsCibles.has(t.salleDestinationId));
-  const parSalle = new Map(restants.map((t) => [t.salleDestinationId, t]));
+    const idsCibles = new Set(params.destinations.map((d) => d.salleId));
+    const aSupprimer = existants.filter((t) => !idsCibles.has(t.salleDestinationId));
 
-  const transfertIds: string[] = [];
-  let crees = 0;
-  const destinationsCreees: { code: CodeSalle; nom: string; transfertId: string }[] = [];
-
-  for (const dest of params.destinations) {
-    const existant = parSalle.get(dest.salleId);
-    if (existant) {
-      transfertIds.push(existant.id);
-      continue;
+    if (aSupprimer.length > 0) {
+      await tx.transfert.deleteMany({
+        where: { id: { in: aSupprimer.map((t) => t.id) } },
+      });
     }
-    const cree = await prisma.$transaction(async (tx) => {
-      const numeroTransfert = await prochainNumeroTransfert(tx);
-      return tx.transfert.create({
+
+    const restants = existants.filter((t) => idsCibles.has(t.salleDestinationId));
+    const parSalle = new Map(restants.map((t) => [t.salleDestinationId, t]));
+
+    const destinationsACreer = params.destinations.filter(
+      (d) => !parSalle.has(d.salleId)
+    );
+    const numeros = await reserverNumerosTransfert(tx, destinationsACreer.length);
+
+    const transfertIds: string[] = [];
+    const destinationsCreees: {
+      code: CodeSalle;
+      nom: string;
+      transfertId: string;
+    }[] = [];
+    let crees = 0;
+    let idxNumero = 0;
+
+    for (const dest of params.destinations) {
+      const existant = parSalle.get(dest.salleId);
+      if (existant) {
+        transfertIds.push(existant.id);
+        continue;
+      }
+
+      const numeroTransfert = numeros[idxNumero]!;
+      idxNumero += 1;
+
+      const cree = await tx.transfert.create({
         data: {
           numeroTransfert,
           dossierId: params.dossierId,
@@ -188,22 +202,37 @@ export async function synchroniserTransfertsEnAttente(params: {
           motif: `${params.motifPrefixe} → ${dest.nom}`,
         },
       });
-    });
-    transfertIds.push(cree.id);
-    destinationsCreees.push({ code: dest.code, nom: dest.nom, transfertId: cree.id });
-    crees += 1;
-  }
 
-  const noms = params.destinations.map((d) => d.nom).join(", ");
-  await prisma.passage.update({
-    where: { id: params.passageId },
-    data: {
-      statut: "EN_ATTENTE",
-      motif: noms ? `Transfert vers ${noms}` : undefined,
-    },
+      transfertIds.push(cree.id);
+      destinationsCreees.push({
+        code: dest.code,
+        nom: dest.nom,
+        transfertId: cree.id,
+      });
+      crees += 1;
+    }
+
+    if (params.destinations.length > 0) {
+      const noms = params.destinations.map((d) => d.nom).join(", ");
+      await tx.passage.update({
+        where: { id: params.passageId },
+        data: {
+          statut: "EN_ATTENTE",
+          motif: noms ? `Transfert vers ${noms}` : undefined,
+        },
+      });
+    }
+
+    return {
+      transfertIds,
+      salles: params.destinations.map((d) => ({ code: d.code, nom: d.nom })),
+      crees,
+      supprimes: aSupprimer.length,
+      destinationsCreees,
+    };
   });
 
-  if (destinationsCreees.length > 0) {
+  if (resultat.destinationsCreees.length > 0) {
     const dossier = await prisma.dossierPatient.findUnique({
       where: { id: params.dossierId },
       include: { patient: true },
@@ -212,7 +241,7 @@ export async function synchroniserTransfertsEnAttente(params: {
       const { evenementDemandeTransfert } = await import(
         "@/lib/notifications/evenements-metier"
       );
-      for (const dest of destinationsCreees) {
+      for (const dest of resultat.destinationsCreees) {
         void evenementDemandeTransfert({
           patientId: dossier.patientId,
           nom: dossier.patient.nom,
@@ -225,11 +254,5 @@ export async function synchroniserTransfertsEnAttente(params: {
     }
   }
 
-  return {
-    transfertIds,
-    salles: params.destinations.map((d) => ({ code: d.code, nom: d.nom })),
-    crees,
-    supprimes: aSupprimer.length,
-    destinationsCreees,
-  };
+  return resultat;
 }

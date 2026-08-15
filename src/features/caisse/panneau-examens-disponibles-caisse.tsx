@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { Printer, Search } from "lucide-react";
 import { ResumePatientLaboratoire } from "@/features/laboratoire/resume-patient-laboratoire";
+import { SectionExamensFacturePanneauCaisse } from "@/features/caisse/section-examens-facture-panneau-caisse";
 import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,8 @@ export function PanneauExamensDisponiblesCaisse({
         </h2>
         <ResumePatientLaboratoire patient={patient} />
       </section>
+
+      <SectionExamensFacturePanneauCaisse dossierId={patient?.dossierId ?? null} />
 
       <section className="min-w-0 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">

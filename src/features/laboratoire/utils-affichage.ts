@@ -91,7 +91,14 @@ export function statutsAnalyseDistincts(
 
 /** N° patient affiché en labo = n° transfert (ex. PAT-202600001). */
 export function numeroEnregistrementLaboratoire(p: PatientFileLaboratoire) {
-  return p.numeroTransfert ?? "—";
+  const brut = p.numeroTransfert?.trim();
+  if (!brut) return "—";
+  const parties = brut
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const uniques = [...new Set(parties)];
+  return uniques[0] ?? "—";
 }
 
 /** N° permanent patient (ex. 20260804008). */

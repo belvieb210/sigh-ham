@@ -622,6 +622,13 @@ export const caisseEn = {
     erreur: "Unable to load available exams.",
     imprimerTous: "Print results",
     imprimerSelection: "Print ({{count}})",
+    factureTitre: "Invoice exams",
+    examensDisponiblesFacture: "{{count}} available",
+    examensEnAttente: "{{count}} pending",
+    examensEnAttenteInfo:
+      "These exams are on the invoice but results are not yet validated (Dr approved).",
+    tousExamensDisponibles: "All exams on this invoice are available.",
+    erreurDetail: "Unable to load invoice details.",
   },
   pages: {
     messagerie: {

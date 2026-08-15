@@ -272,6 +272,8 @@ export interface PatientEnregistre {
   enRecuperation?: boolean;
   /** Code Prisma de la salle destination (transfert actif) */
   codeSalleDestination?: string;
+  /** Codes Prisma des salles destination (multi-sélection) */
+  codesSalleDestination?: string[];
   /** Date/heure d'activité ISO (enregistrement ou transfert) pour filtres */
   dateActivite?: string;
 }

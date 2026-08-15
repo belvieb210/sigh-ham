@@ -4,7 +4,9 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -18,6 +20,10 @@ import { filtrerOrientationsMedecinsExternes } from "@/constants/medecins-extern
 import { useOrientationRapide } from "@/features/reception/contexte-orientation-rapide";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import type { DonneesFormulairePatient } from "@/lib/reception/types";
+import {
+  creerDebounce,
+  orienterPatientsEnSerie,
+} from "@/features/transferts/utilitaires-orientation-lot";
 
 const STATUTS_TRANSFERT_CONFIRMÉS = new Set(["ACCEPTE", "EN_TRAITEMENT", "TERMINE"]);
 
@@ -63,6 +69,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
   const [patientsCoches, setPatientsCoches] = useState<PatientEnregistre[]>([]);
   const [modificationEnCours, setModificationEnCours] = useState(false);
   const [messagePanneau, setMessagePanneau] = useState<string | null>(null);
+  const verrouOrientationRef = useRef(false);
 
   const dossiersCoches = patientsCoches
     .map((p) => p.dossierId)
@@ -125,7 +132,9 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       setMessagePanneau(null);
       setPatientSelectionne(patient);
 
-      if (patient.codeSalleDestination) {
+      if (patient.codesSalleDestination?.length) {
+        definirOrientations(patient.codesSalleDestination);
+      } else if (patient.codeSalleDestination) {
         definirOrientations([patient.codeSalleDestination]);
       }
 
@@ -145,7 +154,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
     [definirDepuisDonneesCompletes, definirOrientations]
   );
 
-  const changerOrientationsTransfert = useCallback(
+  const appliquerOrientationsTransfert = useCallback(
     async (codesSalle: string[]) => {
       const brutes = [...new Set(codesSalle.filter(Boolean))];
       const codes = espace.prefixeApi.includes("medecins-externes")
@@ -185,12 +194,16 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
         }
       }
 
+      if (verrouOrientationRef.current) return;
+      verrouOrientationRef.current = true;
       setModificationEnCours(true);
       setMessagePanneau(null);
 
       try {
-        const resultats = await Promise.allSettled(
-          cibles.map(async (patient) => {
+        const { ok, echecs, resultats, premierEchec } = await orienterPatientsEnSerie(
+          cibles.map((p) => p.dossierId!),
+          async (dossierId) => {
+            const patient = cibles.find((p) => p.dossierId === dossierId)!;
             const res = await fetch(`${espace.prefixeApi}/transferts`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -212,34 +225,14 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
             };
             if (!res.ok) throw new Error(data.message ?? "Transfert rapide impossible.");
             return data;
-          })
+          }
         );
 
-        const ok = resultats.filter((r) => r.status === "fulfilled").length;
-        const echecs = resultats.length - ok;
         if (ok === 0) {
-          const premier = resultats.find((r) => r.status === "rejected") as
-            | PromiseRejectedResult
-            | undefined;
-          throw new Error(
-            premier?.reason instanceof Error
-              ? premier.reason.message
-              : "Transfert rapide impossible."
-          );
+          throw premierEchec ?? new Error("Transfert rapide impossible.");
         }
 
-        const premierOk = (
-          resultats.find((r) => r.status === "fulfilled") as
-            | PromiseFulfilledResult<{
-                salleDestination?: string;
-                codesSalle?: string[];
-                transfertId?: string;
-                confirme?: boolean;
-                message?: string;
-              }>
-            | undefined
-        )?.value;
-
+        const premierOk = resultats[0];
         const codesFinal = premierOk?.codesSalle ?? codes;
         const orientationAffichee =
           premierOk?.salleDestination ??
@@ -260,6 +253,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
                   transfertId: premierOk?.transfertId ?? courant.transfertId,
                   statutTransfert: transfertConfirme ? "ACCEPTE" : "EN_ATTENTE",
                   codeSalleDestination: codesFinal[0] ?? courant.codeSalleDestination,
+                  codesSalleDestination: codesFinal,
                   orientation: orientationAffichee,
                   orientationCouleur,
                   statut: transfertConfirme ? "Transféré" : "À confirmer",
@@ -288,6 +282,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
           error instanceof Error ? error.message : "Impossible d'appliquer l'orientation rapide."
         );
       } finally {
+        verrouOrientationRef.current = false;
         setModificationEnCours(false);
       }
     },
@@ -299,7 +294,26 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
       peutCreerTransfertRapide,
       definirOrientations,
       espace.prefixeApi,
+      espace.evenementPatientsModifies,
     ]
+  );
+
+  const debounceOrientationRef = useRef<ReturnType<
+    typeof creerDebounce<(codes: string[]) => void>
+  > | null>(null);
+
+  useEffect(() => {
+    debounceOrientationRef.current = creerDebounce((codes: string[]) => {
+      void appliquerOrientationsTransfert(codes);
+    }, 400);
+    return () => debounceOrientationRef.current?.annuler();
+  }, [appliquerOrientationsTransfert]);
+
+  const changerOrientationsTransfert = useCallback(
+    async (codesSalle: string[]) => {
+      debounceOrientationRef.current?.(codesSalle);
+    },
+    []
   );
 
   const changerOrientationTransfert = useCallback(

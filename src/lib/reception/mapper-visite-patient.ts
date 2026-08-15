@@ -114,24 +114,30 @@ function includeDernierTransfertDepuis(codeOrigine: CodeSalle) {
   };
 }
 
-function choisirTransfertAffichage(
+function choisirTransfertsAffichage(
   transferts: DossierVisite["transferts"]
-): DossierVisite["transferts"][number] | undefined {
+): DossierVisite["transferts"] {
   const sortants = transferts.filter((t) => !estTransfertIntraSalle(t));
-  if (sortants.length === 0) return undefined;
+  if (sortants.length === 0) return [];
 
-  const enAttente = sortants.find((t) => t.statut === "EN_ATTENTE");
-  if (enAttente) return enAttente;
+  const enAttente = sortants.filter((t) => t.statut === "EN_ATTENTE");
+  if (enAttente.length > 0) return enAttente;
 
-  const enRecup = sortants.find(
+  const enRecup = sortants.filter(
     (t) =>
       t.statut === "REFUSE" &&
       (t as { recuperation?: { statut: string } }).recuperation?.statut ===
         "EN_RECUPERATION"
   );
-  if (enRecup) return enRecup;
+  if (enRecup.length > 0) return enRecup;
 
-  return sortants[0];
+  return sortants[0] ? [sortants[0]] : [];
+}
+
+function choisirTransfertAffichage(
+  transferts: DossierVisite["transferts"]
+): DossierVisite["transferts"][number] | undefined {
+  return choisirTransfertsAffichage(transferts)[0];
 }
 
 const includeDernierTransfertReception = includeDernierTransfertDepuis("RECEPTION");
@@ -383,15 +389,21 @@ export function mapperDossierVisite(dossier: DossierVisite): PatientEnregistre {
   const { patient } = dossier;
   const enregistrement = dossier.enregistrementsReception[0];
   const passage = dossier.passages[0];
-  const transfertAffichage = choisirTransfertAffichage(dossier.transferts);
+  const transfertsAffichage = choisirTransfertsAffichage(dossier.transferts);
+  const transfertAffichage = transfertsAffichage[0];
   const fileAttente = passage?.fileAttente;
   const enRecuperation = estEnRecuperation(transfertAffichage);
 
   let orientation = "Non orienté";
-  if (transfertAffichage && transfertAffichage.statut !== "REFUSE") {
-    orientation = raccourcirNomSalle(transfertAffichage.salleDestination.nom);
+  if (transfertsAffichage.length > 0 && transfertsAffichage.some((t) => t.statut !== "REFUSE")) {
+    orientation = transfertsAffichage
+      .filter((t) => t.statut !== "REFUSE")
+      .map((t) => raccourcirNomSalle(t.salleDestination.nom))
+      .join(", ");
   } else if (transfertAffichage?.statut === "REFUSE" && enRecuperation) {
-    orientation = raccourcirNomSalle(transfertAffichage.salleDestination.nom);
+    orientation = transfertsAffichage
+      .map((t) => raccourcirNomSalle(t.salleDestination.nom))
+      .join(", ");
   } else if (fileAttente && !fileAttente.serviLe) {
     orientation = raccourcirNomSalle(fileAttente.salle.nom);
   }
@@ -426,6 +438,9 @@ export function mapperDossierVisite(dossier: DossierVisite): PatientEnregistre {
     statutTransfert: transfertAffichage?.statut,
     enRecuperation,
     codeSalleDestination: transfertAffichage?.salleDestination?.code,
+    codesSalleDestination: transfertsAffichage
+      .map((t) => t.salleDestination?.code)
+      .filter((c): c is CodeSalle => Boolean(c)),
   };
 }
 

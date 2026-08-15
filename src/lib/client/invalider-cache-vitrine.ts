@@ -32,6 +32,7 @@ const CHEMINS_PAGE_PUBLIQUE: Record<string, string[]> = {
   contact: ["/contact"],
   accueil: ["/"],
   "rendez-vous": ["/rendez-vous"],
+  "services-laboratoire": ["/services/laboratoire"],
 };
 
 /** Invalide le cache après modification d'une page publique (CMS). */

@@ -1,5 +1,7 @@
 /** Traductions LN — contenu ya ba pages (libanda ya accueil ezali déjà na locales/ln.ts) */
 
+import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+
 export const pagesLn = {
   contact: {
     hero: {
@@ -365,6 +367,8 @@ export const pagesLn = {
       boutonSecondaire: "Kokutana na biso",
     },
   },
+
+  servicesLaboratoire: pagesServicesLaboratoireEn,
 
   campagnes: {
     hero: {

@@ -1,5 +1,7 @@
 /** Translations HI — page content (excluding home already in locales/hi.ts) */
 
+import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+
 export const pagesHi = {
   contact: {
     hero: {
@@ -365,6 +367,8 @@ export const pagesHi = {
       boutonSecondaire: "हमसे संपर्क करें",
     },
   },
+
+  servicesLaboratoire: pagesServicesLaboratoireEn,
 
   campagnes: {
     hero: {

@@ -1,5 +1,7 @@
 /** Traductions LUA — makanda ya ba pages (libanda ya munda kele déjà na locales/lua.ts) */
 
+import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+
 export const pagesLua = {
   contact: {
     hero: {
@@ -365,6 +367,8 @@ export const pagesLua = {
       boutonSecondaire: "Kutana ne betu",
     },
   },
+
+  servicesLaboratoire: pagesServicesLaboratoireEn,
 
   campagnes: {
     hero: {

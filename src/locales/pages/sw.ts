@@ -1,5 +1,7 @@
 /** Translations SW — page content (excluding home already in locales/sw.ts) */
 
+import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+
 export const pagesSw = {
   contact: {
     hero: {
@@ -365,6 +367,8 @@ export const pagesSw = {
       boutonSecondaire: "Wasiliana nasi",
     },
   },
+
+  servicesLaboratoire: pagesServicesLaboratoireEn,
 
   campagnes: {
     hero: {

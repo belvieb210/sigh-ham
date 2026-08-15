@@ -177,6 +177,8 @@ export const clientEn = {
       "Contact section text comes from site translations. Only hero banner background images can be edited here.",
     aideHeroRdv:
       "Appointment page text comes from site translations. Images added here scroll in the hero banner on /rendez-vous.",
+    aideHeroServicesLaboratoire:
+      "Exam catalog text comes from site translations. Images added here scroll in the hero banner on /services/laboratoire.",
     typeEtablissement: "Establishment type",
     nomEtablissement: "Displayed name",
     badgeSlogan: "Slogan (badge)",

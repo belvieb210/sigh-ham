@@ -13,6 +13,7 @@ export const IMAGE_HERO_CAMPAGNES = "/images/a-propos/labo-2.jpg";
 export const IMAGE_HERO_SERVICES = "/images/a-propos/labo-3.jpg";
 export const IMAGE_HERO_CONTACT = "/images/a-propos/labo-4.jpg";
 export const IMAGE_HERO_RENDEZ_VOUS = "/images/a-propos/labo-1.jpg";
+export const IMAGE_HERO_SERVICES_LABORATOIRE = "/images/a-propos/labo-3.jpg";
 
 /** Galerie laboratoire — carrousel service phare & visuels analytiques */
 export const IMAGES_LABORATOIRE = IMAGES_FOND_A_PROPOS;

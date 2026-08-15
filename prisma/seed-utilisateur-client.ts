@@ -13,6 +13,7 @@ import { CONTENU_A_PROPOS } from "../src/constants/a-propos";
 import { CONTENU_SERVICES } from "../src/constants/services";
 import { CONTENU_CAMPAGNES } from "../src/constants/campagnes";
 import { CONTENU_RENDEZ_VOUS } from "../src/constants/rendez-vous";
+import { CONTENU_SERVICES_LABORATOIRE } from "../src/constants/services-laboratoire";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
@@ -168,6 +169,14 @@ async function seedPages() {
       contenu: {
         hero: { imagesFond: [] },
         cta: CONTENU_RENDEZ_VOUS.cta,
+      },
+    },
+    {
+      cle: "services-laboratoire",
+      titre: "Examens laboratoire",
+      contenu: {
+        hero: { imagesFond: [] },
+        cta: CONTENU_SERVICES_LABORATOIRE.cta,
       },
     },
   ];

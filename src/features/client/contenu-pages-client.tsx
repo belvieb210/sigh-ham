@@ -182,14 +182,14 @@ export function ContenuPagesClient({
       selection.cle === "accueil"
     )
       return "cta" as const;
-    if (selection.cle === "contact" || selection.cle === "rendez-vous")
+    if (selection.cle === "contact" || selection.cle === "rendez-vous" || selection.cle === "services-laboratoire")
       return "contact" as const;
     return "json" as const;
   }, [selection]);
 
   const afficheImagesFondHero = useMemo(() => {
     if (!selection) return false;
-    return ["services", "campagnes", "contact", "rendez-vous"].includes(selection.cle);
+    return ["services", "campagnes", "contact", "rendez-vous", "services-laboratoire"].includes(selection.cle);
   }, [selection]);
 
   const charger = useCallback(() => {
@@ -678,7 +678,9 @@ export function ContenuPagesClient({
                   <p className="rounded-lg border border-bleu-medical/20 bg-bleu-medical-clair/50 px-4 py-3 text-sm text-texte-principal">
                     {selection.cle === "contact"
                       ? t("client.pages.aideHeroContact")
-                      : t("client.pages.aideHeroRdv")}
+                      : selection.cle === "rendez-vous"
+                        ? t("client.pages.aideHeroRdv")
+                        : t("client.pages.aideHeroServicesLaboratoire")}
                   </p>
                   <SectionCms titre={t("client.pages.sectionHero")}>
                     <div className="sm:col-span-2">

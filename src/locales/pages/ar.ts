@@ -1,5 +1,7 @@
 /** ترجمات عربية — محتوى الصفحات (باستثناء الرئيسية الموجودة في locales/ar.ts) */
 
+import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+
 export const pagesAr = {
   contact: {
     hero: {
@@ -365,6 +367,8 @@ export const pagesAr = {
       boutonSecondaire: "اتصل بنا",
     },
   },
+
+  servicesLaboratoire: pagesServicesLaboratoireEn,
 
   campagnes: {
     hero: {

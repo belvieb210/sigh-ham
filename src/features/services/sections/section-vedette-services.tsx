@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Award,
@@ -138,6 +139,13 @@ export function SectionVedetteServices() {
             <p className="mt-2 max-w-lg text-sm text-white/60">
               {servicePhare.description}
             </p>
+            <Link
+              href="/services/laboratoire"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+            >
+              {vedette.decouvrir}
+              <ChevronRight className="h-4 w-4" />
+            </Link>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-sm">
             <span className="relative flex h-2 w-2">

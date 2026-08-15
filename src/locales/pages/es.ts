@@ -1,5 +1,7 @@
 /** Traducciones ES — contenido de páginas (excluye inicio ya en locales/es.ts) */
 
+import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+
 export const pagesEs = {
   contact: {
     hero: {
@@ -365,6 +367,8 @@ export const pagesEs = {
       boutonSecondaire: "Contáctenos",
     },
   },
+
+  servicesLaboratoire: pagesServicesLaboratoireEn,
 
   campagnes: {
     hero: {

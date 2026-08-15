@@ -10,6 +10,7 @@ import {
 import { CONTENU_CONTACT } from "@/constants/contact";
 import { CONTENU_RENDEZ_VOUS } from "@/constants/rendez-vous";
 import { CONTENU_SERVICES } from "@/constants/services";
+import { CONTENU_SERVICES_LABORATOIRE } from "@/constants/services-laboratoire";
 import { useCampagnes } from "@/hooks/use-campagnes";
 import { useStatistiquesVitrine } from "@/hooks/use-statistiques-vitrine";
 import { normaliserContenuAPropos } from "@/lib/client/normaliser-a-propos";
@@ -697,4 +698,55 @@ export function useContenuAPropos() {
       },
     };
   }, [aPropos, medecinsDb, pageDb, stats]);
+}
+
+export function useContenuServicesLaboratoire() {
+  const pages = usePages();
+  const lab = pages.servicesLaboratoire;
+  const imagesFond = useImagesFondHeroPage("services-laboratoire");
+
+  return useMemo(
+    () => ({
+      hero: {
+        surtitre: lab.hero.surtitre,
+        titre: lab.hero.titre,
+        titreAccent: lab.hero.titreAccent,
+        description: lab.hero.description,
+        imagesFond,
+        garanties: CONTENU_SERVICES_LABORATOIRE.hero.garanties.map(
+          (item, index) => ({
+            id: item.id,
+            titre: lab.hero.garanties[index]?.titre ?? item.titre,
+            description:
+              lab.hero.garanties[index]?.description ?? item.description,
+          })
+        ),
+      },
+      catalogue: {
+        titreTous: lab.catalogue.titreTous,
+        rechercheLabel: lab.catalogue.rechercheLabel,
+        recherchePlaceholder: lab.catalogue.recherchePlaceholder,
+        filtreCategorie: lab.catalogue.filtreCategorie,
+        filtreService: lab.catalogue.filtreService,
+        toutesCategories: lab.catalogue.toutesCategories,
+        tousServices: lab.catalogue.tousServices,
+        trierPar: lab.catalogue.trierPar,
+        triNom: lab.catalogue.triNom,
+        triPrixAsc: lab.catalogue.triPrixAsc,
+        triPrixDesc: lab.catalogue.triPrixDesc,
+        categoriesTitre: lab.catalogue.categoriesTitre,
+        tousExamens: lab.catalogue.tousExamens,
+        aideTitre: lab.catalogue.aideTitre,
+        aideTexte: lab.catalogue.aideTexte,
+        aucunResultat: lab.catalogue.aucunResultat,
+      },
+      cta: {
+        titre: lab.cta.titre,
+        description: lab.cta.description,
+        boutonServices: lab.cta.boutonServices,
+        boutonRdv: lab.cta.boutonRdv,
+      },
+    }),
+    [lab, imagesFond]
+  );
 }

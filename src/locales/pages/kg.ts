@@ -1,5 +1,7 @@
 /** Traductions KG — makanda ya ba pages (libanda ya ebandeli kele déjà na locales/kg.ts) */
 
+import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+
 export const pagesKg = {
   contact: {
     hero: {
@@ -365,6 +367,8 @@ export const pagesKg = {
       boutonSecondaire: "Kutana na beto",
     },
   },
+
+  servicesLaboratoire: pagesServicesLaboratoireEn,
 
   campagnes: {
     hero: {

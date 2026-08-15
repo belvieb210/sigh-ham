@@ -1,5 +1,7 @@
 /** תרגומים HE — תוכן דפים (למעט דף הבית שב-locales/he.ts) */
 
+import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+
 export const pagesHe = {
   contact: {
     hero: {
@@ -365,6 +367,8 @@ export const pagesHe = {
       boutonSecondaire: "יצירת קשר",
     },
   },
+
+  servicesLaboratoire: pagesServicesLaboratoireEn,
 
   campagnes: {
     hero: {

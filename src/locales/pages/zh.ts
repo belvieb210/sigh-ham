@@ -1,5 +1,7 @@
 /** 中文翻译 — 页面内容（首页内容已在 locales/zh.ts 中） */
 
+import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
+
 export const pagesZh = {
   contact: {
     hero: {
@@ -365,6 +367,8 @@ export const pagesZh = {
       boutonSecondaire: "联系我们",
     },
   },
+
+  servicesLaboratoire: pagesServicesLaboratoireEn,
 
   campagnes: {
     hero: {

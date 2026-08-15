@@ -179,6 +179,8 @@ export const clientFr = {
       "Les textes « Nos coordonnées » viennent des traductions du site. Seules les images de fond du bandeau hero sont modifiables ici.",
     aideHeroRdv:
       "Les textes de la page Rendez-vous viennent des traductions du site. Les images ajoutées ici défilent en arrière-plan du bandeau sur /rendez-vous.",
+    aideHeroServicesLaboratoire:
+      "Les textes du catalogue d'examens viennent des traductions du site. Les images ajoutées ici défilent en arrière-plan sur /services/laboratoire.",
     typeEtablissement: "Type d'établissement",
     nomEtablissement: "Nom affiché",
     badgeSlogan: "Slogan (badge)",

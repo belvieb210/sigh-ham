@@ -28,14 +28,17 @@ export async function creerVenteDirecte(
   if (!data.lignes.length) throw new Error("Ajoutez au moins un médicament.");
 
   const meds = await prisma.medicament.findMany({
-    where: { id: { in: data.lignes.map((l) => l.medicamentId) } },
+    where: { id: { in: data.lignes.map((l) => l.medicamentId) }, actif: true },
   });
   const byId = new Map(meds.map((m) => [m.id, m]));
 
   let montant = 0;
   const lignesData = data.lignes.map((l) => {
+    if (!l.medicamentId?.trim()) {
+      throw new Error("Un médicament du panier est invalide. Retirez-le et ajoutez-le à nouveau.");
+    }
     const m = byId.get(l.medicamentId);
-    if (!m) throw new Error("Médicament introuvable.");
+    if (!m) throw new Error(`Médicament introuvable (${l.medicamentId.slice(0, 8)}…).`);
     const prix = decimal(m.prixUnitaire);
     const remise = l.remise ?? 0;
     montant += Math.max(0, prix * l.quantite - remise);
@@ -125,6 +128,46 @@ export async function transmettreVenteACaisse(
   });
 
   return resultat;
+}
+
+/** Crée ou remplace une vente brouillon puis la transmet à la caisse (transaction unique). */
+export async function creerEtTransmettreVenteACaisse(
+  pharmacienId: string,
+  data: {
+    dossierId: string;
+    notes?: string;
+    lignes: { medicamentId: string; quantite: number; remise?: number }[];
+  }
+) {
+  const venteEnCours = await prisma.ventePharmacie.findFirst({
+    where: {
+      dossierId: data.dossierId,
+      type: "DIRECTE",
+      statut: { in: ["TRANSMISE", "PAYEE", "DELIVREE"] },
+    },
+    include: { facture: { select: { numeroFacture: true } } },
+    orderBy: { creeLe: "desc" },
+  });
+  if (venteEnCours) {
+    throw new Error(
+      venteEnCours.facture?.numeroFacture
+        ? `Une facture (${venteEnCours.facture.numeroFacture}) est déjà transmise pour ce client. Confirmez le transfert dans Patients.`
+        : "Cette vente a déjà été transmise à la caisse."
+    );
+  }
+
+  const brouillonExistant = await prisma.ventePharmacie.findFirst({
+    where: { dossierId: data.dossierId, statut: "BROUILLON", type: "DIRECTE" },
+    select: { id: true },
+  });
+
+  if (brouillonExistant) {
+    await prisma.ligneVentePharmacie.deleteMany({ where: { venteId: brouillonExistant.id } });
+    await prisma.ventePharmacie.delete({ where: { id: brouillonExistant.id } });
+  }
+
+  const vente = await creerVenteDirecte(pharmacienId, data);
+  return transmettreVenteACaisse(pharmacienId, vente.id);
 }
 
 export async function marquerVentePayeeParFacture(factureId: string) {

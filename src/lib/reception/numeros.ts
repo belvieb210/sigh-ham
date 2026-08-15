@@ -105,6 +105,35 @@ export async function genererNumerosPatient(tx: ClientTransaction) {
   return { numeroPatient, numeroEnregistrement: numeroPatient };
 }
 
+/**
+ * Numéros pour client walk-in pharmacie : alignés sur la réception mais
+ * basés sur les patients existants du jour (évite les collisions car la
+ * pharmacie ne crée pas d'enregistrement réception).
+ */
+export async function genererNumerosClientPharmacie(
+  tx: ClientTransaction,
+  date = new Date()
+) {
+  const prefix = formaterDateEnregistrement(date);
+  const receptionNum = await prochainNumeroPatientPermanent(tx, date);
+  const receptionSeq = Number.parseInt(receptionNum.slice(prefix.length), 10) || 0;
+
+  const patients = await tx.patient.findMany({
+    where: { numeroPatient: { startsWith: prefix } },
+    select: { numeroPatient: true },
+  });
+
+  let maxSeq = 0;
+  for (const p of patients) {
+    const n = Number.parseInt(p.numeroPatient.slice(prefix.length), 10);
+    if (Number.isFinite(n)) maxSeq = Math.max(maxSeq, n);
+  }
+
+  const sequence = Math.max(maxSeq, receptionSeq) + 1;
+  const numeroPatient = `${prefix}${formaterCompteurAnnuel(sequence)}`;
+  return { numeroPatient, numeroEnregistrement: numeroPatient };
+}
+
 export async function apercuNumerosPatient() {
   const { prisma } = await import("@/lib/prisma");
   return prisma.$transaction(async (tx) => genererNumerosPatient(tx));

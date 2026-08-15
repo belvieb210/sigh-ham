@@ -223,6 +223,12 @@ export const pharmacieFr = {
     choisir: "Choisir…",
     besoinClient: "Sélectionnez ou enregistrez un client.",
     besoinLignes: "Ajoutez au moins un médicament.",
+    ligneMedicamentInvalide:
+      "Un ou plusieurs médicaments du panier sont invalides. Retirez-les et ajoutez-les à nouveau via la recherche.",
+    dejaTransmise:
+      "La facture {{numero}} est déjà transmise. Confirmez le transfert dans Patients.",
+    dejaTransmiseBouton: "Déjà transmise à la caisse",
+    factureExistante: "Facture {{numero}} — en attente de confirmation du transfert.",
     vide: "Aucune vente",
     clientsEnregistres: "Clients et patients ({{count}})",
     aucunClient: "Aucun client en attente. Enregistrez un nouveau client.",

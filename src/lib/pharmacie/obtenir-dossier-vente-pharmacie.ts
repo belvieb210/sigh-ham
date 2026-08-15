@@ -2,6 +2,7 @@ import "server-only";
 import { calculerAge } from "@/features/caisse/utils-format";
 import { obtenirSectionPharmacieDossier } from "@/lib/caisse/facturation-pharmacie";
 import { prisma } from "@/lib/prisma";
+import type { StatutVentePharmacie } from "@/generated/prisma/client";
 
 export interface DossierVentePharmacie {
   dossierId: string;
@@ -15,6 +16,9 @@ export interface DossierVentePharmacie {
   sexe: string | null;
   adresse: string | null;
   ordonnanceId: string | null;
+  venteId: string | null;
+  venteStatut: StatutVentePharmacie | null;
+  numeroFacture: string | null;
   lignesOrdonnance: {
     id: string;
     medicamentId: string;
@@ -33,6 +37,31 @@ function decimal(v: { toNumber?: () => number } | number | string) {
   return Number(v) || 0;
 }
 
+function mapperLignesVente(
+  lignes: {
+    id: string;
+    medicamentId: string;
+    quantite: number;
+    prixUnitaire: { toNumber?: () => number } | number | string;
+    remise: { toNumber?: () => number } | number | string;
+    medicament: { nom: string; dosage: string | null };
+  }[]
+) {
+  return lignes.map((l) => {
+    const prix = decimal(l.prixUnitaire);
+    const remise = decimal(l.remise);
+    return {
+      id: l.id,
+      medicamentId: l.medicamentId,
+      libelle: `${l.medicament.nom}${l.medicament.dosage ? ` ${l.medicament.dosage}` : ""}`,
+      quantite: l.quantite,
+      prixUnitaire: prix,
+      montant: Math.max(0, prix * l.quantite - remise),
+      stockDisponible: 0,
+    };
+  });
+}
+
 export async function obtenirDossierVentePharmacie(
   dossierId: string
 ): Promise<DossierVentePharmacie | null> {
@@ -45,22 +74,34 @@ export async function obtenirDossierVentePharmacie(
   const section = await obtenirSectionPharmacieDossier(dossierId);
   const patient = dossier.patient;
 
-  let lignesOrdonnance = section.lignes.map((l) => ({
-    id: l.id,
-    medicamentId: "",
-    libelle: l.libelle,
-    quantite: l.quantite,
-    prixUnitaire: l.prixUnitaire,
-    montant: l.montant,
-    stockDisponible: 0,
-  }));
+  const venteActive = await prisma.ventePharmacie.findFirst({
+    where: {
+      dossierId,
+      statut: { in: ["BROUILLON", "TRANSMISE", "PAYEE"] },
+      type: "DIRECTE",
+    },
+    include: {
+      lignes: { include: { medicament: true }, orderBy: { medicament: { nom: "asc" } } },
+      facture: { select: { numeroFacture: true } },
+    },
+    orderBy: { creeLe: "desc" },
+  });
 
-  if (section.ordonnanceId) {
+  let lignesOrdonnance: DossierVentePharmacie["lignesOrdonnance"] = [];
+  let ordonnanceId = section.ordonnanceId;
+  let venteId: string | null = venteActive?.id ?? null;
+  let venteStatut: StatutVentePharmacie | null = venteActive?.statut ?? null;
+  let numeroFacture = venteActive?.facture?.numeroFacture ?? null;
+
+  if (venteActive?.lignes.length) {
+    lignesOrdonnance = mapperLignesVente(venteActive.lignes);
+  } else if (section.ordonnanceId) {
     const ord = await prisma.ordonnance.findUnique({
       where: { id: section.ordonnanceId },
       include: { lignes: { include: { medicament: true } } },
     });
     if (ord) {
+      ordonnanceId = ord.id;
       lignesOrdonnance = ord.lignes.map((l) => ({
         id: l.id,
         medicamentId: l.medicamentId,
@@ -84,7 +125,10 @@ export async function obtenirDossierVentePharmacie(
     age: calculerAge(patient.dateNaissance?.toISOString() ?? null),
     sexe: patient.sexe,
     adresse: patient.adresse,
-    ordonnanceId: section.ordonnanceId,
+    ordonnanceId,
+    venteId,
+    venteStatut,
+    numeroFacture,
     lignesOrdonnance,
   };
 }

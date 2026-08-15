@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { obtenirSessionApiPharmacie } from "@/lib/auth/garde-api-pharmacie";
 import {
+  creerEtTransmettreVenteACaisse,
   creerVenteDirecte,
   delivrerVente,
   transmettreVenteACaisse,
@@ -26,12 +27,29 @@ export async function POST(request: Request) {
   if (!session) return NextResponse.json({ message: "Non autorisé." }, { status: 401 });
   try {
     const corps = (await request.json()) as {
-      action?: "creer" | "transmettre" | "delivrer";
+      action?: "creer" | "transmettre" | "delivrer" | "creerEtTransmettre";
       venteId?: string;
       dossierId?: string;
       notes?: string;
       lignes?: { medicamentId: string; quantite: number; remise?: number }[];
     };
+
+    if (
+      corps.action === "creerEtTransmettre" &&
+      corps.dossierId &&
+      corps.lignes?.length
+    ) {
+      const r = await creerEtTransmettreVenteACaisse(session.utilisateur.id, {
+        dossierId: corps.dossierId,
+        notes: corps.notes,
+        lignes: corps.lignes,
+      });
+      return NextResponse.json({
+        message: `Facture ${r.facture.numeroFacture} créée. Confirmez le transfert vers la caisse dans Patients.`,
+        facture: r.facture,
+        vente: r.vente,
+      });
+    }
 
     if (corps.action === "transmettre" && corps.venteId) {
       const r = await transmettreVenteACaisse(session.utilisateur.id, corps.venteId);

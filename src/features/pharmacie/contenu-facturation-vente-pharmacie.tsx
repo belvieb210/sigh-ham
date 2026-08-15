@@ -246,6 +246,19 @@ export function ContenuFacturationVentePharmacie({
       setErreur(t("pharmacie.vente.besoinLignes"));
       return;
     }
+    if (dossier?.venteStatut === "TRANSMISE" || dossier?.venteStatut === "PAYEE") {
+      setErreur(
+        t("pharmacie.vente.dejaTransmise", {
+          numero: dossier.numeroFacture ?? "—",
+        })
+      );
+      return;
+    }
+    const lignesInvalides = lignes.filter((l) => !l.medicamentId?.trim());
+    if (lignesInvalides.length > 0) {
+      setErreur(t("pharmacie.vente.ligneMedicamentInvalide"));
+      return;
+    }
     setEnCours(true);
     setErreur(null);
     setMessage(null);
@@ -254,6 +267,7 @@ export function ContenuFacturationVentePharmacie({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          action: "creerEtTransmettre",
           dossierId,
           notes: notes.trim() || undefined,
           lignes: lignes.map((l) => ({
@@ -265,29 +279,16 @@ export function ContenuFacturationVentePharmacie({
       });
       const data = (await res.json()) as {
         message?: string;
-        vente?: { id: string };
         facture?: { numeroFacture?: string };
       };
       if (!res.ok) throw new Error(data.message ?? t("pharmacie.common.erreur"));
 
-      if (data.vente?.id) {
-        const tr = await fetch("/api/pharmacie/ventes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "transmettre", venteId: data.vente.id }),
-        });
-        const td = (await tr.json()) as {
-          message?: string;
-          facture?: { numeroFacture?: string };
-        };
-        if (!tr.ok) throw new Error(td.message ?? t("pharmacie.common.erreur"));
-        setMessage(
-          td.message ??
-            t("pharmacie.vente.transmiseFacture", {
-              numero: td.facture?.numeroFacture ?? "—",
-            })
-        );
-      }
+      setMessage(
+        data.message ??
+          t("pharmacie.vente.transmiseFacture", {
+            numero: data.facture?.numeroFacture ?? "—",
+          })
+      );
 
       retourListe();
       await chargerClients();
@@ -297,6 +298,9 @@ export function ContenuFacturationVentePharmacie({
       setEnCours(false);
     }
   }
+
+  const venteDejaTransmise =
+    dossier?.venteStatut === "TRANSMISE" || dossier?.venteStatut === "PAYEE";
 
   const resumePanel = dossier && (
     <section className="space-y-4 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm sm:p-5">
@@ -423,16 +427,23 @@ export function ContenuFacturationVentePharmacie({
 
       <button
         type="button"
-        disabled={enCours || lignes.length === 0}
+        disabled={enCours || lignes.length === 0 || venteDejaTransmise}
         onClick={() => void transmettre()}
         className="w-full rounded-lg bg-bleu-medical py-3 text-sm font-bold text-white hover:bg-bleu-medical/90 disabled:opacity-50"
       >
         {enCours ? (
           <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+        ) : venteDejaTransmise ? (
+          t("pharmacie.vente.dejaTransmiseBouton")
         ) : (
           t("pharmacie.vente.creerTransmettre")
         )}
       </button>
+      {venteDejaTransmise && dossier?.numeroFacture && (
+        <p className="text-center text-xs text-emerald-700">
+          {t("pharmacie.vente.factureExistante", { numero: dossier.numeroFacture })}
+        </p>
+      )}
     </section>
   );
 

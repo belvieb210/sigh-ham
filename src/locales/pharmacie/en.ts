@@ -222,6 +222,12 @@ export const pharmacieEn = {
     choisir: "Choose…",
     besoinClient: "Select or register a client.",
     besoinLignes: "Add at least one medicine.",
+    ligneMedicamentInvalide:
+      "One or more medicines in the cart are invalid. Remove them and add again via search.",
+    dejaTransmise:
+      "Invoice {{numero}} was already sent. Confirm the transfer in Patients.",
+    dejaTransmiseBouton: "Already sent to cashier",
+    factureExistante: "Invoice {{numero}} — awaiting transfer confirmation.",
     vide: "No sales",
     clientsEnregistres: "Clients and patients ({{count}})",
     aucunClient: "No waiting clients. Register a new client.",

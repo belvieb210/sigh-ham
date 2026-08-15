@@ -90,9 +90,9 @@ export async function obtenirDossierVentePharmacie(
 
   let lignesOrdonnance: DossierVentePharmacie["lignesOrdonnance"] = [];
   let ordonnanceId = section.ordonnanceId;
-  let venteId: string | null = venteActive?.id ?? null;
-  let venteStatut: StatutVentePharmacie | null = venteActive?.statut ?? null;
-  let numeroFacture = venteActive?.facture?.numeroFacture ?? null;
+  const venteId: string | null = venteActive?.id ?? null;
+  const venteStatut: StatutVentePharmacie | null = venteActive?.statut ?? null;
+  const numeroFacture = venteActive?.facture?.numeroFacture ?? null;
 
   if (venteActive?.lignes.length) {
     lignesOrdonnance = mapperLignesVente(venteActive.lignes);

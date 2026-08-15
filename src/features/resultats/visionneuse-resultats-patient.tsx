@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
+  Clock,
   ExternalLink,
   FileText,
   Loader2,
@@ -194,7 +195,7 @@ export function VisionneuseResultatsPatient({
               {resultat.examens.map((ex) => (
                 <li
                   key={ex.id}
-                  className="flex items-start justify-between gap-2 rounded-lg bg-gris-tres-clair px-3 py-2 text-xs"
+                  className="flex items-start justify-between gap-2 rounded-lg bg-emerald-50/80 px-3 py-2 text-xs"
                 >
                   <span className="font-medium text-texte-principal">
                     {ex.libelle}
@@ -206,6 +207,28 @@ export function VisionneuseResultatsPatient({
               ))}
             </ul>
           </section>
+
+          {resultat.examensExclus.length > 0 ? (
+            <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm">
+              <h3 className="mb-1 text-xs font-bold uppercase tracking-widest text-amber-800">
+                {visionneuse.examensExclus}
+              </h3>
+              <p className="mb-3 text-[11px] leading-relaxed text-amber-900/80">
+                {visionneuse.examensExclusInfo}
+              </p>
+              <ul className="space-y-2">
+                {resultat.examensExclus.map((ex) => (
+                  <li
+                    key={ex.libelle}
+                    className="flex items-center gap-2 rounded-lg border border-amber-200/60 bg-white/80 px-3 py-2 text-xs text-amber-950"
+                  >
+                    <Clock className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+                    <span className="font-medium">{ex.libelle}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
           <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
             <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">

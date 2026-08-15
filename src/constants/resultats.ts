@@ -46,6 +46,13 @@ export const CONTENU_RESULTATS = {
     erreurPdf: "Impossible d'afficher le PDF.",
     details: "Détails du dossier",
     examens: "Examens inclus",
+    examensExclus: "Examens exclus",
+    examensExclusInfo:
+      "Ces examens de votre facture ne sont pas encore disponibles en ligne.",
+    enAttenteTitre: "Résultats en cours de validation",
+    enAttenteMessage:
+      "Vos résultats ne sont pas encore disponibles en ligne. Ils seront accessibles sous 24 heures après validation par notre équipe médicale.",
+    enAttenteExamens: "Examens en attente sur cette facture",
     actions: "Actions",
     ouvrirOnglet: "Ouvrir dans un nouvel onglet",
     imprimer: "Imprimer",

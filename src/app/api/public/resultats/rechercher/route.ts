@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rechercherResultatsPatientPublic } from "@/lib/resultats-public/rechercher-resultats-patient";
 
+const MSG_EN_ATTENTE =
+  "Vos résultats ne sont pas encore disponibles en ligne. Ils seront accessibles sous 24 heures après validation par notre équipe médicale.";
+
+const MSG_INTROUVABLE =
+  "Informations incorrectes. Vérifiez vos données ou contactez l'accueil.";
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as {
@@ -11,7 +17,7 @@ export async function POST(request: NextRequest) {
       telephone?: string;
     };
 
-    const resultat = await rechercherResultatsPatientPublic({
+    const reponse = await rechercherResultatsPatientPublic({
       nom: body.nom?.trim() ?? "",
       prenom: body.prenom?.trim() ?? "",
       numeroPatient: body.numeroPatient?.trim() ?? "",
@@ -19,17 +25,22 @@ export async function POST(request: NextRequest) {
       telephone: body.telephone?.trim() ?? "",
     });
 
-    if (!resultat) {
+    if (reponse.type === "introuvable") {
+      return NextResponse.json({ erreur: MSG_INTROUVABLE }, { status: 404 });
+    }
+
+    if (reponse.type === "en_attente") {
       return NextResponse.json(
         {
-          erreur:
-            "Informations incorrectes ou résultats non encore disponibles. Vérifiez vos données ou contactez l'accueil.",
+          statut: "en_attente",
+          message: MSG_EN_ATTENTE,
+          attente: reponse.attente,
         },
-        { status: 404 }
+        { status: 202 }
       );
     }
 
-    return NextResponse.json({ resultat });
+    return NextResponse.json({ resultat: reponse.resultat });
   } catch (e) {
     console.error("[POST /api/public/resultats/rechercher]", e);
     return NextResponse.json(

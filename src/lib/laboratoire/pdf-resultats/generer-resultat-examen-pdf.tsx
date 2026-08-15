@@ -48,7 +48,8 @@ export async function genererBufferPdfResultatExamen(
     nomFichier: nomFichierResultatPdf({
       numeroPatient: donnees.patient.numeroPatient,
       nbExamens: 1,
-      libelleExamen: donnees.examen.libelle,
+      nom: donnees.patient.nom,
+      prenom: donnees.patient.prenom,
     }),
   };
 }
@@ -85,6 +86,8 @@ export async function genererBufferPdfResultatsMultiExamens(
     nomFichier: nomFichierResultatPdf({
       numeroPatient: pages[0]!.patient.numeroPatient,
       nbExamens: pages.length,
+      nom: pages[0]!.patient.nom,
+      prenom: pages[0]!.patient.prenom,
     }),
   };
 }

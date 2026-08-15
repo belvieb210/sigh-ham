@@ -2,16 +2,19 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { AlertCircle, FileSearch, Phone, Shield } from "lucide-react";
+import { AlertCircle, Clock, FileSearch, Phone, Shield } from "lucide-react";
 import { INFORMATIONS_HOPITAL } from "@/constants/navigation";
 import { Bouton } from "@/components/ui/bouton";
 import { useContenuResultats } from "@/hooks/use-contenu-resultats";
 import { VisionneuseResultatsPatient } from "@/features/resultats/visionneuse-resultats-patient";
-import type { ResultatPatientPublic } from "@/lib/resultats-public/types";
+import type {
+  ResultatEnAttentePublic,
+  ResultatPatientPublic,
+} from "@/lib/resultats-public/types";
 import { cn } from "@/lib/utils";
 
 export function SectionConsultationResultats() {
-  const { consultation, form } = useContenuResultats();
+  const { consultation, form, visionneuse } = useContenuResultats();
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
   const [numeroPatient, setNumeroPatient] = useState("");
@@ -20,9 +23,11 @@ export function SectionConsultationResultats() {
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [resultat, setResultat] = useState<ResultatPatientPublic | null>(null);
+  const [attente, setAttente] = useState<ResultatEnAttentePublic | null>(null);
 
   const reinitialiser = () => {
     setResultat(null);
+    setAttente(null);
     setErreur(null);
   };
 
@@ -30,6 +35,7 @@ export function SectionConsultationResultats() {
     e.preventDefault();
     setChargement(true);
     setErreur(null);
+    setAttente(null);
 
     try {
       const res = await fetch("/api/public/resultats/rechercher", {
@@ -39,19 +45,32 @@ export function SectionConsultationResultats() {
       });
       const data = (await res.json()) as {
         resultat?: ResultatPatientPublic;
+        statut?: string;
+        message?: string;
+        attente?: ResultatEnAttentePublic;
         erreur?: string;
       };
+
+      if (res.status === 202 && data.statut === "en_attente" && data.attente) {
+        setAttente(data.attente);
+        setResultat(null);
+        setErreur(null);
+        return;
+      }
 
       if (!res.ok || !data.resultat) {
         setErreur(data.erreur ?? form.erreur);
         setResultat(null);
+        setAttente(null);
         return;
       }
 
       setResultat(data.resultat);
+      setAttente(null);
     } catch {
       setErreur(form.erreur);
       setResultat(null);
+      setAttente(null);
     } finally {
       setChargement(false);
     }
@@ -83,6 +102,54 @@ export function SectionConsultationResultats() {
         <div className="mx-auto mt-10 max-w-6xl">
           {resultat ? (
             <VisionneuseResultatsPatient resultat={resultat} onFermer={reinitialiser} />
+          ) : attente ? (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-auto max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm sm:p-8"
+            >
+              <div className="flex items-start gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                  <Clock className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-bold text-amber-950">
+                    {visionneuse.enAttenteTitre}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-amber-900/90">
+                    {visionneuse.enAttenteMessage}
+                  </p>
+                  <p className="mt-3 text-xs text-amber-800/80">
+                    {attente.patient.prenom} {attente.patient.nom} ·{" "}
+                    {attente.facture.numeroFacture}
+                  </p>
+                </div>
+              </div>
+
+              {attente.examensEnAttente.length > 0 ? (
+                <div className="mt-6">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-amber-800">
+                    {visionneuse.enAttenteExamens}
+                  </h4>
+                  <ul className="mt-3 space-y-2">
+                    {attente.examensEnAttente.map((ex) => (
+                      <li
+                        key={ex.libelle}
+                        className="rounded-lg border border-amber-200/80 bg-white/70 px-3 py-2 text-sm text-amber-950"
+                      >
+                        {ex.libelle}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              <div className="mt-6">
+                <Bouton variante="contour" taille="petit" onClick={reinitialiser}>
+                  {form.nouvelleRecherche}
+                </Bouton>
+              </div>
+            </motion.div>
           ) : (
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
               <motion.form

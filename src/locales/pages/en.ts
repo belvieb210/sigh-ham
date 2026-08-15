@@ -673,6 +673,13 @@ export const pagesEn = {
       erreurPdf: "Unable to display the PDF.",
       details: "Case details",
       examens: "Included tests",
+      examensExclus: "Excluded tests",
+      examensExclusInfo:
+        "These tests on your invoice are not yet available online.",
+      enAttenteTitre: "Results pending validation",
+      enAttenteMessage:
+        "Your results are not yet available online. They will be accessible within 24 hours after validation by our medical team.",
+      enAttenteExamens: "Pending tests on this invoice",
       actions: "Actions",
       ouvrirOnglet: "Open in new tab",
       imprimer: "Print",

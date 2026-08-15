@@ -526,8 +526,15 @@ export function FormulaireReservation() {
                         <span className="block text-sm font-bold text-texte-principal">
                           {nomComplet}
                         </span>
-                        <span className="block truncate text-xs text-texte-secondaire">
-                          {medecin.specialite}
+                        <span className="mt-0.5 block text-xs font-medium text-bleu-medical">
+                          {form.medecinSpecialite} : {medecin.specialite}
+                        </span>
+                        <span className="mt-1 flex items-start gap-1.5 text-xs text-texte-secondaire">
+                          <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          <span>
+                            {form.medecinDisponibilite} :{" "}
+                            {medecin.horaires?.trim() || form.medecinHorairesDefaut}
+                          </span>
                         </span>
                       </span>
                     </button>

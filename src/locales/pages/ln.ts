@@ -2,6 +2,7 @@
 
 import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
 import { extensionFormRdvMedecinEn } from "./fragments/extension-form-rdv-medecin-en";
+import { resultatsPagesFallback } from "./fragments/resultats-fr";
 
 export const pagesLn = {
   contact: {
@@ -173,6 +174,9 @@ export const pagesLn = {
       medecinSousTitre: extensionFormRdvMedecinEn.medecinSousTitre,
       sansPreference: extensionFormRdvMedecinEn.sansPreference,
       medecin: extensionFormRdvMedecinEn.medecin,
+      medecinSpecialite: extensionFormRdvMedecinEn.medecinSpecialite,
+      medecinDisponibilite: extensionFormRdvMedecinEn.medecinDisponibilite,
+      medecinHorairesDefaut: extensionFormRdvMedecinEn.medecinHorairesDefaut,
       autreRdv: "Zwa rendez-vous mosusu",
       sansRdv: "Sans RDV ekoki",
     },
@@ -585,6 +589,8 @@ export const pagesLn = {
       boutonSecondaire: "Kokutana na biso",
     },
   },
+
+  resultats: resultatsPagesFallback,
 } as const;
 
 export type PagesLn = typeof pagesLn;

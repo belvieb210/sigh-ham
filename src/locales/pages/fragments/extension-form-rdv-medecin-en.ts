@@ -5,4 +5,7 @@ export const extensionFormRdvMedecinEn = {
   medecinSousTitre: "Select a practitioner or leave no preference",
   sansPreference: "No preference — reception will guide me",
   medecin: "Doctor",
+  medecinSpecialite: "Specialty",
+  medecinDisponibilite: "Availability",
+  medecinHorairesDefaut: "By appointment — Mon — Sat",
 } as const;

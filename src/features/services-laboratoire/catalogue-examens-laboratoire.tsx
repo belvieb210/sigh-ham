@@ -150,8 +150,8 @@ function ModaleDetailExamen({
     <Dialog.Root open={Boolean(examen)} onOpenChange={(open) => !open && onFermer()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[120] bg-black/45" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] w-[min(calc(100vw-2rem),480px)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-gris-bordure bg-white shadow-xl focus:outline-none">
-          <div className="flex items-start justify-between gap-3 border-b border-gris-bordure px-5 py-4">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-[121] flex max-h-[min(90vh,640px)] w-[calc(100vw-2rem)] max-w-[480px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-gris-bordure bg-white shadow-xl focus:outline-none">
+          <div className="flex shrink-0 items-start justify-between gap-3 border-b border-gris-bordure px-5 py-4">
             <div className="flex min-w-0 items-start gap-3">
               <span
                 className={cn(
@@ -182,37 +182,37 @@ function ModaleDetailExamen({
             </Dialog.Close>
           </div>
 
-          <div className="space-y-3 px-5 py-4 text-sm">
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 text-sm">
             {examen.description ? (
-              <p className="leading-relaxed text-texte-secondaire">
+              <p className="break-words whitespace-pre-line leading-relaxed text-texte-secondaire">
                 {examen.description}
               </p>
             ) : null}
-            <dl className="grid gap-2 rounded-xl bg-gris-tres-clair p-3 text-sm">
+            <dl className="mt-3 grid gap-2 rounded-xl bg-gris-tres-clair p-3 text-sm">
               <div className="flex justify-between gap-4">
-                <dt className="text-texte-secondaire">Tarif</dt>
-                <dd className="font-bold text-texte-principal">
+                <dt className="shrink-0 text-texte-secondaire">Tarif</dt>
+                <dd className="min-w-0 break-words text-right font-bold text-texte-principal">
                   {formaterPrixExamenPublic(examen.prix)}
                 </dd>
               </div>
               <div className="flex justify-between gap-4">
-                <dt className="text-texte-secondaire">Délai estimé</dt>
-                <dd className="font-medium text-texte-principal">
+                <dt className="shrink-0 text-texte-secondaire">Délai estimé</dt>
+                <dd className="min-w-0 break-words text-right font-medium text-texte-principal">
                   {formaterDelaiExamenPublic(examen.delaiHeures)}
                 </dd>
               </div>
               {examen.serviceLabo ? (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-texte-secondaire">Service</dt>
-                  <dd className="text-right font-medium text-texte-principal">
+                  <dt className="shrink-0 text-texte-secondaire">Service</dt>
+                  <dd className="min-w-0 break-words text-right font-medium text-texte-principal">
                     {examen.serviceLabo}
                   </dd>
                 </div>
               ) : null}
               {examen.specimen ? (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-texte-secondaire">Prélèvement</dt>
-                  <dd className="text-right font-medium text-texte-principal">
+                  <dt className="shrink-0 text-texte-secondaire">Prélèvement</dt>
+                  <dd className="min-w-0 break-words text-right font-medium text-texte-principal">
                     {examen.specimen}
                   </dd>
                 </div>
@@ -220,7 +220,7 @@ function ModaleDetailExamen({
             </dl>
           </div>
 
-          <div className="flex flex-col-reverse gap-2 border-t border-gris-bordure px-5 py-4 sm:flex-row sm:justify-end">
+          <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gris-bordure px-5 py-4 sm:flex-row sm:justify-end">
             <Bouton variante="contour" taille="petit" onClick={onFermer}>
               Fermer
             </Bouton>

@@ -2,6 +2,7 @@
 
 import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
 import { extensionFormRdvMedecinEn } from "./fragments/extension-form-rdv-medecin-en";
+import { resultatsPagesFallback } from "./fragments/resultats-fr";
 
 export const pagesZh = {
   contact: {
@@ -173,6 +174,9 @@ export const pagesZh = {
       medecinSousTitre: extensionFormRdvMedecinEn.medecinSousTitre,
       sansPreference: extensionFormRdvMedecinEn.sansPreference,
       medecin: extensionFormRdvMedecinEn.medecin,
+      medecinSpecialite: extensionFormRdvMedecinEn.medecinSpecialite,
+      medecinDisponibilite: extensionFormRdvMedecinEn.medecinDisponibilite,
+      medecinHorairesDefaut: extensionFormRdvMedecinEn.medecinHorairesDefaut,
       autreRdv: "再次预约",
       sansRdv: "可无需预约",
     },
@@ -585,6 +589,8 @@ export const pagesZh = {
       boutonSecondaire: "联系我们",
     },
   },
+
+  resultats: resultatsPagesFallback,
 } as const;
 
-export type PagesEs = typeof pagesZh;
+export type PagesZh = typeof pagesZh;

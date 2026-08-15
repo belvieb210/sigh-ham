@@ -170,6 +170,9 @@ export const pagesEn = {
       medecinSousTitre: "Select a practitioner or leave no preference",
       sansPreference: "No preference — reception will guide me",
       medecin: "Doctor",
+      medecinSpecialite: "Specialty",
+      medecinDisponibilite: "Availability",
+      medecinHorairesDefaut: "By appointment — Mon — Sat",
       autreRdv: "Book another appointment",
       sansRdv: "Walk-in possible",
     },
@@ -618,6 +621,69 @@ export const pagesEn = {
       description: "Book an appointment or contact us — HAM LABORATOIRE welcomes you in MATETE, Kinshasa.",
       boutonPrincipal: "Book an appointment",
       boutonSecondaire: "Contact us",
+    },
+  },
+
+  resultats: {
+    hero: {
+      surtitre: "Patient portal",
+      titre: "View your",
+      titreAccent: "results",
+      description:
+        "Securely access your approved lab reports — available 24/7 from anywhere.",
+      stats: {
+        securise: "Secure access",
+        disponible: "Available 24/7",
+        certifie: "Certified results",
+        rapide: "Instant viewing",
+      },
+    },
+    consultation: {
+      surtitre: "Your tests",
+      titre: "Access your results",
+      sousTitre:
+        "Enter the details shown on your sample form and invoice.",
+      securite:
+        "Your data is protected. Only exams approved by the responsible physician are accessible.",
+      aide: "Need help?",
+      aideTexte:
+        "Our reception desk can help you find your patient or invoice number.",
+    },
+    form: {
+      nom: "Last name *",
+      prenom: "First name *",
+      numeroPatient: "Patient no. *",
+      numeroFacture: "Invoice no. *",
+      numeroPatientAide: "e.g. 20260811025",
+      numeroFactureAide: "e.g. FAC-2026-00042",
+      rechercher: "View my results",
+      recherche: "Verifying…",
+      nouvelleRecherche: "New search",
+      erreur:
+        "Incorrect information or results not yet available. Check your details or contact reception.",
+    },
+    visionneuse: {
+      titre: "Results report",
+      ouvrir: "Open",
+      telecharger: "Download",
+      fermer: "Close",
+      chargement: "Loading report…",
+      erreurPdf: "Unable to display the PDF.",
+      details: "Case details",
+      examens: "Included tests",
+      actions: "Actions",
+      ouvrirOnglet: "Open in new tab",
+      imprimer: "Print",
+      informations:
+        "This is an official HAM LABORATOIRE report. Keep it for your medical consultations.",
+      patient: "Patient",
+      numeroPatient: "Patient no.",
+      facture: "Invoice no.",
+      prescripteur: "Prescribing physician",
+      dateAnalyse: "Analysis date",
+      montant: "Invoice amount",
+      statut: "Status",
+      statutApprouve: "Approved — available",
     },
   },
 } as const;

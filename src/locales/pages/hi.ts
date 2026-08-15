@@ -2,6 +2,7 @@
 
 import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
 import { extensionFormRdvMedecinEn } from "./fragments/extension-form-rdv-medecin-en";
+import { resultatsPagesFallback } from "./fragments/resultats-fr";
 
 export const pagesHi = {
   contact: {
@@ -173,6 +174,9 @@ export const pagesHi = {
       medecinSousTitre: extensionFormRdvMedecinEn.medecinSousTitre,
       sansPreference: extensionFormRdvMedecinEn.sansPreference,
       medecin: extensionFormRdvMedecinEn.medecin,
+      medecinSpecialite: extensionFormRdvMedecinEn.medecinSpecialite,
+      medecinDisponibilite: extensionFormRdvMedecinEn.medecinDisponibilite,
+      medecinHorairesDefaut: extensionFormRdvMedecinEn.medecinHorairesDefaut,
       autreRdv: "एक और अपॉइंटमेंट बुक करें",
       sansRdv: "बिना अपॉइंटमेंट आना संभव",
     },
@@ -585,6 +589,8 @@ export const pagesHi = {
       boutonSecondaire: "हमसे संपर्क करें",
     },
   },
+
+  resultats: resultatsPagesFallback,
 } as const;
 
 export type PagesHi = typeof pagesHi;

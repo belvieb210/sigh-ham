@@ -2,6 +2,7 @@
 
 import { pagesServicesLaboratoireEn } from "./fragments/services-laboratoire-en";
 import { extensionFormRdvMedecinEn } from "./fragments/extension-form-rdv-medecin-en";
+import { resultatsPagesFallback } from "./fragments/resultats-fr";
 
 export const pagesDe = {
   contact: {
@@ -173,6 +174,9 @@ export const pagesDe = {
       medecinSousTitre: extensionFormRdvMedecinEn.medecinSousTitre,
       sansPreference: extensionFormRdvMedecinEn.sansPreference,
       medecin: extensionFormRdvMedecinEn.medecin,
+      medecinSpecialite: extensionFormRdvMedecinEn.medecinSpecialite,
+      medecinDisponibilite: extensionFormRdvMedecinEn.medecinDisponibilite,
+      medecinHorairesDefaut: extensionFormRdvMedecinEn.medecinHorairesDefaut,
       autreRdv: "Weiteren Termin buchen",
       sansRdv: "Ohne Termin möglich",
     },
@@ -585,6 +589,8 @@ export const pagesDe = {
       boutonSecondaire: "Kontaktieren Sie uns",
     },
   },
+
+  resultats: resultatsPagesFallback,
 } as const;
 
 export type PagesDe = typeof pagesDe;

@@ -163,7 +163,13 @@
 
   /* Carrousel horizontal mobile sans marge négative (évite la coupure à gauche) */
   .carrousel-sigh {
-    @apply flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-masquee;
+    @apply flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .carrousel-sigh::-webkit-scrollbar {
+    display: none;
   }
 
   .carrousel-sigh > * {

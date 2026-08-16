@@ -80,7 +80,7 @@ export async function chargerRecuPublicParToken(
           patient: true,
           examensLaboratoire: {
             where: { statut: { not: "ANNULE" } },
-            include: { typeExamen: true },
+            include: { typeExamen: true, paquetBilan: true },
             orderBy: { createdAt: "asc" },
           },
         },
@@ -108,12 +108,34 @@ export async function chargerRecuPublicParToken(
     ])
   );
 
+  const paquetsParLibelle = new Map<string, { code: string; statut: string }>();
+  for (const ex of facture.dossier.examensLaboratoire) {
+    if (ex.paquetBilan) {
+      const cle = ex.paquetBilan.libelle.trim().toLowerCase();
+      if (!paquetsParLibelle.has(cle)) {
+        paquetsParLibelle.set(cle, {
+          code: ex.paquetBilan.code,
+          statut: ex.statut,
+        });
+      }
+    }
+  }
+
   const examens = lignesPositives.map((l) => {
-    const match = examensParLibelle.get(l.libelle.trim().toLowerCase());
+    const libelleCle = l.libelle.trim().toLowerCase();
+    const matchExamen = examensParLibelle.get(libelleCle);
+    if (matchExamen) {
+      return {
+        libelle: l.libelle,
+        code: matchExamen.typeExamen.code,
+        statut: matchExamen.statut,
+      };
+    }
+    const matchPaquet = paquetsParLibelle.get(libelleCle);
     return {
       libelle: l.libelle,
-      code: match?.typeExamen.code ?? null,
-      statut: match?.statut ?? "FACTURE",
+      code: matchPaquet?.code ?? null,
+      statut: matchPaquet?.statut ?? "FACTURE",
     };
   });
 

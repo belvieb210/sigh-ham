@@ -539,8 +539,8 @@ export function ContenuExamensEnCoursLaboratoire({
             </p>
           ) : (
             <>
-              <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-                  <table className="tableau-liste-labo">
+              <div className="conteneur-tableau-sigh rounded-xl border border-gris-bordure bg-white shadow-sm">
+                <table className="tableau-liste-labo">
                     <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-texte-secondaire">
                       <tr>
                         <th className="w-8 px-1.5 py-1.5">

@@ -27,7 +27,7 @@ export function construireLignesDevisEstimation(
   const lignesPaquets: TypeExamenReception[] = paquets.map((p) => ({
     id: `paquet-${p.id}`,
     code: p.code,
-    libelle: `${p.libelle} (${p.examens.length} examens — forfait)`,
+    libelle: p.libelle,
     categorie: "Paquet bilan",
     prix: p.prix,
     delaiHeures: p.examens.reduce((max, e) => Math.max(max, e.delaiHeures), 0),

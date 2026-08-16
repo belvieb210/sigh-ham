@@ -15,6 +15,8 @@ export type ExamenFactureBrut = {
   notes: string | null;
   resultatLe: Date | null;
   aResultats: boolean;
+  paquetBilanId?: string | null;
+  paquetLibelle?: string | null;
 };
 
 export type ExamenFactureClasse = {
@@ -74,9 +76,21 @@ export function classerExamensFacture(
     lignesExamens.map((l) => normaliserLibelleFacture(l.libelle))
   );
 
-  const surFacture = examensDossier.filter((ex) =>
-    libellesFactureCorrespondent(ex.libelle, libellesFacture)
-  );
+  const estSurFacture = (ex: ExamenFactureBrut): boolean => {
+    if (libellesFactureCorrespondent(ex.libelle, libellesFacture)) return true;
+    if (ex.paquetLibelle) {
+      const libPaquet = normaliserLibelleFacture(ex.paquetLibelle);
+      if (libellesFacture.has(libPaquet)) return true;
+      for (const lf of libellesFacture) {
+        if (libPaquet === lf || libPaquet.includes(lf) || lf.includes(libPaquet)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  const surFacture = examensDossier.filter(estSurFacture);
 
   const approuves: ExamenFactureClasse[] = surFacture
     .filter(estExamenDrApprouve)

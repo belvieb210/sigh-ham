@@ -46,7 +46,7 @@ export async function listerPatientsFileAttenteSalle(codeSalle: CodeSalle) {
               patient: true,
               examensLaboratoire: {
                 where: { statut: { not: "ANNULE" } },
-                include: { typeExamen: true },
+                include: { typeExamen: true, paquetBilan: true },
               },
               enregistrementsReception: {
                 orderBy: { enregistreLe: "desc" },

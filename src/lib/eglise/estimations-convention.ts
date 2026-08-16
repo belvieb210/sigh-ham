@@ -8,6 +8,7 @@ import {
   type DonneesEstimationConventionPdf,
 } from "@/lib/eglise/generer-estimation-convention-pdf";
 import { reorienterPatientDepuisEglise } from "@/lib/eglise/reorienter-patient";
+import { construireLignesEstimationExamens } from "@/lib/caisse/construire-lignes-estimation-examens";
 
 const HONORAIRE_PCT_DEFAUT = 5;
 
@@ -373,7 +374,7 @@ export async function creerEstimationDepuisDossier(
     include: {
       examensLaboratoire: {
         where: { statut: { not: "ANNULE" } },
-        include: { typeExamen: true },
+        include: { typeExamen: true, paquetBilan: true },
       },
       enregistrementsReception: {
         orderBy: { enregistreLe: "desc" },
@@ -384,12 +385,7 @@ export async function creerEstimationDepuisDossier(
   });
   if (!dossier) throw new Error("Dossier introuvable.");
 
-  const lignes: LigneEstimationInput[] = dossier.examensLaboratoire.map((ex) => ({
-    typeExamenId: ex.typeExamenId,
-    code: ex.typeExamen.code,
-    libelle: ex.typeExamen.libelle,
-    prixUnitaire: decimalVersNombre(ex.typeExamen.prix),
-  }));
+  const lignes = construireLignesEstimationExamens(dossier.examensLaboratoire);
 
   if (lignes.length === 0) {
     throw new Error("Aucun examen prescrit pour ce dossier.");

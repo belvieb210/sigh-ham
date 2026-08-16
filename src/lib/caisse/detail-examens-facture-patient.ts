@@ -15,7 +15,8 @@ export async function obtenirDetailExamensFacturePatient(dossierId: string) {
           examensLaboratoire: {
             where: { statut: { not: "ANNULE" } },
             include: {
-              typeExamen: { select: { libelle: true } },
+              typeExamen: { select: { libelle: true, code: true } },
+              paquetBilan: { select: { libelle: true, code: true } },
               resultats: { select: { id: true }, take: 1 },
             },
           },
@@ -33,6 +34,8 @@ export async function obtenirDetailExamensFacturePatient(dossierId: string) {
     id: ex.id,
     statut: ex.statut,
     libelle: ex.typeExamen.libelle,
+    paquetBilanId: ex.paquetBilanId,
+    paquetLibelle: ex.paquetBilan?.libelle ?? null,
     notes: ex.notes,
     resultatLe: ex.resultatLe,
     aResultats: ex.resultats.length > 0,

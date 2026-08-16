@@ -14,6 +14,7 @@ import {
   mapperEstimation,
   type EstimationMapperSource,
 } from "@/lib/eglise/estimations-convention";
+import { construireLignesEstimationExamens } from "@/lib/caisse/construire-lignes-estimation-examens";
 
 export const HONORAIRE_PCT_MEDECIN_EXTERNE = 20;
 const TYPE_ESTIMATION: TypeEstimationHonoraires = "MEDECIN_EXTERNE";
@@ -282,7 +283,7 @@ export async function creerEstimationMedecinExterneDepuisDossier(
     include: {
       examensLaboratoire: {
         where: { statut: { not: "ANNULE" } },
-        include: { typeExamen: true },
+        include: { typeExamen: true, paquetBilan: true },
       },
       enregistrementsReception: {
         orderBy: { enregistreLe: "desc" },
@@ -292,12 +293,7 @@ export async function creerEstimationMedecinExterneDepuisDossier(
   });
   if (!dossier) throw new Error("Dossier introuvable.");
 
-  const lignes: LigneEstimationInput[] = dossier.examensLaboratoire.map((ex) => ({
-    typeExamenId: ex.typeExamenId,
-    code: ex.typeExamen.code,
-    libelle: ex.typeExamen.libelle,
-    prixUnitaire: decimalVersNombre(ex.typeExamen.prix),
-  }));
+  const lignes = construireLignesEstimationExamens(dossier.examensLaboratoire);
 
   if (lignes.length === 0) {
     throw new Error("Aucun examen prescrit pour ce dossier.");

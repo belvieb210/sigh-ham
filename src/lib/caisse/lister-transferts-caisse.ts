@@ -99,11 +99,9 @@ export async function listerPatientsTransfertsCaisse(): Promise<{
     sortantsParDossier.set(t.dossierId, liste);
   }
 
-  const filePayee = file.filter(
-    (p) => p.statutFacture === "PAYEE" || p.facturationComplete
-  );
+  const fileAvecFacture = file.filter((p) => p.factureOuverte || p.facturationComplete);
 
-  const patients: PatientTransfertCaisse[] = filePayee.map((p) => {
+  const patients: PatientTransfertCaisse[] = fileAvecFacture.map((p) => {
     const sortants = sortantsParDossier.get(p.dossierId) ?? [];
     const sortant = sortants[0];
     const enRecuperation = sortants.some(
@@ -160,9 +158,7 @@ export async function listerPatientsTransfertsCaisse(): Promise<{
   });
 
   const stats: StatsTransfertsCaisse = {
-    enAttente: patients.filter(
-      (p) => !p.transfertSortantId && p.statut === "Payée"
-    ).length,
+    enAttente: patients.filter((p) => !p.transfertSortantId).length,
     enCours: patients.filter(
       (p) =>
         p.statutTransfertSortant === "EN_ATTENTE" ||

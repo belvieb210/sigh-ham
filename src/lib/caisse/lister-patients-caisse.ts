@@ -8,6 +8,7 @@ import {
 } from "@/lib/caisse/etat-facturation-dual";
 import { estClientWalkInPharmacie, numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 import type { PatientFileCaisse, StatsCaisseJour } from "@/lib/caisse/types";
+import { construireLignesFactureExamens } from "@/lib/caisse/construire-lignes-facture-examens";
 
 function decimalVersNombre(valeur: { toNumber?: () => number } | number | string): number {
   if (typeof valeur === "number") return valeur;
@@ -102,7 +103,7 @@ const includePassageCaisse = {
           patient: true,
           examensLaboratoire: {
             where: { statut: { not: "ANNULE" as const } },
-            include: { typeExamen: true },
+            include: { typeExamen: true, paquetBilan: true },
           },
           enregistrementsReception: {
             orderBy: { enregistreLe: "desc" as const },
@@ -143,8 +144,14 @@ function aFacturePayee(facs: FacturesDossier): boolean {
   return facs.examens?.statut === "PAYEE" || facs.pharmacie?.statut === "PAYEE";
 }
 
+function aFactureEtablie(facs: FacturesDossier): boolean {
+  const etablie = (statut: StatutFacture | undefined) =>
+    statut === "EMISE" || statut === "PARTIELLEMENT_PAYEE" || statut === "PAYEE";
+  return etablie(facs.examens?.statut) || etablie(facs.pharmacie?.statut);
+}
+
 export async function listerPatientsEnAttenteCaisse(options?: {
-  /** Page transferts : file élargie + uniquement facture payée (examens ou pharmacie). */
+  /** Page transferts : file élargie + au moins une facture établie (examens ou pharmacie). */
   pourPageTransferts?: boolean;
 }): Promise<PatientFileCaisse[]> {
   await reintegrerPatientsCaisseNonConfirmes();
@@ -216,10 +223,14 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       file.passage.transferts[0];
     const transfert = transfertEntrant;
     const examens = dossier.examensLaboratoire;
-    const montantEstime = examens.reduce(
-      (acc, ex) => acc + decimalVersNombre(ex.typeExamen.prix),
-      0
-    );
+    const montantEstime = construireLignesFactureExamens(
+      examens.map((ex) => ({
+        id: ex.id,
+        paquetBilanId: ex.paquetBilanId,
+        typeExamen: ex.typeExamen,
+        paquetBilan: ex.paquetBilan,
+      }))
+    ).reduce((acc, l) => acc + l.montant, 0);
     const medecin =
       dossier.enregistrementsReception[0]?.medecinResponsable?.trim() || null;
     const provenance =
@@ -246,7 +257,7 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       enFile: true,
     });
 
-    if (pourTransferts && !etat.facturationComplete && !aFacturePayee(facs)) {
+    if (pourTransferts && !etat.facturationComplete && !aFactureEtablie(facs)) {
       continue;
     }
 

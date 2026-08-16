@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { EVENEMENT_INFIRMIERS_PATIENTS_MODIFIES, ORIENTATIONS_RAPIDES_INFIRMIERS } from "@/constants/infirmiers";
+import { orientationsInitialesDepuisPatient, filtrerOrientationsAutorisees } from "@/lib/transferts/orientations-universelles";
 import { useOrientationInfirmiers } from "@/features/infirmiers/contexte-orientation-infirmiers";
 import type { PatientFileInfirmiers } from "@/lib/infirmiers/types";
 import {
@@ -77,12 +78,11 @@ export function FournisseurSelectionInfirmiers({ children }: { children: ReactNo
     (patient: PatientFileInfirmiers) => {
       setMessagePanneau(null);
       setPatientSelectionne(patient);
-      const codes =
-        patient.codesSalleDestination?.length
-          ? patient.codesSalleDestination
-          : patient.codeSalleDestination && patient.codeSalleDestination !== "INFIRMIERS"
-            ? [patient.codeSalleDestination]
-            : ["LABORATOIRE"];
+      const codes = orientationsInitialesDepuisPatient(
+        "INFIRMIERS",
+        patient.codesSalleDestination,
+        patient.codeSalleDestination
+      );
       definirOrientations(codes);
       setResume({
         initiales: initiales(patient.prenom, patient.nom),
@@ -122,9 +122,12 @@ export function FournisseurSelectionInfirmiers({ children }: { children: ReactNo
 
   const appliquerOrientationsInfirmiers = useCallback(
     async (codesSalle: string[]) => {
-      const codes = codesSalle.filter((c) => c !== "INFIRMIERS");
+      const codes = filtrerOrientationsAutorisees(
+        "INFIRMIERS",
+        codesSalle.filter((c) => c !== "INFIRMIERS")
+      );
       if (codes.length === 0) {
-        setMessagePanneau("Sélectionnez au moins une destination.");
+        setMessagePanneau("Sélectionnez au moins une destination autorisée (Médecin).");
         return;
       }
 

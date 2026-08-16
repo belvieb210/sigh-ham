@@ -120,6 +120,36 @@ export function filtrerOrientationsAutorisees(
   ];
 }
 
+/** Valeur par défaut du panneau orientation rapide selon la salle d'origine. */
+export function orientationDefautPourSalle(origine: CodeSalle): CodeSalle {
+  const autorisees = orientationsAutoriseesDepuis(origine);
+  if (origine === "CAISSE" && autorisees.includes("LABORATOIRE")) {
+    return "LABORATOIRE";
+  }
+  if (origine === "INFIRMIERS" && autorisees.includes("MEDECINS")) {
+    return "MEDECINS";
+  }
+  if (autorisees.includes("CAISSE")) return "CAISSE";
+  return autorisees[0] ?? origine;
+}
+
+/** Orientations UI à partir des données patient, filtrées selon la salle d'origine. */
+export function orientationsInitialesDepuisPatient(
+  origine: CodeSalle,
+  brutes?: string[] | null,
+  codeUnique?: string | null
+): CodeSalle[] {
+  const candidats =
+    brutes && brutes.length > 0
+      ? brutes
+      : codeUnique && codeUnique !== origine
+        ? [codeUnique]
+        : [];
+  const filtrees = filtrerOrientationsAutorisees(origine, candidats);
+  if (filtrees.length > 0) return filtrees;
+  return [orientationDefautPourSalle(origine)];
+}
+
 export function metaOrientationsSauf(origine: CodeSalle) {
   return orientationsSauf(origine).map((value) => ({
     value,

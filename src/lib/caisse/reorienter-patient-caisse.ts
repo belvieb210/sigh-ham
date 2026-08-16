@@ -1,27 +1,24 @@
 import "server-only";
 import type { CodeSalle } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { ORIENTATIONS_RAPIDES_CAISSE } from "@/constants/caisse";
+import {
+  filtrerOrientationsAutorisees,
+  orientationsAutoriseesDepuis,
+} from "@/lib/transferts/orientations-universelles";
 import { synchroniserTransfertsEnAttente } from "@/lib/transferts/multi-destinations";
 
-export const ORIENTATIONS_CAISSE_AUTORISEES: CodeSalle[] = ORIENTATIONS_RAPIDES_CAISSE.map(
-  (o) => o.value as CodeSalle
-);
+export const ORIENTATIONS_CAISSE_AUTORISEES: CodeSalle[] =
+  orientationsAutoriseesDepuis("CAISSE");
 
 function normaliserDestinations(codes: string[]): CodeSalle[] {
-  const uniques = [...new Set(codes.map((c) => c.trim()).filter(Boolean))];
-  for (const code of uniques) {
-    if (!ORIENTATIONS_CAISSE_AUTORISEES.includes(code as CodeSalle)) {
-      throw new Error(`Salle de destination invalide : ${code}.`);
-    }
-    if (code === "CAISSE") {
-      throw new Error("Le patient est déjà à la caisse. Choisissez une autre destination.");
-    }
-  }
+  const uniques = filtrerOrientationsAutorisees("CAISSE", codes);
   if (uniques.length === 0) {
     throw new Error("Sélectionnez au moins une destination.");
   }
-  return uniques as CodeSalle[];
+  if (uniques.includes("CAISSE")) {
+    throw new Error("Le patient est déjà à la caisse. Choisissez une autre destination.");
+  }
+  return uniques;
 }
 
 /**

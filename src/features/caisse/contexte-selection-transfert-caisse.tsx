@@ -15,6 +15,7 @@ import {
   EVENEMENT_CAISSE_PATIENTS_MODIFIES,
   ORIENTATIONS_RAPIDES_CAISSE,
 } from "@/constants/caisse";
+import { orientationsInitialesDepuisPatient, filtrerOrientationsAutorisees, orientationDefautPourSalle } from "@/lib/transferts/orientations-universelles";
 import { useOrientationCaisse } from "@/features/caisse/contexte-orientation-caisse";
 import { calculerAge, initiales } from "@/features/caisse/utils-format";
 import type { PatientTransfertCaisse } from "@/lib/caisse/types";
@@ -78,9 +79,12 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
       setPatientSelectionne(patient);
       const codes =
         patient.section === "paye" && patient.peutOrienterSortant
-          ? ((patient as { codesSalleDestination?: string[] }).codesSalleDestination ??
-            (patient.codeSalleDestination ? [patient.codeSalleDestination] : ["LABORATOIRE"]))
-          : ["LABORATOIRE"];
+          ? orientationsInitialesDepuisPatient(
+              "CAISSE",
+              (patient as { codesSalleDestination?: string[] }).codesSalleDestination,
+              patient.codeSalleDestination
+            )
+          : [orientationDefautPourSalle("CAISSE")];
       definirOrientations(codes);
       const age = calculerAge(patient.dateNaissance);
       setResume({
@@ -119,7 +123,10 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
 
   const appliquerOrientations = useCallback(
     async (codesSalle: string[]) => {
-      const codes = codesSalle.filter((c) => c !== "CAISSE");
+      const codes = filtrerOrientationsAutorisees(
+        "CAISSE",
+        codesSalle.filter((c) => c !== "CAISSE")
+      );
       if (codes.length === 0) {
         setMessagePanneau("Sélectionnez au moins une destination.");
         return;

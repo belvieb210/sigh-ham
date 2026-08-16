@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { EVENEMENT_MEDECINS_PATIENTS_MODIFIES, ORIENTATIONS_RAPIDES_MEDECINS } from "@/constants/medecins";
+import { orientationsInitialesDepuisPatient, filtrerOrientationsAutorisees } from "@/lib/transferts/orientations-universelles";
 import { useOrientationMedecins } from "@/features/medecins/contexte-orientation-medecins";
 import type { PatientFileMedecins } from "@/lib/medecins/types";
 import {
@@ -82,12 +83,11 @@ export function FournisseurSelectionMedecins({ children }: { children: ReactNode
         return;
       }
       setPatientSelectionne(patient);
-      const codes =
-        patient.codesSalleDestination?.length
-          ? patient.codesSalleDestination
-          : patient.codeSalleDestination && patient.codeSalleDestination !== "MEDECINS"
-            ? [patient.codeSalleDestination]
-            : ["LABORATOIRE"];
+      const codes = orientationsInitialesDepuisPatient(
+        "MEDECINS",
+        patient.codesSalleDestination,
+        patient.codeSalleDestination
+      );
       definirOrientations(codes);
       setResume({
         initiales: initiales(patient.prenom, patient.nom),
@@ -127,9 +127,12 @@ export function FournisseurSelectionMedecins({ children }: { children: ReactNode
 
   const appliquerOrientationsMedecins = useCallback(
     async (codesSalle: string[]) => {
-      const codes = codesSalle.filter((c) => c !== "MEDECINS");
+      const codes = filtrerOrientationsAutorisees(
+        "MEDECINS",
+        codesSalle.filter((c) => c !== "MEDECINS")
+      );
       if (codes.length === 0) {
-        setMessagePanneau("Sélectionnez au moins une destination.");
+        setMessagePanneau("Sélectionnez au moins une destination autorisée (Caisse).");
         return;
       }
 

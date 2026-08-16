@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { EVENEMENT_PHARMACIE_PATIENTS_MODIFIES, ORIENTATIONS_RAPIDES_PHARMACIE } from "@/constants/pharmacie";
+import { orientationsInitialesDepuisPatient, filtrerOrientationsAutorisees } from "@/lib/transferts/orientations-universelles";
 import { useOrientationPharmacie } from "@/features/pharmacie/contexte-orientation-pharmacie";
 import type { PatientFilePharmacie } from "@/lib/pharmacie/types";
 import {
@@ -77,12 +78,11 @@ export function FournisseurSelectionPharmacie({ children }: { children: ReactNod
     (patient: PatientFilePharmacie) => {
       setMessagePanneau(null);
       setPatientSelectionne(patient);
-      const codes =
-        patient.codesSalleDestination?.length
-          ? patient.codesSalleDestination
-          : patient.codeSalleDestination && patient.codeSalleDestination !== "PHARMACIE"
-            ? [patient.codeSalleDestination]
-            : ["CAISSE"];
+      const codes = orientationsInitialesDepuisPatient(
+        "PHARMACIE",
+        patient.codesSalleDestination,
+        patient.codeSalleDestination
+      );
       definirOrientations(codes);
       setResume({
         initiales: initiales(patient.prenom, patient.nom),
@@ -122,9 +122,12 @@ export function FournisseurSelectionPharmacie({ children }: { children: ReactNod
 
   const appliquerOrientationsPharmacie = useCallback(
     async (codesSalle: string[]) => {
-      const codes = codesSalle.filter((c) => c !== "PHARMACIE");
+      const codes = filtrerOrientationsAutorisees(
+        "PHARMACIE",
+        codesSalle.filter((c) => c !== "PHARMACIE")
+      );
       if (codes.length === 0) {
-        setMessagePanneau("Sélectionnez au moins une destination.");
+        setMessagePanneau("Sélectionnez au moins une destination autorisée (Caisse).");
         return;
       }
 

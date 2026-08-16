@@ -10,7 +10,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { EVENEMENT_MEDECINS_EXTERNES_PATIENTS_MODIFIES, filtrerOrientationsMedecinsExternes, ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES } from "@/constants/medecins-externes";
+import { EVENEMENT_MEDECINS_EXTERNES_PATIENTS_MODIFIES, ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES } from "@/constants/medecins-externes";
+import { orientationsInitialesDepuisPatient, filtrerOrientationsAutorisees } from "@/lib/transferts/orientations-universelles";
 import { useOrientationMedecinsExternes } from "@/features/medecins-externes/contexte-orientation-medecins-externes";
 import type { PatientFileMedecinsExternes } from "@/lib/medecins-externes/types";
 import {
@@ -77,12 +78,11 @@ export function FournisseurSelectionMedecinsExternes({ children }: { children: R
     (patient: PatientFileMedecinsExternes) => {
       setMessagePanneau(null);
       setPatientSelectionne(patient);
-      const codes =
-        patient.codesSalleDestination?.length
-          ? patient.codesSalleDestination
-          : patient.codeSalleDestination && patient.codeSalleDestination !== "MEDECINS_EXTERNES"
-            ? [patient.codeSalleDestination]
-            : ["CAISSE"];
+      const codes = orientationsInitialesDepuisPatient(
+        "MEDECINS_EXTERNES",
+        patient.codesSalleDestination,
+        patient.codeSalleDestination
+      );
       definirOrientations(codes);
       setResume({
         initiales: initiales(patient.prenom, patient.nom),
@@ -122,7 +122,8 @@ export function FournisseurSelectionMedecinsExternes({ children }: { children: R
 
   const appliquerOrientationsMedecinsExternes = useCallback(
     async (codesSalle: string[]) => {
-      const codes = filtrerOrientationsMedecinsExternes(
+      const codes = filtrerOrientationsAutorisees(
+        "MEDECINS_EXTERNES",
         codesSalle.filter((c) => c !== "MEDECINS_EXTERNES")
       );
       if (codes.length === 0) {

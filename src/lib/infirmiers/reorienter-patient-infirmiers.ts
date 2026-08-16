@@ -1,23 +1,16 @@
 ﻿import "server-only";
 import type { CodeSalle } from "@/generated/prisma/client";
-import { CODES_ORIENTATION_INFIRMIERS } from "@/constants/infirmiers";
+import {
+  filtrerOrientationsAutorisees,
+  orientationsAutoriseesDepuis,
+} from "@/lib/transferts/orientations-universelles";
 import { prisma } from "@/lib/prisma";
 import { synchroniserTransfertsEnAttente } from "@/lib/transferts/multi-destinations";
 
-const ORIENTATIONS_AUTORISEES = new Set<string>(CODES_ORIENTATION_INFIRMIERS);
+const ORIGINE: CodeSalle = "INFIRMIERS";
 
 function normaliserDestinations(orientations: string[]): CodeSalle[] {
-  const codes = [
-    ...new Set(
-      orientations.map((o) => {
-        const code = o.trim() as CodeSalle;
-        if (!ORIENTATIONS_AUTORISEES.has(code)) {
-          throw new Error("Salle de destination invalide.");
-        }
-        return code;
-      })
-    ),
-  ];
+  const codes = filtrerOrientationsAutorisees(ORIGINE, orientations);
   if (codes.length === 0) {
     throw new Error("Sélectionnez au moins une destination.");
   }

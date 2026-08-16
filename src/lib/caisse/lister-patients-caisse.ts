@@ -27,6 +27,197 @@ function extraireModeFacture(reference: string | null | undefined): string | nul
   );
 }
 
+interface ResumeFacture {
+  statut: StatutFacture;
+  montantTotal: number;
+  montantPaye: number;
+  modeFacture: string | null;
+  nbLignes: number;
+}
+
+interface FacturesDossier {
+  examens: ResumeFacture | null;
+  pharmacie: ResumeFacture | null;
+}
+
+function prioriteStatutFacture(statut: StatutFacture): number {
+  if (statut === "PAYEE") return 4;
+  if (statut === "PARTIELLEMENT_PAYEE") return 3;
+  if (statut === "EMISE") return 2;
+  if (statut === "BROUILLON") return 1;
+  return 0;
+}
+
+function retenirMeilleureFacture(
+  courante: ResumeFacture | null,
+  candidate: ResumeFacture
+): ResumeFacture {
+  if (!courante) return candidate;
+  return prioriteStatutFacture(candidate.statut) >= prioriteStatutFacture(courante.statut)
+    ? candidate
+    : courante;
+}
+
+function aFacturePayee(facs: FacturesDossier): boolean {
+  return facs.examens?.statut === "PAYEE" || facs.pharmacie?.statut === "PAYEE";
+}
+
+function aFactureEtablie(facs: FacturesDossier): boolean {
+  const etablie = (statut: StatutFacture | undefined) =>
+    statut === "EMISE" || statut === "PARTIELLEMENT_PAYEE" || statut === "PAYEE";
+  return etablie(facs.examens?.statut) || etablie(facs.pharmacie?.statut);
+}
+
+/**
+ * Réinscrit en file caisse les dossiers facturés (payés ou établis) encore sans
+ * transfert sortant confirmé — ex. patient payé hors file ou file dans une autre salle.
+ */
+async function synchroniserCandidatsTransfertsCaisse() {
+  const salleCaisse = await prisma.salle.findUnique({ where: { code: "CAISSE" } });
+  if (!salleCaisse) return;
+
+  const debutJour = new Date();
+  debutJour.setHours(0, 0, 0, 0);
+
+  const dossiers = await prisma.dossierPatient.findMany({
+    where: {
+      statut: { in: ["OUVERT", "EN_COURS"] },
+      OR: [
+        {
+          passages: {
+            some: {
+              statut: { not: "ANNULE" },
+              fileAttente: { salleId: salleCaisse.id },
+            },
+          },
+        },
+        {
+          factures: {
+            some: {
+              statut: { in: ["EMISE", "PARTIELLEMENT_PAYEE", "PAYEE"] },
+              OR: [
+                { emiseLe: { gte: debutJour } },
+                { updatedAt: { gte: debutJour } },
+                { paiements: { some: { payeLe: { gte: debutJour } } } },
+              ],
+            },
+          },
+        },
+      ],
+    },
+    select: {
+      id: true,
+      examensLaboratoire: {
+        where: { statut: { not: "ANNULE" } },
+        select: { id: true },
+      },
+      passages: {
+        where: { statut: { not: "ANNULE" } },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          transferts: {
+            where: {
+              salleOrigineId: salleCaisse.id,
+              statut: { in: ["ACCEPTE", "EN_TRAITEMENT", "TERMINE"] },
+            },
+            select: { id: true },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  const dossierIds = dossiers
+    .filter((d) => {
+      const passage = d.passages[0];
+      return passage && passage.transferts.length === 0;
+    })
+    .map((d) => d.id);
+
+  if (dossierIds.length === 0) return;
+
+  const [factures, ordonnancesAvecMed] = await Promise.all([
+    prisma.facture.findMany({
+      where: {
+        dossierId: { in: dossierIds },
+        statut: { in: ["BROUILLON", "EMISE", "PARTIELLEMENT_PAYEE", "PAYEE"] },
+      },
+      select: {
+        dossierId: true,
+        statut: true,
+        numeroFacture: true,
+        ventePharmacie: { select: { id: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.ordonnance.findMany({
+      where: {
+        dossierId: { in: dossierIds },
+        statut: { in: ["EN_ATTENTE", "PARTIELLEMENT_DELIVREE"] },
+        lignes: { some: {} },
+      },
+      select: { dossierId: true },
+      distinct: ["dossierId"],
+    }),
+  ]);
+
+  const dossiersAvecMedicaments = new Set(ordonnancesAvecMed.map((o) => o.dossierId));
+  const facturesParDossier = new Map<string, FacturesDossier>();
+  for (const f of factures) {
+    const courant = facturesParDossier.get(f.dossierId) ?? {
+      examens: null,
+      pharmacie: null,
+    };
+    const estPh =
+      Boolean(f.ventePharmacie) || estNumeroFacturePharmacie(f.numeroFacture);
+    const resume = {
+      statut: f.statut,
+      montantTotal: 0,
+      montantPaye: 0,
+      modeFacture: null,
+      nbLignes: 0,
+    };
+    if (estPh) {
+      courant.pharmacie = retenirMeilleureFacture(courant.pharmacie, resume);
+    } else {
+      courant.examens = retenirMeilleureFacture(courant.examens, resume);
+    }
+    facturesParDossier.set(f.dossierId, courant);
+  }
+
+  const dossiersParId = new Map(dossiers.map((d) => [d.id, d]));
+  const { assurerFileAttenteDestination } = await import("@/lib/transferts/multi-destinations");
+
+  await prisma.$transaction(async (tx) => {
+    for (const dossierId of dossierIds) {
+      const dossier = dossiersParId.get(dossierId);
+      const passage = dossier?.passages[0];
+      if (!passage) continue;
+
+      const facs = facturesParDossier.get(dossierId) ?? {
+        examens: null,
+        pharmacie: null,
+      };
+      const aDesMedicaments =
+        dossiersAvecMedicaments.has(dossierId) || Boolean(facs.pharmacie);
+      const etat = evaluerEtatFacturationDual({
+        nombreExamens: dossier?.examensLaboratoire.length ?? 0,
+        aDesMedicaments,
+        statutFactureExamens: facs.examens?.statut ?? null,
+        statutFacturePharmacie: facs.pharmacie?.statut ?? null,
+        enFile: true,
+      });
+
+      if (!etat.facturationComplete && !aFactureEtablie(facs)) continue;
+
+      await assurerFileAttenteDestination(tx, passage.id, salleCaisse.id);
+    }
+  });
+}
+
 /**
  * Réintègre en file caisse les patients sortis trop tôt (encaissement avant confirm),
  * tant qu'aucun transfert sortant n'a été confirmé depuis la caisse.
@@ -62,37 +253,6 @@ async function reintegrerPatientsCaisseNonConfirmes() {
     where: { id: { in: aReouvrir } },
     data: { serviLe: null },
   });
-}
-
-interface ResumeFacture {
-  statut: StatutFacture;
-  montantTotal: number;
-  montantPaye: number;
-  modeFacture: string | null;
-  nbLignes: number;
-}
-
-interface FacturesDossier {
-  examens: ResumeFacture | null;
-  pharmacie: ResumeFacture | null;
-}
-
-function prioriteStatutFacture(statut: StatutFacture): number {
-  if (statut === "PAYEE") return 4;
-  if (statut === "PARTIELLEMENT_PAYEE") return 3;
-  if (statut === "EMISE") return 2;
-  if (statut === "BROUILLON") return 1;
-  return 0;
-}
-
-function retenirMeilleureFacture(
-  courante: ResumeFacture | null,
-  candidate: ResumeFacture
-): ResumeFacture {
-  if (!courante) return candidate;
-  return prioriteStatutFacture(candidate.statut) >= prioriteStatutFacture(courante.statut)
-    ? candidate
-    : courante;
 }
 
 const includePassageCaisse = {
@@ -140,23 +300,16 @@ async function listerFileAttenteCaissePourTransferts() {
   });
 }
 
-function aFacturePayee(facs: FacturesDossier): boolean {
-  return facs.examens?.statut === "PAYEE" || facs.pharmacie?.statut === "PAYEE";
-}
-
-function aFactureEtablie(facs: FacturesDossier): boolean {
-  const etablie = (statut: StatutFacture | undefined) =>
-    statut === "EMISE" || statut === "PARTIELLEMENT_PAYEE" || statut === "PAYEE";
-  return etablie(facs.examens?.statut) || etablie(facs.pharmacie?.statut);
-}
-
 export async function listerPatientsEnAttenteCaisse(options?: {
-  /** Page transferts : file élargie + au moins une facture établie (examens ou pharmacie). */
+  /** Page transferts : file élargie + facture payée ou établie, sans transfert confirmé. */
   pourPageTransferts?: boolean;
 }): Promise<PatientFileCaisse[]> {
+  const pourTransferts = options?.pourPageTransferts === true;
+  if (pourTransferts) {
+    await synchroniserCandidatsTransfertsCaisse();
+  }
   await reintegrerPatientsCaisseNonConfirmes();
 
-  const pourTransferts = options?.pourPageTransferts === true;
   const files = pourTransferts
     ? await listerFileAttenteCaissePourTransferts()
     : await listerPatientsFileAttenteSalle("CAISSE");

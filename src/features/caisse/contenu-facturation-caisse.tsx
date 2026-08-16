@@ -96,7 +96,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     new Date().toISOString().slice(0, 10)
   );
   const [numeroRecu, setNumeroRecu] = useState("");
-  const [transfererApres, setTransfererApres] = useState(true);
+  const [transfererApres, setTransfererApres] = useState(false);
   const [typeFactureUi, setTypeFactureUi] = useState<TypeFactureCaisseUi>("NORMALE");
   const [rechercheExamenOuverte, setRechercheExamenOuverte] = useState(false);
   const [ajoutExamenEnCours, setAjoutExamenEnCours] = useState(false);

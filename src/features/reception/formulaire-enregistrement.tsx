@@ -30,6 +30,7 @@ import { SectionEstimationExamens } from "@/features/reception/section-estimatio
 import { ChampDateNaissance } from "@/features/reception/champ-date-naissance";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import { cn } from "@/lib/utils";
+import { lireReponseJson } from "@/lib/api/lire-reponse-json";
 import type {
   DonneesFormulairePatient,
   PaquetBilanReception,
@@ -233,10 +234,10 @@ export const FormulaireEnregistrement = forwardRef<
     fetch(`${espace.prefixeApi}/numeros`)
       .then(async (res) => {
         if (!res.ok) throw new Error(t("reception.erreurs.numerosIndisponibles"));
-        return res.json() as Promise<{
+        return lireReponseJson<{
           numeroPatient: string;
           numeroEnregistrement: string;
-        }>;
+        }>(res);
       })
       .then((data) => {
         if (annule) return;
@@ -298,7 +299,7 @@ export const FormulaireEnregistrement = forwardRef<
     const chargerPaquetPrenuptial = async () => {
       const res = await fetch(`${espace.prefixeApi}/paquets-bilans`);
       if (!res.ok) return false;
-      const data = (await res.json()) as { paquets?: PaquetBilanReception[] };
+      const data = await lireReponseJson<{ paquets?: PaquetBilanReception[] }>(res);
       const paquets = data.paquets ?? [];
       const prenuptial = paquets.find(
         (p) =>
@@ -318,7 +319,7 @@ export const FormulaireEnregistrement = forwardRef<
         return fetch(`${espace.prefixeApi}/examens?pack=prenuptial`)
           .then(async (res) => {
             if (!res.ok) return null;
-            return res.json() as Promise<{ examens: TypeExamenReception[] }>;
+            return lireReponseJson<{ examens: TypeExamenReception[] }>(res);
           })
           .then((data) => {
             if (annule || !data?.examens?.length) return;
@@ -413,7 +414,9 @@ export const FormulaireEnregistrement = forwardRef<
         body: formData,
       });
 
-      const data = (await res.json()) as { message?: string; numeroPatient?: string };
+      const data = await lireReponseJson<{ message?: string; numeroPatient?: string }>(
+        res
+      );
 
       if (!res.ok) {
         throw new Error(
@@ -492,11 +495,11 @@ export const FormulaireEnregistrement = forwardRef<
         }),
       });
 
-      const data = (await res.json()) as {
+      const data = await lireReponseJson<{
         message?: string;
         numeroPatient?: string;
         salleDestination?: string;
-      };
+      }>(res);
 
       if (!res.ok) {
         throw new Error(data.message ?? t("reception.erreurs.transfertImpossible"));

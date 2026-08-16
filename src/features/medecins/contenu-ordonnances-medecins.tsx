@@ -45,6 +45,11 @@ import {
 } from "@/features/medecins/panneau-droit-medecins";
 import { useSelectionMedecins } from "@/features/medecins/contexte-selection-medecins";
 import { imprimerDevisEstimation } from "@/lib/reception/imprimer-devis-estimation";
+import {
+  calculerMontantSelectionExamens,
+  construireLignesDevisEstimation,
+} from "@/lib/reception/montant-selection-examens";
+import type { PaquetBilanReception } from "@/lib/reception/types";
 import type {
   MedicamentMedecins,
   PatientFileMedecins,
@@ -125,6 +130,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
   const [patients, setPatients] = useState<PatientFileMedecins[]>([]);
   const [catalogue, setCatalogue] = useState<MedicamentMedecins[]>([]);
   const [examens, setExamens] = useState<TypeExamenMedecins[]>([]);
+  const [paquets, setPaquets] = useState<PaquetBilanReception[]>([]);
   const [lignes, setLignes] = useState<LigneMedicamentDraft[]>([nouvelleLigneMed()]);
   const [imagerie, setImagerie] = useState<DetailsImagerie>(IMAGERIE_VIDE);
   const [patientNom, setPatientNom] = useState("");
@@ -221,7 +227,10 @@ function CorpsOrdonnances({ utilisateur }: Props) {
     ignorerNumeroFacture: true,
   });
 
-  const totalExamens = examens.reduce((t, e) => t + e.prix, 0);
+  const totalExamens = useMemo(
+    () => calculerMontantSelectionExamens(paquets, examens),
+    [paquets, examens]
+  );
   const totalMeds = lignes
     .filter((l) => l.medicamentId)
     .reduce(
@@ -268,6 +277,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
             docteur,
           },
           typeExamenIds: examens.map((e) => e.id),
+          paquetsBilanIds: paquets.map((p) => p.id),
           lignes: lignesApi,
           orienterVersPharmacie: orienterPharmacie && lignesApi.length > 0,
         }),
@@ -276,6 +286,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
       if (!res.ok) throw new Error(data.erreur ?? "Enregistrement impossible.");
       setMessage(t("medecins.ordonnances.creee"));
       setExamens([]);
+      setPaquets([]);
       setLignes([nouvelleLigneMed()]);
       setImagerie(IMAGERIE_VIDE);
       setModeEstimation(false);
@@ -294,8 +305,8 @@ function CorpsOrdonnances({ utilisateur }: Props) {
       setErreur("Sélectionnez un patient.");
       return;
     }
-    if (examens.length === 0 && lignesApi.length === 0) {
-      setErreur("Ajoutez des examens et/ou des médicaments pour l'estimation.");
+    if (examens.length === 0 && paquets.length === 0 && lignesApi.length === 0) {
+      setErreur("Ajoutez des examens, des bilans et/ou des médicaments pour l'estimation.");
       return;
     }
     if (!docteur.trim()) {
@@ -317,7 +328,7 @@ function CorpsOrdonnances({ utilisateur }: Props) {
           code: l.code,
         }));
       const ok = await imprimerDevisEstimation({
-        examens: examens.map((e) => ({
+        examens: construireLignesDevisEstimation(paquets, examens).map((e) => ({
           id: e.id,
           code: e.code,
           libelle: e.libelle,
@@ -497,7 +508,9 @@ function CorpsOrdonnances({ utilisateur }: Props) {
 
             <SelectionExamensOrdonnances
               selection={examens}
+              selectionPaquets={paquets}
               onChange={setExamens}
+              onChangePaquets={setPaquets}
             />
 
             <LignesMedicamentsOrdonnances
@@ -528,11 +541,24 @@ function CorpsOrdonnances({ utilisateur }: Props) {
                   <p className="mb-2 text-xs font-semibold uppercase text-texte-secondaire">
                     Examens
                   </p>
-                  {examens.length === 0 ? (
+                  {examens.length === 0 && paquets.length === 0 ? (
                     <p className="text-xs text-texte-secondaire">Aucun examen.</p>
                   ) : (
                     <ul className="space-y-1 text-sm">
-                      {examens.map((e) => (
+                      {paquets.map((p) => (
+                        <li key={p.id} className="flex justify-between gap-2">
+                          <span>
+                            {p.code} — {p.libelle}
+                          </span>
+                          <span className="font-medium">{formaterPrixUsd(p.prix)}</span>
+                        </li>
+                      ))}
+                      {examens
+                        .filter(
+                          (e) =>
+                            !paquets.some((p) => p.examens.some((x) => x.id === e.id))
+                        )
+                        .map((e) => (
                         <li key={e.id} className="flex justify-between gap-2">
                           <span>
                             {e.code} — {e.libelle}

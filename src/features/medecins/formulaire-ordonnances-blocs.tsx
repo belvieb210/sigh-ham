@@ -1,11 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Plus, Search, Trash2, X } from "lucide-react";
+import { Loader2, Layers, Plus, Search, Trash2, X } from "lucide-react";
 import {
   CLASSE_CHAMP_RECEPTION,
   CLASSE_LABEL_RECEPTION,
 } from "@/constants/reception";
+import {
+  calculerMontantSelectionExamens,
+  idsExamensDansPaquets,
+} from "@/lib/reception/montant-selection-examens";
+import type { PaquetBilanReception } from "@/lib/reception/types";
 import type { MedicamentMedecins, TypeExamenMedecins } from "@/lib/medecins/types";
 import { cn } from "@/lib/utils";
 
@@ -78,36 +83,62 @@ function formaterPrixFc(prix: number): string {
   })} Fc`;
 }
 
-/** Recherche / sélection examens (style caisse-réception) */
+/** Recherche unifiée examens + paquets bilans */
 export function SelectionExamensOrdonnances({
   selection,
+  selectionPaquets,
   onChange,
+  onChangePaquets,
   desactive,
 }: {
   selection: TypeExamenMedecins[];
+  selectionPaquets: PaquetBilanReception[];
   onChange: (examens: TypeExamenMedecins[]) => void;
+  onChangePaquets: (paquets: PaquetBilanReception[]) => void;
   desactive?: boolean;
 }) {
   const [recherche, setRecherche] = useState("");
   const [resultats, setResultats] = useState<TypeExamenMedecins[]>([]);
+  const [resultatsPaquets, setResultatsPaquets] = useState<PaquetBilanReception[]>([]);
   const [chargement, setChargement] = useState(false);
   const [listeOuverte, setListeOuverte] = useState(false);
   const conteneurRef = useRef<HTMLDivElement>(null);
-  const ids = useMemo(() => new Set(selection.map((e) => e.id)), [selection]);
-  const total = useMemo(
-    () => selection.reduce((t, e) => t + e.prix, 0),
-    [selection]
+
+  const idsExamens = useMemo(() => new Set(selection.map((e) => e.id)), [selection]);
+  const idsPaquets = useMemo(
+    () => new Set(selectionPaquets.map((p) => p.id)),
+    [selectionPaquets]
   );
+  const idsDansPaquets = useMemo(
+    () => idsExamensDansPaquets(selectionPaquets),
+    [selectionPaquets]
+  );
+  const total = useMemo(
+    () => calculerMontantSelectionExamens(selectionPaquets, selection),
+    [selectionPaquets, selection]
+  );
+  const nombreElements =
+    selectionPaquets.length +
+    selection.filter((e) => !idsDansPaquets.has(e.id)).length;
 
   const charger = useCallback(async (terme: string) => {
     setChargement(true);
     try {
-      const params = new URLSearchParams({ q: terme.trim(), limite: "12" });
-      const res = await fetch(`/api/medecins/examens?${params}`);
-      const data = (await res.json()) as { examens?: TypeExamenMedecins[] };
-      setResultats(data.examens ?? []);
+      const paramsExamen = new URLSearchParams({ q: terme.trim(), limite: "12" });
+      const paramsPaquet = new URLSearchParams();
+      if (terme.trim()) paramsPaquet.set("q", terme.trim());
+
+      const [resExamens, resPaquets] = await Promise.all([
+        fetch(`/api/medecins/examens?${paramsExamen}`),
+        fetch(`/api/medecins/paquets-bilans?${paramsPaquet}`),
+      ]);
+      const dataExamens = (await resExamens.json()) as { examens?: TypeExamenMedecins[] };
+      const dataPaquets = (await resPaquets.json()) as { paquets?: PaquetBilanReception[] };
+      setResultats(dataExamens.examens ?? []);
+      setResultatsPaquets(dataPaquets.paquets ?? []);
     } catch {
       setResultats([]);
+      setResultatsPaquets([]);
     } finally {
       setChargement(false);
     }
@@ -126,11 +157,19 @@ export function SelectionExamensOrdonnances({
     return () => document.removeEventListener("mousedown", fermer);
   }, []);
 
+  const paquetsFiltres = resultatsPaquets.filter((p) => !idsPaquets.has(p.id));
+  const examensFiltres = resultats.filter(
+    (e) => !idsExamens.has(e.id) && !idsDansPaquets.has(e.id)
+  );
+  const aucunResultat = paquetsFiltres.length === 0 && examensFiltres.length === 0;
+
+  const examensIndividuels = selection.filter((e) => !idsDansPaquets.has(e.id));
+
   return (
     <div className="space-y-3">
-      <h3 className="text-base font-bold text-texte-principal">Examens recommandés</h3>
+      <h3 className="text-base font-bold text-texte-principal">Examens et bilans</h3>
       <p className="text-xs text-texte-secondaire">
-        Recherchez et prescrivez les examens de laboratoire (optionnel).
+        Recherchez et prescrivez des examens ou des paquets bilans (optionnel).
       </p>
       <div ref={conteneurRef} className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
@@ -143,44 +182,74 @@ export function SelectionExamensOrdonnances({
             setListeOuverte(true);
           }}
           onFocus={() => setListeOuverte(true)}
-          placeholder="Rechercher un examen (code ou nom)…"
+          placeholder="Rechercher un examen ou un bilan (code ou nom)…"
           className={CLASSE_CHAMP_RECEPTION + " pl-9"}
         />
         {listeOuverte && !desactive ? (
-          <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-gris-bordure bg-white shadow-lg">
+          <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-gris-bordure bg-white shadow-lg">
             {chargement ? (
               <li className="flex items-center gap-2 px-3 py-2 text-sm text-texte-secondaire">
                 <Loader2 className="h-4 w-4 animate-spin" /> Recherche…
               </li>
-            ) : resultats.length === 0 ? (
+            ) : aucunResultat ? (
               <li className="px-3 py-2 text-sm text-texte-secondaire">
-                Aucun examen trouvé.
+                Aucun résultat.
               </li>
             ) : (
-              resultats.map((e) => (
-                <li key={e.id}>
-                  <button
-                    type="button"
-                    disabled={ids.has(e.id)}
-                    onClick={() => {
-                      if (ids.has(e.id)) return;
-                      onChange([...selection, e]);
-                      setListeOuverte(false);
-                      setRecherche("");
-                    }}
-                    className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-bleu-medical-clair/40 disabled:opacity-40"
-                  >
-                    <span>
-                      <span className="font-semibold text-bleu-medical">{e.code}</span>{" "}
-                      — {e.libelle}
-                      <span className="ml-1 text-xs text-texte-secondaire">
-                        ({e.categorie})
+              <>
+                {paquetsFiltres.map((paquet) => (
+                  <li key={`paquet-${paquet.id}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onChangePaquets([...selectionPaquets, paquet]);
+                        onChange(
+                          selection.filter(
+                            (e) => !paquet.examens.some((x) => x.id === e.id)
+                          )
+                        );
+                        setListeOuverte(false);
+                        setRecherche("");
+                      }}
+                      className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-violet-50/60"
+                    >
+                      <span>
+                        <Layers className="mr-1 inline h-3.5 w-3.5 text-violet-700" />
+                        <span className="font-semibold text-violet-700">{paquet.code}</span>{" "}
+                        — {paquet.libelle}
+                        <span className="ml-1 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] text-violet-700">
+                          Forfait
+                        </span>
                       </span>
-                    </span>
-                    <span className="shrink-0 font-medium">{formaterPrixUsd(e.prix)}</span>
-                  </button>
-                </li>
-              ))
+                      <span className="shrink-0 font-medium">{formaterPrixUsd(paquet.prix)}</span>
+                    </button>
+                  </li>
+                ))}
+                {examensFiltres.map((e) => (
+                  <li key={e.id}>
+                    <button
+                      type="button"
+                      disabled={idsExamens.has(e.id)}
+                      onClick={() => {
+                        if (idsExamens.has(e.id)) return;
+                        onChange([...selection, e]);
+                        setListeOuverte(false);
+                        setRecherche("");
+                      }}
+                      className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-bleu-medical-clair/40 disabled:opacity-40"
+                    >
+                      <span>
+                        <span className="font-semibold text-bleu-medical">{e.code}</span>{" "}
+                        — {e.libelle}
+                        <span className="ml-1 text-xs text-texte-secondaire">
+                          ({e.categorie})
+                        </span>
+                      </span>
+                      <span className="shrink-0 font-medium">{formaterPrixUsd(e.prix)}</span>
+                    </button>
+                  </li>
+                ))}
+              </>
             )}
           </ul>
         ) : null}
@@ -189,15 +258,15 @@ export function SelectionExamensOrdonnances({
       <div>
         <div className="mb-2 flex items-center justify-between">
           <p className="text-sm font-semibold text-texte-principal">
-            Examens sélectionnés
+            Sélection
           </p>
           <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-bleu-medical px-1.5 text-xs font-bold text-white">
-            {selection.length}
+            {nombreElements}
           </span>
         </div>
-        {selection.length === 0 ? (
+        {nombreElements === 0 ? (
           <p className="rounded-lg border border-dashed border-gris-bordure px-3 py-4 text-center text-xs text-texte-secondaire">
-            Aucun examen sélectionné.
+            Aucun examen ou paquet sélectionné.
           </p>
         ) : (
           <div className="overflow-hidden rounded-lg border border-gris-bordure">
@@ -212,7 +281,31 @@ export function SelectionExamensOrdonnances({
                 </tr>
               </thead>
               <tbody>
-                {selection.map((e) => (
+                {selectionPaquets.map((p) => (
+                  <tr key={`paquet-${p.id}`} className="border-t border-gris-bordure bg-violet-50/30">
+                    <td className="px-3 py-2 font-semibold text-violet-700">{p.code}</td>
+                    <td className="px-3 py-2">{p.libelle}</td>
+                    <td className="hidden px-3 py-2 sm:table-cell">
+                      <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-700">
+                        Paquet bilan
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 font-medium">{formaterPrixUsd(p.prix)}</td>
+                    <td className="px-3 py-2">
+                      <button
+                        type="button"
+                        disabled={desactive}
+                        onClick={() =>
+                          onChangePaquets(selectionPaquets.filter((x) => x.id !== p.id))
+                        }
+                        className="inline-flex items-center gap-1 text-xs font-medium text-red-600"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Retirer
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {examensIndividuels.map((e) => (
                   <tr key={e.id} className="border-t border-gris-bordure">
                     <td className="px-3 py-2 font-semibold text-bleu-medical">
                       {e.code}

@@ -39,6 +39,7 @@ export async function POST(req: Request) {
       orienterVersPharmacie?: boolean;
       orienterVersCaisse?: boolean;
       typeExamenIds?: string[];
+      paquetsBilanIds?: string[];
       lignes?: {
         medicamentId: string;
         quantite: number;
@@ -53,9 +54,11 @@ export async function POST(req: Request) {
 
     const lignes = body.lignes ?? [];
     const typeExamenIds = body.typeExamenIds ?? [];
+    const paquetsBilanIds = body.paquetsBilanIds ?? [];
     const aContenu =
       lignes.some((l) => l.medicamentId?.trim()) ||
       typeExamenIds.length > 0 ||
+      paquetsBilanIds.length > 0 ||
       Boolean(body.detailsPrescription);
 
     if (!aContenu) {
@@ -66,13 +69,14 @@ export async function POST(req: Request) {
     }
 
     let examens = null;
-    if (typeExamenIds.length > 0) {
+    if (typeExamenIds.length > 0 || paquetsBilanIds.length > 0) {
       const { prescrireExamensMedecins } = await import(
         "@/lib/medecins/prescrire-examens"
       );
       examens = await prescrireExamensMedecins(session.utilisateur.id, {
         dossierId: body.dossierId,
         typeExamenIds,
+        paquetsBilanIds,
         notes: body.notes,
       });
     }
@@ -100,6 +104,7 @@ export async function POST(req: Request) {
       body.orienterVersCaisse === true ||
       (body.orienterVersCaisse !== false &&
         (typeExamenIds.length > 0 ||
+          paquetsBilanIds.length > 0 ||
           lignes.some((l) => l.medicamentId?.trim())));
     if (orienterCaisse) {
       try {

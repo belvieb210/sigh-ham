@@ -52,7 +52,7 @@ import type {
   PatientFileCaisse,
   TypeFactureCaisseUi,
 } from "@/lib/caisse/types";
-import type { TypeExamenReception } from "@/lib/reception/types";
+import type { PaquetBilanReception, TypeExamenReception } from "@/lib/reception/types";
 import type { ModePaiement } from "@/generated/prisma/client";
 
 interface PropsContenuFacturationCaisse {
@@ -291,6 +291,14 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     [dossier]
   );
 
+  const idsPaquetsPresents = useMemo(
+    () =>
+      new Set(
+        dossier?.examens.idsPaquetsBilan ?? dossier?.idsPaquetsBilan ?? []
+      ),
+    [dossier]
+  );
+
   const libellesExamensPresents = useMemo(
     () =>
       new Set(
@@ -456,6 +464,40 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ typeExamenId: examen.id }),
+        });
+        const data = (await res.json()) as {
+          dossier?: DossierFacturationCaisse;
+          message?: string;
+        };
+        if (!res.ok || !data.dossier) {
+          throw new Error(data.message ?? t("caisse.facturation.examensChargement"));
+        }
+        setDossier(data.dossier);
+        setMessage(data.message ?? t("caisse.facturation.examenAjoute"));
+        setRechercheExamenOuverte(false);
+        void chargerFile();
+      } catch (e) {
+        setErreur(
+          e instanceof Error ? e.message : t("caisse.facturation.examensChargement")
+        );
+      } finally {
+        setAjoutExamenEnCours(false);
+      }
+    },
+    [dossierId, t, chargerFile]
+  );
+
+  const ajouterPaquetAuDossier = useCallback(
+    async (paquet: PaquetBilanReception) => {
+      if (!dossierId) return;
+      setAjoutExamenEnCours(true);
+      setErreur(null);
+      setMessage(null);
+      try {
+        const res = await fetch(`/api/caisse/dossiers/${dossierId}/examens`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paquetBilanId: paquet.id }),
         });
         const data = (await res.json()) as {
           dossier?: DossierFacturationCaisse;
@@ -1264,8 +1306,10 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                         ouverte={rechercheExamenOuverte}
                         onFermer={() => setRechercheExamenOuverte(false)}
                         idsDejaPresents={idsTypesExamenPresents}
+                        idsPaquetsDejaPresents={idsPaquetsPresents}
                         libellesDejaPresents={libellesExamensPresents}
                         onAjouter={ajouterExamenAuDossier}
+                        onAjouterPaquet={ajouterPaquetAuDossier}
                         enCours={ajoutExamenEnCours}
                       />
                     </div>

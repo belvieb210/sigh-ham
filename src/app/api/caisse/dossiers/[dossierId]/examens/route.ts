@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { obtenirSessionApiCaisse } from "@/lib/auth/garde-api-caisse";
 import {
   ajouterExamenAuDossierCaisse,
+  ajouterPaquetBilanAuDossierCaisse,
   retirerLigneFacturationCaisse,
 } from "@/lib/caisse/facturation";
 
@@ -16,11 +17,34 @@ export async function POST(
 
   try {
     const { dossierId } = await context.params;
-    const body = (await request.json()) as { typeExamenId?: string };
+    const body = (await request.json()) as {
+      typeExamenId?: string;
+      paquetBilanId?: string;
+    };
     const typeExamenId = body.typeExamenId?.trim();
+    const paquetBilanId = body.paquetBilanId?.trim();
+
+    if (typeExamenId && paquetBilanId) {
+      return NextResponse.json(
+        { message: "Un seul type d'ajout à la fois (examen ou paquet)." },
+        { status: 400 }
+      );
+    }
+
+    if (paquetBilanId) {
+      const dossier = await ajouterPaquetBilanAuDossierCaisse(
+        dossierId,
+        paquetBilanId,
+        session.utilisateur.id
+      );
+      return NextResponse.json({
+        message: "Paquet bilan ajouté à la facturation.",
+        dossier,
+      });
+    }
 
     if (!typeExamenId) {
-      return NextResponse.json({ message: "Examen requis." }, { status: 400 });
+      return NextResponse.json({ message: "Examen ou paquet requis." }, { status: 400 });
     }
 
     const dossier = await ajouterExamenAuDossierCaisse(

@@ -16,7 +16,8 @@ export async function listerPaquetsBilansActifs(opts?: {
 }): Promise<PaquetBilanReception[]> {
   const where: Prisma.PaquetBilanWhereInput = {
     actif: true,
-  };  if (opts?.q?.trim()) {
+  };
+  if (opts?.q?.trim()) {
     const q = opts.q.trim();
     where.OR = [
       { code: { contains: q, mode: "insensitive" } },

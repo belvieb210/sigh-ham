@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { prescrireExamensInitiaux } from "@/lib/reception/prescrire-examens-initiaux";
 import type {
   ExamenMedecinsResume,
   TypeExamenMedecins,
@@ -53,13 +54,22 @@ export async function listerExamensDossierMedecins(
 
 export async function prescrireExamensMedecins(
   medecinId: string,
-  input: { dossierId: string; typeExamenIds: string[]; notes?: string | null }
+  input: {
+    dossierId: string;
+    typeExamenIds: string[];
+    paquetsBilanIds?: string[];
+    notes?: string | null;
+  }
 ): Promise<ExamenMedecinsResume[]> {
   const dossierId = input.dossierId.trim();
   if (!dossierId) throw new Error("DOSSIER_ID_REQUIS");
 
   const ids = [...new Set(input.typeExamenIds.map((id) => id.trim()).filter(Boolean))];
-  if (ids.length === 0) throw new Error("TYPES_REQUIS");
+  const paquetsIds = [
+    ...new Set((input.paquetsBilanIds ?? []).map((id) => id.trim()).filter(Boolean)),
+  ];
+
+  if (ids.length === 0 && paquetsIds.length === 0) throw new Error("TYPES_REQUIS");
 
   const dossier = await prisma.dossierPatient.findUnique({
     where: { id: dossierId },
@@ -67,33 +77,31 @@ export async function prescrireExamensMedecins(
   });
   if (!dossier) throw new Error("DOSSIER_INTROUVABLE");
 
-  const types = await prisma.typeExamen.findMany({
-    where: { id: { in: ids }, actif: true },
+  if (ids.length > 0) {
+    const types = await prisma.typeExamen.findMany({
+      where: { id: { in: ids }, actif: true },
+    });
+    if (types.length !== ids.length) throw new Error("TYPES_INVALIDES");
+  }
+
+  if (paquetsIds.length > 0) {
+    const paquets = await prisma.paquetBilan.findMany({
+      where: { id: { in: paquetsIds }, actif: true },
+    });
+    if (paquets.length !== paquetsIds.length) throw new Error("PAQUETS_INVALIDES");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await prescrireExamensInitiaux(
+      tx,
+      dossierId,
+      medecinId,
+      ids,
+      false,
+      "MEDECINS",
+      paquetsIds
+    );
   });
-  if (types.length !== ids.length) throw new Error("TYPES_INVALIDES");
 
-  const notes = input.notes?.trim() || null;
-
-  const crees = await prisma.$transaction(
-    types.map((type) =>
-      prisma.examenLaboratoire.create({
-        data: {
-          dossierId,
-          typeExamenId: type.id,
-          prescripteurId: medecinId,
-          statut: "PRESCRIT",
-          notes,
-        },
-        include: { typeExamen: true },
-      })
-    )
-  );
-
-  return crees.map((e) => ({
-    id: e.id,
-    statut: e.statut,
-    createdAt: e.createdAt.toISOString(),
-    notes: e.notes,
-    typeExamen: mapperType(e.typeExamen),
-  }));
+  return listerExamensDossierMedecins(dossierId);
 }

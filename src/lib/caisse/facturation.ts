@@ -11,6 +11,7 @@ import { estClientWalkInPharmacie, numeroIdentitePersonne } from "@/lib/pharmaci
 import { creerTokenRecuFacture } from "@/lib/caisse/token-recu-public";
 import { evaluerEtatFacturationDual } from "@/lib/caisse/etat-facturation-dual";
 import { construireLignesFactureExamens } from "@/lib/caisse/construire-lignes-facture-examens";
+import { prescrireExamensInitiaux } from "@/lib/reception/prescrire-examens-initiaux";
 import type {
   DestinationApresEncaissement,
   DossierFacturationCaisse,
@@ -315,12 +316,26 @@ export async function obtenirDossierFacturation(
       : null,
     remiseProposee,
     idsTypesExamen: dossier.examensLaboratoire.map((ex) => ex.typeExamenId),
+    idsPaquetsBilan: [
+      ...new Set(
+        dossier.examensLaboratoire
+          .map((ex) => ex.paquetBilanId)
+          .filter((id): id is string => Boolean(id))
+      ),
+    ],
     examens: {
       lignes: factureExamens.lignes.filter(
         (l) => l.montant > 0 && l.libelle !== "Frais divers"
       ),
       facture: factureExamens,
       idsTypesExamen: dossier.examensLaboratoire.map((ex) => ex.typeExamenId),
+      idsPaquetsBilan: [
+        ...new Set(
+          dossier.examensLaboratoire
+            .map((ex) => ex.paquetBilanId)
+            .filter((id): id is string => Boolean(id))
+        ),
+      ],
     },
     pharmacie,
     facture: factureActive,
@@ -469,6 +484,72 @@ export async function ajouterExamenAuDossierCaisse(
   return detail;
 }
 
+/** Ajoute un paquet bilan (forfait) au dossier et à la facture ouverte si elle existe. */
+export async function ajouterPaquetBilanAuDossierCaisse(
+  dossierId: string,
+  paquetBilanId: string,
+  agentId: string
+) {
+  const dossier = await prisma.dossierPatient.findUnique({
+    where: { id: dossierId },
+    select: { id: true },
+  });
+  if (!dossier) throw new Error("Dossier introuvable.");
+
+  const paquet = await prisma.paquetBilan.findFirst({
+    where: { id: paquetBilanId, actif: true },
+  });
+  if (!paquet) throw new Error("Paquet bilan introuvable ou inactif.");
+
+  const deja = await prisma.examenLaboratoire.findFirst({
+    where: {
+      dossierId,
+      paquetBilanId,
+      statut: { not: "ANNULE" },
+    },
+    select: { id: true },
+  });
+  if (deja) throw new Error("Ce paquet bilan est déjà prescrit pour ce dossier.");
+
+  const prixForfait = decimalVersNombre(paquet.prix);
+
+  await prisma.$transaction(async (tx) => {
+    await prescrireExamensInitiaux(tx, dossierId, agentId, [], false, "CAISSE", [
+      paquetBilanId,
+    ]);
+
+    const facture = await tx.facture.findFirst({
+      where: {
+        dossierId,
+        statut: { in: ["BROUILLON", "EMISE", "PARTIELLEMENT_PAYEE"] },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (facture) {
+      await tx.ligneFacture.create({
+        data: {
+          factureId: facture.id,
+          libelle: paquet.libelle,
+          quantite: 1,
+          prixUnitaire: prixForfait,
+          montant: prixForfait,
+        },
+      });
+      await tx.facture.update({
+        where: { id: facture.id },
+        data: {
+          montantTotal: { increment: prixForfait },
+        },
+      });
+    }
+  });
+
+  const detail = await obtenirDossierFacturation(dossierId);
+  if (!detail) throw new Error("Dossier introuvable après ajout.");
+  return detail;
+}
+
 /** Retire une ligne d'examen de la facturation (annule la prescription + ligne facture). */
 export async function retirerLigneFacturationCaisse(
   dossierId: string,
@@ -490,6 +571,50 @@ export async function retirerLigneFacturationCaisse(
   });
 
   if (source === "EXAMEN") {
+    if (ligneId.startsWith("paquet-")) {
+      const paquetBilanId = ligneId.slice("paquet-".length);
+      const examensPaquet = await prisma.examenLaboratoire.findMany({
+        where: {
+          dossierId,
+          paquetBilanId,
+          statut: { not: "ANNULE" },
+        },
+        include: { paquetBilan: true },
+      });
+      if (examensPaquet.length === 0) throw new Error("Paquet introuvable.");
+
+      await prisma.$transaction(async (tx) => {
+        for (const ex of examensPaquet) {
+          await tx.examenLaboratoire.update({
+            where: { id: ex.id },
+            data: { statut: "ANNULE" },
+          });
+        }
+
+        if (factureOuverte) {
+          const libellePaquet = examensPaquet[0]?.paquetBilan?.libelle;
+          if (libellePaquet) {
+            const ligne = await tx.ligneFacture.findFirst({
+              where: {
+                factureId: factureOuverte.id,
+                libelle: libellePaquet,
+                montant: { gt: 0 },
+              },
+              orderBy: { id: "asc" },
+            });
+            if (ligne) {
+              const montantLigne = decimalVersNombre(ligne.montant);
+              await tx.ligneFacture.delete({ where: { id: ligne.id } });
+              const factureMaj = await tx.facture.update({
+                where: { id: factureOuverte.id },
+                data: { montantTotal: { decrement: montantLigne } },
+              });
+              await reconcilerStatutFactureApresAjustement(tx, factureMaj.id);
+            }
+          }
+        }
+      });
+    } else {
     const examen = await prisma.examenLaboratoire.findFirst({
       where: { id: ligneId, dossierId, statut: { not: "ANNULE" } },
       include: { typeExamen: true },
@@ -522,6 +647,7 @@ export async function retirerLigneFacturationCaisse(
         }
       }
     });
+    }
   } else {
     const ligne = await prisma.ligneFacture.findFirst({
       where: { id: ligneId, facture: { dossierId } },

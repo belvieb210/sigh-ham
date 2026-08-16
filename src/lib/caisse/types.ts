@@ -86,6 +86,7 @@ export interface SectionFacturationExamens {
   lignes: LigneFacturable[];
   facture: FactureCaisseDetail;
   idsTypesExamen: string[];
+  idsPaquetsBilan: string[];
 }
 
 export interface HistoriquePaiementCaisse {
@@ -119,6 +120,8 @@ export interface DossierFacturationCaisse {
   remiseProposee: number;
   /** Types d'examen déjà prescrits (non annulés) — pour éviter les doublons à l'ajout */
   idsTypesExamen: string[];
+  /** Paquets bilans déjà prescrits sur le dossier */
+  idsPaquetsBilan: string[];
   /** Facturation examens (laboratoire) */
   examens: SectionFacturationExamens;
   /** Facturation pharmacie (médicaments ordonnés) */

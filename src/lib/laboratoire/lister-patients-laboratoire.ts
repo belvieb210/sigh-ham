@@ -69,41 +69,10 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
     });
   }
 
-  const transfertsSortants =
-    dossierIds.length === 0
-      ? []
-      : await prisma.transfert.findMany({
-          where: {
-            dossierId: { in: dossierIds },
-            salleOrigine: { code: "LABORATOIRE" },
-            OR: [
-              { statut: "EN_ATTENTE" },
-              {
-                statut: "REFUSE",
-                recuperation: { statut: "EN_RECUPERATION" },
-              },
-            ],
-          },
-          include: {
-            salleDestination: { select: { code: true, nom: true } },
-            recuperation: { select: { statut: true } },
-          },
-          orderBy: { emisLe: "desc" },
-        });
-
-  const sortantParDossier = new Map<string, (typeof transfertsSortants)[number][]>();
-  for (const t of transfertsSortants) {
-    const liste = sortantParDossier.get(t.dossierId) ?? [];
-    liste.push(t);
-    sortantParDossier.set(t.dossierId, liste);
-  }
-
   const patients = files.map((file) => {
     const dossier = file.passage.dossier;
     const patient = dossier.patient;
     const transfert = file.passage.transferts[0];
-    const sortants = sortantParDossier.get(dossier.id) ?? [];
-    const sortant = sortants[0];
     const examensBruts =
       examensParDossier.get(dossier.id) ?? dossier.examensLaboratoire;
     const examens = examensBruts.map((ex) => ({
@@ -120,11 +89,7 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
       const n = `${prenom ?? ""} ${nom ?? ""}`.trim();
       return n || null;
     };
-    const orientation = sortants.length
-      ? sortants
-          .map((s) => raccourcirOrientation(s.salleDestination.nom))
-          .join(", ")
-      : "Laboratoire";
+    const orientation = "Laboratoire";
 
     return {
       fileAttenteId: file.id,
@@ -158,13 +123,11 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
       numeroFacture: fac?.numeroFacture ?? null,
       modePaiement: fac?.modePaiement ?? null,
       statutFacture: fac?.statut ?? null,
-      transfertSortantId: sortant?.id ?? null,
-      statutTransfertSortant: sortant?.statut ?? null,
-      codeSalleDestination: sortant?.salleDestination.code ?? null,
-      codesSalleDestination: sortants.map((s) => s.salleDestination.code),
-      enRecuperation: sortants.some(
-        (s) => s.recuperation?.statut === "EN_RECUPERATION"
-      ),
+      transfertSortantId: null,
+      statutTransfertSortant: null,
+      codeSalleDestination: null,
+      codesSalleDestination: [],
+      enRecuperation: false,
       orientation,
     };
   });
@@ -172,17 +135,6 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
   return patients.sort(
     (a, b) => new Date(b.arriveeLe).getTime() - new Date(a.arriveeLe).getTime()
   );
-}
-
-function raccourcirOrientation(nom: string): string {
-  if (nom.startsWith("Médecin")) {
-    return nom.includes("externe") ? "Médecin externe" : "Médecin";
-  }
-  if (nom.startsWith("Infirmier")) return "Infirmiers";
-  if (nom.startsWith("Pharmacie")) return "Pharmacie";
-  if (nom.startsWith("Caisse")) return "Caisse";
-  if (nom.startsWith("Laboratoire")) return "Laboratoire";
-  return nom;
 }
 
 export async function obtenirDetailPatientLaboratoire(

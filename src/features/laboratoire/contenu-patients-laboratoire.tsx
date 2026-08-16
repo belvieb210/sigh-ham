@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
@@ -13,7 +13,6 @@ import {
 import { Bouton } from "@/components/ui/bouton";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import { telechargerCsv } from "@/components/ui/boutons-outils-liste";
-import { idOrientationDepuisCodeSalle } from "@/constants/laboratoire-orientations";
 import {
   MiseEnPageLaboratoire,
   type UtilisateurLaboratoire,
@@ -34,13 +33,11 @@ import {
   patientCorrespondFiltresLabo,
   type FiltresLaboratoireUi,
 } from "@/features/laboratoire/formulaire-filtres-laboratoire";
-import { MenuActionsTransfertLaboratoire } from "@/features/laboratoire/menu-actions-transfert-laboratoire";
 import {
   CelluleBadgesStatutExamens,
   CelluleListeExamens,
 } from "@/features/laboratoire/cellule-examens-statut-laboratoire";
 import {
-  libelleStatutLigneLabo,
   libellesExamensDemandes,
   numeroEnregistrementLaboratoire,
   trierPatientsParArriveeDesc,
@@ -51,10 +48,6 @@ import type {
 } from "@/lib/laboratoire/types";
 import { cheminSaisieResultats } from "@/lib/laboratoire/saisie-resultats-types";
 import { cn } from "@/lib/utils";
-import {
-  creerDebounce,
-  orienterPatientsEnSerie,
-} from "@/features/transferts/utilitaires-orientation-lot";
 
 interface PropsContenuPatientsLaboratoire {
   utilisateur: UtilisateurLaboratoire;
@@ -79,12 +72,6 @@ export function ContenuPatientsLaboratoire({
     FILTRES_LABORATOIRE_VIDES
   );
   const [selectionId, setSelectionId] = useState<string | null>(dossierUrl);
-  const [orientations, setOrientations] = useState<string[]>([]);
-  const [orientationEnCours, setOrientationEnCours] = useState(false);
-  const verrouOrientationRef = useRef(false);
-  const debounceOrientationRef = useRef<ReturnType<
-    typeof creerDebounce<(ids: string[]) => void>
-  > | null>(null);
   const [idsCoches, setIdsCoches] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<DetailPatientLaboratoire | null>(null);
   const [chargementDetail, setChargementDetail] = useState(false);
@@ -132,107 +119,12 @@ export function ContenuPatientsLaboratoire({
     [filtrés, selectionId]
   );
 
-  useEffect(() => {
-    if (!patientSelectionne) {
-      setOrientations([]);
-      return;
-    }
-    const codes =
-      patientSelectionne.codesSalleDestination?.length
-        ? patientSelectionne.codesSalleDestination
-        : patientSelectionne.codeSalleDestination
-          ? [patientSelectionne.codeSalleDestination]
-          : [];
-    setOrientations(
-      codes
-        .map((c) => idOrientationDepuisCodeSalle(c))
-        .filter((id): id is NonNullable<typeof id> => Boolean(id))
-    );
-  }, [
-    patientSelectionne?.dossierId,
-    patientSelectionne?.codeSalleDestination,
-    patientSelectionne?.codesSalleDestination,
-    patientSelectionne,
-  ]);
-
   const selectionner = (dossierId: string) => {
     setSelectionId(dossierId);
     setMessageAction(null);
     router.replace(`/sigh/laboratoire/patients?dossier=${dossierId}`, {
       scroll: false,
     });
-  };
-
-  const appliquerOrientationsLabo = useCallback(
-    async (ids: string[]) => {
-      const idsAOrienter =
-        idsCoches.size > 0
-          ? [...idsCoches]
-          : selectionId
-            ? [selectionId]
-            : [];
-      if (idsAOrienter.length === 0 || verrouOrientationRef.current) return;
-      if (ids.length === 0) {
-        setMessageAction(t("laboratoire.transferts.selectionnerDestination"));
-        return;
-      }
-      setOrientations(ids);
-      setMessageAction(null);
-      verrouOrientationRef.current = true;
-      setOrientationEnCours(true);
-      try {
-        const { ok, echecs, premierEchec } = await orienterPatientsEnSerie(
-          idsAOrienter,
-          async (dossierId) => {
-            const res = await fetch("/api/laboratoire/transferts", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ dossierId, orientations: ids }),
-            });
-            const data = (await res.json()) as { message?: string };
-            if (!res.ok) {
-              throw new Error(
-                data.message ?? t("laboratoire.transferts.erreurOrientation")
-              );
-            }
-            return data;
-          }
-        );
-        if (ok === 0) {
-          setMessageAction(
-            premierEchec?.message ?? t("laboratoire.transferts.erreurOrientation")
-          );
-          await charger();
-          return;
-        }
-        setMessageAction(
-          echecs > 0
-            ? t("laboratoire.transferts.orienteLotPartiel", { ok, echecs })
-            : idsAOrienter.length > 1
-              ? t("laboratoire.transferts.orienteLotOk", { count: ok })
-              : t("laboratoire.transferts.orienteOk")
-        );
-        setIdsCoches(new Set());
-        await charger();
-      } catch {
-        setMessageAction(t("laboratoire.transferts.erreurOrientation"));
-      } finally {
-        verrouOrientationRef.current = false;
-        setOrientationEnCours(false);
-      }
-    },
-    [idsCoches, selectionId, t, charger]
-  );
-
-  useEffect(() => {
-    debounceOrientationRef.current = creerDebounce((ids: string[]) => {
-      void appliquerOrientationsLabo(ids);
-    }, 400);
-    return () => debounceOrientationRef.current?.annuler();
-  }, [appliquerOrientationsLabo]);
-
-  const changerOrientations = (ids: string[]) => {
-    debounceOrientationRef.current?.(ids);
   };
 
   const ouvrirDetail = useCallback(
@@ -384,23 +276,8 @@ export function ContenuPatientsLaboratoire({
   const propsPanneau = {
     variante: "patients" as const,
     patient: patientSelectionne,
-    orientation: orientations[0] ?? null,
+    orientation: null,
     onOrientationChange: () => undefined,
-    orientations,
-    onOrientationsChange: (ids: string[]) => {
-      if (orientationEnCours || verrouOrientationRef.current) return;
-      changerOrientations(ids);
-    },
-    peutOrienter:
-      (Boolean(patientSelectionne) || idsCoches.size > 0) && !orientationEnCours,
-    aideOrientation:
-      idsCoches.size > 1
-        ? t("laboratoire.panneau.aideOrientationLotPatients", {
-            count: idsCoches.size,
-          })
-        : idsCoches.size === 1 || patientSelectionne
-          ? t("laboratoire.panneau.aideOrientationPatientMulti")
-          : t("laboratoire.panneau.selectionnerPatientOuCocher"),
     onAction,
   };
 
@@ -519,7 +396,6 @@ export function ContenuPatientsLaboratoire({
                     </thead>
                     <tbody className="divide-y divide-gris-bordure">
                       {filtrés.map((p) => {
-                        const statut = libelleStatutLigneLabo(p);
                         const selectionne = selectionId === p.dossierId;
                         return (
                           <tr
@@ -574,37 +450,20 @@ export function ContenuPatientsLaboratoire({
                               <CelluleListeExamens examens={p.examens} />
                             </td>
                             <td className="px-2 py-1.5">
-                              {statut.type === "transfert" ? (
-                                <span
-                                  className={cn(
-                                    "inline-flex rounded-full px-1.5 py-0 text-[10px] font-semibold leading-5",
-                                    statut.couleur
-                                  )}
-                                >
-                                  {t(`laboratoire.transferts.statut.${statut.cle}`)}
-                                </span>
-                              ) : (
-                                <CelluleBadgesStatutExamens examens={p.examens} />
-                              )}
+                              <CelluleBadgesStatutExamens examens={p.examens} />
                             </td>
                             <td className="px-1.5 py-1.5">
-                              <div className="flex items-center gap-1">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    void ouvrirDetail(p.dossierId);
-                                  }}
-                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gris-bordure text-texte-secondaire hover:text-bleu-medical"
-                                  title={t("laboratoire.patients.ouvrirDossier")}
-                                >
-                                  <Eye className="h-3.5 w-3.5" />
-                                </button>
-                                <MenuActionsTransfertLaboratoire
-                                  patient={p}
-                                  onRafraichir={() => void charger()}
-                                />
-                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void ouvrirDetail(p.dossierId);
+                                }}
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gris-bordure text-texte-secondaire hover:text-bleu-medical"
+                                title={t("laboratoire.patients.ouvrirDossier")}
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </button>
                             </td>
                           </tr>
                         );

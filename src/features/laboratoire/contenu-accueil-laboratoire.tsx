@@ -365,13 +365,9 @@ export function ContenuAccueilLaboratoire({
                                       statut.couleur
                                     )}
                                   >
-                                    {statut.type === "transfert"
-                                      ? t(
-                                          `laboratoire.transferts.statut.${statut.cle}`
-                                        )
-                                      : t(
-                                          `laboratoire.orientationsStatut.${statut.statutAnalyse}.label`
-                                        )}
+                                    {t(
+                                      `laboratoire.orientationsStatut.${statut.statutAnalyse}.label`
+                                    )}
                                   </span>
                                 );
                               })()}

@@ -153,41 +153,16 @@ export function couleurStatutAnalyse(statut: string | null | undefined) {
   return COULEURS_STATUT_ANALYSE[id] ?? COULEURS_STATUT_ANALYSE.RECUS;
 }
 
-export type BadgeStatutLigneLabo =
-  | {
-      type: "transfert";
-      cle: "aConfirmer" | "rejete";
-      couleur: string;
-    }
-  | {
-      type: "analyse";
-      statutAnalyse: IdOrientationStatutAnalyse;
-      couleur: string;
-    };
+export type BadgeStatutLigneLabo = {
+  type: "analyse";
+  statutAnalyse: IdOrientationStatutAnalyse;
+  couleur: string;
+};
 
-/**
- * Badge de statut pour les listes labo :
- * priorité au transfert sortant (à confirmer / rejeté),
- * sinon le statut d'analyse orienté (Reçus, Vérifiés…).
- */
+/** Badge de statut pour les listes labo (statut d'analyse uniquement). */
 export function libelleStatutLigneLabo(
   p: PatientFileLaboratoire
 ): BadgeStatutLigneLabo {
-  if (p.enRecuperation && p.statutTransfertSortant === "REFUSE") {
-    return {
-      type: "transfert",
-      cle: "rejete",
-      couleur: "bg-red-100 text-red-700",
-    };
-  }
-  if (p.statutTransfertSortant === "EN_ATTENTE") {
-    return {
-      type: "transfert",
-      cle: "aConfirmer",
-      couleur: "bg-orange-100 text-orange-800",
-    };
-  }
-
   const statutAnalyse = (p.statutAnalyse ||
     "RECUS") as IdOrientationStatutAnalyse;
 

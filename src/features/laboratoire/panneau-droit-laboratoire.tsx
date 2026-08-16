@@ -2,7 +2,6 @@
 
 import { useTranslation } from "react-i18next";
 import {
-  ORIENTATIONS_DESTINATION_LABO,
   ORIENTATIONS_STATUT_ANALYSE,
 } from "@/constants/laboratoire-orientations";
 import { ResumePatientLaboratoire } from "@/features/laboratoire/resume-patient-laboratoire";
@@ -26,12 +25,8 @@ interface PropsPanneauDroitLaboratoire {
   /** Pages statut (Reçus, En cours…) : affiche Résultats & paramètres filtrés par la page */
   modeDetailExamens?: boolean;
   statutPage?: IdOrientationStatutAnalyse | null;
-  /** Destinations multiples */
-  orientations?: string[];
-  onOrientationsChange?: (ids: string[]) => void;
   /** false si aucun patient sélectionné ni coché */
   peutOrienter?: boolean;
-  aideOrientation?: string;
   onAction: (id: IdActionRapideLabo) => void;
 }
 
@@ -42,29 +37,17 @@ export function PanneauDroitLaboratoire({
   onOrientationChange,
   modeDetailExamens = false,
   statutPage = null,
-  orientations = [],
-  onOrientationsChange,
   peutOrienter,
-  aideOrientation,
   onAction,
 }: PropsPanneauDroitLaboratoire) {
   const { t } = useTranslation();
   const orientable = peutOrienter ?? Boolean(patient);
-
-  const optionsDestination = ORIENTATIONS_DESTINATION_LABO.map((o) => ({
-    id: o.id,
-    icone: iconeDepuisNom(o.icone),
-    couleur: o.couleur,
-  }));
 
   const optionsStatut = ORIENTATIONS_STATUT_ANALYSE.map((o) => ({
     id: o.id,
     icone: iconeDepuisNom(o.icone),
     couleur: o.couleur,
   }));
-
-  const afficherDestinations =
-    variante === "patients" && Boolean(onOrientationsChange);
 
   return (
     <aside className="flex w-full min-w-0 shrink-0 flex-col gap-4">
@@ -102,28 +85,6 @@ export function PanneauDroitLaboratoire({
               orientable
                 ? t("laboratoire.panneau.aideStatutAnalyse")
                 : t("laboratoire.panneau.selectionnerPatient")
-            }
-          />
-        </section>
-      ) : null}
-
-      {afficherDestinations ? (
-        <section className="min-w-0 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-            {t("laboratoire.panneau.orientationRapide")}
-          </h2>
-          <ListeOrientationLaboratoire
-            options={optionsDestination}
-            cleTraduction="orientationsDestination"
-            multiple
-            valeurs={orientations}
-            onChangeMulti={onOrientationsChange}
-            desactive={!orientable}
-            aide={
-              aideOrientation ??
-              (orientable
-                ? t("laboratoire.panneau.aideOrientationPatientMulti")
-                : t("laboratoire.panneau.selectionnerPatient"))
             }
           />
         </section>

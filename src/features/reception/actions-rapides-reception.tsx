@@ -151,7 +151,9 @@ export function ActionsRapidesReception({
       <div
         className={cn(
           "grid gap-2",
-          variante === "grille" ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"
+          variante === "grille"
+            ? "grid-cols-1 min-[420px]:grid-cols-2"
+            : "grid-cols-1 sm:grid-cols-2"
         )}
       >
         {actionsAffichees.map((action) => {

@@ -30,7 +30,7 @@ export function MiseEnPageAdmin({
 
   return (
     <FournisseurNotifications>
-      <div className="flex h-full min-h-0 w-full flex-1 overflow-hidden bg-[#f1f5f9]">
+      <div className="flex h-full min-h-0 w-full flex-1 min-w-0 overflow-x-clip overflow-y-hidden bg-[#f1f5f9]">
         <BarreLateraleAdmin
           utilisateur={utilisateur}
           ouvert={menuOuvert}
@@ -45,7 +45,7 @@ export function MiseEnPageAdmin({
             onMenu={() => setMenuOuvert(true)}
           />
 
-          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 pb-[calc(6.75rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6 lg:py-6 lg:pb-6">
+          <main className="min-h-0 flex-1 overflow-y-auto overflow-x-clip overscroll-contain px-3 py-3 pb-[calc(6.75rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6 lg:py-6 lg:pb-6">
             {children}
           </main>
         </div>

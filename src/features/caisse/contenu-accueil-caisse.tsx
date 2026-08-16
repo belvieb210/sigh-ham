@@ -162,7 +162,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
           </div>
         ) : (
           <>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="grille-kpi-sigh">
               <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-xs font-medium text-texte-secondaire">
@@ -296,7 +296,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                   </p>
                 ) : (
                   <>
-                    <div className="overflow-hidden">
+                    <div className="conteneur-tableau-sigh">
                       <table className="tableau-sigh">
                         <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                           <tr>
@@ -408,7 +408,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                   </p>
                 ) : (
                   <>
-                    <div className="overflow-hidden">
+                    <div className="conteneur-tableau-sigh">
                       <table className="tableau-sigh">
                         <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                           <tr>
@@ -472,7 +472,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                     {t("caisse.dashboard.raccourcis")}
                   </h3>
                 </div>
-                <div className="grid grid-cols-2 gap-3 p-4">
+                <div className="grid grid-cols-1 gap-3 p-4 min-[420px]:grid-cols-2">
                   {raccourcis.map((r) => {
                     const Icone = r.icone;
                     return (

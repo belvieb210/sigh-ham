@@ -40,13 +40,13 @@ export function CartesStatistiquesReception() {
   return (
     <>
       {/* Mobile : défilement horizontal */}
-      <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 snap-x snap-mandatory md:hidden">
+      <div className="carrousel-sigh md:hidden">
         {stats.map((stat) => {
           const Icone = stat.icone;
           return (
             <div
               key={stat.libelle}
-              className="min-w-[148px] flex-shrink-0 snap-start rounded-xl border border-gris-bordure bg-white p-3 shadow-sm"
+              className="rounded-xl border border-gris-bordure bg-white p-3 shadow-sm"
             >
               <div className="mb-2 flex items-center justify-between">
                 <div className={`rounded-lg p-1.5 ${stat.couleurIcone}`}>

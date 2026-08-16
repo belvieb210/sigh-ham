@@ -627,7 +627,7 @@ export function TableauPatients({
         </div>
       )}
 
-      <div className="overflow-hidden">
+      <div className="conteneur-tableau-sigh">
         <table className="tableau-sigh">
           <thead>
             <tr className="border-b border-gris-bordure bg-gris-tres-clair/80 text-[10px] font-semibold uppercase tracking-wide text-texte-secondaire">

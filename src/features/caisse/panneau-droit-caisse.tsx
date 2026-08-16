@@ -109,7 +109,7 @@ function ResumeEtOrientation() {
         <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
           {t("caisse.transferts.actionsRapides")}
         </h2>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
           <Link
             href="/sigh/caisse/transferts"
             className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-gris-bordure bg-[#f8fafc] p-3 text-center text-xs font-medium text-texte-principal hover:border-bleu-medical hover:bg-bleu-medical-clair"

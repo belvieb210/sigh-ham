@@ -11,7 +11,7 @@ export default function LayoutSigh({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <FournisseurModaleSigh>
-      <div className="flex h-[100dvh] flex-col overflow-hidden bg-[#f1f5f9]">
+      <div className="flex h-[100dvh] min-w-0 flex-col overflow-y-hidden bg-[#f1f5f9]">
         {children}
       </div>
     </FournisseurModaleSigh>

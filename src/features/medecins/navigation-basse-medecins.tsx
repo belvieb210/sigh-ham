@@ -60,7 +60,7 @@ export function NavigationBasseMedecins({ onMenu }: PropsNavigationBasseMedecins
                 )}
               >
                 <Icone className={cn("h-5 w-5", actif && "stroke-[2.5]")} aria-hidden />
-                <span className="max-w-[4.5rem] truncate text-center text-[9px] leading-tight sm:max-w-[72px] sm:text-[10px]">
+                <span className="libelle-nav-basse-sigh">
                   {item.etiquette}
                 </span>
               </Link>

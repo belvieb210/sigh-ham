@@ -41,6 +41,7 @@ export const pharmacieFr = {
     accueil: "Accueil",
     patients: "Patients",
     vente: "Vente",
+    nouveauClient: "Nouveau",
     ordonnances: "Ordonnances",
     menu: "Menu",
   },

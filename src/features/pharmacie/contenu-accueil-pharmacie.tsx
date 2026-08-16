@@ -208,7 +208,7 @@ export function ContenuAccueilPharmacie({
           <p className="text-sm text-red-600">{erreur}</p>
         ) : (
           <>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
+            <div className="grille-kpi-sigh lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
               {kpis.map((kpi) => {
                 const Icone = kpi.icone;
                 return (
@@ -436,7 +436,7 @@ export function ContenuAccueilPharmacie({
               <h2 className="mb-3 text-sm font-semibold text-texte-principal">
                 {t("pharmacie.dashboard.actionsRapidesTitre")}
               </h2>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+              <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
                 {actionsRapides.map((action) => {
                   const Icone = action.icone;
                   return (

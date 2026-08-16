@@ -41,6 +41,7 @@ export const pharmacieEn = {
     accueil: "Home",
     patients: "Patients",
     vente: "Sale",
+    nouveauClient: "New",
     ordonnances: "Rx",
     menu: "Menu",
   },

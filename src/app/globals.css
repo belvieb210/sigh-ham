@@ -138,6 +138,50 @@
 
   .tableau-sigh,
   .tableau-liste-labo {
-    @apply w-full table-fixed text-left text-xs;
+    @apply w-full text-left text-xs;
+  }
+
+  @media (min-width: 768px) {
+    .tableau-sigh,
+    .tableau-liste-labo {
+      @apply table-fixed;
+    }
+  }
+
+  /* Grilles KPI / actions — cohérentes sur toutes les salles SIGH */
+  .grille-kpi-sigh {
+    @apply grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5;
+  }
+
+  .grille-actions-sigh {
+    @apply grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:flex sm:flex-wrap;
+  }
+
+  .grille-actions-sigh > * {
+    @apply sm:flex-none;
+  }
+
+  /* Carrousel horizontal mobile sans marge négative (évite la coupure à gauche) */
+  .carrousel-sigh {
+    @apply flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-masquee;
+  }
+
+  .carrousel-sigh > * {
+    @apply min-w-[148px] flex-shrink-0 snap-start;
+  }
+
+  /* Tableaux dashboard : scroll horizontal sur mobile */
+  .conteneur-tableau-sigh {
+    @apply w-full max-w-full overflow-x-auto;
+  }
+
+  .conteneur-tableau-sigh .tableau-sigh,
+  .conteneur-tableau-sigh .tableau-liste-labo {
+    @apply min-w-[640px] md:min-w-0;
+  }
+
+  /* Libellés navigation basse mobile */
+  .libelle-nav-basse-sigh {
+    @apply w-full max-w-[5.5rem] px-0.5 text-center text-[9px] leading-tight line-clamp-2 sm:max-w-none sm:text-[10px];
   }
 }

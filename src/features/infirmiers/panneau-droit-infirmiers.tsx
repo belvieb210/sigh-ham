@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
@@ -38,7 +38,7 @@ function ResumeEtOrientation() {
         </h2>
         <div className="flex flex-col items-center text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-sm font-bold text-violet-700">
-            {resume && !resume.vide ? resume.initiales : "â€”"}
+            {resume && !resume.vide ? resume.initiales : "—"}
           </div>
           <p className="mt-3 text-sm font-semibold text-texte-principal">
             {resume?.nomComplet ?? t("infirmiers.panneau.aucunPatient")}
@@ -52,18 +52,18 @@ function ResumeEtOrientation() {
         <div className="mt-4 space-y-2 text-left text-xs">
           <div className="flex justify-between gap-2">
             <span className="text-texte-secondaire">{t("infirmiers.panneau.age")}</span>
-            <span className="font-medium text-texte-principal">{resume?.age ?? "â€”"}</span>
+            <span className="font-medium text-texte-principal">{resume?.age ?? "—"}</span>
           </div>
           <div className="flex justify-between gap-2">
             <span className="text-texte-secondaire">{t("infirmiers.panneau.telephone")}</span>
             <span className="font-medium text-texte-principal">
-              {resume?.telephone ?? "â€”"}
+              {resume?.telephone ?? "—"}
             </span>
           </div>
           <div className="flex justify-between gap-2">
             <span className="text-texte-secondaire">{t("infirmiers.panneau.motif")}</span>
             <span className="max-w-[60%] truncate font-medium text-texte-principal">
-              {resume?.motif ?? "â€”"}
+              {resume?.motif ?? "—"}
             </span>
           </div>
         </div>
@@ -101,7 +101,7 @@ function ResumeEtOrientation() {
             className={cn(
               "mt-2 text-xs",
               selection.messagePanneau.toLowerCase().includes("impossible") ||
-                selection.messagePanneau.toLowerCase().includes("dÃ©jÃ ")
+                selection.messagePanneau.toLowerCase().includes("déjà")
                 ? "text-red-600"
                 : "text-emerald-700"
             )}
@@ -115,7 +115,7 @@ function ResumeEtOrientation() {
         <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
           {t("infirmiers.panneau.actionsRapides")}
         </h2>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
           <Link
             href={
               selection?.resume.dossierId

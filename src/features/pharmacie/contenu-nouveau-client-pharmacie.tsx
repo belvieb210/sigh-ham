@@ -329,8 +329,8 @@ export function ContenuNouveauClientPharmacie({
                   : t("pharmacie.nouveauClient.listeVide")}
               </p>
             ) : (
-              <div className="overflow-hidden">
-                <table className="tableau-sigh">
+              <div className="conteneur-tableau-sigh">
+        <table className="tableau-sigh">
                   <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                     <tr>
                       <th className="px-2 py-1.5">N°</th>

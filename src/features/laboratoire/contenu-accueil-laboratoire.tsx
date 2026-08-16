@@ -255,7 +255,7 @@ export function ContenuAccueilLaboratoire({
           </p>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
+            <div className="grille-kpi-sigh">
               {kpis.map((k) => {
                 const Icone = k.icone;
                 return (
@@ -304,6 +304,7 @@ export function ContenuAccueilLaboratoire({
                   </p>
                 ) : (
                   <>
+                    <div className="conteneur-tableau-sigh">
                     <table className="tableau-liste-labo">
                       <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-texte-secondaire">
                         <tr>
@@ -388,6 +389,7 @@ export function ContenuAccueilLaboratoire({
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   </>
                 )}
                 <PaginationListe
@@ -420,6 +422,7 @@ export function ContenuAccueilLaboratoire({
                   </p>
                 ) : (
                   <>
+                    <div className="conteneur-tableau-sigh">
                     <table className="tableau-liste-labo">
                       <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-texte-secondaire">
                         <tr>
@@ -480,6 +483,7 @@ export function ContenuAccueilLaboratoire({
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   </>
                 )}
                 <PaginationListe
@@ -643,7 +647,7 @@ export function ContenuAccueilLaboratoire({
             </div>
 
             <section className="rounded-xl border border-gris-bordure bg-white p-3 shadow-sm sm:p-4">
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+              <div className="grille-actions-sigh">
                 {actionsRapides.map((a) => {
                   const Icone = a.icone;
                   return (

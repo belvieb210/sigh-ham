@@ -331,8 +331,8 @@ export function ListePatientsTransfertsCaisse() {
           </p>
         ) : (
           <>
-            <div className="overflow-hidden">
-            <table className="tableau-sigh">
+            <div className="conteneur-tableau-sigh">
+        <table className="tableau-sigh">
               <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
                 <tr>
                   <th className="w-8 px-3 py-2.5">

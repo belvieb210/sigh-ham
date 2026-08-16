@@ -161,7 +161,7 @@ export function ContenuAccueilAdmin({
               </div>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grille-kpi-sigh lg:grid-cols-4">
               <CarteKpi
                 label={t("admin.dashboard.utilisateursActifs")}
                 valeur={`${stats.kpis.utilisateursActifs}/${stats.kpis.utilisateursTotal}`}

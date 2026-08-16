@@ -101,7 +101,7 @@ export function ActionsRapidesLaboratoire({
       <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-texte-secondaire">
         {t("laboratoire.panneau.actionsRapides")}
       </h2>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
         {actions.map((action) => {
           const Icone = action.icone as LucideIcon;
           const desactive =

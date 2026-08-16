@@ -157,7 +157,7 @@ export function ContenuAccueilInfirmiers({ utilisateur }: PropsContenuAccueilInf
           <p className="text-sm text-red-600">{erreur}</p>
         ) : (
           <>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <div className="grille-kpi-sigh">
               {kpis.map((kpi) => {
                 const Icone = kpi.icone;
                 return (

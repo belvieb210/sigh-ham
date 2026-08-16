@@ -279,6 +279,10 @@ export const receptionLua = {
     titre: "Enregistrement wa mupya",
     titreModification: "Modification du patient",
     patientSelectionne: "Muntu wa maladi wa kusala :",
+    recherchePatient: {
+      revenirNouveau: "New patient",
+      effacer: "Clear selection",
+    },
     etapes: {
       infosPatient: "Ba info ya muntu wa maladi",
       motifVisite: "Motif ya visite",

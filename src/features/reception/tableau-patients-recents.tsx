@@ -6,6 +6,7 @@ import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import { SlidersHorizontal } from "lucide-react";
 import type { PatientEnregistre } from "@/constants/reception";
 import {
+  type DetailPatientEpingleRecents,
   type DetailPatientOrientationModifiee,
 } from "@/constants/reception";
 import { TableauPatients } from "@/features/reception/composants-liste-patients";
@@ -18,7 +19,6 @@ import {
   STATUTS_SANS_TRANSFERE,
   type FiltresRecentsReception,
 } from "@/features/reception/formulaire-filtres-recents-reception";
-import { RecherchePatientExistantRecents } from "@/features/reception/recherche-patient-existant-recents";
 import { cn } from "@/lib/utils";
 
 interface PropsTableauPatientsRecents {
@@ -62,6 +62,21 @@ export function TableauPatientsRecents({
   useEffect(() => {
     charger().finally(() => setChargement(false));
   }, [charger]);
+
+  useEffect(() => {
+    const onPatientEpingle = (event: Event) => {
+      const detail = (event as CustomEvent<DetailPatientEpingleRecents>).detail;
+      if (!detail?.patient) return;
+      setPatientsEpingles((liste) => {
+        const sansDoublon = liste.filter((p) => p.id !== detail.patient.id);
+        return [detail.patient, ...sansDoublon];
+      });
+    };
+
+    window.addEventListener(espace.evenementPatientEpingleRecents, onPatientEpingle);
+    return () =>
+      window.removeEventListener(espace.evenementPatientEpingleRecents, onPatientEpingle);
+  }, [espace.evenementPatientEpingleRecents]);
 
   useEffect(() => {
     const rafraichir = (event: Event) => {
@@ -109,13 +124,6 @@ export function TableauPatientsRecents({
     [patientsFusionnes, appliques]
   );
 
-  const ajouterPatientRecherche = useCallback((patient: PatientEnregistre) => {
-    setPatientsEpingles((liste) => {
-      const sansDoublon = liste.filter((p) => p.id !== patient.id);
-      return [patient, ...sansDoublon];
-    });
-  }, []);
-
   const nbFiltres = compterFiltresRecents(appliques);
 
   if (chargement) {
@@ -141,14 +149,9 @@ export function TableauPatientsRecents({
             })}
           </p>
         </div>
-        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
-          <RecherchePatientExistantRecents
-            className="flex-1 sm:flex-none"
-            onPatientAjoute={ajouterPatientRecherche}
-          />
-          <button
-            type="button"
-            onClick={() => setFiltresOuverts((o) => !o)}
+        <button
+          type="button"
+          onClick={() => setFiltresOuverts((o) => !o)}
           aria-expanded={filtresOuverts}
           aria-label={
             filtresOuverts
@@ -171,8 +174,7 @@ export function TableauPatientsRecents({
           >
             {nbFiltres}
           </span>
-          </button>
-        </div>
+        </button>
       </div>
 
       {filtresOuverts && (

@@ -279,6 +279,10 @@ export const receptionAr = {
     titre: "تسجيل جديد",
     titreModification: "Modification du patient",
     patientSelectionne: "المريض المحدد:",
+    recherchePatient: {
+      revenirNouveau: "New patient",
+      effacer: "Clear selection",
+    },
     etapes: {
       infosPatient: "معلومات المريض",
       motifVisite: "سبب الزيارة",

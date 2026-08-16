@@ -281,6 +281,10 @@ export const receptionLn = {
     titre: "Enregistrement ya sika",
     titreModification: "Modification du patient",
     patientSelectionne: "Patient oyo eponami :",
+    recherchePatient: {
+      revenirNouveau: "New patient",
+      effacer: "Clear selection",
+    },
     etapes: {
       infosPatient: "Ba info ya patient",
       motifVisite: "Motif ya visite",

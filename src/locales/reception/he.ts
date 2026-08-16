@@ -279,6 +279,10 @@ export const receptionHe = {
     titre: "רישום חדש",
     titreModification: "Modification du patient",
     patientSelectionne: "מטופל שנבחר:",
+    recherchePatient: {
+      revenirNouveau: "New patient",
+      effacer: "Clear selection",
+    },
     etapes: {
       infosPatient: "פרטי מטופל",
       motifVisite: "סיבת ביקור",

@@ -16,6 +16,7 @@ import { ResumePatientMobile } from "@/features/reception/resume-patient-mobile"
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import type { PatientEnregistre } from "@/constants/reception";
 import {
+  type DetailPatientEpingleRecents,
   type DetailPatientRechercheSelectionne,
 } from "@/constants/reception";
 import { useSelectionTransfertOptionnel } from "@/features/reception/contexte-selection-transfert";
@@ -102,6 +103,19 @@ function CorpsAccueilReception({ agentNom }: { agentNom: string }) {
     return () =>
       window.removeEventListener(espace.evenementPatientRecherche, onRecherchePatient);
   }, [chargementSelection, definirDepuisDonneesCompletes, espace.evenementPatientRecherche, espace.prefixeApi]);
+
+  useEffect(() => {
+    const onPatientEpingle = (event: Event) => {
+      const detail = (event as CustomEvent<DetailPatientEpingleRecents>).detail;
+      if (!detail?.patient) return;
+      setPatientSelectionneId(detail.patient.id);
+      void selection?.selectionnerPourPanneau(detail.patient);
+    };
+
+    window.addEventListener(espace.evenementPatientEpingleRecents, onPatientEpingle);
+    return () =>
+      window.removeEventListener(espace.evenementPatientEpingleRecents, onPatientEpingle);
+  }, [espace.evenementPatientEpingleRecents, selection]);
 
   return (
     <div className="mx-auto w-full max-w-[1100px] space-y-4 lg:space-y-5">

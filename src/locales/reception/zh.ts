@@ -280,6 +280,10 @@ export const receptionZh = {
     titre: "新登记",
     titreModification: "Modification du patient",
     patientSelectionne: "已选患者：",
+    recherchePatient: {
+      revenirNouveau: "New patient",
+      effacer: "Clear selection",
+    },
     etapes: {
       infosPatient: "患者信息",
       motifVisite: "就诊事由",

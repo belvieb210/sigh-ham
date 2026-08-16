@@ -20,10 +20,12 @@ import {
   ETAPES_ENREGISTREMENT,
   GROUPES_SANGUINS,
   ORIENTATIONS_RECEPTION,
+  type DetailPatientEpingleRecents,
 } from "@/constants/reception";
 import { ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES } from "@/constants/medecins-externes";
 import { ORIENTATIONS_RAPIDES_EGLISE } from "@/constants/eglise";
 import { useTraductionsReception } from "@/hooks/use-traductions-reception";
+import { ChampTypePatientRecherche } from "@/features/reception/champ-type-patient-recherche";
 import { ZonePhotoPatient } from "@/features/reception/zone-photo-patient";
 import { SelectionExamensInitiaux } from "@/features/reception/selection-examens-initiaux";
 import { SectionEstimationExamens } from "@/features/reception/section-estimation-examens";
@@ -31,9 +33,11 @@ import { ChampDateNaissance } from "@/features/reception/champ-date-naissance";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import { cn } from "@/lib/utils";
 import { lireReponseJson } from "@/lib/api/lire-reponse-json";
+import { resultatRechercheVersPatientEnregistre } from "@/lib/reception/resultat-recherche-vers-patient-enregistre";
 import type {
   DonneesFormulairePatient,
   PaquetBilanReception,
+  ResultatRecherchePatientReception,
   TypeExamenReception,
 } from "@/lib/reception/types";
 
@@ -155,7 +159,8 @@ export const FormulaireEnregistrement = forwardRef<
     groupesSanguins,
   } = useTraductionsReception();
   const estComplet = variante === "complet";
-  const { definirDepuisFormulaire, reinitialiserResume } = useResumePatient();
+  const { definirDepuisFormulaire, definirDepuisDonneesCompletes, reinitialiserResume } =
+    useResumePatient();
 
   const [etape, setEtape] = useState(0);
   const [sexe, setSexe] = useState<"MASCULIN" | "FEMININ">("FEMININ");
@@ -185,6 +190,7 @@ export const FormulaireEnregistrement = forwardRef<
     espace.orientationDefaut ?? "INFIRMIERS"
   );
   const [paroisse, setParoisse] = useState("");
+  const [selectionPatientEnCours, setSelectionPatientEnCours] = useState(false);
 
   const motifEstAutre = motifPrincipal === "autre";
   const champsEglise = Boolean(espace.afficherChampsEglise);
@@ -221,6 +227,100 @@ export const FormulaireEnregistrement = forwardRef<
       })
     );
   }, []);
+
+  const appliquerDonneesPatient = useCallback(
+    (donnees: DonneesFormulairePatient, typeVisite = "ancien") => {
+      setFormulaire(mapperPrefillVersEtat({ ...donnees, typeVisite }));
+      setSexe(donnees.sexe);
+      setNumeroEnregistrement(donnees.numeroEnregistrement);
+      setNumeroPatientActif(donnees.numeroPatient);
+      setDossierIdActif(donnees.dossierId ?? null);
+      setAujourdhui(donnees.dateEnregistrement);
+      setHeure(donnees.heureEnregistrement);
+      setPhotoUrlExistante(donnees.photoUrl);
+      setPhotoPatient(null);
+      setPlusInfos(true);
+      setEtape(0);
+      setErreur(null);
+      definirDepuisDonneesCompletes({
+        ...donnees,
+        typeVisite,
+        dossierId: donnees.dossierId,
+      });
+    },
+    [definirDepuisDonneesCompletes]
+  );
+
+  const effacerPatientExistant = useCallback(() => {
+    setNumeroPatientActif(null);
+    setDossierIdActif(null);
+    setFormulaire({ ...ETAT_INITIAL_FORMULAIRE, typeVisite: "ancien" });
+    setSexe("FEMININ");
+    setPhotoUrlExistante(null);
+    setPhotoPatient(null);
+    reinitialiserResume();
+    majDateHeureActuelles();
+  }, [majDateHeureActuelles, reinitialiserResume]);
+
+  const changerTypeVisite = useCallback(
+    (valeur: string) => {
+      if (valeur !== "ancien" && numeroPatientActif) {
+        setNumeroPatientActif(null);
+        setDossierIdActif(null);
+        setFormulaire({ ...ETAT_INITIAL_FORMULAIRE, typeVisite: valeur });
+        setSexe("FEMININ");
+        setPhotoUrlExistante(null);
+        setPhotoPatient(null);
+        reinitialiserResume();
+        majDateHeureActuelles();
+        return;
+      }
+      majFormulaire("typeVisite", valeur);
+    },
+    [majDateHeureActuelles, majFormulaire, numeroPatientActif, reinitialiserResume]
+  );
+
+  const selectionnerPatientExistant = useCallback(
+    async (resultat: ResultatRecherchePatientReception) => {
+      if (selectionPatientEnCours) return;
+
+      setSelectionPatientEnCours(true);
+      setErreur(null);
+
+      try {
+        const res = await fetch(
+          `${espace.prefixeApi}/patients/${encodeURIComponent(resultat.numeroPatient)}`
+        );
+        if (!res.ok) throw new Error(t("reception.recherche.selectionImpossible"));
+
+        const donnees = (await res.json()) as DonneesFormulairePatient;
+        const dossierId = resultat.dossierId ?? donnees.dossierId;
+        appliquerDonneesPatient({ ...donnees, dossierId }, "ancien");
+
+        const patient = resultatRechercheVersPatientEnregistre(resultat, {
+          motif: t("reception.tableau.recherchePatient.motif"),
+          orientation: t("reception.tableau.recherchePatient.orientation"),
+          statut: t("reception.tableau.recherchePatient.statut"),
+        });
+        const detail: DetailPatientEpingleRecents = { patient };
+        window.dispatchEvent(
+          new CustomEvent(espace.evenementPatientEpingleRecents, { detail })
+        );
+      } catch (error) {
+        setErreur(
+          error instanceof Error ? error.message : t("reception.recherche.selectionImpossible")
+        );
+      } finally {
+        setSelectionPatientEnCours(false);
+      }
+    },
+    [appliquerDonneesPatient, espace.evenementPatientEpingleRecents, espace.prefixeApi, selectionPatientEnCours, t]
+  );
+
+  const libellePatientSelectionne =
+    formulaire.typeVisite === "ancien" && numeroPatientActif
+      ? `${formulaire.prenom} ${formulaire.nom}`.trim() || numeroPatientActif
+      : null;
 
   useEffect(() => {
     majDateHeureActuelles();
@@ -716,18 +816,15 @@ export const FormulaireEnregistrement = forwardRef<
                     className={CLASSE_CHAMP_RECEPTION}
                   />
                 </div>
-                <div className={clsCacheDesktop}>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("reception.formulaire.champs.typePatient")}
-                  </label>
-                  <select className={CLASSE_CHAMP_RECEPTION} {...propsSelect("typeVisite")}>
-                    {typesPatient.map((tp) => (
-                      <option key={tp.value} value={tp.value}>
-                        {tp.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <ChampTypePatientRecherche
+                  typeVisite={formulaire.typeVisite}
+                  onTypeVisiteChange={changerTypeVisite}
+                  typesPatient={typesPatient}
+                  libellePatientSelectionne={libellePatientSelectionne}
+                  onPatientSelectionne={selectionnerPatientExistant}
+                  onEffacerPatient={effacerPatientExistant}
+                  selectionEnCours={selectionPatientEnCours}
+                />
                 <div>
                   <label className={CLASSE_LABEL_RECEPTION}>
                     {t("reception.formulaire.champs.nom")}

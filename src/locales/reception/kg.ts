@@ -281,6 +281,10 @@ export const receptionKg = {
     titre: "Enregistrement ya sika",
     titreModification: "Modification du patient",
     patientSelectionne: "Muntu ya maladi oyo safuti :",
+    recherchePatient: {
+      revenirNouveau: "New patient",
+      effacer: "Clear selection",
+    },
     etapes: {
       infosPatient: "Ba info ya muntu ya maladi",
       motifVisite: "Motif ya visite",

@@ -377,12 +377,21 @@ export const EVENEMENT_RECEPTION_PATIENTS_MODIFIES = "sigh:reception-patients-mo
 /** Événement client lorsqu'un patient est choisi via la barre de recherche globale. */
 export const EVENEMENT_RECEPTION_PATIENT_RECHERCHE = "sigh:reception-patient-recherche-selectionne";
 
+/** Patient existant épinglé dans « Patients récemment enregistrés » (depuis le formulaire). */
+export const EVENEMENT_RECEPTION_PATIENT_EPINGLE_RECENTS =
+  "sigh:reception-patient-epingle-recents";
+
 /** Focus la barre de recherche globale (Ctrl+K). */
 export const EVENEMENT_RECEPTION_FOCUS_RECHERCHE = "sigh:reception-focus-recherche";
 
 export interface DetailPatientRechercheSelectionne {
   numeroPatient: string;
   dossierId?: string;
+}
+
+/** Patient ajouté à la liste « récemment enregistrés » depuis le formulaire. */
+export interface DetailPatientEpingleRecents {
+  patient: PatientEnregistre;
 }
 
 /** Mise à jour locale d'une ligne (évite de recharger toute la liste). */

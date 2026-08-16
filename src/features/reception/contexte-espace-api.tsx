@@ -3,6 +3,7 @@
 import { createContext, useContext, type ReactNode } from "react";
 import {
   EVENEMENT_RECEPTION_FOCUS_RECHERCHE,
+  EVENEMENT_RECEPTION_PATIENT_EPINGLE_RECENTS,
   EVENEMENT_RECEPTION_PATIENT_RECHERCHE,
   EVENEMENT_RECEPTION_PATIENTS_MODIFIES,
 } from "@/constants/reception";
@@ -17,6 +18,7 @@ export interface EspaceApiReceptionLike {
   cleFilRacine: string;
   evenementPatientsModifies: string;
   evenementPatientRecherche: string;
+  evenementPatientEpingleRecents: string;
   evenementFocusRecherche: string;
   /** Affiche paroisse / date mariage / conjoint dans le formulaire. */
   afficherChampsEglise?: boolean;
@@ -30,6 +32,7 @@ export const ESPACE_API_RECEPTION: EspaceApiReceptionLike = {
   cleFilRacine: "reception.common.reception",
   evenementPatientsModifies: EVENEMENT_RECEPTION_PATIENTS_MODIFIES,
   evenementPatientRecherche: EVENEMENT_RECEPTION_PATIENT_RECHERCHE,
+  evenementPatientEpingleRecents: EVENEMENT_RECEPTION_PATIENT_EPINGLE_RECENTS,
   evenementFocusRecherche: EVENEMENT_RECEPTION_FOCUS_RECHERCHE,
 };
 
@@ -39,6 +42,7 @@ export const ESPACE_API_MEDECINS_EXTERNES: EspaceApiReceptionLike = {
   cleFilRacine: "medecinsExternes.common.salle",
   evenementPatientsModifies: "sigh:medecins-externes-patients-modifies",
   evenementPatientRecherche: "sigh:medecins-externes-patient-recherche-selectionne",
+  evenementPatientEpingleRecents: "sigh:medecins-externes-patient-epingle-recents",
   evenementFocusRecherche: "sigh:medecins-externes-focus-recherche",
   orientationDefaut: "CAISSE",
 };
@@ -49,6 +53,7 @@ export const ESPACE_API_EGLISE: EspaceApiReceptionLike = {
   cleFilRacine: "eglise.common.salle",
   evenementPatientsModifies: "sigh:eglise-patients-modifies",
   evenementPatientRecherche: "sigh:eglise-patient-recherche-selectionne",
+  evenementPatientEpingleRecents: "sigh:eglise-patient-epingle-recents",
   evenementFocusRecherche: "sigh:eglise-focus-recherche",
   afficherChampsEglise: true,
   orientationDefaut: "CAISSE",

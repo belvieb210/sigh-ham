@@ -279,6 +279,10 @@ export const receptionPt = {
     titre: "Novo registo",
     titreModification: "Modification du patient",
     patientSelectionne: "Paciente selecionado:",
+    recherchePatient: {
+      revenirNouveau: "New patient",
+      effacer: "Clear selection",
+    },
     etapes: {
       infosPatient: "Informações do paciente",
       motifVisite: "Motivo da visita",

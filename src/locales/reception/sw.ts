@@ -281,6 +281,10 @@ export const receptionSw = {
     titre: "Usajili mpya",
     titreModification: "Modification du patient",
     patientSelectionne: "Mgonjwa aliyechaguliwa:",
+    recherchePatient: {
+      revenirNouveau: "New patient",
+      effacer: "Clear selection",
+    },
     etapes: {
       infosPatient: "Taarifa za mgonjwa",
       motifVisite: "Sababu ya ziara",

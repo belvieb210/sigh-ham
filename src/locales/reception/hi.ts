@@ -279,6 +279,10 @@ export const receptionHi = {
     titre: "नया पंजीकरण",
     titreModification: "Modification du patient",
     patientSelectionne: "चयनित रोगी:",
+    recherchePatient: {
+      revenirNouveau: "New patient",
+      effacer: "Clear selection",
+    },
     etapes: {
       infosPatient: "रोगी की जानकारी",
       motifVisite: "विज़िट का कारण",

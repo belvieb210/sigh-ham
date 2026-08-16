@@ -276,6 +276,10 @@ export const receptionFr = {
     titre: "Nouvel enregistrement",
     titreModification: "Modification du patient",
     patientSelectionne: "Patient sélectionné :",
+    recherchePatient: {
+      revenirNouveau: "Nouveau patient",
+      effacer: "Effacer la sélection",
+    },
     etapes: {
       infosPatient: "Informations patient",
       motifVisite: "Motif de visite",

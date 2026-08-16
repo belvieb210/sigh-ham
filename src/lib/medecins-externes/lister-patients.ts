@@ -1,6 +1,7 @@
 import "server-only";
 import { calculerAge } from "@/features/caisse/utils-format";
 import { prisma } from "@/lib/prisma";
+import { dedupliquerFilesAttenteParDossier } from "@/lib/transferts/visibilite-salle";
 
 export interface PatientFileMedecinsExternes {
   id: string;
@@ -86,7 +87,8 @@ export async function listerPatientsMedecinsExternes(
     orderBy: { numeroOrdre: "asc" },
   });
 
-  const dossierIds = files.map((f) => f.passage.dossier.id);
+  const filesDedup = dedupliquerFilesAttenteParDossier(files);
+  const dossierIds = filesDedup.map((f) => f.passage.dossier.id);
   const transfertsSortants =
     dossierIds.length === 0
       ? []
@@ -116,7 +118,7 @@ export async function listerPatientsMedecinsExternes(
     byDossier.set(t.dossierId, list);
   }
 
-  return files.map((f, idx) => {
+  return filesDedup.map((f, idx) => {
     const p = f.passage.dossier.patient;
     const sortants = byDossier.get(f.passage.dossier.id) ?? [];
     // ignorer auto-transfert local (origine = destination)

@@ -1,7 +1,7 @@
 import "server-only";
 import type { StatutFacture } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { listerPatientsFileAttenteSalle } from "@/lib/transferts/visibilite-salle";
+import { listerPatientsFileAttenteSalle, dedupliquerFilesAttenteParDossier } from "@/lib/transferts/visibilite-salle";
 import {
   estNumeroFacturePharmacie,
   evaluerEtatFacturationDual,
@@ -290,7 +290,7 @@ const includePassageCaisse = {
 
 /** Tous les patients en file caisse (y compris facture payée en attente de transfert). */
 async function listerFileAttenteCaissePourTransferts() {
-  return prisma.fileAttente.findMany({
+  const files = await prisma.fileAttente.findMany({
     where: {
       salle: { code: "CAISSE" },
       serviLe: null,
@@ -298,6 +298,7 @@ async function listerFileAttenteCaissePourTransferts() {
     include: includePassageCaisse,
     orderBy: { numeroOrdre: "asc" },
   });
+  return dedupliquerFilesAttenteParDossier(files);
 }
 
 export async function listerPatientsEnAttenteCaisse(options?: {

@@ -24,11 +24,43 @@ export function filtreTransfertVisibleSalle(codeSalle: CodeSalle) {
   } as const;
 }
 
+type FileAttenteAvecDossier = {
+  id: string;
+  arriveLe: Date;
+  numeroOrdre: number;
+  passage: { dossier: { id: string } };
+};
+
+/**
+ * Une seule file par dossier patient dans une salle, même si plusieurs passages
+ * ont été créés (transferts multi-origines).
+ */
+export function dedupliquerFilesAttenteParDossier<T extends FileAttenteAvecDossier>(
+  files: T[]
+): T[] {
+  const parDossier = new Map<string, T>();
+
+  const prefer = (a: T, b: T): T => {
+    const ta = a.arriveLe.getTime();
+    const tb = b.arriveLe.getTime();
+    if (ta !== tb) return ta > tb ? a : b;
+    return a.numeroOrdre <= b.numeroOrdre ? a : b;
+  };
+
+  for (const file of files) {
+    const dossierId = file.passage.dossier.id;
+    const existant = parDossier.get(dossierId);
+    parDossier.set(dossierId, existant ? prefer(file, existant) : file);
+  }
+
+  return [...parDossier.values()].sort((a, b) => a.numeroOrdre - b.numeroOrdre);
+}
+
 /**
  * Patients visibles dans la file d'attente d'une salle (transfert confirmé uniquement).
  */
 export async function listerPatientsFileAttenteSalle(codeSalle: CodeSalle) {
-  return prisma.fileAttente.findMany({
+  const files = await prisma.fileAttente.findMany({
     where: {
       salle: { code: codeSalle },
       serviLe: null,
@@ -74,6 +106,8 @@ export async function listerPatientsFileAttenteSalle(codeSalle: CodeSalle) {
     },
     orderBy: { numeroOrdre: "asc" },
   });
+
+  return dedupliquerFilesAttenteParDossier(files);
 }
 
 /**

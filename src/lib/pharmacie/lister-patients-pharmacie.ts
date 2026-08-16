@@ -1,6 +1,7 @@
 import "server-only";
 import { calculerAge } from "@/features/caisse/utils-format";
 import { prisma } from "@/lib/prisma";
+import { dedupliquerFilesAttenteParDossier } from "@/lib/transferts/visibilite-salle";
 import type { PatientFilePharmacie, StatsPharmacieJour } from "@/lib/pharmacie/types";
 
 const COULEURS_ORIENTATION: Record<string, string> = {
@@ -85,7 +86,8 @@ export async function listerPatientsPharmacie(): Promise<PatientFilePharmacie[]>
     },
     orderBy: { numeroOrdre: "asc" },
   });
-  const dossierIds = files.map((f) => f.passage.dossier.id);
+  const filesDedup = dedupliquerFilesAttenteParDossier(files);
+  const dossierIds = filesDedup.map((f) => f.passage.dossier.id);
 
   const transfertsSortants =
     dossierIds.length === 0
@@ -116,7 +118,7 @@ export async function listerPatientsPharmacie(): Promise<PatientFilePharmacie[]>
     sortantParDossier.set(t.dossierId, liste);
   }
 
-  const resultats = files.map((file) => {
+  const resultats = filesDedup.map((file) => {
     const dossier = file.passage.dossier;
     const patient = dossier.patient;
     const transfertEntrant = file.passage.transferts.find(

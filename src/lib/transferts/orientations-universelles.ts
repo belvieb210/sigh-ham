@@ -79,9 +79,45 @@ export const META_ORIENTATION_SALLE: Record<
   },
 };
 
-/** Toutes les salles cliniques sauf l'origine. */
-export function orientationsSauf(origine: CodeSalle): CodeSalle[] {
+/**
+ * Destinations autorisées par salle d'origine.
+ * Salles absentes (CAISSE, LABORATOIRE) : toutes les autres salles cliniques.
+ */
+export const ORIENTATIONS_DESTINATION_PAR_SALLE: Partial<
+  Record<CodeSalle, readonly CodeSalle[]>
+> = {
+  RECEPTION: ["CAISSE", "INFIRMIERS"],
+  INFIRMIERS: ["MEDECINS"],
+  MEDECINS: ["CAISSE"],
+  MEDECINS_EXTERNES: ["CAISSE"],
+  EGLISE: ["CAISSE"],
+  PHARMACIE: ["CAISSE"],
+};
+
+/** Destinations autorisées depuis une salle (restriction métier ou toutes sauf origine). */
+export function orientationsAutoriseesDepuis(origine: CodeSalle): CodeSalle[] {
+  const limitees = ORIENTATIONS_DESTINATION_PAR_SALLE[origine];
+  if (limitees) return [...limitees];
   return SALLES_CLINIQUES.filter((c) => c !== origine);
+}
+
+/** @deprecated Préférer orientationsAutoriseesDepuis — conservé pour compatibilité interne. */
+export function orientationsSauf(origine: CodeSalle): CodeSalle[] {
+  return orientationsAutoriseesDepuis(origine);
+}
+
+export function filtrerOrientationsAutorisees(
+  origine: CodeSalle,
+  orientations: string[]
+): CodeSalle[] {
+  const autorisees = new Set<string>(orientationsAutoriseesDepuis(origine));
+  return [
+    ...new Set(
+      orientations
+        .map((o) => o.trim())
+        .filter((o): o is CodeSalle => autorisees.has(o))
+    ),
+  ];
 }
 
 export function metaOrientationsSauf(origine: CodeSalle) {
@@ -99,5 +135,5 @@ export function estOrientationCliniqueValide(
   origine: CodeSalle,
   destination: string
 ): destination is CodeSalle {
-  return orientationsSauf(origine).includes(destination as CodeSalle);
+  return orientationsAutoriseesDepuis(origine).includes(destination as CodeSalle);
 }

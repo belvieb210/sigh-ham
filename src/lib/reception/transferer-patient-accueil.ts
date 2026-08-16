@@ -16,29 +16,13 @@ import type {
   DonneesTransfertAccueil,
   ResultatTransfertAccueil,
 } from "@/lib/reception/types";
+import { orientationsAutoriseesDepuis } from "@/lib/transferts/orientations-universelles";
 
-/** Salles disponibles via orientation rapide / transfert manuel */
-export const ORIENTATIONS_TRANSFERT_RAPIDE: CodeSalle[] = [
-  "INFIRMIERS",
-  "MEDECINS",
-  "CAISSE",
-  "LABORATOIRE",
-  "PHARMACIE",
-  "HOSPITALISATION",
-  "EGLISE",
-  "MEDECINS_EXTERNES",
-];
+/** Salles disponibles via orientation rapide / transfert manuel (réception) */
+export const ORIENTATIONS_TRANSFERT_RAPIDE: CodeSalle[] =
+  orientationsAutoriseesDepuis("RECEPTION");
 
-const ORIENTATIONS_VALIDES: CodeSalle[] = [
-  "INFIRMIERS",
-  "MEDECINS",
-  "CAISSE",
-  "LABORATOIRE",
-  "PHARMACIE",
-  "HOSPITALISATION",
-  "EGLISE",
-  "MEDECINS_EXTERNES",
-];
+const ORIENTATIONS_VALIDES: CodeSalle[] = orientationsAutoriseesDepuis("RECEPTION");
 
 const LIBELLES_MOTIF: Record<string, string> = {
   consultation: "Consultation générale",

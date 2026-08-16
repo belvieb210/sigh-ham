@@ -157,7 +157,9 @@ function BlocOrientation({
         </p>
       ) : (
         <p className="mb-2 text-xs text-texte-secondaire">
-          {t("reception.panneau.aideOrientationMultiAccueil")}
+          {t("reception.panneau.aideOrientationReception", {
+            defaultValue: "Transfert vers la Caisse ou les Infirmiers uniquement.",
+          })}
         </p>
       )}
       <OrientationRapide

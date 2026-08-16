@@ -18,6 +18,7 @@ import {
 } from "@/constants/reception";
 import { filtrerOrientationsMedecinsExternes } from "@/constants/medecins-externes";
 import { filtrerOrientationsEglise } from "@/constants/eglise";
+import { filtrerOrientationsReception } from "@/constants/reception";
 import { useOrientationRapide } from "@/features/reception/contexte-orientation-rapide";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import type { DonneesFormulairePatient } from "@/lib/reception/types";
@@ -162,13 +163,13 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
         ? filtrerOrientationsMedecinsExternes(brutes)
         : espace.prefixeApi.includes("eglise")
           ? filtrerOrientationsEglise(brutes)
-          : brutes;
+          : filtrerOrientationsReception(brutes);
       if (codes.length === 0) {
         setMessagePanneau(
           espace.prefixeApi.includes("medecins-externes") ||
             espace.prefixeApi.includes("eglise")
             ? "La destination autorisée est la Caisse."
-            : "Sélectionnez au moins une destination."
+            : "Sélectionnez Caisse ou Infirmiers."
         );
         return;
       }

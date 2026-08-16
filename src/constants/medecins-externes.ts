@@ -13,7 +13,7 @@ import {
   MessageSquare,
   Bell,
 } from "lucide-react";
-import { ORIENTATIONS_RAPIDES } from "@/constants/reception";
+import { metaOrientationsSauf } from "@/lib/transferts/orientations-universelles";
 import type { CodeSalle } from "@/generated/prisma/client";
 
 export const BADGES_NAVIGATION_MEDECINS_EXTERNES = {
@@ -104,8 +104,8 @@ export const NAVIGATION_BASSE_MEDECINS_EXTERNES = [
 ] as const;
 
 /** Médecins externes : transfert uniquement vers la Caisse */
-export const ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES = ORIENTATIONS_RAPIDES.filter(
-  (o) => o.value === "CAISSE"
+export const ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES = metaOrientationsSauf(
+  "MEDECINS_EXTERNES"
 );
 
 export const CODES_ORIENTATION_MEDECINS_EXTERNES: CodeSalle[] = ["CAISSE"];

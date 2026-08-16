@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import { filtrerOrientationsMedecinsExternes } from "@/constants/medecins-externes";
 import { filtrerOrientationsEglise } from "@/constants/eglise";
+import { filtrerOrientationsReception } from "@/constants/reception";
 import {
   Search,
   Printer,
@@ -72,7 +73,7 @@ export function ActionsRapidesReception({
       ? filtrerOrientationsMedecinsExternes(brutes)
       : espace.prefixeApi.includes("eglise")
         ? filtrerOrientationsEglise(brutes)
-        : brutes;
+        : filtrerOrientationsReception(brutes);
     if (codes.length === 0) {
       setErreur(t("reception.actions.destinationRequise"));
       setMessage(null);

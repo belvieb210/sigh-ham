@@ -1,5 +1,11 @@
 /** Navigation et contenus — Salle de Réception HAM LABORATOIRE */
 
+import type { CodeSalle } from "@/generated/prisma/client";
+import {
+  filtrerOrientationsAutorisees,
+  metaOrientationsSauf,
+  orientationsAutoriseesDepuis,
+} from "@/lib/transferts/orientations-universelles";
 import {
   Home,
   UserPlus,
@@ -116,64 +122,31 @@ export const ASSURANCES = [
   "Autre",
 ] as const;
 
-export const ORIENTATIONS_RAPIDES = [
-  {
-    value: "INFIRMIERS",
-    label: "Infirmiers",
-    description: "Prise de signes vitaux",
-    couleur: "border-violet-300 bg-violet-50 text-violet-700",
-    couleurMobile: "border-bleu-medical bg-bleu-medical-clair ring-2 ring-bleu-medical/20",
-  },
-  {
-    value: "MEDECINS",
-    label: "Médecin",
-    description: "Consultation médicale",
-    couleur: "border-blue-200 bg-blue-50 text-blue-700",
-    couleurMobile: "border-gris-bordure bg-white",
-  },
-  {
-    value: "CAISSE",
-    label: "Caisse",
-    description: "Facturation et paiement",
-    couleur: "border-rose-200 bg-rose-50 text-rose-700",
-    couleurMobile: "border-gris-bordure bg-white",
-  },
-  {
-    value: "LABORATOIRE",
-    label: "Laboratoire",
-    description: "Analyses et prélèvements",
-    couleur: "border-cyan-200 bg-cyan-50 text-cyan-800",
-    couleurMobile: "border-gris-bordure bg-white",
-  },
-  {
-    value: "PHARMACIE",
-    label: "Pharmacie",
-    description: "Délivrance des médicaments",
-    couleur: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    couleurMobile: "border-gris-bordure bg-white",
-  },
-  {
-    value: "HOSPITALISATION",
-    label: "Hospitalisation",
-    description: "Admission / lits",
-    couleur: "border-indigo-200 bg-indigo-50 text-indigo-800",
-    couleurMobile: "border-gris-bordure bg-white",
-  },
-  {
-    value: "MEDECINS_EXTERNES",
-    label: "Médecin externe",
-    description: "Patient référé par un médecin",
-    couleur: "border-amber-200 bg-amber-50 text-amber-800",
-    couleurMobile: "border-gris-bordure bg-white",
-  },
-  {
-    value: "EGLISE",
-    label: "Église",
-    description: "Examens prénuptiaux",
-    couleur: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    couleurMobile: "border-gris-bordure bg-white",
-  },
-] as const;
+const COULEUR_MOBILE_DEFAUT = "border-gris-bordure bg-white";
+const COULEUR_MOBILE_INFIRMIERS =
+  "border-bleu-medical bg-bleu-medical-clair ring-2 ring-bleu-medical/20";
+
+/** Réception : Caisse et Infirmiers uniquement */
+export const ORIENTATIONS_RAPIDES = metaOrientationsSauf("RECEPTION").map((o) => ({
+  ...o,
+  couleurMobile:
+    o.value === "INFIRMIERS" ? COULEUR_MOBILE_INFIRMIERS : COULEUR_MOBILE_DEFAUT,
+})) as readonly {
+  value: CodeSalle;
+  label: string;
+  description: string;
+  couleur: string;
+  couleurMobile: string;
+}[];
+
+export const CODES_ORIENTATION_RECEPTION: CodeSalle[] =
+  orientationsAutoriseesDepuis("RECEPTION");
+
+export function filtrerOrientationsReception(orientations: string[]): CodeSalle[] {
+  const codes = filtrerOrientationsAutorisees("RECEPTION", orientations);
+  if (codes.length === 0) return ["INFIRMIERS"];
+  return codes;
+}
 
 export const MOTIFS_PRINCIPAUX = [
   { value: "consultation", label: "Consultation générale" },
@@ -184,14 +157,15 @@ export const MOTIFS_PRINCIPAUX = [
   { value: "autre", label: "Autre" },
 ] as const;
 
-export const ORIENTATIONS_RECEPTION = [
-  { value: "INFIRMIERS", label: "Infirmiers", desc: "Prise de signes vitaux" },
-  { value: "MEDECINS", label: "Médecin", desc: "Consultation médicale" },
-  { value: "CAISSE", label: "Caisse", desc: "Facturation et paiement" },
-  { value: "LABORATOIRE", label: "Laboratoire", desc: "Analyses directes" },
-  { value: "PHARMACIE", label: "Pharmacie", desc: "Médicaments" },
-  { value: "HOSPITALISATION", label: "Hospitalisation", desc: "Admission" },
-] as const;
+export const ORIENTATIONS_RECEPTION = metaOrientationsSauf("RECEPTION").map((o) => ({
+  value: o.value,
+  label: o.label,
+  desc: o.description,
+})) as readonly {
+  value: CodeSalle;
+  label: string;
+  desc: string;
+}[];
 
 export const STATISTIQUES_RECEPTION = {
   patientsAujourdhui: { valeur: 34, evolution: "+12%", libelle: "par rapport à hier" },

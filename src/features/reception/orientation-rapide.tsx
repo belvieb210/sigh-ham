@@ -15,7 +15,13 @@ import {
 import { ORIENTATIONS_RAPIDES } from "@/constants/reception";
 import { cn } from "@/lib/utils";
 
-type OptionOrientation = (typeof ORIENTATIONS_RAPIDES)[number];
+type OptionOrientation = {
+  value: string;
+  label: string;
+  description: string;
+  couleur: string;
+  couleurMobile?: string;
+};
 
 const ICONES: Record<string, React.ComponentType<{ className?: string }>> = {
   INFIRMIERS: Stethoscope,
@@ -30,7 +36,7 @@ const ICONES: Record<string, React.ComponentType<{ className?: string }>> = {
 
 function libelleOrientation(
   t: (key: string, options?: { defaultValue?: string }) => string,
-  opt: (typeof ORIENTATIONS_RAPIDES)[number]
+  opt: OptionOrientation
 ) {
   return {
     label: t(`reception.orientations.${opt.value}.label`, {

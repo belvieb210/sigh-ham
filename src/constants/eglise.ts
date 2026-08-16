@@ -14,7 +14,7 @@ import {
   MessageSquare,
   Bell,
 } from "lucide-react";
-import { ORIENTATIONS_RAPIDES } from "@/constants/reception";
+import { metaOrientationsSauf } from "@/lib/transferts/orientations-universelles";
 import type { CodeSalle } from "@/generated/prisma/client";
 
 export const NAVIGATION_EGLISE = {
@@ -63,9 +63,7 @@ export const NAVIGATION_BASSE_EGLISE = [
   { href: "/sigh/eglise/transferts", id: "transferes", icone: ArrowRightLeft },
 ] as const;
 
-export const ORIENTATIONS_RAPIDES_EGLISE = ORIENTATIONS_RAPIDES.filter(
-  (o) => o.value === "CAISSE"
-);
+export const ORIENTATIONS_RAPIDES_EGLISE = metaOrientationsSauf("EGLISE");
 
 export const CODES_ORIENTATION_EGLISE: CodeSalle[] = ["CAISSE"];
 

@@ -62,8 +62,6 @@ export const receptionFr = {
       "{{count}} patient(s) cochés : cochez les salles de destination pour les orienter tous ensemble.",
     aideOrientationMultiAccueil:
       "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
-    aideOrientationReception:
-      "Transfert vers la Caisse, les Infirmiers ou le Médecin.",
     destinationVerrouillee:
       "Transfert déjà confirmé : l'orientation rapide ne peut plus être modifiée.",
     aucunPatient: "Aucun patient sélectionné",

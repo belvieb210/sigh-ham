@@ -44,8 +44,16 @@ function CorpsAccueil({ agentNom }: { agentNom: string }) {
           message?: string;
         };
         if (!res.ok) throw new Error(data.message ?? "Impossible de charger.");
-        setDonneesPrefill(data);
-        definirDepuisDonneesCompletes(data);
+        const dossierId = patient.dossierId ?? data.dossierId;
+        definirDepuisDonneesCompletes({
+          ...data,
+          dossierId,
+        });
+        setDonneesPrefill({
+          ...data,
+          typeVisite: "ancien",
+          dossierId,
+        });
         refFormulaire.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       } catch {
         setPatientSelectionneId(null);
@@ -69,9 +77,17 @@ function CorpsAccueil({ agentNom }: { agentNom: string }) {
             message?: string;
           };
           if (!res.ok) return;
-          setDonneesPrefill(data);
+          const dossierId = detail.dossierId ?? data.dossierId;
+          definirDepuisDonneesCompletes({
+            ...data,
+            dossierId,
+          });
+          setDonneesPrefill({
+            ...data,
+            typeVisite: "ancien",
+            dossierId,
+          });
           setPatientSelectionneId(data.numeroPatient);
-          definirDepuisDonneesCompletes(data);
         } catch {
           /* ignore */
         }

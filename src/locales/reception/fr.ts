@@ -839,6 +839,13 @@ export const receptionFr = {
     videNonConfirmes: "Aucun patient en attente de confirmation. Les transferts confirmés n'apparaissent plus ici.",
     ouvrirFiltres: "Ouvrir les filtres",
     fermerFiltres: "Fermer les filtres",
+    recherchePatient: {
+      label: "Rechercher un patient existant",
+      placeholder: "Rechercher patient (nom, n° PAT, téléphone)…",
+      motif: "Patient existant",
+      orientation: "—",
+      statut: "Ancien patient",
+    },
     filtres: {
       dateDu: "Du (date)",
       dateAu: "Au (date)",

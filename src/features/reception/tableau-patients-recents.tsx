@@ -18,6 +18,7 @@ import {
   STATUTS_SANS_TRANSFERE,
   type FiltresRecentsReception,
 } from "@/features/reception/formulaire-filtres-recents-reception";
+import { RecherchePatientExistantRecents } from "@/features/reception/recherche-patient-existant-recents";
 import { cn } from "@/lib/utils";
 
 interface PropsTableauPatientsRecents {
@@ -34,6 +35,7 @@ export function TableauPatientsRecents({
   const espace = useEspaceApi();
   const { t } = useTranslation();
   const [patients, setPatients] = useState<PatientEnregistre[]>([]);
+  const [patientsEpingles, setPatientsEpingles] = useState<PatientEnregistre[]>([]);
   const [chargement, setChargement] = useState(true);
   const [patientExamens, setPatientExamens] = useState<PatientEnregistre | null>(null);
   const [modaleExamensOuverte, setModaleExamensOuverte] = useState(false);
@@ -89,10 +91,30 @@ export function TableauPatientsRecents({
     return () => window.removeEventListener(espace.evenementPatientsModifies, rafraichir);
   }, [charger]);
 
+  const patientsFusionnes = useMemo(() => {
+    const idsVus = new Set<string>();
+    const fusion: PatientEnregistre[] = [];
+
+    for (const patient of [...patientsEpingles, ...patients]) {
+      if (idsVus.has(patient.id)) continue;
+      idsVus.add(patient.id);
+      fusion.push(patient);
+    }
+
+    return fusion;
+  }, [patients, patientsEpingles]);
+
   const patientsFiltres = useMemo(
-    () => patients.filter((p) => patientCorrespondFiltresListe(p, appliques)),
-    [patients, appliques]
+    () => patientsFusionnes.filter((p) => patientCorrespondFiltresListe(p, appliques)),
+    [patientsFusionnes, appliques]
   );
+
+  const ajouterPatientRecherche = useCallback((patient: PatientEnregistre) => {
+    setPatientsEpingles((liste) => {
+      const sansDoublon = liste.filter((p) => p.id !== patient.id);
+      return [patient, ...sansDoublon];
+    });
+  }, []);
 
   const nbFiltres = compterFiltresRecents(appliques);
 
@@ -119,9 +141,14 @@ export function TableauPatientsRecents({
             })}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setFiltresOuverts((o) => !o)}
+        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+          <RecherchePatientExistantRecents
+            className="flex-1 sm:flex-none"
+            onPatientAjoute={ajouterPatientRecherche}
+          />
+          <button
+            type="button"
+            onClick={() => setFiltresOuverts((o) => !o)}
           aria-expanded={filtresOuverts}
           aria-label={
             filtresOuverts
@@ -144,7 +171,8 @@ export function TableauPatientsRecents({
           >
             {nbFiltres}
           </span>
-        </button>
+          </button>
+        </div>
       </div>
 
       {filtresOuverts && (
@@ -164,7 +192,7 @@ export function TableauPatientsRecents({
       {patientsFiltres.length === 0 ? (
         <section className="rounded-xl border border-dashed border-gris-bordure bg-white px-4 py-10 text-center shadow-sm">
           <p className="text-sm text-texte-secondaire">
-            {patients.length === 0
+            {patientsFusionnes.length === 0
               ? t("reception.tableau.videNonConfirmes")
               : t("reception.liste.aucunPatient")}
           </p>

@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # =============================================================================
-# SIGH HAM — Purge données opérationnelles (VPS ou local)
+# SIGH HAM — Purge données opérationnelles (MANUEL UNIQUEMENT)
 #
-# 1. Export PostgreSQL complet (sauvegarde)
-# 2. Purge patients / factures / flux cliniques
-# 3. Conserve agents, médicaments, catalogue examens
+# Ne s'exécute jamais via deploy, cron ou migrations.
+# Conserve : utilisateurs, roles, permissions, salles, medicaments, catalogue examens.
 #
 # Usage :
 #   bash deploy/purge-donnees-operationnelles.sh              # demande confirmation

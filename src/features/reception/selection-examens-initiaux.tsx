@@ -43,17 +43,12 @@ export function SelectionExamensInitiaux({
   const espace = useEspaceApi();
   const { t } = useTranslation();
   const [recherche, setRecherche] = useState("");
-  const [recherchePaquet, setRecherchePaquet] = useState("");
   const [resultats, setResultats] = useState<TypeExamenReception[]>([]);
   const [resultatsPaquets, setResultatsPaquets] = useState<PaquetBilanReception[]>([]);
   const [chargement, setChargement] = useState(false);
-  const [chargementPaquets, setChargementPaquets] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [erreurPaquets, setErreurPaquets] = useState<string | null>(null);
   const [listeOuverte, setListeOuverte] = useState(false);
-  const [listePaquetsOuverte, setListePaquetsOuverte] = useState(false);
   const conteneurRef = useRef<HTMLDivElement>(null);
-  const conteneurPaquetsRef = useRef<HTMLDivElement>(null);
 
   const idsExamensSelectionnes = useMemo(
     () => new Set(selectionExamens.map((e) => e.id)),
@@ -77,26 +72,36 @@ export function SelectionExamensInitiaux({
     selectionPaquets.length +
     selectionExamens.filter((e) => !idsDansPaquets.has(e.id)).length;
 
-  const chargerExamens = useCallback(
+  const chargerCatalogue = useCallback(
     async (terme: string) => {
       setChargement(true);
       setErreur(null);
 
       try {
-        const params = new URLSearchParams();
-        if (terme.trim()) params.set("q", terme.trim());
-        params.set("limite", "12");
+        const paramsExamen = new URLSearchParams();
+        if (terme.trim()) paramsExamen.set("q", terme.trim());
+        paramsExamen.set("limite", "12");
 
-        const res = await fetch(
-          `${espace.prefixeApi}/examens?${params.toString()}`
-        );
-        if (!res.ok) throw new Error(t("reception.examens.indisponible"));
+        const paramsPaquet = new URLSearchParams();
+        if (terme.trim()) paramsPaquet.set("q", terme.trim());
 
-        const data = (await res.json()) as { examens?: TypeExamenReception[] };
-        setResultats(data.examens ?? []);
+        const [resExamens, resPaquets] = await Promise.all([
+          fetch(`${espace.prefixeApi}/examens?${paramsExamen.toString()}`),
+          fetch(`${espace.prefixeApi}/paquets-bilans?${paramsPaquet.toString()}`),
+        ]);
+
+        if (!resExamens.ok) throw new Error(t("reception.examens.indisponible"));
+        if (!resPaquets.ok) throw new Error(t("reception.paquets.indisponible"));
+
+        const dataExamens = (await resExamens.json()) as { examens?: TypeExamenReception[] };
+        const dataPaquets = (await resPaquets.json()) as { paquets?: PaquetBilanReception[] };
+
+        setResultats(dataExamens.examens ?? []);
+        setResultatsPaquets(dataPaquets.paquets ?? []);
       } catch {
         setErreur(t("reception.examens.chargement"));
         setResultats([]);
+        setResultatsPaquets([]);
       } finally {
         setChargement(false);
       }
@@ -104,55 +109,18 @@ export function SelectionExamensInitiaux({
     [espace.prefixeApi, t]
   );
 
-  const chargerPaquets = useCallback(
-    async (terme: string) => {
-      setChargementPaquets(true);
-      setErreurPaquets(null);
-
-      try {
-        const params = new URLSearchParams();
-        if (terme.trim()) params.set("q", terme.trim());
-
-        const res = await fetch(
-          `${espace.prefixeApi}/paquets-bilans?${params.toString()}`
-        );
-        if (!res.ok) throw new Error(t("reception.paquets.indisponible"));
-
-        const data = (await res.json()) as { paquets?: PaquetBilanReception[] };
-        setResultatsPaquets(data.paquets ?? []);
-      } catch {
-        setErreurPaquets(t("reception.paquets.chargement"));
-        setResultatsPaquets([]);
-      } finally {
-        setChargementPaquets(false);
-      }
-    },
-    [espace.prefixeApi, t]
-  );
-
   useEffect(() => {
     const delai = window.setTimeout(() => {
-      chargerExamens(recherche);
+      void chargerCatalogue(recherche);
     }, 280);
 
     return () => window.clearTimeout(delai);
-  }, [recherche, chargerExamens]);
-
-  useEffect(() => {
-    const delai = window.setTimeout(() => {
-      chargerPaquets(recherchePaquet);
-    }, 280);
-
-    return () => window.clearTimeout(delai);
-  }, [recherchePaquet, chargerPaquets]);
+  }, [recherche, chargerCatalogue]);
 
   useEffect(() => {
     const fermerSiClicExterieur = (event: MouseEvent) => {
       if (!conteneurRef.current?.contains(event.target as Node)) {
         setListeOuverte(false);
-      }
-      if (!conteneurPaquetsRef.current?.contains(event.target as Node)) {
-        setListePaquetsOuverte(false);
       }
     };
 
@@ -176,7 +144,7 @@ export function SelectionExamensInitiaux({
     onChangeExamens(
       selectionExamens.filter((e) => !paquet.examens.some((x) => x.id === e.id))
     );
-    setListePaquetsOuverte(false);
+    setListeOuverte(false);
   };
 
   const retirerPaquet = (id: string) => {
@@ -187,6 +155,8 @@ export function SelectionExamensInitiaux({
     (e) => !idsExamensSelectionnes.has(e.id) && !idsDansPaquets.has(e.id)
   );
   const paquetsFiltres = resultatsPaquets.filter((p) => !idsPaquetsSelectionnes.has(p.id));
+  const aucunResultatCatalogue =
+    paquetsFiltres.length === 0 && resultatsFiltres.length === 0;
 
   const examensIndividuelsAffichables = selectionExamens.filter(
     (e) => !idsDansPaquets.has(e.id)
@@ -195,210 +165,146 @@ export function SelectionExamensInitiaux({
   return (
     <div className="space-y-5">
       {!lectureSeule && (
-        <>
-          <div ref={conteneurPaquetsRef} className="relative">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-texte-secondaire">
-              {t("reception.paquets.titre")}
-            </p>
-            <div className="relative">
-              <Search
-                className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire"
-                aria-hidden
-              />
-              <input
-                type="search"
-                value={recherchePaquet}
-                onChange={(e) => {
-                  setRecherchePaquet(e.target.value);
-                  setListePaquetsOuverte(true);
-                }}
-                onFocus={() => setListePaquetsOuverte(true)}
-                placeholder={t("reception.paquets.recherchePlaceholder")}
-                className={cn(
-                  CLASSE_CHAMP_RECEPTION,
-                  "pl-10 pr-10 shadow-sm transition-shadow focus:shadow-md"
-                )}
-                autoComplete="off"
-              />
-              {recherchePaquet && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRecherchePaquet("");
-                    setListePaquetsOuverte(true);
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-texte-secondaire hover:bg-gris-tres-clair hover:text-texte-principal"
-                  aria-label={t("reception.examens.effacerRecherche")}
-                >
-                  <X className="h-4 w-4" />
-                </button>
+        <div ref={conteneurRef} className="relative">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-texte-secondaire">
+            {t("reception.paquets.examensUnitaires")}
+          </p>
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire"
+              aria-hidden
+            />
+            <input
+              type="search"
+              value={recherche}
+              onChange={(e) => {
+                setRecherche(e.target.value);
+                setListeOuverte(true);
+              }}
+              onFocus={() => setListeOuverte(true)}
+              placeholder={t("reception.examens.recherchePlaceholder")}
+              className={cn(
+                CLASSE_CHAMP_RECEPTION,
+                "pl-10 pr-10 shadow-sm transition-shadow focus:shadow-md"
               )}
-            </div>
-
-            {listePaquetsOuverte && (
-              <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-lg ring-1 ring-black/5">
-                {chargementPaquets ? (
-                  <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-texte-secondaire">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {t("reception.paquets.rechercheEnCours")}
-                  </div>
-                ) : erreurPaquets ? (
-                  <p className="px-4 py-6 text-center text-sm text-red-600">{erreurPaquets}</p>
-                ) : paquetsFiltres.length === 0 ? (
-                  <p className="px-4 py-6 text-center text-sm text-texte-secondaire">
-                    {recherchePaquet.trim()
-                      ? t("reception.paquets.aucunResultat")
-                      : t("reception.paquets.catalogueVide")}
-                  </p>
-                ) : (
-                  <ul className="max-h-72 divide-y divide-gris-bordure/60 overflow-y-auto">
-                    {paquetsFiltres.map((paquet) => (
-                      <li key={paquet.id}>
-                        <button
-                          type="button"
-                          onClick={() => ajouterPaquet(paquet)}
-                          className="flex w-full items-center gap-3 px-2 py-2 text-left transition-colors hover:bg-violet-50/60"
-                        >
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
-                            <Layers className="h-4 w-4" aria-hidden />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-mono text-xs font-bold text-violet-700">
-                                {paquet.code}
-                              </span>
-                              <span className="rounded-full bg-gris-tres-clair px-2 py-0.5 text-[10px] font-medium text-texte-secondaire">
-                                {t("reception.paquets.forfait")}
-                              </span>
-                            </div>
-                            <p className="mt-0.5 truncate text-sm font-medium text-texte-principal">
-                              {paquet.libelle}
-                            </p>
-                            <p className="mt-0.5 text-[11px] text-texte-secondaire">
-                              {t("reception.paquets.countExamens", {
-                                count: paquet.examens.length,
-                              })}
-                            </p>
-                          </div>
-                          <div className="shrink-0 text-right">
-                            <p className="text-sm font-bold tabular-nums text-texte-principal">
-                              {formaterPrix(paquet.prix)}
-                            </p>
-                            <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-violet-700">
-                              <Plus className="h-3.5 w-3.5" />
-                              {t("reception.examens.ajouter")}
-                            </span>
-                          </div>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div ref={conteneurRef} className="relative">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-texte-secondaire">
-              {t("reception.paquets.examensUnitaires")}
-            </p>
-            <div className="relative">
-              <Search
-                className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire"
-                aria-hidden
-              />
-              <input
-                type="search"
-                value={recherche}
-                onChange={(e) => {
-                  setRecherche(e.target.value);
+              autoComplete="off"
+            />
+            {recherche && (
+              <button
+                type="button"
+                onClick={() => {
+                  setRecherche("");
                   setListeOuverte(true);
                 }}
-                onFocus={() => setListeOuverte(true)}
-                placeholder={t("reception.examens.recherchePlaceholder")}
-                className={cn(
-                  CLASSE_CHAMP_RECEPTION,
-                  "pl-10 pr-10 shadow-sm transition-shadow focus:shadow-md"
-                )}
-                autoComplete="off"
-              />
-              {recherche && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRecherche("");
-                    setListeOuverte(true);
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-texte-secondaire hover:bg-gris-tres-clair hover:text-texte-principal"
-                  aria-label={t("reception.examens.effacerRecherche")}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {listeOuverte && (
-              <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-lg ring-1 ring-black/5">
-                {chargement ? (
-                  <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-texte-secondaire">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {t("reception.examens.rechercheEnCours")}
-                  </div>
-                ) : erreur ? (
-                  <p className="px-4 py-6 text-center text-sm text-red-600">{erreur}</p>
-                ) : resultatsFiltres.length === 0 ? (
-                  <p className="px-4 py-6 text-center text-sm text-texte-secondaire">
-                    {recherche.trim()
-                      ? t("reception.examens.aucunResultat")
-                      : t("reception.examens.catalogueVide")}
-                  </p>
-                ) : (
-                  <ul className="max-h-72 divide-y divide-gris-bordure/60 overflow-y-auto">
-                    {resultatsFiltres.map((examen) => (
-                      <li key={examen.id}>
-                        <button
-                          type="button"
-                          onClick={() => ajouterExamen(examen)}
-                          className="flex w-full items-center gap-3 px-2 py-1.5 text-left transition-colors hover:bg-bleu-medical-clair/40"
-                        >
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-bleu-medical-clair text-bleu-medical">
-                            <FlaskConical className="h-4 w-4" aria-hidden />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-mono text-xs font-bold text-bleu-medical">
-                                {examen.code}
-                              </span>
-                              <span className="rounded-full bg-gris-tres-clair px-2 py-0.5 text-[10px] font-medium text-texte-secondaire">
-                                {examen.categorie}
-                              </span>
-                            </div>
-                            <p className="mt-0.5 truncate text-sm font-medium text-texte-principal">
-                              {examen.libelle}
-                            </p>
-                            <p className="mt-0.5 flex items-center gap-1 text-[11px] text-texte-secondaire">
-                              <Clock className="h-3 w-3" aria-hidden />
-                              {t("reception.examens.resultatDelai", { h: examen.delaiHeures })}
-                            </p>
-                          </div>
-                          <div className="shrink-0 text-right">
-                            <p className="text-sm font-bold tabular-nums text-texte-principal">
-                              {formaterPrix(examen.prix)}
-                            </p>
-                            <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-bleu-medical">
-                              <Plus className="h-3.5 w-3.5" />
-                              {t("reception.examens.ajouter")}
-                            </span>
-                          </div>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-texte-secondaire hover:bg-gris-tres-clair hover:text-texte-principal"
+                aria-label={t("reception.examens.effacerRecherche")}
+              >
+                <X className="h-4 w-4" />
+              </button>
             )}
           </div>
-        </>
+
+          {listeOuverte && (
+            <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-lg ring-1 ring-black/5">
+              {chargement ? (
+                <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-texte-secondaire">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("reception.examens.rechercheEnCours")}
+                </div>
+              ) : erreur ? (
+                <p className="px-4 py-6 text-center text-sm text-red-600">{erreur}</p>
+              ) : aucunResultatCatalogue ? (
+                <p className="px-4 py-6 text-center text-sm text-texte-secondaire">
+                  {recherche.trim()
+                    ? t("reception.examens.aucunResultat")
+                    : t("reception.examens.catalogueVide")}
+                </p>
+              ) : (
+                <ul className="max-h-80 divide-y divide-gris-bordure/60 overflow-y-auto">
+                  {paquetsFiltres.map((paquet) => (
+                    <li key={`paquet-${paquet.id}`}>
+                      <button
+                        type="button"
+                        onClick={() => ajouterPaquet(paquet)}
+                        className="flex w-full items-center gap-3 px-2 py-2 text-left transition-colors hover:bg-violet-50/60"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
+                          <Layers className="h-4 w-4" aria-hidden />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-xs font-bold text-violet-700">
+                              {paquet.code}
+                            </span>
+                            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">
+                              {t("reception.paquets.forfait")}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 truncate text-sm font-medium text-texte-principal">
+                            {paquet.libelle}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-texte-secondaire">
+                            {t("reception.paquets.countExamens", {
+                              count: paquet.examens.length,
+                            })}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-sm font-bold tabular-nums text-texte-principal">
+                            {formaterPrix(paquet.prix)}
+                          </p>
+                          <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-violet-700">
+                            <Plus className="h-3.5 w-3.5" />
+                            {t("reception.examens.ajouter")}
+                          </span>
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                  {resultatsFiltres.map((examen) => (
+                    <li key={examen.id}>
+                      <button
+                        type="button"
+                        onClick={() => ajouterExamen(examen)}
+                        className="flex w-full items-center gap-3 px-2 py-1.5 text-left transition-colors hover:bg-bleu-medical-clair/40"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-bleu-medical-clair text-bleu-medical">
+                          <FlaskConical className="h-4 w-4" aria-hidden />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-xs font-bold text-bleu-medical">
+                              {examen.code}
+                            </span>
+                            <span className="rounded-full bg-gris-tres-clair px-2 py-0.5 text-[10px] font-medium text-texte-secondaire">
+                              {examen.categorie}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 truncate text-sm font-medium text-texte-principal">
+                            {examen.libelle}
+                          </p>
+                          <p className="mt-0.5 flex items-center gap-1 text-[11px] text-texte-secondaire">
+                            <Clock className="h-3 w-3" aria-hidden />
+                            {t("reception.examens.resultatDelai", { h: examen.delaiHeures })}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-sm font-bold tabular-nums text-texte-principal">
+                            {formaterPrix(examen.prix)}
+                          </p>
+                          <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-bleu-medical">
+                            <Plus className="h-3.5 w-3.5" />
+                            {t("reception.examens.ajouter")}
+                          </span>
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">

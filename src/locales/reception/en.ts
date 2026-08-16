@@ -409,7 +409,8 @@ export const receptionEn = {
     },
   },
   examens: {
-    recherchePlaceholder: "Search by code, name or category (e.g. NFS, D-DIMER)...",
+    recherchePlaceholder:
+      "Search test or panel (e.g. CBC, prenuptial, full panel)…",
     effacerRecherche: "Clear search",
     rechercheEnCours: "Searching…",
     aucunResultat: "No test matches your search.",
@@ -436,7 +437,7 @@ export const receptionEn = {
   },
   paquets: {
     titre: "Test panels (flat rate)",
-    examensUnitaires: "Individual tests",
+    examensUnitaires: "Tests and panels",
     recherchePlaceholder: "Search a test panel (e.g. prenuptial, full panel)...",
     rechercheEnCours: "Searching…",
     aucunResultat: "No panel matches your search.",

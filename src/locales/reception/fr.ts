@@ -411,7 +411,8 @@ export const receptionFr = {
     },
   },
   examens: {
-    recherchePlaceholder: "Rechercher par code, nom ou catégorie (ex. NFS, D-DIMER)...",
+    recherchePlaceholder:
+      "Rechercher examen ou paquet bilan (ex. NFS, prénuptial, bilan complet)…",
     effacerRecherche: "Effacer la recherche",
     rechercheEnCours: "Recherche en cours…",
     aucunResultat: "Aucun examen ne correspond à votre recherche.",
@@ -438,12 +439,13 @@ export const receptionFr = {
   },
   paquets: {
     titre: "Paquets bilans (forfait)",
-    examensUnitaires: "Examens à l'unité",
+    examensUnitaires: "Examens et bilans",
     recherchePlaceholder: "Rechercher un paquet bilan (ex. prénuptial, bilan complet)...",
     rechercheEnCours: "Recherche en cours…",
     aucunResultat: "Aucun paquet ne correspond à votre recherche.",
     catalogueVide: "Aucun paquet bilan actif.",
-    catalogueHint: "Choisissez un paquet forfaitaire ou des examens à l'unité.",
+    catalogueHint:
+      "Paquets forfaitaires (violet) et examens à l'unité dans la même recherche.",
     forfait: "Forfait",
     countExamens: "{{count}} examen inclus",
     countExamens_plural: "{{count}} examens inclus",

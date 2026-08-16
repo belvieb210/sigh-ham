@@ -85,6 +85,7 @@ async function prochainNumeroClientPharmacie(
 
 /**
  * Réserve une plage de numéros PAT-YYYY##### sans collision (dans une transaction).
+ * Verrou advisory + max séquence existante (pas un simple COUNT) pour éviter les doublons concurrents.
  */
 export async function reserverNumerosTransfert(
   tx: ClientTransaction,
@@ -93,17 +94,28 @@ export async function reserverNumerosTransfert(
 ): Promise<string[]> {
   if (count <= 0) return [];
 
-  const annee = date.getFullYear();
-  const debutAnnee = new Date(annee, 0, 1);
-  const finAnnee = new Date(annee + 1, 0, 1);
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(8822017)`;
 
-  const dejaCetteAnnee = await tx.transfert.count({
-    where: { emisLe: { gte: debutAnnee, lt: finAnnee } },
+  const annee = date.getFullYear();
+  const prefix = `PAT-${annee}`;
+
+  const transferts = await tx.transfert.findMany({
+    where: { numeroTransfert: { startsWith: prefix } },
+    select: { numeroTransfert: true },
   });
+
+  let maxSeq = 0;
+  for (const t of transferts) {
+    if (!t.numeroTransfert) continue;
+    const m = /^PAT-(\d{4})(\d+)$/.exec(t.numeroTransfert);
+    if (!m || Number.parseInt(m[1]!, 10) !== annee) continue;
+    const seq = Number.parseInt(m[2]!, 10);
+    if (Number.isFinite(seq)) maxSeq = Math.max(maxSeq, seq);
+  }
 
   const numeros: string[] = [];
   for (let i = 0; i < count; i++) {
-    numeros.push(`PAT-${annee}${String(dejaCetteAnnee + 1 + i).padStart(5, "0")}`);
+    numeros.push(`PAT-${annee}${String(maxSeq + 1 + i).padStart(5, "0")}`);
   }
   return numeros;
 }

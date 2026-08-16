@@ -18,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { basculerOrientationsMulti } from "@/features/transferts/utilitaires-orientation-lot";
 
 export interface OptionOrientationLabo {
   id: string;
@@ -75,10 +76,7 @@ export function ListeOrientationLaboratoire({
   const basculer = (id: string) => {
     if (desactive) return;
     if (multiple && onChangeMulti) {
-      const deja = valeurs.includes(id);
-      onChangeMulti(
-        deja ? valeurs.filter((v) => v !== id) : [...valeurs, id]
-      );
+      onChangeMulti(basculerOrientationsMulti(valeurs, id));
       return;
     }
     onChange?.(id);

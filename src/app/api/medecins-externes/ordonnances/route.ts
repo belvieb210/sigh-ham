@@ -26,7 +26,10 @@ export async function GET(req: Request) {
       where: {
         medecinId: session.utilisateur.id,
         ...(dossierId ? { dossierId } : {}),
-        dossier: { patient: { medecinExterneId } },
+        dossier: {
+          salleEnregistrement: "MEDECINS_EXTERNES",
+          patient: { medecinExterneId },
+        },
       },
       include: {
         lignes: { include: { medicament: true } },

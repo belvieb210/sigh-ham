@@ -77,8 +77,10 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
       setMessagePanneau(null);
       setPatientSelectionne(patient);
       const codes =
-        (patient as { codesSalleDestination?: string[] }).codesSalleDestination ??
-        (patient.codeSalleDestination ? [patient.codeSalleDestination] : ["LABORATOIRE"]);
+        patient.section === "paye" && patient.peutOrienterSortant
+          ? ((patient as { codesSalleDestination?: string[] }).codesSalleDestination ??
+            (patient.codeSalleDestination ? [patient.codeSalleDestination] : ["LABORATOIRE"]))
+          : ["LABORATOIRE"];
       definirOrientations(codes);
       const age = calculerAge(patient.dateNaissance);
       setResume({
@@ -131,7 +133,19 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
             : [];
 
       if (cibles.length === 0) {
-        setMessagePanneau("Sélectionnez au moins un patient.");
+        setMessagePanneau("Sélectionnez au moins un patient (section factures payées).");
+        return;
+      }
+
+      const dossiersNonPayes = cibles.filter((id) => {
+        const courant =
+          patientSelectionne?.dossierId === id ? patientSelectionne : null;
+        return courant ? !courant.peutOrienterSortant : false;
+      });
+      if (dossiersNonPayes.length > 0) {
+        setMessagePanneau(
+          "Seuls les patients de la section « Factures payées » peuvent être orientés."
+        );
         return;
       }
 

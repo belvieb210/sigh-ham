@@ -2,8 +2,6 @@ import "server-only";
 import type { CodeSalle } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ORIENTATIONS_RAPIDES_CAISSE } from "@/constants/caisse";
-import { dossierEstFacturePayeePourTransfert } from "@/lib/caisse/facturation-transfert";
-import { confirmerTransfertCaisse } from "@/lib/caisse/gestion-transfert-caisse";
 import { synchroniserTransfertsEnAttente } from "@/lib/transferts/multi-destinations";
 
 export const ORIENTATIONS_CAISSE_AUTORISEES: CodeSalle[] = ORIENTATIONS_RAPIDES_CAISSE.map(
@@ -97,21 +95,7 @@ export async function reorienterPatientDepuisCaisse(
     motifPrefixe: "Orientation rapide caisse",
   });
 
-  let transfertConfirme = false;
   const premierTransfertId = resultat.transfertIds[0] ?? null;
-
-  // Facture payée : confirmer automatiquement pour rendre le patient visible en labo / pharmacie, etc.
-  if (premierTransfertId) {
-    const facturePayee = await dossierEstFacturePayeePourTransfert(dossierId);
-    if (facturePayee) {
-      try {
-        await confirmerTransfertCaisse(caissierId, premierTransfertId);
-        transfertConfirme = true;
-      } catch (error) {
-        console.error("[reorienterPatientDepuisCaisse] auto-confirmation", error);
-      }
-    }
-  }
 
   return {
     transfertId: premierTransfertId,
@@ -121,6 +105,6 @@ export async function reorienterPatientDepuisCaisse(
     codeSalle: resultat.salles[0]?.code ?? codes[0],
     codesSalle: resultat.salles.map((s) => s.code),
     transfertMisAJour: resultat.crees === 0 && resultat.supprimes === 0,
-    transfertConfirme,
+    transfertConfirme: false,
   };
 }

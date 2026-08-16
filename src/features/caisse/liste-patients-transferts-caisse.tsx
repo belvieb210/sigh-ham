@@ -31,11 +31,276 @@ import { cn } from "@/lib/utils";
 
 const PAR_PAGE = 15;
 
+function filtrerPatients(
+  patients: PatientTransfertCaisse[],
+  filtres: FiltresFacturationCaisse
+) {
+  return patients.filter((p) => {
+    if (filtres.nom.trim() && !p.nom.toLowerCase().includes(filtres.nom.trim().toLowerCase())) {
+      return false;
+    }
+    if (
+      filtres.prenom.trim() &&
+      !p.prenom.toLowerCase().includes(filtres.prenom.trim().toLowerCase())
+    ) {
+      return false;
+    }
+    if (filtres.telephone.trim()) {
+      const tel = (p.telephone ?? "").replace(/\s+/g, "");
+      if (!tel.includes(filtres.telephone.trim().replace(/\s+/g, ""))) return false;
+    }
+    if (filtres.numeroEnreg.trim()) {
+      const enreg = filtres.numeroEnreg.trim().toLowerCase();
+      if (
+        !p.numeroDossier.toLowerCase().includes(enreg) &&
+        !p.numeroPatient.toLowerCase().includes(enreg)
+      ) {
+        return false;
+      }
+    }
+    if (filtres.idEntite.trim()) {
+      const id = filtres.idEntite.trim().toLowerCase();
+      if (
+        !p.dossierId.toLowerCase().includes(id) &&
+        !p.numeroPatient.toLowerCase().includes(id) &&
+        !p.cleListe.toLowerCase().includes(id)
+      ) {
+        return false;
+      }
+    }
+    if (filtres.dateDu || filtres.dateAu) {
+      const jour = (p.arriveeLe ?? "").slice(0, 10);
+      if (!jour) return false;
+      if (filtres.dateDu && jour < filtres.dateDu) return false;
+      if (filtres.dateAu && jour > filtres.dateAu) return false;
+    }
+    return true;
+  });
+}
+
+interface PropsSectionTableau {
+  titre: string;
+  vide: string;
+  patients: PatientTransfertCaisse[];
+  page: number;
+  onPageChange: (page: number) => void;
+  afficherMenuSortant: boolean;
+  selectionCochee: boolean;
+  onBasculerSelectionPage: (coche: boolean) => void;
+  patientSelectionne: PatientTransfertCaisse | null;
+  dossiersCoches: string[];
+  onSelectionner: (p: PatientTransfertCaisse) => void;
+  onBasculerCoche: (dossierId: string) => void;
+  onVoirExamens: (p: PatientTransfertCaisse) => void;
+  onRafraichir: () => void;
+}
+
+function SectionTableauTransferts({
+  titre,
+  vide,
+  patients,
+  page,
+  onPageChange,
+  afficherMenuSortant,
+  selectionCochee,
+  onBasculerSelectionPage,
+  patientSelectionne,
+  dossiersCoches,
+  onSelectionner,
+  onBasculerCoche,
+  onVoirExamens,
+  onRafraichir,
+}: PropsSectionTableau) {
+  const { t } = useTranslation();
+  const totalPages = Math.max(1, Math.ceil(patients.length / PAR_PAGE));
+  const pageCourante = Math.min(page, totalPages);
+  const debut = (pageCourante - 1) * PAR_PAGE;
+  const pagePatients = patients.slice(debut, debut + PAR_PAGE);
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
+      <div className="border-b border-gris-bordure px-2 py-1.5">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
+          {titre}
+        </h3>
+      </div>
+
+      {pagePatients.length === 0 ? (
+        <p className="px-4 py-12 text-center text-sm text-texte-secondaire">{vide}</p>
+      ) : (
+        <div className="conteneur-tableau-sigh">
+          <table className="tableau-sigh">
+            <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
+              <tr>
+                <th className="w-8 px-3 py-2.5">
+                  {afficherMenuSortant && (
+                    <CaseCocheLigne
+                      coche={selectionCochee}
+                      onChange={onBasculerSelectionPage}
+                      ariaLabel={t("caisse.transferts.selectionnerTout")}
+                    />
+                  )}
+                </th>
+                <th className="px-2 py-1.5 font-semibold">ID</th>
+                <th className="px-2 py-1.5 font-semibold">{t("caisse.transferts.colNom")}</th>
+                <th className="hidden px-2 py-1.5 font-semibold md:table-cell">
+                  {t("caisse.transferts.colTelephone")}
+                </th>
+                <th className="hidden px-2 py-1.5 font-semibold lg:table-cell">
+                  {t("caisse.transferts.colProvenance")}
+                </th>
+                <th className="px-2 py-1.5 font-semibold">
+                  {afficherMenuSortant
+                    ? t("caisse.transferts.colOrientation")
+                    : t("caisse.transferts.colDestination")}
+                </th>
+                <th className="px-2 py-1.5 font-semibold">{t("caisse.transferts.colStatut")}</th>
+                <th className="px-2 py-1.5 font-semibold">{t("caisse.transferts.colHeure")}</th>
+                <th className="px-2 py-1.5 font-semibold">{t("caisse.transferts.colActions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagePatients.map((p) => {
+                const selectionne = patientSelectionne?.cleListe === p.cleListe;
+                return (
+                  <tr
+                    key={p.cleListe}
+                    onClick={() => onSelectionner(p)}
+                    className={cn(
+                      "cursor-pointer border-t border-gris-bordure/70 transition-colors",
+                      selectionne ? "bg-bleu-medical-clair/40" : "hover:bg-slate-50"
+                    )}
+                  >
+                    <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
+                      {afficherMenuSortant && (
+                        <CaseCocheLigne
+                          coche={dossiersCoches.includes(p.dossierId)}
+                          onChange={() => onBasculerCoche(p.dossierId)}
+                        />
+                      )}
+                    </td>
+                    <td className="px-2 py-1.5 font-mono text-xs text-texte-secondaire">
+                      {p.numeroPatient}
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <span className="block font-semibold text-texte-principal">
+                        <span className="inline-flex flex-wrap items-center gap-1.5">
+                          {p.nomComplet}
+                          <BadgeTypePersonneCaisse estClientWalkIn={p.estClientWalkIn} />
+                        </span>
+                      </span>
+                      <span className="block text-[11px] text-texte-secondaire">
+                        {p.estClientWalkIn
+                          ? t("caisse.facturation.nbMedicaments", {
+                              count: p.nombreMedicaments,
+                            })
+                          : `${p.nombreExamens} examen(s)`}{" "}
+                        · {formaterMontantCaisse(p.montantEstime)}
+                      </span>
+                    </td>
+                    <td className="hidden px-2 py-1.5 text-texte-secondaire md:table-cell">
+                      {p.telephone}
+                    </td>
+                    <td className="hidden max-w-[160px] truncate px-2 py-1.5 text-texte-secondaire lg:table-cell">
+                      {p.provenance}
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                          p.orientationCouleur
+                        )}
+                      >
+                        {p.orientation}
+                      </span>
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                          p.statutCouleur
+                        )}
+                      >
+                        {p.statut}
+                      </span>
+                    </td>
+                    <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">{p.heure}</td>
+                    <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onSelectionner(p);
+                            onVoirExamens(p);
+                          }}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:border-bleu-medical/40 hover:text-bleu-medical"
+                          aria-label={t("caisse.transferts.voirExamens")}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        {afficherMenuSortant && p.transfertSortantId ? (
+                          <MenuActionsTransfertCaisse
+                            patient={p}
+                            onRafraichir={onRafraichir}
+                          />
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-2 py-1.5 text-xs text-texte-secondaire">
+        <p>
+          {t("caisse.transferts.pagination", {
+            debut: patients.length === 0 ? 0 : debut + 1,
+            fin: Math.min(debut + PAR_PAGE, patients.length),
+            total: patients.length,
+          })}
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            disabled={pageCourante <= 1}
+            onClick={() => onPageChange(Math.max(1, pageCourante - 1))}
+            className="inline-flex items-center gap-1 rounded-lg border border-gris-bordure px-3 py-1.5 disabled:opacity-40"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            {t("caisse.transferts.prec")}
+          </button>
+          <button
+            type="button"
+            disabled={pageCourante >= totalPages}
+            onClick={() => onPageChange(Math.min(totalPages, pageCourante + 1))}
+            className="inline-flex items-center gap-1 rounded-lg border border-gris-bordure px-3 py-1.5 disabled:opacity-40"
+          >
+            {t("caisse.transferts.suiv")}
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function ListePatientsTransfertsCaisse() {
   const { t } = useTranslation();
-  const { patientSelectionne, selectionnerPatient, synchroniserSelection, dossiersCoches, basculerDossierCoche, definirCoches } =
-    useSelectionTransfertCaisse();
-  const [patients, setPatients] = useState<PatientTransfertCaisse[]>([]);
+  const {
+    patientSelectionne,
+    selectionnerPatient,
+    synchroniserSelection,
+    dossiersCoches,
+    basculerDossierCoche,
+    definirCoches,
+  } = useSelectionTransfertCaisse();
+  const [patientsEntrants, setPatientsEntrants] = useState<PatientTransfertCaisse[]>([]);
+  const [patientsFacturesPayes, setPatientsFacturesPayes] = useState<PatientTransfertCaisse[]>(
+    []
+  );
   const [stats, setStats] = useState<StatsTransfertsCaisse>({
     enAttente: 0,
     enCours: 0,
@@ -51,7 +316,8 @@ export function ListePatientsTransfertsCaisse() {
   const [filtresAppliques, setFiltresAppliques] = useState<FiltresFacturationCaisse>(
     FILTRES_FACTURATION_VIDES
   );
-  const [page, setPage] = useState(1);
+  const [pageEntrants, setPageEntrants] = useState(1);
+  const [pagePayes, setPagePayes] = useState(1);
   const [patientExamens, setPatientExamens] = useState<PatientTransfertCaisse | null>(null);
   const [modaleExamensOuverte, setModaleExamensOuverte] = useState(false);
 
@@ -65,14 +331,18 @@ export function ListePatientsTransfertsCaisse() {
       try {
         const res = await fetch("/api/caisse/transferts");
         const data = (await res.json()) as {
+          patientsEntrants?: PatientTransfertCaisse[];
+          patientsFacturesPayes?: PatientTransfertCaisse[];
           patients?: PatientTransfertCaisse[];
           stats?: StatsTransfertsCaisse;
           message?: string;
         };
         if (!res.ok) throw new Error(data.message ?? "Chargement impossible.");
-        const liste = data.patients ?? [];
-        setPatients(liste);
-        synchroniserSelection(liste);
+        const entrants = data.patientsEntrants ?? [];
+        const payes = data.patientsFacturesPayes ?? data.patients ?? [];
+        setPatientsEntrants(entrants);
+        setPatientsFacturesPayes(payes);
+        synchroniserSelection([...entrants, ...payes]);
         setStats(
           data.stats ?? {
             enAttente: 0,
@@ -106,90 +376,46 @@ export function ListePatientsTransfertsCaisse() {
     return () => window.removeEventListener(EVENEMENT_CAISSE_PATIENTS_MODIFIES, onModifie);
   }, [charger]);
 
-  const filtres = useMemo(() => {
-    const f = filtresAppliques;
-    return patients.filter((p) => {
-      if (f.nom.trim() && !p.nom.toLowerCase().includes(f.nom.trim().toLowerCase())) {
-        return false;
-      }
-      if (
-        f.prenom.trim() &&
-        !p.prenom.toLowerCase().includes(f.prenom.trim().toLowerCase())
-      ) {
-        return false;
-      }
-      if (f.telephone.trim()) {
-        const tel = (p.telephone ?? "").replace(/\s+/g, "");
-        if (!tel.includes(f.telephone.trim().replace(/\s+/g, ""))) return false;
-      }
-      if (f.numeroEnreg.trim()) {
-        const enreg = f.numeroEnreg.trim().toLowerCase();
-        if (
-          !p.numeroDossier.toLowerCase().includes(enreg) &&
-          !p.numeroPatient.toLowerCase().includes(enreg)
-        ) {
-          return false;
-        }
-      }
-      if (f.idEntite.trim()) {
-        const id = f.idEntite.trim().toLowerCase();
-        if (
-          !p.dossierId.toLowerCase().includes(id) &&
-          !p.numeroPatient.toLowerCase().includes(id) &&
-          !p.cleListe.toLowerCase().includes(id)
-        ) {
-          return false;
-        }
-      }
-      if (f.dateDu || f.dateAu) {
-        const jour = (p.arriveeLe ?? "").slice(0, 10);
-        if (!jour) return false;
-        if (f.dateDu && jour < f.dateDu) return false;
-        if (f.dateAu && jour > f.dateAu) return false;
-      }
-      return true;
-    });
-  }, [patients, filtresAppliques]);
+  const entrantsFiltres = useMemo(
+    () => filtrerPatients(patientsEntrants, filtresAppliques),
+    [patientsEntrants, filtresAppliques]
+  );
+  const payesFiltres = useMemo(
+    () => filtrerPatients(patientsFacturesPayes, filtresAppliques),
+    [patientsFacturesPayes, filtresAppliques]
+  );
 
   const nbFiltresActifs = compterFiltresActifs(filtresAppliques, {
     ignorerNumeroFacture: true,
   });
 
-  const totalPages = Math.max(1, Math.ceil(filtres.length / PAR_PAGE));
-  const pageCourante = Math.min(page, totalPages);
-  const debut = (pageCourante - 1) * PAR_PAGE;
-  const pagePatients = filtres.slice(debut, debut + PAR_PAGE);
-
   useEffect(() => {
-    setPage(1);
+    setPageEntrants(1);
+    setPagePayes(1);
   }, [filtresAppliques]);
 
   const appliquerFiltres = () => {
     setFiltresAppliques(brouillonFiltres);
-    setPage(1);
+    setPageEntrants(1);
+    setPagePayes(1);
   };
 
   const reinitialiserFiltres = () => {
     setBrouillonFiltres(FILTRES_FACTURATION_VIDES);
     setFiltresAppliques(FILTRES_FACTURATION_VIDES);
-    setPage(1);
+    setPageEntrants(1);
+    setPagePayes(1);
   };
 
-  const toutSelectionne =
-    filtres.length > 0 && filtres.every((p) => dossiersCoches.includes(p.dossierId));
-
-  const basculerSelectionTout = () => {
-    definirCoches(
-      filtres.map((p) => p.dossierId),
-      !toutSelectionne
-    );
-  };
+  const toutSelectionnePayes =
+    payesFiltres.length > 0 &&
+    payesFiltres.every((p) => dossiersCoches.includes(p.dossierId));
 
   const exporterSelection = () => {
     const cibles =
       dossiersCoches.length > 0
-        ? filtres.filter((p) => dossiersCoches.includes(p.dossierId))
-        : filtres;
+        ? payesFiltres.filter((p) => dossiersCoches.includes(p.dossierId))
+        : [...entrantsFiltres, ...payesFiltres];
     if (cibles.length === 0) return;
     telechargerCsv(
       `caisse-patients-${new Date().toISOString().slice(0, 10)}.csv`,
@@ -237,13 +463,13 @@ export function ListePatientsTransfertsCaisse() {
       accent: "text-emerald-600",
     },
     {
-      label: t("caisse.transferts.stats.resultats"),
-      valeur: filtres.length,
+      label: t("caisse.transferts.stats.entrants"),
+      valeur: entrantsFiltres.length,
       accent: "text-bleu-medical",
     },
     {
-      label: t("caisse.transferts.stats.enAttente"),
-      valeur: stats.enAttente,
+      label: t("caisse.transferts.stats.facturesPayees"),
+      valeur: payesFiltres.length,
       accent: "text-texte-principal",
     },
     {
@@ -252,6 +478,9 @@ export function ListePatientsTransfertsCaisse() {
       accent: "text-texte-principal",
     },
   ];
+
+  const debutPagePayes = (Math.min(pagePayes, Math.max(1, Math.ceil(payesFiltres.length / PAR_PAGE))) - 1) * PAR_PAGE;
+  const pagePatientsPayes = payesFiltres.slice(debutPagePayes, debutPagePayes + PAR_PAGE);
 
   return (
     <div className="space-y-4">
@@ -297,8 +526,13 @@ export function ListePatientsTransfertsCaisse() {
           </span>
         </button>
         <BoutonsOutilsListe
-          toutSelectionne={toutSelectionne}
-          onSelectionnerTout={basculerSelectionTout}
+          toutSelectionne={toutSelectionnePayes}
+          onSelectionnerTout={() =>
+            definirCoches(
+              payesFiltres.map((p) => p.dossierId),
+              !toutSelectionnePayes
+            )
+          }
           onExporter={exporterSelection}
           labelSelectionnerTout={t("caisse.transferts.selectionnerTout")}
           labelExporter={t("caisse.transferts.exporterSelection")}
@@ -316,179 +550,61 @@ export function ListePatientsTransfertsCaisse() {
         />
       )}
 
-      <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-        <div className="border-b border-gris-bordure px-2 py-1.5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-            {t("caisse.transferts.tableau")}
-          </h3>
-        </div>
+      <SectionTableauTransferts
+        titre={t("caisse.transferts.tableauEntrants")}
+        vide={
+          nbFiltresActifs > 0
+            ? t("caisse.facturation.filtres.aucunResultat")
+            : t("caisse.transferts.videEntrants")
+        }
+        patients={entrantsFiltres}
+        page={pageEntrants}
+        onPageChange={setPageEntrants}
+        afficherMenuSortant={false}
+        selectionCochee={false}
+        onBasculerSelectionPage={() => undefined}
+        patientSelectionne={patientSelectionne}
+        dossiersCoches={dossiersCoches}
+        onSelectionner={selectionnerPatient}
+        onBasculerCoche={basculerDossierCoche}
+        onVoirExamens={(p) => {
+          setPatientExamens(p);
+          setModaleExamensOuverte(true);
+        }}
+        onRafraichir={() => void charger({ silencieux: true })}
+      />
 
-        {pagePatients.length === 0 ? (
-          <p className="px-4 py-12 text-center text-sm text-texte-secondaire">
-            {nbFiltresActifs > 0
-              ? t("caisse.facturation.filtres.aucunResultat")
-              : t("caisse.transferts.vide")}
-          </p>
-        ) : (
-          <>
-            <div className="conteneur-tableau-sigh">
-        <table className="tableau-sigh">
-              <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-texte-secondaire">
-                <tr>
-                  <th className="w-8 px-3 py-2.5">
-                    <CaseCocheLigne
-                      coche={
-                        pagePatients.length > 0 &&
-                        pagePatients.every((p) => dossiersCoches.includes(p.dossierId))
-                      }
-                      onChange={(coche) =>
-                        definirCoches(
-                          pagePatients.map((p) => p.dossierId),
-                          coche
-                        )
-                      }
-                      ariaLabel={t("caisse.transferts.selectionnerTout")}
-                    />
-                  </th>
-                  <th className="px-2 py-1.5 font-semibold">ID</th>
-                  <th className="px-2 py-1.5 font-semibold">{t("caisse.transferts.colNom")}</th>
-                  <th className="hidden px-2 py-1.5 font-semibold md:table-cell">
-                    {t("caisse.transferts.colTelephone")}
-                  </th>
-                  <th className="hidden px-2 py-1.5 font-semibold lg:table-cell">
-                    {t("caisse.transferts.colProvenance")}
-                  </th>
-                  <th className="px-2 py-1.5 font-semibold">
-                    {t("caisse.transferts.colOrientation")}
-                  </th>
-                  <th className="px-2 py-1.5 font-semibold">{t("caisse.transferts.colStatut")}</th>
-                  <th className="px-2 py-1.5 font-semibold">{t("caisse.transferts.colHeure")}</th>
-                  <th className="px-2 py-1.5 font-semibold">{t("caisse.transferts.colActions")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pagePatients.map((p) => {
-                  const selectionne = patientSelectionne?.cleListe === p.cleListe;
-                  return (
-                    <tr
-                      key={p.cleListe}
-                      onClick={() => selectionnerPatient(p)}
-                      className={cn(
-                        "cursor-pointer border-t border-gris-bordure/70 transition-colors",
-                        selectionne ? "bg-bleu-medical-clair/40" : "hover:bg-slate-50"
-                      )}
-                    >
-                      <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
-                        <CaseCocheLigne
-                          coche={dossiersCoches.includes(p.dossierId)}
-                          onChange={() => basculerDossierCoche(p.dossierId)}
-                        />
-                      </td>
-                      <td className="px-2 py-1.5 font-mono text-xs text-texte-secondaire">
-                        {p.numeroPatient}
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <span className="block font-semibold text-texte-principal">
-                          <span className="inline-flex flex-wrap items-center gap-1.5">
-                            {p.nomComplet}
-                            <BadgeTypePersonneCaisse estClientWalkIn={p.estClientWalkIn} />
-                          </span>
-                        </span>
-                        <span className="block text-[11px] text-texte-secondaire">
-                          {p.estClientWalkIn
-                            ? t("caisse.facturation.nbMedicaments", {
-                                count: p.nombreMedicaments,
-                              })
-                            : `${p.nombreExamens} examen(s)`}{" "}
-                          · {formaterMontantCaisse(p.montantEstime)}
-                        </span>
-                      </td>
-                      <td className="hidden px-2 py-1.5 text-texte-secondaire md:table-cell">
-                        {p.telephone}
-                      </td>
-                      <td className="hidden max-w-[160px] truncate px-2 py-1.5 text-texte-secondaire lg:table-cell">
-                        {p.provenance}
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <span
-                          className={cn(
-                            "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                            p.orientationCouleur
-                          )}
-                        >
-                          {p.orientation}
-                        </span>
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <span
-                          className={cn(
-                            "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                            p.statutCouleur
-                          )}
-                        >
-                          {p.statut}
-                        </span>
-                      </td>
-                      <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">{p.heure}</td>
-                      <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              selectionnerPatient(p);
-                              setPatientExamens(p);
-                              setModaleExamensOuverte(true);
-                            }}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:border-bleu-medical/40 hover:text-bleu-medical"
-                            aria-label={t("caisse.transferts.voirExamens")}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <MenuActionsTransfertCaisse
-                            patient={p}
-                            onRafraichir={() => void charger({ silencieux: true })}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            </div>
-          </>
-        )}
-
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gris-bordure px-2 py-1.5 text-xs text-texte-secondaire">
-          <p>
-            {t("caisse.transferts.pagination", {
-              debut: filtres.length === 0 ? 0 : debut + 1,
-              fin: Math.min(debut + PAR_PAGE, filtres.length),
-              total: filtres.length,
-            })}
-          </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={pageCourante <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="inline-flex items-center gap-1 rounded-lg border border-gris-bordure px-3 py-1.5 disabled:opacity-40"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-              {t("caisse.transferts.prec")}
-            </button>
-            <button
-              type="button"
-              disabled={pageCourante >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              className="inline-flex items-center gap-1 rounded-lg border border-gris-bordure px-3 py-1.5 disabled:opacity-40"
-            >
-              {t("caisse.transferts.suiv")}
-              <ChevronRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-      </section>
+      <SectionTableauTransferts
+        titre={t("caisse.transferts.tableauFacturesPayees")}
+        vide={
+          nbFiltresActifs > 0
+            ? t("caisse.facturation.filtres.aucunResultat")
+            : t("caisse.transferts.videFacturesPayees")
+        }
+        patients={payesFiltres}
+        page={pagePayes}
+        onPageChange={setPagePayes}
+        afficherMenuSortant
+        selectionCochee={
+          pagePatientsPayes.length > 0 &&
+          pagePatientsPayes.every((p) => dossiersCoches.includes(p.dossierId))
+        }
+        onBasculerSelectionPage={(coche) =>
+          definirCoches(
+            pagePatientsPayes.map((p) => p.dossierId),
+            coche
+          )
+        }
+        patientSelectionne={patientSelectionne}
+        dossiersCoches={dossiersCoches}
+        onSelectionner={selectionnerPatient}
+        onBasculerCoche={basculerDossierCoche}
+        onVoirExamens={(p) => {
+          setPatientExamens(p);
+          setModaleExamensOuverte(true);
+        }}
+        onRafraichir={() => void charger({ silencieux: true })}
+      />
 
       <ModaleExamensCaisse
         patient={patientExamens}

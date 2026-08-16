@@ -77,7 +77,11 @@ function ResumeEtOrientation() {
           </p>
         ) : (
           <p className="mb-2 text-xs text-texte-secondaire">
-            {t("caisse.transferts.selectionnerPourOrienter")}
+            {selection?.patientSelectionne &&
+            !selection.patientSelectionne.peutOrienterSortant &&
+            !(selection?.dossiersCoches?.length ?? 0)
+              ? t("caisse.transferts.selectionnerPourOrienterEntrant")
+              : t("caisse.transferts.selectionnerPourOrienter")}
           </p>
         )}
         <OrientationRapideCaisse
@@ -87,7 +91,12 @@ function ResumeEtOrientation() {
           multiple
           desactive={
             selection?.modificationEnCours ||
-            (!(selection?.dossiersCoches?.length) && !selection?.patientSelectionne)
+            (!(selection?.dossiersCoches?.length) && !selection?.patientSelectionne) ||
+            Boolean(
+              selection?.patientSelectionne &&
+                !selection.patientSelectionne.peutOrienterSortant &&
+                !(selection?.dossiersCoches?.length ?? 0)
+            )
           }
         />
         {selection?.messagePanneau && (

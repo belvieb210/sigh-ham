@@ -178,6 +178,8 @@ export interface PatientAttenteAccueil {
 
 export interface PatientTransfertCaisse {
   cleListe: string;
+  /** entrant = transféré vers caisse ; paye = facture payée, prêt à orienter */
+  section: "entrant" | "paye";
   dossierId: string;
   numeroPatient: string;
   numeroDossier: string;
@@ -211,6 +213,8 @@ export interface PatientTransfertCaisse {
   medecinResponsable: string | null;
   estClientWalkIn: boolean;
   nombreMedicaments: number;
+  /** Orientation sortante autorisée (facture payée, section bas) */
+  peutOrienterSortant?: boolean;
 }
 
 export interface StatsTransfertsCaisse {

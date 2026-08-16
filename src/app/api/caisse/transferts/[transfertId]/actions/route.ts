@@ -5,8 +5,33 @@ import {
   recupererTransfertCaisse,
   rejeterTransfertCaisse,
 } from "@/lib/caisse/gestion-transfert-caisse";
+import {
+  confirmerTransfertEntrantCaisse,
+  recupererTransfertEntrantCaisse,
+  rejeterTransfertEntrantCaisse,
+} from "@/lib/caisse/gestion-transfert-entrant-caisse";
+import { prisma } from "@/lib/prisma";
 
 type ActionTransfert = "confirmer" | "rejeter" | "recuperer";
+
+async function determinerSensTransfert(transfertId: string) {
+  const transfert = await prisma.transfert.findUnique({
+    where: { id: transfertId },
+    include: {
+      salleOrigine: { select: { code: true } },
+      salleDestination: { select: { code: true } },
+    },
+  });
+
+  if (!transfert) {
+    throw new Error("Transfert introuvable.");
+  }
+
+  if (transfert.salleDestination.code === "CAISSE") return "entrant" as const;
+  if (transfert.salleOrigine.code === "CAISSE") return "sortant" as const;
+
+  throw new Error("Ce transfert ne peut pas être géré depuis la caisse.");
+}
 
 export async function POST(
   request: NextRequest,
@@ -26,21 +51,41 @@ export async function POST(
       return NextResponse.json({ message: "Action invalide." }, { status: 400 });
     }
 
+    const sens = await determinerSensTransfert(transfertId);
     let resultat;
-    switch (action) {
-      case "confirmer":
-        resultat = await confirmerTransfertCaisse(session.utilisateur.id, transfertId);
-        break;
-      case "rejeter":
-        resultat = await rejeterTransfertCaisse(
-          session.utilisateur.id,
-          transfertId,
-          body.motifRejet
-        );
-        break;
-      case "recuperer":
-        resultat = await recupererTransfertCaisse(session.utilisateur.id, transfertId);
-        break;
+
+    if (sens === "entrant") {
+      switch (action) {
+        case "confirmer":
+          resultat = await confirmerTransfertEntrantCaisse(session.utilisateur.id, transfertId);
+          break;
+        case "rejeter":
+          resultat = await rejeterTransfertEntrantCaisse(
+            session.utilisateur.id,
+            transfertId,
+            body.motifRejet
+          );
+          break;
+        case "recuperer":
+          resultat = await recupererTransfertEntrantCaisse(session.utilisateur.id, transfertId);
+          break;
+      }
+    } else {
+      switch (action) {
+        case "confirmer":
+          resultat = await confirmerTransfertCaisse(session.utilisateur.id, transfertId);
+          break;
+        case "rejeter":
+          resultat = await rejeterTransfertCaisse(
+            session.utilisateur.id,
+            transfertId,
+            body.motifRejet
+          );
+          break;
+        case "recuperer":
+          resultat = await recupererTransfertCaisse(session.utilisateur.id, transfertId);
+          break;
+      }
     }
 
     const messages: Record<ActionTransfert, string> = {

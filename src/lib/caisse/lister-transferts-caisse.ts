@@ -1,10 +1,12 @@
 import "server-only";
 import { COULEURS_ORIENTATION_CAISSE } from "@/constants/caisse";
+import { construireLignesFactureExamens } from "@/lib/caisse/construire-lignes-facture-examens";
 import {
   listerPatientsEnAttenteCaisse,
 } from "@/lib/caisse/lister-patients-caisse";
 import type { PatientFileCaisse } from "@/lib/caisse/types";
 import { prisma } from "@/lib/prisma";
+import { estClientWalkInPharmacie, numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 import type { PatientTransfertCaisse, StatsTransfertsCaisse } from "@/lib/caisse/types";
 
 function formaterHeure(iso: string) {
@@ -33,11 +35,22 @@ function patientEstPayePourTransfertSortant(p: PatientFileCaisse): boolean {
   return p.facturationComplete || p.factureExamensPayee || p.facturePharmaciePayee;
 }
 
-function libelleStatutEntrant(p: PatientFileCaisse): { statut: string; statutCouleur: string } {
-  if (p.statutFacture === "PARTIELLEMENT_PAYEE") {
+function libelleStatutEntrant(opts: {
+  statutFacture?: string | null;
+  factureOuverte: boolean;
+  statutTransfertEntrant: string | null;
+  enRecuperation: boolean;
+}): { statut: string; statutCouleur: string } {
+  if (opts.enRecuperation && opts.statutTransfertEntrant === "REFUSE") {
+    return { statut: "Rejeté", statutCouleur: "bg-red-100 text-red-700" };
+  }
+  if (opts.statutTransfertEntrant === "EN_ATTENTE") {
+    return { statut: "À confirmer", statutCouleur: "bg-orange-100 text-orange-800" };
+  }
+  if (opts.statutFacture === "PARTIELLEMENT_PAYEE") {
     return { statut: "Avance", statutCouleur: "bg-amber-100 text-amber-800" };
   }
-  if (p.factureOuverte && p.statutFacture === "EMISE") {
+  if (opts.factureOuverte && opts.statutFacture === "EMISE") {
     return { statut: "Facturé", statutCouleur: "bg-blue-100 text-blue-700" };
   }
   return { statut: "À facturer", statutCouleur: "bg-amber-100 text-amber-800" };
@@ -76,13 +89,18 @@ type TransfertSortant = {
 function mapperPatientTransfert(
   p: PatientFileCaisse,
   sortantsParDossier: Map<string, TransfertSortant[]>,
-  section: PatientTransfertCaisse["section"]
+  section: PatientTransfertCaisse["section"],
+  statutTransfertEntrantOverride?: string | null
 ): PatientTransfertCaisse {
   const sortants = sortantsParDossier.get(p.dossierId) ?? [];
   const sortant = sortants[0];
-  const enRecuperation = sortants.some(
+  const enRecuperationEntrant =
+    statutTransfertEntrantOverride === "REFUSE" ||
+    sortants.some((s) => s.recuperation?.statut === "EN_RECUPERATION");
+  const enRecuperationSortant = sortants.some(
     (s) => s.recuperation?.statut === "EN_RECUPERATION"
   );
+  const statutTransfertEntrant = statutTransfertEntrantOverride ?? null;
 
   const orientation =
     section === "entrant"
@@ -93,12 +111,17 @@ function mapperPatientTransfert(
 
   const { statut, statutCouleur } =
     section === "entrant"
-      ? libelleStatutEntrant(p)
+      ? libelleStatutEntrant({
+          factureOuverte: p.factureOuverte,
+          statutFacture: p.statutFacture,
+          statutTransfertEntrant,
+          enRecuperation: enRecuperationEntrant,
+        })
       : libelleStatutPayeSortant({
           factureOuverte: p.factureOuverte,
           statutFacture: p.statutFacture,
           statutTransfert: sortant?.statut ?? null,
-          enRecuperation,
+          enRecuperation: enRecuperationSortant,
           facturationComplete: p.facturationComplete,
         });
 
@@ -127,9 +150,10 @@ function mapperPatientTransfert(
     heure: formaterHeure(p.arriveeLe),
     arriveeLe: p.arriveeLe,
     transfertId: p.transfertId || null,
+    statutTransfertEntrant,
     transfertSortantId: section === "paye" ? (sortant?.id ?? null) : null,
     statutTransfertSortant: section === "paye" ? (sortant?.statut ?? null) : null,
-    enRecuperation,
+    enRecuperation: section === "entrant" ? enRecuperationEntrant : enRecuperationSortant,
     passageId: p.passageId,
     numeroOrdre: p.numeroOrdre,
     nombreExamens: p.nombreExamens,
@@ -142,6 +166,68 @@ function mapperPatientTransfert(
     estClientWalkIn: p.estClientWalkIn,
     nombreMedicaments: p.nombreMedicaments,
     peutOrienterSortant: section === "paye" && patientEstPayePourTransfertSortant(p),
+  };
+}
+
+function mapperTransfertEntrantEnAttente(
+  t: Awaited<ReturnType<typeof listerTransfertsEntrantsBruts>>[number]
+): PatientTransfertCaisse {
+  const dossier = t.dossier;
+  const patient = dossier.patient;
+  const examens = dossier.examensLaboratoire;
+  const montantEstime = construireLignesFactureExamens(
+    examens.map((ex) => ({
+      id: ex.id,
+      paquetBilanId: ex.paquetBilanId,
+      typeExamen: ex.typeExamen,
+      paquetBilan: ex.paquetBilan,
+    }))
+  ).reduce((acc, l) => acc + l.montant, 0);
+  const medecin = dossier.enregistrementsReception[0]?.medecinResponsable?.trim() || null;
+  const enRecuperation = t.recuperation?.statut === "EN_RECUPERATION";
+  const { statut, statutCouleur } = libelleStatutEntrant({
+    factureOuverte: false,
+    statutFacture: null,
+    statutTransfertEntrant: t.statut,
+    enRecuperation,
+  });
+
+  return {
+    cleListe: `entrant-attente-${t.id}`,
+    section: "entrant",
+    dossierId: dossier.id,
+    numeroPatient: numeroIdentitePersonne(dossier.numeroDossier, patient.numeroPatient),
+    numeroDossier: dossier.numeroDossier,
+    nomComplet: `${patient.prenom} ${patient.nom}`,
+    prenom: patient.prenom,
+    nom: patient.nom,
+    telephone: patient.telephone ?? "—",
+    motif: t.motif ?? "—",
+    orientation: "Caisse",
+    orientationCouleur: COULEURS_ORIENTATION_CAISSE.Caisse ?? "bg-slate-100 text-slate-600",
+    codeSalleDestination: "CAISSE",
+    codesSalleDestination: ["CAISSE"],
+    statut,
+    statutCouleur,
+    heure: formaterHeure(t.emisLe.toISOString()),
+    arriveeLe: t.emisLe.toISOString(),
+    transfertId: t.id,
+    statutTransfertEntrant: t.statut,
+    transfertSortantId: null,
+    statutTransfertSortant: null,
+    enRecuperation,
+    passageId: t.passageId ?? "",
+    numeroOrdre: 0,
+    nombreExamens: examens.length,
+    montantEstime,
+    dateNaissance: patient.dateNaissance?.toISOString() ?? null,
+    factureOuverte: false,
+    facturationComplete: false,
+    provenance: t.salleOrigine.nom?.trim() || t.salleOrigine.code,
+    medecinResponsable: medecin,
+    estClientWalkIn: estClientWalkInPharmacie(dossier.numeroDossier),
+    nombreMedicaments: 0,
+    peutOrienterSortant: false,
   };
 }
 
@@ -178,13 +264,71 @@ async function chargerSortantsParDossier(
   return sortantsParDossier;
 }
 
+async function chargerDossiersAvecSortantConfirme(dossierIds: string[]): Promise<Set<string>> {
+  if (dossierIds.length === 0) return new Set();
+
+  const confirmes = await prisma.transfert.findMany({
+    where: {
+      dossierId: { in: dossierIds },
+      salleOrigine: { code: "CAISSE" },
+      statut: { in: ["ACCEPTE", "EN_TRAITEMENT", "TERMINE"] },
+    },
+    select: { dossierId: true },
+  });
+
+  return new Set(confirmes.map((t) => t.dossierId));
+}
+
+async function listerTransfertsEntrantsBruts() {
+  return prisma.transfert.findMany({
+    where: {
+      salleDestination: { code: "CAISSE" },
+      OR: [
+        { statut: "EN_ATTENTE" },
+        {
+          statut: "REFUSE",
+          recuperation: { statut: "EN_RECUPERATION" },
+        },
+      ],
+    },
+    include: {
+      salleOrigine: { select: { code: true, nom: true } },
+      recuperation: { select: { statut: true } },
+      dossier: {
+        include: {
+          patient: true,
+          examensLaboratoire: {
+            where: { statut: { not: "ANNULE" } },
+            include: { typeExamen: true, paquetBilan: true },
+          },
+          enregistrementsReception: {
+            orderBy: { enregistreLe: "desc" },
+            take: 1,
+            select: { medecinResponsable: true },
+          },
+        },
+      },
+    },
+    orderBy: { emisLe: "asc" },
+  });
+}
+
+async function listerTransfertsEntrantsEnAttenteCaisse(
+  dossierIdsDejaListes: Set<string>
+): Promise<PatientTransfertCaisse[]> {
+  const transferts = await listerTransfertsEntrantsBruts();
+
+  return transferts
+    .filter((t) => !dossierIdsDejaListes.has(t.dossierId))
+    .map((t) => mapperTransfertEntrantEnAttente(t));
+}
+
 export async function listerPatientsTransfertsCaisse(): Promise<{
   patientsEntrants: PatientTransfertCaisse[];
   patientsFacturesPayes: PatientTransfertCaisse[];
   stats: StatsTransfertsCaisse;
 }> {
-  const [fileEntrants, fileFactures, transferesDepuisCaisse] = await Promise.all([
-    listerPatientsEnAttenteCaisse(),
+  const [fileCaisse, transferesDepuisCaisse] = await Promise.all([
     listerPatientsEnAttenteCaisse({ pourPageTransferts: true }),
     (async () => {
       const debut = new Date();
@@ -199,15 +343,24 @@ export async function listerPatientsTransfertsCaisse(): Promise<{
     })(),
   ]);
 
-  const entrantsSource = fileEntrants.filter((p) => !patientEstPayePourTransfertSortant(p));
-  const payesSource = fileFactures.filter((p) => patientEstPayePourTransfertSortant(p));
+  const entrantsSource = fileCaisse.filter((p) => !patientEstPayePourTransfertSortant(p));
+  const payesSourceBrut = fileCaisse.filter((p) => patientEstPayePourTransfertSortant(p));
+  const dossierIdsPayes = payesSourceBrut.map((p) => p.dossierId);
 
-  const dossierIdsPayes = payesSource.map((p) => p.dossierId);
-  const sortantsParDossier = await chargerSortantsParDossier(dossierIdsPayes);
+  const [sortantsParDossier, dossiersSortis] = await Promise.all([
+    chargerSortantsParDossier(dossierIdsPayes),
+    chargerDossiersAvecSortantConfirme(dossierIdsPayes),
+  ]);
 
-  const patientsEntrants = entrantsSource.map((p) =>
+  const payesSource = payesSourceBrut.filter((p) => !dossiersSortis.has(p.dossierId));
+
+  const patientsEntrantsFile = entrantsSource.map((p) =>
     mapperPatientTransfert(p, sortantsParDossier, "entrant")
   );
+  const dossierIdsEntrants = new Set(entrantsSource.map((p) => p.dossierId));
+  const patientsEntrantsAttente = await listerTransfertsEntrantsEnAttenteCaisse(dossierIdsEntrants);
+  const patientsEntrants = [...patientsEntrantsAttente, ...patientsEntrantsFile];
+
   const patientsFacturesPayes = payesSource.map((p) =>
     mapperPatientTransfert(p, sortantsParDossier, "paye")
   );

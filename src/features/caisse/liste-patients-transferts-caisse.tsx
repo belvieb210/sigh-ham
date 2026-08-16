@@ -238,7 +238,11 @@ function SectionTableauTransferts({
                         >
                           <Eye className="h-4 w-4" />
                         </button>
-                        {afficherMenuSortant && p.transfertSortantId ? (
+                        {(afficherMenuSortant
+                          ? p.transfertSortantId
+                          : p.transfertId &&
+                            (p.statutTransfertEntrant === "EN_ATTENTE" ||
+                              p.statutTransfertEntrant === "REFUSE")) ? (
                           <MenuActionsTransfertCaisse
                             patient={p}
                             onRafraichir={onRafraichir}

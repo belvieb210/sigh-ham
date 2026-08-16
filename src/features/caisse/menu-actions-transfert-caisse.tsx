@@ -14,9 +14,7 @@ interface PropsMenuActionsTransfertCaisse {
 }
 
 /**
- * Menu ⋮ comme à la réception : Confirmer / Rejeter / Restaurer.
- * Visible dès qu'un transfert sortant existe (pas encore confirmé définitivement).
- * La confirmation serveur exige toujours une facture établie.
+ * Menu ⋮ : confirmation entrante (vers caisse) ou sortante (depuis caisse).
  */
 export function MenuActionsTransfertCaisse({
   patient,
@@ -31,17 +29,20 @@ export function MenuActionsTransfertCaisse({
   const boutonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const estEntrant = patient.section === "entrant";
+  const statutTransfert = estEntrant
+    ? patient.statutTransfertEntrant
+    : patient.statutTransfertSortant;
+  const transfertActionId = estEntrant ? patient.transfertId : patient.transfertSortantId;
+
   const transfere =
     patient.statut === "Transféré" ||
-    patient.statutTransfertSortant === "ACCEPTE" ||
-    patient.statutTransfertSortant === "TERMINE";
+    statutTransfert === "ACCEPTE" ||
+    statutTransfert === "TERMINE";
 
-  const peutConfirmer =
-    patient.statutTransfertSortant === "EN_ATTENTE" && !patient.enRecuperation;
-  const peutRejeter =
-    patient.statutTransfertSortant === "EN_ATTENTE" && !patient.enRecuperation;
-  const peutRestaurer =
-    patient.enRecuperation === true && patient.statutTransfertSortant === "REFUSE";
+  const peutConfirmer = statutTransfert === "EN_ATTENTE" && !patient.enRecuperation;
+  const peutRejeter = statutTransfert === "EN_ATTENTE" && !patient.enRecuperation;
+  const peutRestaurer = patient.enRecuperation === true && statutTransfert === "REFUSE";
 
   const mettreAJourPosition = useCallback(() => {
     const bouton = boutonRef.current;
@@ -61,10 +62,10 @@ export function MenuActionsTransfertCaisse({
   }, []);
 
   useEffect(() => {
-    if (transfere || !patient.transfertSortantId) {
+    if (transfere || !transfertActionId) {
       setOuvert(false);
     }
-  }, [transfere, patient.transfertSortantId]);
+  }, [transfere, transfertActionId]);
 
   useLayoutEffect(() => {
     if (!ouvert) return;
@@ -94,9 +95,10 @@ export function MenuActionsTransfertCaisse({
   }, [ouvert, mettreAJourPosition]);
 
   const executerAction = async (action: "confirmer" | "rejeter" | "recuperer") => {
-    if (!patient.transfertSortantId || enCours) return;
+    if (!transfertActionId || enCours) return;
 
     if (
+      !estEntrant &&
       action === "confirmer" &&
       patient.statut !== "Payée" &&
       !patient.facturationComplete
@@ -110,7 +112,7 @@ export function MenuActionsTransfertCaisse({
 
     try {
       const res = await fetch(
-        `/api/caisse/transferts/${encodeURIComponent(patient.transfertSortantId)}/actions`,
+        `/api/caisse/transferts/${encodeURIComponent(transfertActionId)}/actions`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -133,7 +135,7 @@ export function MenuActionsTransfertCaisse({
     }
   };
 
-  if (transfere || !patient.transfertSortantId) {
+  if (transfere || !transfertActionId || (!peutConfirmer && !peutRejeter && !peutRestaurer)) {
     return null;
   }
 
@@ -176,7 +178,7 @@ export function MenuActionsTransfertCaisse({
               >
                 <Check className="h-3.5 w-3.5" />
                 <span>{t("caisse.transferts.confirmer")}</span>
-                {!patient.factureOuverte && (
+                {!estEntrant && !patient.factureOuverte && (
                   <span className="ml-auto text-[10px] text-amber-600">facture</span>
                 )}
               </button>
@@ -210,11 +212,6 @@ export function MenuActionsTransfertCaisse({
                 <RotateCcw className="h-3.5 w-3.5" />
                 <span>{t("caisse.transferts.restaurer")}</span>
               </button>
-            )}
-            {!peutConfirmer && !peutRejeter && !peutRestaurer && (
-              <span className="block px-3 py-2 text-xs text-texte-secondaire">
-                {t("caisse.transferts.aucuneAction")}
-              </span>
             )}
             {erreur && (
               <span className="block border-t border-gris-bordure px-3 py-2 text-xs text-red-600">

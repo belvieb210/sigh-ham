@@ -301,10 +301,13 @@ async function listerFileAttenteCaissePourTransferts() {
 }
 
 export async function listerPatientsEnAttenteCaisse(options?: {
-  /** Page transferts : file élargie + facture payée ou établie, sans transfert confirmé. */
+  /** Page transferts : file élargie + réintégration des dossiers facturés. */
   pourPageTransferts?: boolean;
+  /** Si true, exclut les dossiers sans facture établie (section « factures payées »). */
+  exigerFactureEtablie?: boolean;
 }): Promise<PatientFileCaisse[]> {
   const pourTransferts = options?.pourPageTransferts === true;
+  const exigerFactureEtablie = options?.exigerFactureEtablie === true;
   if (pourTransferts) {
     await synchroniserCandidatsTransfertsCaisse();
   }
@@ -410,7 +413,7 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       enFile: true,
     });
 
-    if (pourTransferts && !etat.facturationComplete && !aFactureEtablie(facs)) {
+    if (exigerFactureEtablie && !etat.facturationComplete && !aFactureEtablie(facs)) {
       continue;
     }
 

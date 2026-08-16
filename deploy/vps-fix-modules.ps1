@@ -18,7 +18,7 @@ $pwForCmd = $Password -replace '\^','^^' -replace '&','^&' -replace '<','^<' -re
 $env:SSH_ASKPASS = $askpass
 $env:SSH_ASKPASS_REQUIRE = "force"
 $env:DISPLAY = "unused"
-$cmd = "bash ${AppDir}/deploy/fix-node-modules.sh; systemctl is-active sigh-web sigh-socket; git -C ${AppDir} log -1 --oneline"
+$cmd = "systemctl stop sigh-web sigh-socket 2>/dev/null || true; rm -f /tmp/sigh-ham-auto-deploy.lock; pkill -u sigh -f 'npm|next|node.*sigh-ham' 2>/dev/null || true; sleep 2; rm -rf ${AppDir}/node_modules ${AppDir}/node_modules.trash.* ${AppDir}/.next ${AppDir}/.next-new ${AppDir}/.next-old; cd ${AppDir}; git fetch origin main; git reset --hard origin/main; chown -R sigh:sigh ${AppDir}; sudo -u sigh -H bash -lc 'cd ${AppDir} && npm ci'; bash ${AppDir}/deploy/deploy-app.sh; systemctl is-active sigh-web sigh-socket; git log -1 --oneline"
 try {
   & ssh -o StrictHostKeyChecking=accept-new -o PreferredAuthentications=password -o PubkeyAuthentication=no -o NumberOfPasswordPrompts=1 ("{0}@{1}" -f $User, $HostName) $cmd
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

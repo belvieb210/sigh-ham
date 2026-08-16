@@ -279,6 +279,12 @@ export const receptionHi = {
     titre: "नया पंजीकरण",
     titreModification: "Modification du patient",
     patientSelectionne: "चयनित रोगी:",
+    derniereVisite: "अंतिम विज़िट:",
+    visiteTerminee: "समाप्त",
+    visiteEnCoursAccueil: "रिसेप्शन पर जारी",
+    visiteEnParcours: "प्रगति में: {{salle}}",
+    nouvelleVisiteAuto: "पंजीकरण पर नई विज़िट (VIS) बनेगी।",
+    reutiliseVisite: "रिसेप्शन पर खुली यह विज़िट जारी रहेगी।",
     recherchePatient: {
       revenirNouveau: "New patient",
       effacer: "Clear selection",
@@ -382,6 +388,7 @@ export const receptionHi = {
       miseAJour: "Mise à jour...",
       transferer: "रोगी स्थानांतरित करें",
       transfert: "स्थानांतरण जारी...",
+      nouvelleVisite: "+ नई विज़िट",
     },
     options: {
       typesPatient: {

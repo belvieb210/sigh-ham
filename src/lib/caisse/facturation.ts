@@ -951,6 +951,15 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
     }
   }
 
+  if (resultat.statut === "PAYEE" && donnees.destinationApres === "AUCUNE") {
+    const {
+      evaluerEtCloturerVisite,
+      libererFileCaisseSansSuite,
+    } = await import("@/lib/visites/evaluer-cloture-visite");
+    await libererFileCaisseSansSuite(donnees.dossierId);
+    await evaluerEtCloturerVisite(donnees.dossierId);
+  }
+
   const dossierMisAJour = await obtenirDossierFacturation(
     donnees.dossierId,
     factureId

@@ -133,7 +133,55 @@ export async function prochainNumeroTransfert(
 }
 
 /**
+ * PAT du parcours : réutilise le n° déjà attribué à la VIS,
+ * ou en crée un si c'est le premier hop.
+ */
+export async function numeroPatDuParcours(
+  tx: ClientTransaction,
+  dossierId: string,
+  date = new Date()
+): Promise<string> {
+  const existant = await tx.transfert.findFirst({
+    where: { dossierId, numeroTransfert: { not: null } },
+    orderBy: { createdAt: "asc" },
+    select: { numeroTransfert: true },
+  });
+  if (existant?.numeroTransfert) return existant.numeroTransfert;
+  return prochainNumeroTransfert(tx, date);
+}
+
+/**
+ * N° de visite : VIS-YYYY-XXXXXX (séquence annuelle, indépendante du n° patient).
+ * Ex. VIS-2026-000001 — les dossiers existants (YYYYMMDD…) restent valides.
+ */
+async function prochainNumeroVisite(
+  tx: ClientTransaction,
+  date = new Date()
+): Promise<string> {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(8822018)`;
+
+  const annee = date.getFullYear();
+  const prefix = `VIS-${annee}-`;
+
+  const dossiers = await tx.dossierPatient.findMany({
+    where: { numeroDossier: { startsWith: prefix } },
+    select: { numeroDossier: true },
+  });
+
+  let maxSeq = 0;
+  for (const d of dossiers) {
+    const m = /^VIS-\d{4}-(\d+)$/.exec(d.numeroDossier);
+    if (!m) continue;
+    const seq = Number.parseInt(m[1]!, 10);
+    if (Number.isFinite(seq)) maxSeq = Math.max(maxSeq, seq);
+  }
+
+  return `${prefix}${String(maxSeq + 1).padStart(6, "0")}`;
+}
+
+/**
  * N° d'enregistrement dossier (visite) : YYYYMMDD + compteur annuel.
+ * Conservé pour la série pharmacie PH- et l'extraction de dates.
  */
 function formaterDateEnregistrement(date: Date): string {
   const y = date.getFullYear();
@@ -147,35 +195,18 @@ function formaterCompteurAnnuel(sequence: number): string {
   return String(sequence);
 }
 
-async function prochainNumeroEnregistrement(
-  tx: ClientTransaction,
-  date = new Date()
-): Promise<string> {
-  const annee = date.getFullYear();
-  const debutAnnee = new Date(annee, 0, 1);
-  const finAnnee = new Date(annee + 1, 0, 1);
-
-  const dejaEnregistres = await tx.enregistrementReception.count({
-    where: {
-      enregistreLe: { gte: debutAnnee, lt: finAnnee },
-    },
-  });
-
-  const sequence = dejaEnregistres + 1;
-  return `${formaterDateEnregistrement(date)}${formaterCompteurAnnuel(sequence)}`;
-}
-
 export async function genererNumeroEnregistrementVisite(tx: ClientTransaction) {
-  return prochainNumeroEnregistrement(tx);
+  return prochainNumeroVisite(tx);
 }
 
-/** Nouveau patient hospitalier : n° permanent + 1er dossier (même n° à la première visite). */
+/** Nouveau patient hospitalier : n° permanent + 1re visite VIS-YYYY-XXXXXX. */
 export async function genererNumerosPatient(
   tx: ClientTransaction,
   date = new Date()
 ) {
   const numeroPatient = await prochainNumeroPatientPermanent(tx, date);
-  return { numeroPatient, numeroEnregistrement: numeroPatient };
+  const numeroEnregistrement = await prochainNumeroVisite(tx, date);
+  return { numeroPatient, numeroEnregistrement };
 }
 
 /**

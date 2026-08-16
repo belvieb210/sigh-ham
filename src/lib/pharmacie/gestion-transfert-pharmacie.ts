@@ -141,6 +141,10 @@ export async function confirmerTransfertPharmacie(
     });
   }
 
+  void import("@/lib/visites/evaluer-cloture-visite").then(({ evaluerEtCloturerVisite }) =>
+    evaluerEtCloturerVisite(transfert.dossierId)
+  );
+
   return resultat;
 }
 

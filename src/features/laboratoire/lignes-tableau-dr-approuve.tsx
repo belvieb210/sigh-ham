@@ -9,7 +9,7 @@ import {
 } from "@/features/laboratoire/cellule-examens-statut-laboratoire";
 import {
   examensPourPageStatut,
-  numeroEnregistrementLaboratoire,
+  numeroVisiteLaboratoire,
   numeroPermanentPatientLaboratoire,
 } from "@/features/laboratoire/utils-affichage";
 import type { ExamenFileLaboratoire, PatientFileLaboratoire } from "@/lib/laboratoire/types";
@@ -83,7 +83,7 @@ export function LignesTableauDrApprouve({
         </td>
         <td className="px-2 py-1.5 font-mono text-[11px] font-semibold text-bleu-medical">
           {varianteNumero === "labo"
-            ? numeroEnregistrementLaboratoire(patient)
+            ? numeroVisiteLaboratoire(patient)
             : numeroPermanentPatientLaboratoire(patient)}
         </td>
         <td className="px-2 py-1.5">

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { obtenirSessionApiReception } from "@/lib/auth/garde-api-reception";
-import { listerPatientsExamensDisponibles } from "@/lib/laboratoire/lister-examens-disponibles";
+import { listerPatientsExamensDisponiblesReception } from "@/lib/laboratoire/lister-examens-disponibles";
 
 /**
  * GET /api/reception/examens-disponibles
@@ -13,7 +13,7 @@ export async function GET() {
   }
 
   try {
-    const patients = await listerPatientsExamensDisponibles();
+    const patients = await listerPatientsExamensDisponiblesReception();
     return NextResponse.json({ patients });
   } catch (e) {
     console.error("[api/reception/examens-disponibles]", e);

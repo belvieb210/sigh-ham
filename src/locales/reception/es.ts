@@ -279,6 +279,12 @@ export const receptionEs = {
     titre: "Nuevo registro",
     titreModification: "Modification du patient",
     patientSelectionne: "Paciente seleccionado:",
+    derniereVisite: "Última visita:",
+    visiteTerminee: "Terminada",
+    visiteEnCoursAccueil: "En curso en recepción",
+    visiteEnParcours: "En recorrido: {{salle}}",
+    nouvelleVisiteAuto: "Se creará una nueva visita (VIS) al registrar.",
+    reutiliseVisite: "Esta visita aún abierta en recepción continuará.",
     recherchePatient: {
       revenirNouveau: "New patient",
       effacer: "Clear selection",
@@ -382,6 +388,7 @@ export const receptionEs = {
       miseAJour: "Mise à jour...",
       transferer: "Transferir paciente",
       transfert: "Transfiriendo...",
+      nouvelleVisite: "+ Nueva visita",
     },
     options: {
       typesPatient: {

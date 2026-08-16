@@ -1,7 +1,7 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { reserverNumerosTransfert } from "@/lib/reception/numeros";
+import { numeroPatDuParcours } from "@/lib/reception/numeros";
 
 async function inscrireFileAttentePharmacie(
   tx: Prisma.TransactionClient,
@@ -103,7 +103,7 @@ export async function preparerTransfertVentePharmacieVersCaisse(
         },
       });
     } else if (!transfert) {
-      const [numeroTransfert] = await reserverNumerosTransfert(client, 1);
+      const numeroTransfert = await numeroPatDuParcours(client, dossierId);
       transfert = await client.transfert.create({
         data: {
           numeroTransfert,

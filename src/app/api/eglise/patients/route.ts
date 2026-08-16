@@ -23,7 +23,9 @@ async function enregistrerPatientEglise(
   prenuptial: { paroisse?: string; dateMariage?: string; conjointNom?: string }
 ) {
   /** Réutilise l'enregistrement réception puis rattache file EGLISE + pack. */
-  const resultat = await enregistrerNouveauPatient(agentId, donnees, photo);
+  const resultat = await enregistrerNouveauPatient(agentId, donnees, photo, {
+    salleEnregistrement: "EGLISE",
+  });
 
   const salle = await prisma.salle.findUnique({ where: { code: "EGLISE" } });
   if (!salle) throw new Error("Salle Église introuvable.");
@@ -98,10 +100,11 @@ export async function GET(request: NextRequest) {
     const limite = limiteParam ? parseInt(limiteParam, 10) : undefined;
 
     if (q !== null) {
-      /** Recherche globale patients (réception) — l'agent peut retrouver un ancien. */
+      /** Recherche limitée aux patients enregistrés au service Église. */
       const patients = await rechercherPatientsReception(
         q,
-        limite && limite > 0 ? limite : 8
+        limite && limite > 0 ? limite : 8,
+        { salleEnregistrement: "EGLISE" }
       );
       return NextResponse.json({ patients });
     }

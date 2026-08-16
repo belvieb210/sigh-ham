@@ -280,6 +280,12 @@ export const receptionZh = {
     titre: "新登记",
     titreModification: "Modification du patient",
     patientSelectionne: "已选患者：",
+    derniereVisite: "上次就诊：",
+    visiteTerminee: "已结束",
+    visiteEnCoursAccueil: "在前台进行中",
+    visiteEnParcours: "就诊中：{{salle}}",
+    nouvelleVisiteAuto: "登记时将创建新就诊（VIS）。",
+    reutiliseVisite: "前台尚未结束的就诊将继续。",
     recherchePatient: {
       revenirNouveau: "New patient",
       effacer: "Clear selection",
@@ -383,6 +389,7 @@ export const receptionZh = {
       miseAJour: "Mise à jour...",
       transferer: "转介患者",
       transfert: "正在转介...",
+      nouvelleVisite: "+ 新就诊",
     },
     options: {
       typesPatient: {

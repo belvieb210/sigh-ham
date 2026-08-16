@@ -245,5 +245,11 @@ export async function delivrerVente(pharmacienId: string, venteId: string) {
     });
   }
 
+  const { evaluerEtCloturerVisite, libererFilePharmacieSiDelivre } = await import(
+    "@/lib/visites/evaluer-cloture-visite"
+  );
+  await libererFilePharmacieSiDelivre(vente.dossierId);
+  await evaluerEtCloturerVisite(vente.dossierId);
+
   return delivrance;
 }

@@ -281,6 +281,12 @@ export const receptionKg = {
     titre: "Enregistrement ya sika",
     titreModification: "Modification du patient",
     patientSelectionne: "Muntu ya maladi oyo safuti :",
+    derniereVisite: "Lukutakanu ya nsuka :",
+    visiteTerminee: "Me mana",
+    visiteEnCoursAccueil: "Ke sala na accueil",
+    visiteEnParcours: "Na nzila : {{salle}}",
+    nouvelleVisiteAuto: "Lukutakanu ya mpa (VIS) ke salama na enregistrement.",
+    reutiliseVisite: "Lukutakanu yai ke sala kaka na accueil ke landa.",
     recherchePatient: {
       revenirNouveau: "New patient",
       effacer: "Clear selection",
@@ -384,6 +390,7 @@ export const receptionKg = {
       miseAJour: "Mise à jour...",
       transferer: "Transferer muntu ya maladi",
       transfert: "Transfert...",
+      nouvelleVisite: "+ Lukutakanu ya mpa",
     },
     options: {
       typesPatient: {

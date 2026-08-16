@@ -40,7 +40,7 @@ import {
   cheminSaisieResultatsPatient,
   couleurStatutAnalyse,
   libellesExamensDemandes,
-  numeroEnregistrementLaboratoire,
+  numeroVisiteLaboratoire,
   patientCorrespondPageStatut,
   trierPatientsParArriveeDesc,
 } from "@/features/laboratoire/utils-affichage";
@@ -424,7 +424,7 @@ export function ContenuExamensEnCoursLaboratoire({
       `laboratoire-${pageStatut?.toLowerCase() ?? "examens"}-${new Date().toISOString().slice(0, 10)}.csv`,
       ["numeroEnregistrement", "nom", "prenom", "service", "statut", "examens"],
       cibles.map((p) => [
-        numeroEnregistrementLaboratoire(p),
+        numeroVisiteLaboratoire(p),
         p.nom,
         p.prenom,
         p.provenance || p.orientation,
@@ -649,7 +649,7 @@ export function ContenuExamensEnCoursLaboratoire({
                               />
                             </td>
                             <td className="px-2 py-1.5 font-mono text-[11px] font-semibold text-bleu-medical">
-                              {numeroEnregistrementLaboratoire(p)}
+                              {numeroVisiteLaboratoire(p)}
                             </td>
                             <td className="px-2 py-1.5">
                               <p className="truncate text-xs font-semibold leading-tight">

@@ -279,6 +279,12 @@ export const receptionAr = {
     titre: "تسجيل جديد",
     titreModification: "Modification du patient",
     patientSelectionne: "المريض المحدد:",
+    derniereVisite: "آخر زيارة:",
+    visiteTerminee: "منتهية",
+    visiteEnCoursAccueil: "جارٍ في الاستقبال",
+    visiteEnParcours: "في المسار: {{salle}}",
+    nouvelleVisiteAuto: "سيتم إنشاء زيارة جديدة (VIS) عند التسجيل.",
+    reutiliseVisite: "ستُستأنف هذه الزيارة المفتوحة في الاستقبال.",
     recherchePatient: {
       revenirNouveau: "New patient",
       effacer: "Clear selection",
@@ -382,6 +388,7 @@ export const receptionAr = {
       miseAJour: "Mise à jour...",
       transferer: "تحويل المريض",
       transfert: "جارٍ التحويل...",
+      nouvelleVisite: "+ زيارة جديدة",
     },
     options: {
       typesPatient: {

@@ -161,8 +161,8 @@ export async function chargerDonneesResultatExamenPdf(
   const qrCodeDataUrl = await resoudreQrFactureDossier(dossierId, request);
 
   const transfertCourant = await prisma.transfert.findFirst({
-    where: { dossierId },
-    orderBy: { emisLe: "desc" },
+    where: { dossierId, numeroTransfert: { not: null } },
+    orderBy: { createdAt: "asc" },
     select: { numeroTransfert: true },
   });
 

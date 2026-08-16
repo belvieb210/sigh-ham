@@ -60,6 +60,9 @@ export async function assertDossierDuMedecinExterne(
     include: { patient: { select: { medecinExterneId: true } } },
   });
   if (!dossier) throw new Error("DOSSIER_INTROUVABLE");
+  if (dossier.salleEnregistrement !== "MEDECINS_EXTERNES") {
+    throw new Error("DOSSIER_NON_AUTORISE");
+  }
   if (dossier.patient.medecinExterneId !== medecinExterneId) {
     throw new Error("DOSSIER_NON_AUTORISE");
   }

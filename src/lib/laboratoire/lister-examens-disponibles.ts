@@ -2,10 +2,6 @@ import "server-only";
 import { patientCorrespondPageStatut, trierPatientsParArriveeDesc } from "@/features/laboratoire/utils-affichage";
 import { listerPatientsLaboratoire } from "@/lib/laboratoire/lister-patients-laboratoire";
 import { prisma } from "@/lib/prisma";
-import {
-  chargerDossiersAccueilEglise,
-  chargerDossiersVisiteEglise,
-} from "@/lib/reception/mapper-visite-patient";
 
 /** Patients avec au moins un examen Dr approuve (résultats validés). */
 export async function listerPatientsExamensDisponibles() {
@@ -15,9 +11,9 @@ export async function listerPatientsExamensDisponibles() {
   );
 }
 
-/** Examens disponibles limités aux patients enregistrés par ce médecin externe. */
-export async function listerPatientsExamensDisponiblesMedecinExterne(
-  medecinExterneId: string
+async function filtrerExamensDisponiblesParSalle(
+  salleEnregistrement: "RECEPTION" | "EGLISE" | "MEDECINS_EXTERNES",
+  extra?: { medecinExterneId?: string }
 ) {
   const tous = await listerPatientsExamensDisponibles();
   if (tous.length === 0) return [];
@@ -26,7 +22,10 @@ export async function listerPatientsExamensDisponiblesMedecinExterne(
   const dossiersAutorises = await prisma.dossierPatient.findMany({
     where: {
       id: { in: dossierIds },
-      patient: { medecinExterneId },
+      salleEnregistrement,
+      ...(extra?.medecinExterneId
+        ? { patient: { medecinExterneId: extra.medecinExterneId } }
+        : {}),
     },
     select: { id: true },
   });
@@ -34,18 +33,19 @@ export async function listerPatientsExamensDisponiblesMedecinExterne(
   return tous.filter((p) => idsAutorises.has(p.dossierId));
 }
 
-/** Examens disponibles limités aux dossiers prénuptiaux / service Église. */
-export async function listerPatientsExamensDisponiblesEglise() {
-  const tous = await listerPatientsExamensDisponibles();
-  if (tous.length === 0) return [];
+/** Examens disponibles des patients enregistrés à la réception uniquement. */
+export async function listerPatientsExamensDisponiblesReception() {
+  return filtrerExamensDisponiblesParSalle("RECEPTION");
+}
 
-  const [accueil, visites] = await Promise.all([
-    chargerDossiersAccueilEglise(),
-    chargerDossiersVisiteEglise(),
-  ]);
-  const idsAutorises = new Set([
-    ...accueil.map((d) => d.id),
-    ...visites.map((d) => d.id),
-  ]);
-  return tous.filter((p) => idsAutorises.has(p.dossierId));
+/** Examens disponibles limités aux patients enregistrés par ce médecin externe. */
+export async function listerPatientsExamensDisponiblesMedecinExterne(
+  medecinExterneId: string
+) {
+  return filtrerExamensDisponiblesParSalle("MEDECINS_EXTERNES", { medecinExterneId });
+}
+
+/** Examens disponibles limités aux patients enregistrés au service Église. */
+export async function listerPatientsExamensDisponiblesEglise() {
+  return filtrerExamensDisponiblesParSalle("EGLISE");
 }

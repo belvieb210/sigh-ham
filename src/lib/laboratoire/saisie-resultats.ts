@@ -109,8 +109,8 @@ export async function chargerSaisieResultats(
   const patient = dossier.patient;
 
   const transfertCourant = await prisma.transfert.findFirst({
-    where: { dossierId },
-    orderBy: { emisLe: "desc" },
+    where: { dossierId, numeroTransfert: { not: null } },
+    orderBy: { createdAt: "asc" },
     select: { numeroTransfert: true },
   });
 
@@ -294,6 +294,13 @@ export async function enregistrerResultatsExamen(
       },
     });
   });
+
+  if (action === "verifier" || action === "approuver" || action === "rejeter") {
+    const { evaluerEtCloturerVisite } = await import(
+      "@/lib/visites/evaluer-cloture-visite"
+    );
+    await evaluerEtCloturerVisite(examen.dossierId);
+  }
 }
 
 function statutEtOrientationPourAction(

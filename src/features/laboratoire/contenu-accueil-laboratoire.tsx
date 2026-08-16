@@ -32,7 +32,7 @@ import {
 import {
   couleurStatutAnalyse,
   libelleStatutLigneLabo,
-  numeroEnregistrementLaboratoire,
+  numeroVisiteLaboratoire,
 } from "@/features/laboratoire/utils-affichage";
 import type {
   PatientFileLaboratoire,
@@ -68,7 +68,7 @@ function codeEchantillon(p: PatientFileLaboratoire) {
 }
 
 function numeroEnregistrement(p: PatientFileLaboratoire) {
-  return numeroEnregistrementLaboratoire(p);
+  return numeroVisiteLaboratoire(p);
 }
 
 export function ContenuAccueilLaboratoire({

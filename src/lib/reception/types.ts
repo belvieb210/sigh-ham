@@ -50,8 +50,13 @@ export interface DonneesFormulairePatient {
   heureEnregistrement: string;
   /** URL publique de la photo patient */
   photoUrl: string | null;
-  /** Dossier de visite en cours (réutilisé au transfert) */
+  /** Dossier de visite réutilisable (accueil, transfert non confirmé) */
   dossierId?: string;
+  /** N° de la dernière / visite en cours (VIS-… ou ancien format) */
+  numeroVisite?: string;
+  visiteReutilisable?: boolean;
+  visiteStatut?: string;
+  salleEnCoursNom?: string | null;
 }
 
 export interface DonneesEnregistrementPatient {

@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       const patients = await rechercherPatientsReception(
         q,
         limite && limite > 0 ? limite : 8,
-        { medecinExterneId }
+        { medecinExterneId, salleEnregistrement: "MEDECINS_EXTERNES" }
       );
       return NextResponse.json({ patients });
     }

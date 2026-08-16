@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { obtenirSessionApiReception } from "@/lib/auth/garde-api-reception";
 import { obtenirDetailExamensFacturePatient } from "@/lib/caisse/detail-examens-facture-patient";
+import { prisma } from "@/lib/prisma";
 
 interface Ctx {
   params: Promise<{ dossierId: string }>;
@@ -22,6 +23,14 @@ export async function GET(_request: Request, ctx: Ctx) {
   }
 
   try {
+    const dossier = await prisma.dossierPatient.findFirst({
+      where: { id: dossierId.trim(), salleEnregistrement: "RECEPTION" },
+      select: { id: true },
+    });
+    if (!dossier) {
+      return NextResponse.json({ erreur: "Patient non autorisé." }, { status: 403 });
+    }
+
     const detail = await obtenirDetailExamensFacturePatient(dossierId.trim());
     if (!detail) {
       return NextResponse.json(

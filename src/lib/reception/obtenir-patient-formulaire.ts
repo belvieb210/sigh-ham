@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { chargerResumeDerniereVisite } from "@/lib/visites/etat-visite";
 import type { DonneesFormulairePatient } from "@/lib/reception/types";
 
 const CHAMPS_OBSERVATIONS: Record<string, keyof DonneesFormulairePatient> = {
@@ -65,34 +66,19 @@ export async function obtenirPatientPourFormulaire(
 ): Promise<DonneesFormulairePatient | null> {
   const patient = await prisma.patient.findUnique({
     where: { numeroPatient },
-    include: {
-      dossiers: {
-        where: {
-          statut: { in: ["OUVERT", "EN_COURS"] },
-          transferts: {
-            none: { statut: { notIn: ["ANNULE", "REFUSE"] } },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 1,
-        include: {
-          enregistrementsReception: { orderBy: { enregistreLe: "desc" }, take: 1 },
-        },
-      },
-    },
   });
 
   if (!patient) return null;
 
-  const dossier =
-    patient.dossiers[0] ??
-    (await prisma.dossierPatient.findFirst({
-      where: { patientId: patient.id },
-      orderBy: { createdAt: "desc" },
-      include: {
-        enregistrementsReception: { orderBy: { enregistreLe: "desc" }, take: 1 },
-      },
-    }));
+  const visite = await chargerResumeDerniereVisite(patient.id);
+  const dossier = visite
+    ? await prisma.dossierPatient.findUnique({
+        where: { id: visite.dossierId },
+        include: {
+          enregistrementsReception: { orderBy: { enregistreLe: "desc" }, take: 1 },
+        },
+      })
+    : null;
   const enregistrement = dossier?.enregistrementsReception[0];
   const depuisObservations = parserObservations(enregistrement?.observations);
   const enregistreLe = enregistrement?.enregistreLe ?? dossier?.createdAt ?? patient.createdAt;
@@ -100,7 +86,11 @@ export async function obtenirPatientPourFormulaire(
   return {
     numeroPatient: patient.numeroPatient,
     numeroEnregistrement: patient.numeroPatient,
-    dossierId: dossier?.id,
+    numeroVisite: visite?.numeroVisite,
+    visiteReutilisable: false,
+    visiteStatut: visite?.statut,
+    salleEnCoursNom: visite?.salleEnCoursNom ?? null,
+    dossierId: undefined,
     typeVisite: enregistrement?.typeVisite ?? "ancien",
     nom: patient.nom,
     prenom: patient.prenom,

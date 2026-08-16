@@ -89,7 +89,12 @@ export function statutsAnalyseDistincts(
   return [...ids];
 }
 
-/** N° patient affiché en labo = n° transfert (ex. PAT-202600001). */
+/** N° visite affiché en labo (VIS-… ou ancien n° dossier). */
+export function numeroVisiteLaboratoire(p: PatientFileLaboratoire) {
+  return p.numeroDossier?.trim() || "—";
+}
+
+/** N° PAT (transfert / orientation). */
 export function numeroEnregistrementLaboratoire(p: PatientFileLaboratoire) {
   const brut = p.numeroTransfert?.trim();
   if (!brut) return "—";
@@ -103,10 +108,10 @@ export function numeroEnregistrementLaboratoire(p: PatientFileLaboratoire) {
 
 /** N° permanent patient (ex. 20260804008). */
 export function numeroPermanentPatientLaboratoire(p: PatientFileLaboratoire) {
-  return p.numeroEnregistrement || p.numeroPatient;
+  return p.numeroPatient || p.numeroEnregistrement || "—";
 }
 
-/** @deprecated Alias — préférer numeroEnregistrementLaboratoire */
+/** @deprecated Alias — n° PAT de l'orientation */
 export function codeTransfertLaboratoire(p: PatientFileLaboratoire) {
   return numeroEnregistrementLaboratoire(p);
 }

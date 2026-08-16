@@ -279,6 +279,12 @@ export const receptionHe = {
     titre: "רישום חדש",
     titreModification: "Modification du patient",
     patientSelectionne: "מטופל שנבחר:",
+    derniereVisite: "ביקור אחרון:",
+    visiteTerminee: "הסתיים",
+    visiteEnCoursAccueil: "פתוח בקבלה",
+    visiteEnParcours: "במסלול: {{salle}}",
+    nouvelleVisiteAuto: "ביקור חדש (VIS) ייווצר ברישום.",
+    reutiliseVisite: "הביקור הפתוח בקבלה יימשך.",
     recherchePatient: {
       revenirNouveau: "New patient",
       effacer: "Clear selection",
@@ -382,6 +388,7 @@ export const receptionHe = {
       miseAJour: "Mise à jour...",
       transferer: "העברת מטופל",
       transfert: "מעביר...",
+      nouvelleVisite: "+ ביקור חדש",
     },
     options: {
       typesPatient: {

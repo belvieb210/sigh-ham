@@ -279,6 +279,12 @@ export const receptionLua = {
     titre: "Enregistrement wa mupya",
     titreModification: "Modification du patient",
     patientSelectionne: "Muntu wa maladi wa kusala :",
+    derniereVisite: "Cisela ca nsuka :",
+    visiteTerminee: "Cimane",
+    visiteEnCoursAccueil: "Cidi ku accueil",
+    visiteEnParcours: "Mu nzila : {{salle}}",
+    nouvelleVisiteAuto: "Cisela cipi (VIS) cikekala pa enregistrement.",
+    reutiliseVisite: "Cisela eci cidi kaka ku accueil cikendela.",
     recherchePatient: {
       revenirNouveau: "New patient",
       effacer: "Clear selection",
@@ -382,6 +388,7 @@ export const receptionLua = {
       miseAJour: "Mise à jour...",
       transferer: "Transferer muntu wa maladi",
       transfert: "Transfert...",
+      nouvelleVisite: "+ Cisela cipi",
     },
     options: {
       typesPatient: {

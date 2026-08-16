@@ -39,7 +39,7 @@ import {
 } from "@/features/laboratoire/cellule-examens-statut-laboratoire";
 import {
   libellesExamensDemandes,
-  numeroEnregistrementLaboratoire,
+  numeroVisiteLaboratoire,
   trierPatientsParArriveeDesc,
 } from "@/features/laboratoire/utils-affichage";
 import type {
@@ -251,7 +251,7 @@ export function ContenuPatientsLaboratoire({
       `laboratoire-patients-${new Date().toISOString().slice(0, 10)}.csv`,
       ["numeroEnregistrement", "nom", "prenom", "destination", "statut", "examens"],
       cibles.map((p) => [
-        numeroEnregistrementLaboratoire(p),
+        numeroVisiteLaboratoire(p),
         p.nom,
         p.prenom,
         p.orientation,
@@ -431,7 +431,7 @@ export function ContenuPatientsLaboratoire({
                                   void ouvrirDetail(p.dossierId);
                                 }}
                               >
-                                {numeroEnregistrementLaboratoire(p)}
+                                {numeroVisiteLaboratoire(p)}
                               </button>
                             </td>
                             <td className="px-2 py-1.5">

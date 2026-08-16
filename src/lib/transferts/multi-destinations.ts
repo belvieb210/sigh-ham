@@ -1,7 +1,7 @@
 import "server-only";
 import type { CodeSalle, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { reserverNumerosTransfert } from "@/lib/reception/numeros";
+import { numeroPatDuParcours } from "@/lib/reception/numeros";
 
 /**
  * Inscrit le patient dans une ou plusieurs salles de destination.
@@ -183,7 +183,10 @@ export async function synchroniserTransfertsEnAttente(params: {
     const destinationsACreer = params.destinations.filter(
       (d) => !parSalle.has(d.salleId)
     );
-    const numeros = await reserverNumerosTransfert(tx, destinationsACreer.length);
+    const numeroPat =
+      destinationsACreer.length > 0
+        ? await numeroPatDuParcours(tx, params.dossierId)
+        : null;
 
     const transfertIds: string[] = [];
     const destinationsCreees: {
@@ -192,7 +195,6 @@ export async function synchroniserTransfertsEnAttente(params: {
       transfertId: string;
     }[] = [];
     let crees = 0;
-    let idxNumero = 0;
 
     for (const dest of params.destinations) {
       const existant = parSalle.get(dest.salleId);
@@ -201,12 +203,9 @@ export async function synchroniserTransfertsEnAttente(params: {
         continue;
       }
 
-      const numeroTransfert = numeros[idxNumero]!;
-      idxNumero += 1;
-
       const cree = await tx.transfert.create({
         data: {
-          numeroTransfert,
+          numeroTransfert: numeroPat,
           dossierId: params.dossierId,
           passageId: params.passageId,
           salleOrigineId: params.salleOrigineId,

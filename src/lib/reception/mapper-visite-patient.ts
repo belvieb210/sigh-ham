@@ -172,6 +172,7 @@ export async function chargerDossiersVisiteReception(options?: {
   return prisma.dossierPatient.findMany({
     take: options?.limite,
     where: {
+      salleEnregistrement: "RECEPTION",
       enregistrementsReception: { some: {} },
       ...(options?.uniquementTransfertDepuisReception
         ? {
@@ -205,7 +206,7 @@ export async function chargerDossiersVisiteReception(options?: {
 export async function chargerDossiersAccueil(limite?: number) {
   return prisma.dossierPatient.findMany({
     take: limite,
-    where: { enregistrementsReception: { some: {} } },
+    where: { salleEnregistrement: "RECEPTION", enregistrementsReception: { some: {} } },
     include: includeVisiteAccueil,
     orderBy: { ouvertLe: "desc" },
   });
@@ -219,24 +220,9 @@ export async function chargerDossiersAccueilRecents(limite?: number) {
   return prisma.dossierPatient.findMany({
     take: limite,
     where: {
+      salleEnregistrement: "RECEPTION",
       enregistrementsReception: { some: {} },
       patient: { medecinExterneId: null },
-      examensPrenuptiaux: { none: {} },
-      NOT: {
-        OR: [
-          { motifOuverture: { contains: "médecin externe", mode: "insensitive" } },
-          { motifOuverture: { contains: "conventionné", mode: "insensitive" } },
-          { motifOuverture: { contains: "église", mode: "insensitive" } },
-          {
-            transferts: {
-              some: {
-                salleOrigine: { code: { in: ["MEDECINS_EXTERNES", "EGLISE"] } },
-                statut: { notIn: ["ANNULE", "REFUSE"] },
-              },
-            },
-          },
-        ],
-      },
     },
     include: includeVisiteAccueil,
     orderBy: { ouvertLe: "desc" },
@@ -251,6 +237,7 @@ export async function chargerDossiersAccueilMedecinExterne(
   return prisma.dossierPatient.findMany({
     take: limite,
     where: {
+      salleEnregistrement: "MEDECINS_EXTERNES",
       enregistrementsReception: { some: {} },
       patient: { medecinExterneId },
     },
@@ -263,16 +250,7 @@ export async function chargerDossiersAccueilMedecinExterne(
 export async function chargerDossiersAccueilEglise(limite?: number) {
   return prisma.dossierPatient.findMany({
     take: limite,
-    where: {
-      OR: [
-        { examensPrenuptiaux: { some: {} } },
-        {
-          transferts: {
-            some: { salleOrigine: { code: "EGLISE" } },
-          },
-        },
-      ],
-    },
+    where: { salleEnregistrement: "EGLISE" },
     include: includeVisiteDepuis("EGLISE"),
     orderBy: { ouvertLe: "desc" },
   });
@@ -285,14 +263,7 @@ export async function chargerDossiersVisiteEglise(options?: {
   return prisma.dossierPatient.findMany({
     take: options?.limite,
     where: {
-      OR: [
-        { examensPrenuptiaux: { some: {} } },
-        {
-          transferts: {
-            some: { salleOrigine: { code: "EGLISE" } },
-          },
-        },
-      ],
+      salleEnregistrement: "EGLISE",
       ...(options?.uniquementTransfert
         ? {
             AND: [
@@ -335,6 +306,7 @@ export async function chargerDossiersVisiteMedecinExterne(
   return prisma.dossierPatient.findMany({
     take: options?.limite,
     where: {
+      salleEnregistrement: "MEDECINS_EXTERNES",
       enregistrementsReception: { some: {} },
       patient: { medecinExterneId },
       ...(options?.uniquementTransfert

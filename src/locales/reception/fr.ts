@@ -276,6 +276,13 @@ export const receptionFr = {
     titre: "Nouvel enregistrement",
     titreModification: "Modification du patient",
     patientSelectionne: "Patient sélectionné :",
+    derniereVisite: "Dernière visite :",
+    visiteTerminee: "Terminée",
+    visiteEnCoursAccueil: "En cours à l'accueil",
+    visiteEnParcours: "En parcours : {{salle}}",
+    nouvelleVisiteAuto:
+      "Une nouvelle visite (VIS) et un nouveau PAT seront créés. L'ancienne visite continue son parcours.",
+    reutiliseVisite: "Cette visite encore ouverte à l'accueil sera poursuivie.",
     recherchePatient: {
       revenirNouveau: "Nouveau patient",
       effacer: "Effacer la sélection",
@@ -304,7 +311,7 @@ export const receptionFr = {
       orientationHint: "Choisissez le service de destination pour ce patient.",
     },
     champs: {
-      numeroEnregistrement: "N° d'enregistrement",
+      numeroEnregistrement: "N° patient (permanent)",
       date: "Date",
       heure: "Heure",
       typePatient: "Type de patient",
@@ -380,6 +387,7 @@ export const receptionFr = {
       miseAJour: "Mise à jour...",
       transferer: "Transférer le patient",
       transfert: "Transfert...",
+      nouvelleVisite: "+ Nouvelle visite",
     },
     options: {
       typesPatient: {

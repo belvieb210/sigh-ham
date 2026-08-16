@@ -1,6 +1,7 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { restaurerVisiteApresRecuperation } from "@/lib/visites/restaurer-visite-recuperation";
 
 async function inscrireFileAttenteDestination(
   tx: Prisma.TransactionClient,
@@ -173,6 +174,10 @@ export async function confirmerTransfertLaboratoire(
     });
   }
 
+  void import("@/lib/visites/evaluer-cloture-visite").then(({ evaluerEtCloturerVisite }) =>
+    evaluerEtCloturerVisite(transfert.dossierId)
+  );
+
   return resultat;
 }
 
@@ -241,6 +246,12 @@ export async function recupererTransfertLaboratoire(
   }
 
   return prisma.$transaction(async (tx) => {
+    await restaurerVisiteApresRecuperation(tx, {
+      dossierId: transfert.dossierId,
+      passageId: transfert.passageId,
+      examensIds: recuperation.examensIds,
+    });
+
     await tx.transfert.update({
       where: { id: transfertId },
       data: {

@@ -1,6 +1,7 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { idsExamensEnCoursDuDossier, restaurerVisiteApresRecuperation } from "@/lib/visites/restaurer-visite-recuperation";
 
 async function inscrireFileAttenteDestination(
   tx: Prisma.TransactionClient,
@@ -184,6 +185,10 @@ export async function confirmerTransfertReception(agentId: string, transfertId: 
     });
   }
 
+  void import("@/lib/visites/evaluer-cloture-visite").then(({ evaluerEtCloturerVisite }) =>
+    evaluerEtCloturerVisite(transfert.dossierId)
+  );
+
   return resultat;
 }
 
@@ -202,20 +207,12 @@ export async function rejeterTransfertReception(
     throw new Error("Ce transfert est déjà en récupération.");
   }
 
-  const examensIds =
-    transfert.dossier.examensLaboratoire.length > 0
-      ? transfert.dossier.examensLaboratoire.map((e) => e.id)
-      : (
-          await prisma.examenLaboratoire.findMany({
-            where: { dossierId: transfert.dossierId },
-            select: { id: true },
-          })
-        ).map((e) => e.id);
-
   return prisma.$transaction(async (tx) => {
+    const examensIds = await idsExamensEnCoursDuDossier(tx, transfert.dossierId);
+
     if (examensIds.length > 0) {
       await tx.examenLaboratoire.updateMany({
-        where: { id: { in: examensIds } },
+        where: { id: { in: examensIds }, dossierId: transfert.dossierId },
         data: { statut: "ANNULE" },
       });
     }
@@ -271,12 +268,11 @@ export async function recupererTransfertReception(agentId: string, transfertId: 
   }
 
   return prisma.$transaction(async (tx) => {
-    if (recuperation.examensIds.length > 0) {
-      await tx.examenLaboratoire.updateMany({
-        where: { id: { in: recuperation.examensIds } },
-        data: { statut: "PRESCRIT" },
-      });
-    }
+    await restaurerVisiteApresRecuperation(tx, {
+      dossierId: transfert.dossierId,
+      passageId: transfert.passageId,
+      examensIds: recuperation.examensIds,
+    });
 
     await tx.transfert.update({
       where: { id: transfertId },

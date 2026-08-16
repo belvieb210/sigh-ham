@@ -168,7 +168,7 @@ export async function creerAdmission(input: {
 export async function sortirAdmission(id: string): Promise<AdmissionMedecins> {
   const existante = await prisma.admission.findUnique({
     where: { id },
-    select: { id: true, litId: true, sortiLe: true },
+    select: { id: true, litId: true, sortiLe: true, dossierId: true },
   });
   if (!existante) throw new Error("ADMISSION_INTROUVABLE");
   if (existante.sortiLe) throw new Error("DEJA_SORTI");
@@ -190,6 +190,11 @@ export async function sortirAdmission(id: string): Promise<AdmissionMedecins> {
       include: includeAdmission,
     });
   });
+
+  const { evaluerEtCloturerVisite } = await import(
+    "@/lib/visites/evaluer-cloture-visite"
+  );
+  await evaluerEtCloturerVisite(existante.dossierId);
 
   return mapperAdmission(admission);
 }

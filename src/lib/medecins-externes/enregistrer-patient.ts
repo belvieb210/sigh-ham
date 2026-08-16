@@ -64,6 +64,7 @@ export async function enregistrerPatientMedecinExterne(
         patientId: patient.id,
         statut: "OUVERT",
         motifOuverture: "Enregistrement médecin externe",
+        salleEnregistrement: "MEDECINS_EXTERNES",
       },
     });
 

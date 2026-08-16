@@ -279,6 +279,12 @@ export const receptionDe = {
     titre: "Neue Registrierung",
     titreModification: "Modification du patient",
     patientSelectionne: "Ausgewählter Patient:",
+    derniereVisite: "Letzter Besuch:",
+    visiteTerminee: "Abgeschlossen",
+    visiteEnCoursAccueil: "Offen am Empfang",
+    visiteEnParcours: "Unterwegs: {{salle}}",
+    nouvelleVisiteAuto: "Beim Speichern wird ein neuer Besuch (VIS) angelegt.",
+    reutiliseVisite: "Dieser noch offene Besuch am Empfang wird fortgesetzt.",
     recherchePatient: {
       revenirNouveau: "New patient",
       effacer: "Clear selection",
@@ -382,6 +388,7 @@ export const receptionDe = {
       miseAJour: "Mise à jour...",
       transferer: "Patient überweisen",
       transfert: "Wird überwiesen...",
+      nouvelleVisite: "+ Neuer Besuch",
     },
     options: {
       typesPatient: {

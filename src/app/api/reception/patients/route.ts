@@ -23,7 +23,9 @@ export async function GET(request: NextRequest) {
     const limite = limiteParam ? parseInt(limiteParam, 10) : undefined;
 
     if (q !== null) {
-      const patients = await rechercherPatientsReception(q, limite && limite > 0 ? limite : 8);
+      const patients = await rechercherPatientsReception(q, limite && limite > 0 ? limite : 8, {
+        salleEnregistrement: "RECEPTION",
+      });
       return NextResponse.json({ patients });
     }
 

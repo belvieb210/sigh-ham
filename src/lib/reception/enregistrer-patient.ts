@@ -1,5 +1,5 @@
 import "server-only";
-import { Sexe } from "@/generated/prisma/client";
+import { Sexe, type CodeSalle } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { genererNumerosPatient } from "@/lib/reception/numeros";
 import type {
@@ -112,7 +112,8 @@ export function parserFormDataEnregistrement(formData: FormData): {
 export async function enregistrerNouveauPatient(
   agentId: string,
   donnees: DonneesEnregistrementPatient,
-  photo?: File | null
+  photo?: File | null,
+  options?: { salleEnregistrement?: CodeSalle }
 ): Promise<ResultatEnregistrementPatient> {
   const erreur = validerDonneesEnregistrement(donnees);
   if (erreur) throw new Error(erreur);
@@ -150,6 +151,7 @@ export async function enregistrerNouveauPatient(
         patientId: patient.id,
         statut: "OUVERT",
         motifOuverture: "Nouvel enregistrement à la réception",
+        salleEnregistrement: options?.salleEnregistrement ?? "RECEPTION",
       },
     });
 

@@ -281,6 +281,12 @@ export const receptionSw = {
     titre: "Usajili mpya",
     titreModification: "Modification du patient",
     patientSelectionne: "Mgonjwa aliyechaguliwa:",
+    derniereVisite: "Ziara ya mwisho:",
+    visiteTerminee: "Imekamilika",
+    visiteEnCoursAccueil: "Inaendelea mapokezi",
+    visiteEnParcours: "Katika mzunguko: {{salle}}",
+    nouvelleVisiteAuto: "Ziara mpya (VIS) itaundwa wakati wa usajili.",
+    reutiliseVisite: "Ziara hii iliyo wazi mapokezi itaendelea.",
     recherchePatient: {
       revenirNouveau: "New patient",
       effacer: "Clear selection",
@@ -384,6 +390,7 @@ export const receptionSw = {
       miseAJour: "Mise à jour...",
       transferer: "Hamisha mgonjwa",
       transfert: "Inahamisha...",
+      nouvelleVisite: "+ Ziara mpya",
     },
     options: {
       typesPatient: {

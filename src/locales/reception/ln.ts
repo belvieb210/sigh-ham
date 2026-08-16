@@ -281,6 +281,12 @@ export const receptionLn = {
     titre: "Enregistrement ya sika",
     titreModification: "Modification du patient",
     patientSelectionne: "Patient oyo eponami :",
+    derniereVisite: "Visite ya nsuka :",
+    visiteTerminee: "Esilisi",
+    visiteEnCoursAccueil: "Ezali na accueil",
+    visiteEnParcours: "Na nzela : {{salle}}",
+    nouvelleVisiteAuto: "Visite ya sika (VIS) ekosalema na enregistrement.",
+    reutiliseVisite: "Visite oyo ezali kaka na accueil ekokoba.",
     recherchePatient: {
       revenirNouveau: "New patient",
       effacer: "Clear selection",
@@ -384,6 +390,7 @@ export const receptionLn = {
       miseAJour: "Mise à jour...",
       transferer: "Transferer patient",
       transfert: "Transfert...",
+      nouvelleVisite: "+ Visite ya sika",
     },
     options: {
       typesPatient: {

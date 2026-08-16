@@ -141,6 +141,10 @@ export async function confirmerTransfertInfirmiers(
     });
   }
 
+  void import("@/lib/visites/evaluer-cloture-visite").then(({ evaluerEtCloturerVisite }) =>
+    evaluerEtCloturerVisite(transfert.dossierId)
+  );
+
   return resultat;
 }
 

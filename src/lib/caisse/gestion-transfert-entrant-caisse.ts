@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { restaurerVisiteApresRecuperation } from "@/lib/visites/restaurer-visite-recuperation";
 
 async function chargerTransfertEntrantCaisse(transfertId: string) {
   const transfert = await prisma.transfert.findUnique({
@@ -98,6 +99,10 @@ export async function confirmerTransfertEntrantCaisse(agentId: string, transfert
     };
   });
 
+  void import("@/lib/visites/evaluer-cloture-visite").then(({ evaluerEtCloturerVisite }) =>
+    evaluerEtCloturerVisite(transfert.dossierId)
+  );
+
   return resultat;
 }
 
@@ -159,6 +164,12 @@ export async function recupererTransfertEntrantCaisse(agentId: string, transfert
   }
 
   return prisma.$transaction(async (tx) => {
+    await restaurerVisiteApresRecuperation(tx, {
+      dossierId: transfert.dossierId,
+      passageId: transfert.passageId,
+      examensIds: recuperation.examensIds,
+    });
+
     await tx.transfert.update({
       where: { id: transfertId },
       data: {

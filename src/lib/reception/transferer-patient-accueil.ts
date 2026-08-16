@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import {
   genererNumeroEnregistrementVisite,
   genererNumerosPatient,
-  prochainNumeroTransfert,
+  numeroPatDuParcours,
 } from "@/lib/reception/numeros";
 import {
   parserDonneesEnregistrement,
@@ -16,6 +16,7 @@ import type {
   DonneesTransfertAccueil,
   ResultatTransfertAccueil,
 } from "@/lib/reception/types";
+import { dossierEstReutilisableAccueil } from "@/lib/visites/etat-visite";
 import { orientationsAutoriseesDepuis } from "@/lib/transferts/orientations-universelles";
 
 /** Salles disponibles via orientation rapide / transfert manuel (réception) */
@@ -261,36 +262,23 @@ async function trouverDossierReutilisable(
 
     if (!dossier) return null;
 
-    /** Ignore les transferts intra-salle (ex. file EGLISE) — seul un sortant confirmé bloque. */
-    const transfertsConfirmes = await tx.transfert.findMany({
-      where: {
-        dossierId: dossier.id,
-        statut: { in: ["ACCEPTE", "EN_TRAITEMENT", "TERMINE"] },
-      },
-      select: { id: true, salleOrigineId: true, salleDestinationId: true },
-    });
-    const transfertBloquant = transfertsConfirmes.find(
-      (t) => t.salleOrigineId !== t.salleDestinationId
-    );
-    if (transfertBloquant) {
-      throw new Error(
-        "Ce transfert est déjà confirmé : l'orientation rapide ne peut plus être appliquée."
-      );
+    if (!(await dossierEstReutilisableAccueil(dossier.id, tx))) {
+      return null;
     }
     return dossier;
   }
 
-  return tx.dossierPatient.findFirst({
+  const dossier = await tx.dossierPatient.findFirst({
     where: {
       patientId,
       statut: { in: ["OUVERT", "EN_COURS"] },
-      transferts: {
-        none: { statut: { notIn: STATUTS_TRANSFERT_INACTIFS } },
-      },
     },
     orderBy: { createdAt: "desc" },
     include,
   });
+  if (!dossier) return null;
+  if (!(await dossierEstReutilisableAccueil(dossier.id, tx))) return null;
+  return dossier;
 }
 
 async function assurerFileAttenteSalleOrigine(
@@ -475,9 +463,11 @@ export async function transfererPatientAccueil(
       patientId = cree.id;
     }
 
-    const dossierExistant = donnees.numeroPatient
-      ? await trouverDossierReutilisable(tx, patientId, donnees.dossierId)
-      : null;
+    /** Formulaire d'enregistrement : toujours une nouvelle VIS. Réorientation = autre API. */
+    const dossierExistant =
+      manuel && donnees.numeroPatient
+        ? await trouverDossierReutilisable(tx, patientId, donnees.dossierId)
+        : null;
 
     let dossierId: string;
     let numeroEnregistrement: string;
@@ -541,6 +531,7 @@ export async function transfererPatientAccueil(
           patientId,
           statut: "EN_COURS",
           motifOuverture: motifVisite,
+          salleEnregistrement: codeOrigine,
         },
       });
       dossierId = dossier.id;
@@ -575,7 +566,7 @@ export async function transfererPatientAccueil(
 
     const transfert = await tx.transfert.create({
       data: {
-        numeroTransfert: await prochainNumeroTransfert(tx),
+        numeroTransfert: await numeroPatDuParcours(tx, dossierId),
         dossierId,
         passageId,
         salleOrigineId: salleOrigine.id,

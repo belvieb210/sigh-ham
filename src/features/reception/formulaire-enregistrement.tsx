@@ -170,7 +170,12 @@ export const FormulaireEnregistrement = forwardRef<
     estComplet ? "—" : "20260101001"
   );
   const [numeroPatientActif, setNumeroPatientActif] = useState<string | null>(null);
-  const [dossierIdActif, setDossierIdActif] = useState<string | null>(null);
+  const [visiteResume, setVisiteResume] = useState<{
+    numeroVisite?: string;
+    statut?: string;
+    reutilisable?: boolean;
+    salleEnCoursNom?: string | null;
+  } | null>(null);
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [photoPatient, setPhotoPatient] = useState<File | null>(null);
@@ -234,7 +239,12 @@ export const FormulaireEnregistrement = forwardRef<
       setSexe(donnees.sexe);
       setNumeroEnregistrement(donnees.numeroEnregistrement);
       setNumeroPatientActif(donnees.numeroPatient);
-      setDossierIdActif(donnees.dossierId ?? null);
+      setVisiteResume({
+        numeroVisite: donnees.numeroVisite,
+        statut: donnees.visiteStatut,
+        reutilisable: false,
+        salleEnCoursNom: donnees.salleEnCoursNom,
+      });
       setAujourdhui(donnees.dateEnregistrement);
       setHeure(donnees.heureEnregistrement);
       setPhotoUrlExistante(donnees.photoUrl);
@@ -245,7 +255,7 @@ export const FormulaireEnregistrement = forwardRef<
       definirDepuisDonneesCompletes({
         ...donnees,
         typeVisite,
-        dossierId: donnees.dossierId,
+        dossierId: undefined,
       });
     },
     [definirDepuisDonneesCompletes]
@@ -253,7 +263,7 @@ export const FormulaireEnregistrement = forwardRef<
 
   const effacerPatientExistant = useCallback(() => {
     setNumeroPatientActif(null);
-    setDossierIdActif(null);
+    setVisiteResume(null);
     setFormulaire({ ...ETAT_INITIAL_FORMULAIRE, typeVisite: "ancien" });
     setSexe("FEMININ");
     setPhotoUrlExistante(null);
@@ -266,7 +276,7 @@ export const FormulaireEnregistrement = forwardRef<
     (valeur: string) => {
       if (valeur !== "ancien" && numeroPatientActif) {
         setNumeroPatientActif(null);
-        setDossierIdActif(null);
+        setVisiteResume(null);
         setFormulaire({ ...ETAT_INITIAL_FORMULAIRE, typeVisite: valeur });
         setSexe("FEMININ");
         setPhotoUrlExistante(null);
@@ -294,8 +304,7 @@ export const FormulaireEnregistrement = forwardRef<
         if (!res.ok) throw new Error(t("reception.recherche.selectionImpossible"));
 
         const donnees = (await res.json()) as DonneesFormulairePatient;
-        const dossierId = resultat.dossierId ?? donnees.dossierId;
-        appliquerDonneesPatient({ ...donnees, dossierId }, "ancien");
+        appliquerDonneesPatient(donnees, "ancien");
 
         const patient = resultatRechercheVersPatientEnregistre(resultat, {
           motif: t("reception.tableau.recherchePatient.motif"),
@@ -362,7 +371,12 @@ export const FormulaireEnregistrement = forwardRef<
     setSexe(donneesPrefill.sexe);
     setNumeroEnregistrement(donneesPrefill.numeroEnregistrement);
     setNumeroPatientActif(donneesPrefill.numeroPatient);
-    setDossierIdActif(donneesPrefill.dossierId ?? null);
+    setVisiteResume({
+      numeroVisite: donneesPrefill.numeroVisite,
+      statut: donneesPrefill.visiteStatut,
+      reutilisable: false,
+      salleEnCoursNom: donneesPrefill.salleEnCoursNom,
+    });
     setAujourdhui(donneesPrefill.dateEnregistrement);
     setHeure(donneesPrefill.heureEnregistrement);
     setPhotoUrlExistante(donneesPrefill.photoUrl);
@@ -385,7 +399,6 @@ export const FormulaireEnregistrement = forwardRef<
       ville: formulaire.ville,
       assurance: formulaire.assurance,
       numeroPatient: numeroPatientActif,
-      dossierId: dossierIdActif,
       photoUrl: photoUrlExistante,
     });
   }, [formulaire, numeroPatientActif, photoUrlExistante, definirDepuisFormulaire]);
@@ -452,7 +465,7 @@ export const FormulaireEnregistrement = forwardRef<
     setErreurPhoto(null);
     setErreur(null);
     setNumeroPatientActif(null);
-    setDossierIdActif(null);
+    setVisiteResume(null);
     setMotifPrincipal("");
     setMotifAutreTexte("");
     setDescriptionMotif("");
@@ -581,7 +594,6 @@ export const FormulaireEnregistrement = forwardRef<
           transfertWizard: true,
           sexe,
           numeroPatient: numeroPatientActif ?? undefined,
-          dossierId: dossierIdActif ?? undefined,
           orientation,
           motifPrincipal,
           motifAutreTexte: motifAutreTexte || undefined,
@@ -663,10 +675,31 @@ export const FormulaireEnregistrement = forwardRef<
     >
       {numeroPatientActif && !estComplet && (
         <div className="mx-4 mt-4 rounded-lg border border-bleu-medical/30 bg-bleu-medical-clair/40 px-4 py-3 text-sm text-bleu-medical lg:mx-6">
-          {t("reception.formulaire.patientSelectionne")}{" "}
-          <span className="font-semibold">{numeroPatientActif}</span>
-          {" — "}
-          {formulaire.prenom} {formulaire.nom}
+          <p>
+            {t("reception.formulaire.patientSelectionne")}{" "}
+            <span className="font-semibold">{numeroPatientActif}</span>
+            {" — "}
+            {formulaire.prenom} {formulaire.nom}
+          </p>
+          {visiteResume?.numeroVisite ? (
+            <p className="mt-1 text-xs text-texte-secondaire">
+              {t("reception.formulaire.derniereVisite")}{" "}
+              <span className="font-mono font-semibold text-texte-principal">
+                {visiteResume.numeroVisite}
+              </span>
+              {" · "}
+              {visiteResume.reutilisable
+                ? t("reception.formulaire.visiteEnCoursAccueil")
+                : visiteResume.salleEnCoursNom
+                  ? t("reception.formulaire.visiteEnParcours", {
+                      salle: visiteResume.salleEnCoursNom,
+                    })
+                  : t("reception.formulaire.visiteTerminee")}
+            </p>
+          ) : null}
+          <p className="mt-1 text-xs text-texte-secondaire">
+            {t("reception.formulaire.nouvelleVisiteAuto")}
+          </p>
         </div>
       )}
       {erreur && (

@@ -80,6 +80,7 @@ export async function creerClientPharmacie(data: {
               numeroDossier: numeroEnregistrement,
               patientId: patient.id,
               motifOuverture: "Vente pharmacie",
+              salleEnregistrement: "PHARMACIE",
             },
           });
 

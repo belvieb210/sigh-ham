@@ -6,14 +6,7 @@ export async function assertDossierEglise(dossierId: string) {
   const dossier = await prisma.dossierPatient.findFirst({
     where: {
       id: dossierId,
-      OR: [
-        { examensPrenuptiaux: { some: {} } },
-        {
-          transferts: {
-            some: { salleOrigine: { code: "EGLISE" } },
-          },
-        },
-      ],
+      salleEnregistrement: "EGLISE",
     },
   });
   if (!dossier) throw new Error("DOSSIER_NON_AUTORISE");

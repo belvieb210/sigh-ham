@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
             throw error;
           }
         }
+        dossierId = "";
       }
 
       if (!numeroPatient) {

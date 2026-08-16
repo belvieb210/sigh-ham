@@ -1,4 +1,4 @@
-"use client";
+ï»¿"use client";
 
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
@@ -38,7 +38,7 @@ function ResumeEtOrientation() {
         </h2>
         <div className="flex flex-col items-center text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-sm font-bold text-violet-700">
-            {resume && !resume.vide ? resume.initiales : "—"}
+            {resume && !resume.vide ? resume.initiales : "â€”"}
           </div>
           <p className="mt-3 text-sm font-semibold text-texte-principal">
             {resume?.nomComplet ?? t("pharmacie.panneau.aucunPatient")}
@@ -52,18 +52,18 @@ function ResumeEtOrientation() {
         <div className="mt-4 space-y-2 text-left text-xs">
           <div className="flex justify-between gap-2">
             <span className="text-texte-secondaire">{t("pharmacie.panneau.age")}</span>
-            <span className="font-medium text-texte-principal">{resume?.age ?? "—"}</span>
+            <span className="font-medium text-texte-principal">{resume?.age ?? "â€”"}</span>
           </div>
           <div className="flex justify-between gap-2">
             <span className="text-texte-secondaire">{t("pharmacie.panneau.telephone")}</span>
             <span className="font-medium text-texte-principal">
-              {resume?.telephone ?? "—"}
+              {resume?.telephone ?? "â€”"}
             </span>
           </div>
           <div className="flex justify-between gap-2">
             <span className="text-texte-secondaire">{t("pharmacie.panneau.motif")}</span>
             <span className="max-w-[60%] truncate font-medium text-texte-principal">
-              {resume?.motif ?? "—"}
+              {resume?.motif ?? "â€”"}
             </span>
           </div>
         </div>
@@ -101,7 +101,7 @@ function ResumeEtOrientation() {
             className={cn(
               "mt-2 text-xs",
               selection.messagePanneau.toLowerCase().includes("impossible") ||
-                selection.messagePanneau.toLowerCase().includes("déjà")
+                selection.messagePanneau.toLowerCase().includes("dÃ©jÃ ")
                 ? "text-red-600"
                 : "text-emerald-700"
             )}

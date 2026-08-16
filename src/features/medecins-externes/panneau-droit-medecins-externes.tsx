@@ -9,10 +9,11 @@ import { useSelectionMedecinsExternesOptionnel } from "@/features/medecins-exter
 import { cn } from "@/lib/utils";
 
 function useGestionOrientation() {
-  const { orientation, orientations } = useOrientationMedecinsExternes();
+  const { orientation, orientations, definirOrientations } = useOrientationMedecinsExternes();
   const selection = useSelectionMedecinsExternesOptionnel();
 
   const onOrientationsChange = (codes: string[]) => {
+    definirOrientations(codes);
     if (
       selection?.patientSelectionne ||
       (selection?.dossiersCoches?.length ?? 0) > 0

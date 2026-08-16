@@ -9,10 +9,11 @@ import { useSelectionMedecinsOptionnel } from "@/features/medecins/contexte-sele
 import { cn } from "@/lib/utils";
 
 function useGestionOrientation() {
-  const { orientation, orientations } = useOrientationMedecins();
+  const { orientation, orientations, definirOrientations } = useOrientationMedecins();
   const selection = useSelectionMedecinsOptionnel();
 
   const onOrientationsChange = (codes: string[]) => {
+    definirOrientations(codes);
     if (
       selection?.patientSelectionne ||
       (selection?.dossiersCoches?.length ?? 0) > 0
@@ -101,7 +102,8 @@ function ResumeEtOrientation() {
             className={cn(
               "mt-2 text-xs",
               selection.messagePanneau.toLowerCase().includes("impossible") ||
-                selection.messagePanneau.toLowerCase().includes("déjà")
+                selection.messagePanneau.toLowerCase().includes("déjà") ||
+                selection.messagePanneau.toLowerCase().includes("sélectionnez")
                 ? "text-red-600"
                 : "text-emerald-700"
             )}

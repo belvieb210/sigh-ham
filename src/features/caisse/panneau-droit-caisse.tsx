@@ -9,10 +9,11 @@ import { useSelectionTransfertCaisseOptionnel } from "@/features/caisse/contexte
 import { cn } from "@/lib/utils";
 
 function useGestionOrientation() {
-  const { orientation, orientations } = useOrientationCaisse();
+  const { orientation, orientations, definirOrientations } = useOrientationCaisse();
   const selection = useSelectionTransfertCaisseOptionnel();
 
   const onOrientationsChange = (codes: string[]) => {
+    definirOrientations(codes);
     if (
       selection?.patientSelectionne ||
       (selection?.dossiersCoches?.length ?? 0) > 0

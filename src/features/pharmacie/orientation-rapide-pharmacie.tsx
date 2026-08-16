@@ -15,6 +15,7 @@ import {
   HeartPulse,
 } from "lucide-react";
 import { ORIENTATIONS_RAPIDES_PHARMACIE } from "@/constants/pharmacie";
+import { basculerOrientationsMulti } from "@/features/transferts/utilitaires-orientation-lot";
 import { cn } from "@/lib/utils";
 
 const ICONES: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -58,10 +59,7 @@ export function OrientationRapidePharmacie({
   const basculer = (value: string) => {
     if (desactive) return;
     if (multiple && onOrientationsChange) {
-      const deja = orientations.includes(value);
-      const suivant = deja
-        ? orientations.filter((v) => v !== value)
-        : [...orientations, value];
+      const suivant = basculerOrientationsMulti(orientations, value);
       setOrientationsInternes(suivant);
       onOrientationsChange(suivant);
       return;

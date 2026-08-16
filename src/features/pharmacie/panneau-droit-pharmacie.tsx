@@ -9,10 +9,11 @@ import { useSelectionPharmacieOptionnel } from "@/features/pharmacie/contexte-se
 import { cn } from "@/lib/utils";
 
 function useGestionOrientation() {
-  const { orientation, orientations } = useOrientationPharmacie();
+  const { orientation, orientations, definirOrientations } = useOrientationPharmacie();
   const selection = useSelectionPharmacieOptionnel();
 
   const onOrientationsChange = (codes: string[]) => {
+    definirOrientations(codes);
     if (
       selection?.patientSelectionne ||
       (selection?.dossiersCoches?.length ?? 0) > 0

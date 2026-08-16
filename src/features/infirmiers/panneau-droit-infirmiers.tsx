@@ -9,10 +9,11 @@ import { useSelectionInfirmiersOptionnel } from "@/features/infirmiers/contexte-
 import { cn } from "@/lib/utils";
 
 function useGestionOrientation() {
-  const { orientation, orientations } = useOrientationInfirmiers();
+  const { orientation, orientations, definirOrientations } = useOrientationInfirmiers();
   const selection = useSelectionInfirmiersOptionnel();
 
   const onOrientationsChange = (codes: string[]) => {
+    definirOrientations(codes);
     if (
       selection?.patientSelectionne ||
       (selection?.dossiersCoches?.length ?? 0) > 0

@@ -13,6 +13,7 @@ import {
   BedDouble,
 } from "lucide-react";
 import { ORIENTATIONS_RAPIDES } from "@/constants/reception";
+import { basculerOrientationsMulti } from "@/features/transferts/utilitaires-orientation-lot";
 import { cn } from "@/lib/utils";
 
 type OptionOrientation = {
@@ -84,10 +85,7 @@ export function OrientationRapide({
   const basculer = (value: string) => {
     if (desactive) return;
     if (multiple && onOrientationsChange) {
-      const deja = orientations.includes(value);
-      const suivant = deja
-        ? orientations.filter((v) => v !== value)
-        : [...orientations, value];
+      const suivant = basculerOrientationsMulti(orientations, value);
       setOrientationsInternes(suivant);
       onOrientationsChange(suivant);
       return;

@@ -86,7 +86,7 @@ export const META_ORIENTATION_SALLE: Record<
 export const ORIENTATIONS_DESTINATION_PAR_SALLE: Partial<
   Record<CodeSalle, readonly CodeSalle[]>
 > = {
-  RECEPTION: ["CAISSE", "INFIRMIERS"],
+  RECEPTION: ["CAISSE", "INFIRMIERS", "MEDECINS"],
   INFIRMIERS: ["MEDECINS"],
   MEDECINS: ["CAISSE"],
   MEDECINS_EXTERNES: ["CAISSE"],

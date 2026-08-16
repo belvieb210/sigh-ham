@@ -169,7 +169,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
           espace.prefixeApi.includes("medecins-externes") ||
             espace.prefixeApi.includes("eglise")
             ? "La destination autorisée est la Caisse."
-            : "Sélectionnez Caisse ou Infirmiers."
+            : "Sélectionnez Caisse, Infirmiers ou Médecin."
         );
         return;
       }

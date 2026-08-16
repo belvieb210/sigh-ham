@@ -57,6 +57,9 @@ export interface LigneFacturable {
   source: "EXAMEN" | "FACTURE";
 }
 
+/** Alias utilisé par la construction des lignes examens (forfait paquet / unitaire). */
+export type LigneFactureExamensCaisse = LigneFacturable;
+
 export interface FactureCaisseDetail {
   id: string | null;
   numeroFacture: string | null;

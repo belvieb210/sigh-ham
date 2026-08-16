@@ -30,7 +30,11 @@ import { SectionEstimationExamens } from "@/features/reception/section-estimatio
 import { ChampDateNaissance } from "@/features/reception/champ-date-naissance";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import { cn } from "@/lib/utils";
-import type { DonneesFormulairePatient, TypeExamenReception } from "@/lib/reception/types";
+import type {
+  DonneesFormulairePatient,
+  PaquetBilanReception,
+  TypeExamenReception,
+} from "@/lib/reception/types";
 
 type VarianteFormulaire = "apercu" | "complet";
 
@@ -172,6 +176,7 @@ export const FormulaireEnregistrement = forwardRef<
   const [motifAutreTexte, setMotifAutreTexte] = useState("");
   const [descriptionMotif, setDescriptionMotif] = useState("");
   const [examensSelectionnes, setExamensSelectionnes] = useState<TypeExamenReception[]>([]);
+  const [paquetsSelectionnes, setPaquetsSelectionnes] = useState<PaquetBilanReception[]>([]);
   const [medecinResponsable, setMedecinResponsable] = useState("");
   const [remise, setRemise] = useState(0);
   const [modeEstimation, setModeEstimation] = useState(false);
@@ -286,17 +291,39 @@ export const FormulaireEnregistrement = forwardRef<
 
   useEffect(() => {
     if (!champsEglise || estComplet || etape !== 2) return;
-    if (examensSelectionnes.length > 0) return;
+    if (examensSelectionnes.length > 0 || paquetsSelectionnes.length > 0) return;
 
     let annule = false;
-    fetch(`${espace.prefixeApi}/examens?pack=prenuptial`)
-      .then(async (res) => {
-        if (!res.ok) return null;
-        return res.json() as Promise<{ examens: TypeExamenReception[] }>;
-      })
-      .then((data) => {
-        if (annule || !data?.examens?.length) return;
-        setExamensSelectionnes(data.examens);
+
+    const chargerPaquetPrenuptial = async () => {
+      const res = await fetch(`${espace.prefixeApi}/paquets-bilans`);
+      if (!res.ok) return false;
+      const data = (await res.json()) as { paquets?: PaquetBilanReception[] };
+      const paquets = data.paquets ?? [];
+      const prenuptial = paquets.find(
+        (p) =>
+          /prenupt/i.test(p.code) ||
+          /prenupt/i.test(p.libelle) ||
+          /pr[eé]nupt/i.test(p.libelle)
+      );
+      if (!prenuptial) return false;
+      if (annule) return true;
+      setPaquetsSelectionnes([prenuptial]);
+      return true;
+    };
+
+    void chargerPaquetPrenuptial()
+      .then((trouve) => {
+        if (annule || trouve) return;
+        return fetch(`${espace.prefixeApi}/examens?pack=prenuptial`)
+          .then(async (res) => {
+            if (!res.ok) return null;
+            return res.json() as Promise<{ examens: TypeExamenReception[] }>;
+          })
+          .then((data) => {
+            if (annule || !data?.examens?.length) return;
+            setExamensSelectionnes(data.examens);
+          });
       })
       .catch(() => {
         /* ignore */
@@ -305,7 +332,14 @@ export const FormulaireEnregistrement = forwardRef<
     return () => {
       annule = true;
     };
-  }, [champsEglise, estComplet, etape, examensSelectionnes.length, espace.prefixeApi]);
+  }, [
+    champsEglise,
+    estComplet,
+    etape,
+    examensSelectionnes.length,
+    paquetsSelectionnes.length,
+    espace.prefixeApi,
+  ]);
 
   const reinitialiser = () => {
     setEtape(0);
@@ -322,6 +356,7 @@ export const FormulaireEnregistrement = forwardRef<
     setMotifAutreTexte("");
     setDescriptionMotif("");
     setExamensSelectionnes([]);
+    setPaquetsSelectionnes([]);
     setMedecinResponsable("");
     setModeEstimation(false);
     setOrientation(espace.orientationDefaut ?? "INFIRMIERS");
@@ -449,6 +484,7 @@ export const FormulaireEnregistrement = forwardRef<
           motifAutreTexte: motifAutreTexte || undefined,
           descriptionMotif: descriptionMotif || undefined,
           examensIds: examensSelectionnes.map((e) => e.id),
+          paquetsBilanIds: paquetsSelectionnes.map((p) => p.id),
           medecinResponsable: medecinResponsable.trim(),
           estEstimation: modeEstimation,
           remise: Math.max(0, Number(remise) || 0),
@@ -1110,8 +1146,10 @@ export const FormulaireEnregistrement = forwardRef<
               {t("reception.formulaire.sections.examensIntro")}
             </p>
             <SelectionExamensInitiaux
-              selection={examensSelectionnes}
-              onChange={setExamensSelectionnes}
+              selectionExamens={examensSelectionnes}
+              selectionPaquets={paquetsSelectionnes}
+              onChangeExamens={setExamensSelectionnes}
+              onChangePaquets={setPaquetsSelectionnes}
             />
             <SectionEstimationExamens
               medecinResponsable={medecinResponsable}
@@ -1119,6 +1157,7 @@ export const FormulaireEnregistrement = forwardRef<
               modeEstimation={modeEstimation}
               onModeEstimationChange={setModeEstimation}
               examens={examensSelectionnes}
+              paquets={paquetsSelectionnes}
               nomPatient={formulaire.nom}
               prenomPatient={formulaire.prenom}
               telephonePatient={formulaire.telephone}

@@ -5,7 +5,11 @@ import { useTranslation } from "react-i18next";
 import { Calculator, Loader2, Printer } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
-import type { TypeExamenReception } from "@/lib/reception/types";
+import type { PaquetBilanReception, TypeExamenReception } from "@/lib/reception/types";
+import {
+  calculerMontantSelectionExamens,
+  construireLignesDevisEstimation,
+} from "@/lib/reception/montant-selection-examens";
 import { cn } from "@/lib/utils";
 import { imprimerDevisEstimation } from "@/lib/reception/imprimer-devis-estimation";
 
@@ -19,6 +23,7 @@ interface PropsSectionEstimationExamens {
   modeEstimation: boolean;
   onModeEstimationChange: (actif: boolean) => void;
   examens: TypeExamenReception[];
+  paquets?: PaquetBilanReception[];
   nomPatient: string;
   prenomPatient: string;
   telephonePatient?: string;
@@ -37,6 +42,7 @@ export function SectionEstimationExamens({
   modeEstimation,
   onModeEstimationChange,
   examens,
+  paquets = [],
   nomPatient,
   prenomPatient,
   telephonePatient = "",
@@ -51,13 +57,15 @@ export function SectionEstimationExamens({
   const [impressionEnCours, setImpressionEnCours] = useState(false);
   const verrouImpression = useRef(false);
 
-  const sousTotal = examens.reduce((total, examen) => total + examen.prix, 0);
+  const lignesDevis = construireLignesDevisEstimation(paquets, examens);
+  const sousTotal = calculerMontantSelectionExamens(paquets, examens);
   const remiseEffective = Math.min(Math.max(0, remise || 0), sousTotal);
   const totalNet = Math.max(0, sousTotal - remiseEffective);
+  const nombreLignes = lignesDevis.length;
 
   const imprimerDevis = () => {
     if (verrouImpression.current || impressionEnCours) return;
-    if (examens.length === 0) {
+    if (nombreLignes === 0) {
       onErreur?.(t("reception.estimations.examenRequis"));
       return;
     }
@@ -85,7 +93,7 @@ export function SectionEstimationExamens({
     setImpressionEnCours(true);
 
     void imprimerDevisEstimation({
-      examens,
+      examens: lignesDevis,
       medecinResponsable: medecinResponsable.trim(),
       nomPatient,
       prenomPatient,
@@ -172,7 +180,7 @@ export function SectionEstimationExamens({
           </p>
         </div>
 
-        {examens.length > 0 && (
+        {nombreLignes > 0 && (
           <div className="flex flex-col justify-end rounded-xl border border-gris-bordure bg-gris-tres-clair px-4 py-3">
             <div className="flex items-center justify-between text-sm text-texte-secondaire">
               <span>{t("reception.estimations.sousTotal")}</span>
@@ -215,10 +223,10 @@ export function SectionEstimationExamens({
                 {t("reception.estimations.devisTitre")}
               </h4>
               <p className="mt-1 text-sm text-texte-secondaire">
-                {examens.length === 0
+                {nombreLignes === 0
                   ? t("reception.estimations.introExamens")
-                  : t("reception.examens.count", { count: examens.length })}{" "}
-                {examens.length > 0 && (
+                  : t("reception.paquets.selectionResume", { count: nombreLignes })}{" "}
+                {nombreLignes > 0 && (
                   <span className="font-semibold text-bleu-medical">
                     · {formaterPrix(totalNet)}
                     {remiseEffective > 0 && (
@@ -236,7 +244,7 @@ export function SectionEstimationExamens({
               taille="moyen"
               className={cn("shrink-0 rounded-xl print:hidden")}
               onClick={imprimerDevis}
-              disabled={examens.length === 0 || impressionEnCours}
+              disabled={nombreLignes === 0 || impressionEnCours}
             >
               {impressionEnCours ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

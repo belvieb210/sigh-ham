@@ -9,6 +9,15 @@ export interface TypeExamenReception {
   delaiHeures: number;
 }
 
+export interface PaquetBilanReception {
+  id: string;
+  code: string;
+  libelle: string;
+  description: string | null;
+  prix: number;
+  examens: TypeExamenReception[];
+}
+
 export interface DonneesFormulairePatient {
   numeroPatient: string;
   numeroEnregistrement: string;
@@ -86,6 +95,7 @@ export interface DonneesTransfertAccueil extends DonneesEnregistrementPatient {
   motifAutreTexte?: string;
   descriptionMotif?: string;
   examensIds?: string[];
+  paquetsBilanIds?: string[];
   medecinResponsable?: string;
   estEstimation?: boolean;
   /** Remise en devise (USD), ≥ 0 */

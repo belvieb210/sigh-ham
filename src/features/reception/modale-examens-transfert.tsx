@@ -177,11 +177,13 @@ export function ModaleExamensTransfert({
             ) : erreur && selection.length === 0 ? (
               <p className="py-12 text-center text-sm text-red-600">{erreur}</p>
             ) : (
-              <SelectionExamensInitiaux
-                selection={selection}
-                onChange={setSelection}
-                lectureSeule={!modifiable}
-              />
+            <SelectionExamensInitiaux
+              selectionExamens={selection}
+              selectionPaquets={[]}
+              onChangeExamens={setSelection}
+              onChangePaquets={() => {}}
+              lectureSeule={!modifiable}
+            />
             )}
             {erreur && selection.length > 0 && (
               <p className="mt-3 text-sm text-red-600">{erreur}</p>

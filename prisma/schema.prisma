@@ -838,6 +838,7 @@ model PaquetBilan {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   examens PaquetBilanExamen[]
+  prescriptions ExamenLaboratoire[]
 
   @@map("paquets_bilans")
 }
@@ -887,6 +888,8 @@ model ExamenLaboratoire {
   resultatLe     DateTime?      @map("resultat_le")
   rapportPdfUrl  String?        @map("rapport_pdf_url")
   notes          String?
+  paquetBilanId  String?        @map("paquet_bilan_id")
+  paquetBilan    PaquetBilan?   @relation(fields: [paquetBilanId], references: [id], onDelete: SetNull)
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
 

@@ -27,23 +27,70 @@ export async function prescrireExamensInitiaux(
   agentId: string,
   idsExamens: string[],
   estEstimation: boolean,
-  salleOrigine: CodeSalle = "RECEPTION"
+  salleOrigine: CodeSalle = "RECEPTION",
+  paquetsBilanIds: string[] = []
 ) {
-  if (idsExamens.length === 0) return 0;
+  let total = 0;
+  const idsDansPaquets = new Set<string>();
+  const note = noteExamen(salleOrigine, estEstimation);
+
+  for (const paquetId of [...new Set(paquetsBilanIds)]) {
+    const paquet = await tx.paquetBilan.findFirst({
+      where: { id: paquetId, actif: true },
+      include: {
+        examens: {
+          orderBy: { ordre: "asc" },
+          select: { typeExamenId: true },
+        },
+      },
+    });
+    if (!paquet) {
+      throw new Error("Un paquet bilan sélectionné est invalide ou inactif.");
+    }
+
+    for (const lien of paquet.examens) {
+      idsDansPaquets.add(lien.typeExamenId);
+      const deja = await tx.examenLaboratoire.findFirst({
+        where: {
+          dossierId,
+          typeExamenId: lien.typeExamenId,
+          statut: { not: "ANNULE" },
+        },
+        select: { id: true },
+      });
+      if (deja) continue;
+
+      await tx.examenLaboratoire.create({
+        data: {
+          dossierId,
+          typeExamenId: lien.typeExamenId,
+          prescripteurId: agentId,
+          statut: "PRESCRIT",
+          notes: note,
+          paquetBilanId: paquet.id,
+        },
+      });
+      total += 1;
+    }
+  }
+
+  const idsExamensHorsPaquet = [...new Set(idsExamens)].filter(
+    (id) => !idsDansPaquets.has(id)
+  );
+
+  if (idsExamensHorsPaquet.length === 0) return total;
 
   const typesExamens = await tx.typeExamen.findMany({
-    where: { id: { in: idsExamens }, actif: true },
+    where: { id: { in: idsExamensHorsPaquet }, actif: true },
     select: { id: true },
   });
 
-  if (typesExamens.length !== idsExamens.length) {
+  if (typesExamens.length !== idsExamensHorsPaquet.length) {
     throw new Error("Un ou plusieurs examens sélectionnés sont invalides.");
   }
 
-  const note = noteExamen(salleOrigine, estEstimation);
-
   const dejaPrescrits = await tx.examenLaboratoire.findMany({
-    where: { dossierId, typeExamenId: { in: idsExamens } },
+    where: { dossierId, typeExamenId: { in: idsExamensHorsPaquet } },
     select: { typeExamenId: true },
   });
   const idsDejaPrescrits = new Set(dejaPrescrits.map((e) => e.typeExamenId));
@@ -61,5 +108,5 @@ export async function prescrireExamensInitiaux(
     });
   }
 
-  return nouveaux.length;
+  return total + nouveaux.length;
 }

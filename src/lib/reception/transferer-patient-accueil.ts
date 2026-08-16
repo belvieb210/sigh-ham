@@ -127,6 +127,9 @@ export function parserDonneesTransfert(body: unknown): Partial<DonneesTransfertA
     examensIds: Array.isArray(b.examensIds)
       ? b.examensIds.map((id) => String(id))
       : [],
+    paquetsBilanIds: Array.isArray(b.paquetsBilanIds)
+      ? b.paquetsBilanIds.map((id) => String(id))
+      : [],
     medecinResponsable: String(b.medecinResponsable ?? "").trim(),
     estEstimation: b.estEstimation === true,
     remise: Math.max(0, Number(b.remise) || 0),
@@ -373,7 +376,7 @@ export async function transfererPatientAccueil(
     ? "Transfert manuel"
     : libelleMotifVisite(donnees.motifPrincipal!, donnees.motifAutreTexte);
   const idsExamens = manuel ? [...new Set(donnees.examensIds ?? [])] : [...new Set(donnees.examensIds ?? [])];
-  // Keep manuel without examens like before
+  const idsPaquets = manuel ? [] : [...new Set(donnees.paquetsBilanIds ?? [])];
   const idsExamensEffectifs = manuel ? [] : idsExamens;
 
   const resultat = await prisma.$transaction(async (tx) => {
@@ -582,7 +585,8 @@ export async function transfererPatientAccueil(
       agentId,
       idsExamensEffectifs,
       donnees.estEstimation ?? false,
-      codeOrigine
+      codeOrigine,
+      idsPaquets
     );
 
     const transfert = await tx.transfert.create({

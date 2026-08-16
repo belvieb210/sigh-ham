@@ -10,6 +10,7 @@ import { reorienterPatientDepuisCaisse } from "@/lib/caisse/reorienter-patient-c
 import { estClientWalkInPharmacie, numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 import { creerTokenRecuFacture } from "@/lib/caisse/token-recu-public";
 import { evaluerEtatFacturationDual } from "@/lib/caisse/etat-facturation-dual";
+import { construireLignesFactureExamens } from "@/lib/caisse/construire-lignes-facture-examens";
 import type {
   DestinationApresEncaissement,
   DossierFacturationCaisse,
@@ -148,7 +149,7 @@ export async function obtenirDossierFacturation(
       patient: true,
       examensLaboratoire: {
         where: { statut: { not: "ANNULE" } },
-        include: { typeExamen: true },
+        include: { typeExamen: true, paquetBilan: true },
         orderBy: { createdAt: "asc" },
       },
       factures: {
@@ -217,14 +218,14 @@ export async function obtenirDossierFacturation(
     facturePharmacieBrute?.id
   );
 
-  const lignesExamensPrescrits = dossier.examensLaboratoire.map((ex) => ({
-    id: ex.id,
-    libelle: ex.typeExamen.libelle,
-    quantite: 1,
-    prixUnitaire: decimalVersNombre(ex.typeExamen.prix),
-    montant: decimalVersNombre(ex.typeExamen.prix),
-    source: "EXAMEN" as const,
-  }));
+  const lignesExamensPrescrits = construireLignesFactureExamens(
+    dossier.examensLaboratoire.map((ex) => ({
+      id: ex.id,
+      paquetBilanId: ex.paquetBilanId,
+      typeExamen: ex.typeExamen,
+      paquetBilan: ex.paquetBilan,
+    }))
+  );
 
   const historiquePaiements = dossier.factures.flatMap((f) =>
     f.paiements.map((p) => {

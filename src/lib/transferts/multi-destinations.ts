@@ -31,6 +31,20 @@ export async function inscrirePassagesDansSalles(
   for (let i = 0; i < uniques.length; i++) {
     const salleId = uniques[i]!;
 
+    /** Évite un 2e passage si le dossier est déjà en file dans cette salle. */
+    const dejaEnDestination = await tx.fileAttente.findFirst({
+      where: {
+        serviLe: null,
+        salleId,
+        passage: { dossierId: params.dossierId },
+      },
+      orderBy: { arriveLe: "desc" },
+    });
+    if (dejaEnDestination) {
+      resultats.push({ passageId: dejaEnDestination.passageId, salleId });
+      continue;
+    }
+
     if (i === 0) {
       if (fileOrigine) {
         await tx.fileAttente.update({

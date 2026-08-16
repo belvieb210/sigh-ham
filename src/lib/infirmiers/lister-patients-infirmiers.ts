@@ -124,48 +124,136 @@ function debutJourLocal(d = new Date()) {
 
 const STATUTS_TRANSFERT_CONFIRME = ["ACCEPTE", "EN_TRAITEMENT", "TERMINE"] as const;
 
-/** Patients en file sans ceux dont la consultation est enregistrée et le transfert confirmé. */
+/** Patients en file sans vitals du jour (consultation à établir). */
 export async function listerPatientsConsultationInfirmiers(): Promise<
   PatientFileInfirmiers[]
 > {
   const all = await listerPatientsInfirmiers();
-  if (all.length === 0) return [];
-
-  const dossierIds = all.map((p) => p.dossierId);
-  const dossiersTransfertConfirme = await dossiersTransfertConfirmeInfirmiers(dossierIds);
-
-  return all.filter((p) => {
-    if (!p.hasConstantesAujourdhui) return true;
-    if (!dossiersTransfertConfirme.has(p.dossierId)) return true;
-    return false;
-  });
+  return all.filter((p) => !p.hasConstantesAujourdhui);
 }
 
-async function dossiersTransfertConfirmeInfirmiers(
-  dossierIds: string[]
-): Promise<Set<string>> {
-  if (dossierIds.length === 0) return new Set();
-  const transfertsConfirmes = await prisma.transfert.findMany({
-    where: {
-      dossierId: { in: dossierIds },
-      salleOrigine: { code: "INFIRMIERS" },
-      statut: { in: [...STATUTS_TRANSFERT_CONFIRME] },
+function dedupliquerParDossierInfirmiers(
+  patients: PatientFileInfirmiers[]
+): PatientFileInfirmiers[] {
+  const parDossier = new Map<string, PatientFileInfirmiers>();
+  for (const p of patients) {
+    const existant = parDossier.get(p.dossierId);
+    if (!existant) {
+      parDossier.set(p.dossierId, p);
+      continue;
+    }
+    const garder =
+      new Date(p.arriveeLe).getTime() >= new Date(existant.arriveeLe).getTime()
+        ? p
+        : existant;
+    parDossier.set(p.dossierId, garder);
+  }
+  return [...parDossier.values()].sort(
+    (a, b) => new Date(b.arriveeLe).getTime() - new Date(a.arriveeLe).getTime()
+  );
+}
+
+async function construirePatientHorsFileInfirmiers(
+  dossierId: string,
+  mesureLe?: Date
+): Promise<PatientFileInfirmiers | null> {
+  const dossier = await prisma.dossierPatient.findUnique({
+    where: { id: dossierId },
+    include: {
+      patient: true,
+      passages: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        include: {
+          transferts: {
+            where: {
+              salleOrigine: { code: "INFIRMIERS" },
+              statut: { in: [...STATUTS_TRANSFERT_CONFIRME] },
+            },
+            orderBy: { emisLe: "desc" },
+            take: 1,
+            include: { salleDestination: { select: { code: true, nom: true } } },
+          },
+        },
+      },
     },
-    select: { dossierId: true },
   });
-  return new Set(transfertsConfirmes.map((t) => t.dossierId));
+  if (!dossier) return null;
+
+  const patient = dossier.patient;
+  const passage = dossier.passages[0];
+  const transfertSortant = passage?.transferts[0] ?? null;
+  const orientation = transfertSortant
+    ? raccourcirOrientation(transfertSortant.salleDestination.nom)
+    : "Infirmiers";
+  const arriveeIso = mesureLe?.toISOString() ?? new Date().toISOString();
+
+  return {
+    cleListe: `fiche-${dossier.id}`,
+    dossierId: dossier.id,
+    passageId: passage?.id ?? "",
+    numeroPatient: patient.numeroPatient,
+    numeroDossier: dossier.numeroDossier,
+    nomComplet: `${patient.prenom} ${patient.nom}`.trim(),
+    prenom: patient.prenom,
+    nom: patient.nom,
+    telephone: patient.telephone ?? "—",
+    age: calculerAge(patient.dateNaissance?.toISOString() ?? null),
+    sexe: patient.sexe ?? null,
+    motif: passage?.motif ?? "Consultation enregistrée",
+    provenance: "Infirmiers",
+    orientation,
+    orientationCouleur:
+      COULEURS_ORIENTATION[orientation] ?? "bg-violet-100 text-violet-700",
+    codeSalleDestination: transfertSortant?.salleDestination.code ?? "INFIRMIERS",
+    statut: "Constantes prises",
+    statutCouleur: "bg-emerald-100 text-emerald-800",
+    heure: formaterHeure(arriveeIso),
+    arriveeLe: arriveeIso,
+    transfertId: null,
+    transfertSortantId: transfertSortant?.id ?? null,
+    statutTransfertSortant: transfertSortant?.statut ?? null,
+    enRecuperation: false,
+    numeroOrdre: 0,
+    hasConstantesAujourdhui: true,
+  };
 }
 
-/** Patients dont le transfert sortant depuis Infirmiers est confirmé (fiche traitement). */
+/** Patients avec consultation enregistrée aujourd'hui (restent visibles après transfert). */
 export async function listerPatientsFicheTraitementInfirmiers(): Promise<
   PatientFileInfirmiers[]
 > {
-  const all = await listerPatientsInfirmiers();
-  if (all.length === 0) return [];
-  const dossiersTransfertConfirme = await dossiersTransfertConfirmeInfirmiers(
-    all.map((p) => p.dossierId)
+  const debut = debutJourLocal();
+  const enFile = await listerPatientsInfirmiers();
+  const enFileAvecConstantes = enFile.filter((p) => p.hasConstantesAujourdhui);
+  const idsEnFile = new Set(enFile.map((p) => p.dossierId));
+
+  const constantesAujourdhui = await prisma.constantesVitales.findMany({
+    where: { mesureLe: { gte: debut } },
+    select: { dossierId: true, mesureLe: true },
+    orderBy: { mesureLe: "desc" },
+  });
+
+  const derniereMesureParDossier = new Map<string, Date>();
+  for (const c of constantesAujourdhui) {
+    if (!derniereMesureParDossier.has(c.dossierId)) {
+      derniereMesureParDossier.set(c.dossierId, c.mesureLe);
+    }
+  }
+
+  const horsFileIds = [...derniereMesureParDossier.keys()].filter(
+    (id) => !idsEnFile.has(id)
   );
-  return all.filter((p) => dossiersTransfertConfirme.has(p.dossierId));
+
+  const horsFile = (
+    await Promise.all(
+      horsFileIds.map((id) =>
+        construirePatientHorsFileInfirmiers(id, derniereMesureParDossier.get(id))
+      )
+    )
+  ).filter((p): p is PatientFileInfirmiers => p != null);
+
+  return dedupliquerParDossierInfirmiers([...enFileAvecConstantes, ...horsFile]);
 }
 
 export async function listerPatientsInfirmiers(): Promise<PatientFileInfirmiers[]> {

@@ -83,6 +83,29 @@ function debutJourLocal(d = new Date()) {
   return x;
 }
 
+function dedupliquerParDossierMedecins(
+  patients: PatientFileMedecins[]
+): PatientFileMedecins[] {
+  const parDossier = new Map<string, PatientFileMedecins>();
+  for (const p of patients) {
+    const existant = parDossier.get(p.dossierId);
+    if (!existant) {
+      parDossier.set(p.dossierId, p);
+      continue;
+    }
+    const score = (x: PatientFileMedecins) => {
+      let s = new Date(x.arriveeLe).getTime();
+      if (x.provenance.toLowerCase().includes("infirmier")) s += 1_000;
+      if (x.consultationOuverteId) s += 10_000;
+      return s;
+    };
+    parDossier.set(p.dossierId, score(p) >= score(existant) ? p : existant);
+  }
+  return [...parDossier.values()].sort(
+    (a, b) => new Date(b.arriveeLe).getTime() - new Date(a.arriveeLe).getTime()
+  );
+}
+
 export async function listerPatientsMedecins(): Promise<PatientFileMedecins[]> {
   const files = await listerPatientsFileAttenteSalle("MEDECINS");
   const dossierIds = files.map((f) => f.passage.dossier.id);
@@ -131,7 +154,7 @@ export async function listerPatientsMedecins(): Promise<PatientFileMedecins[]> {
     sortantParDossier.set(t.dossierId, liste);
   }
 
-  return files.map((file) => {
+  const patients = files.map((file) => {
     const dossier = file.passage.dossier;
     const patient = dossier.patient;
     const transfert = file.passage.transferts[0];
@@ -187,6 +210,8 @@ export async function listerPatientsMedecins(): Promise<PatientFileMedecins[]> {
       consultationOuverteId,
     };
   });
+
+  return dedupliquerParDossierMedecins(patients);
 }
 
 export async function obtenirDetailPatientMedecins(

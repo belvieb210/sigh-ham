@@ -12,11 +12,21 @@ source "${APP_DIR}/deploy/lib/npm-deps.sh"
 echo "==> Arrêt services"
 systemctl stop sigh-web sigh-socket 2>/dev/null || true
 
-clean_node_modules "${APP_DIR}"
+clean_node_modules "${APP_DIR}" sync
+
+shopt -s nullglob
+for old in "${APP_DIR}"/node_modules.trash.*; do
+  [[ -d "$old" ]] && rm -rf "$old"
+done
+shopt -u nullglob
+
+chown -R sigh:sigh "${APP_DIR}" 2>/dev/null || true
 
 echo "==> npm ci (utilisateur sigh)"
-sudo -u sigh -H bash -lc "cd '${APP_DIR}' && npm ci" || \
+if ! sudo -u sigh -H bash -lc "cd '${APP_DIR}' && npm ci"; then
+  echo "⚠️  npm ci échoué — npm install"
   sudo -u sigh -H bash -lc "cd '${APP_DIR}' && npm install"
+fi
 
 echo "==> Relance déploiement complet"
 bash "${APP_DIR}/deploy/deploy-app.sh"

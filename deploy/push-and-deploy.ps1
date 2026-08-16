@@ -88,7 +88,7 @@ function Invoke-VpsDeploy {
   $env:DISPLAY = "unused"
 
   try {
-    $cmd = "cd '$AppDir' && git fetch origin main && git pull origin main && bash deploy/auto-deploy-cron.sh --force && git log -1 --oneline && systemctl is-active sigh-web sigh-socket"
+    $cmd = "cd '$AppDir' && git fetch origin main && git reset --hard origin/main && bash deploy/auto-deploy-cron.sh --force && git log -1 --oneline && systemctl is-active sigh-web sigh-socket"
     # Pas de TTY alloue : force l'utilisation de SSH_ASKPASS
     & ssh `
       -o StrictHostKeyChecking=accept-new `

@@ -113,6 +113,7 @@ export const infirmiersEn = {
       "{{count}} patient(s) checked: pick destination rooms to route them together.",
     age: "Age",
     telephone: "Phone",
+    numeroVisite: "Visit No.",
     motif: "Reason",
     provenance: "From",
     actionConstantes: "Vitals",

@@ -70,6 +70,7 @@ export const receptionKg = {
     aucunPatient: "Muntu ya maladi mosi ve oyo safuti",
     age: "Mibu",
     telephone: "Téléphone",
+    numeroVisite: "N° visite",
     adresse: "Adresse",
     assurance: "Assurance",
   },

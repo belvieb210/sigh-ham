@@ -68,6 +68,7 @@ export const receptionEs = {
     aucunPatient: "Ningún paciente seleccionado",
     age: "Edad",
     telephone: "Teléfono",
+    numeroVisite: "N.º visita",
     adresse: "Dirección",
     assurance: "Seguro",
   },

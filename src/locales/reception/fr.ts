@@ -67,6 +67,7 @@ export const receptionFr = {
     aucunPatient: "Aucun patient sélectionné",
     age: "Âge",
     telephone: "Téléphone",
+    numeroVisite: "N° visite",
     adresse: "Adresse",
     assurance: "Assurance",
   },

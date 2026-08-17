@@ -134,6 +134,7 @@ export const caisseFr = {
     aucunPatient: "Aucun patient sélectionné",
     age: "Âge",
     telephone: "Téléphone",
+    numeroVisite: "N° visite",
     orientationRapide: "Orientation rapide",
     aideOrientation:
       "Section « Factures payées » uniquement : choisissez une destination, puis confirmez via le menu ⋮ — le patient n'apparaît en destination qu'après confirmation.",
@@ -441,6 +442,7 @@ export const caisseFr = {
     age: "Âge",
     telephone: "Téléphone",
     dossier: "Dossier",
+    numeroVisite: "N° visite",
     aucuneLigne: "Aucune ligne sur cette facture.",
     selectionnerFacture: "Sélectionnez une facture pour afficher le résumé.",
     nbExamens: "{{count}} examen",

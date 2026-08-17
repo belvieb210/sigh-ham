@@ -69,6 +69,7 @@ export const receptionZh = {
     aucunPatient: "未选择患者",
     age: "年龄",
     telephone: "电话",
+    numeroVisite: "就诊号",
     adresse: "地址",
     assurance: "保险",
   },

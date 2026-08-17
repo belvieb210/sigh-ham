@@ -40,6 +40,7 @@ export interface ExamenSaisieDto {
 
 export interface SaisieResultatsDto {
   dossierId: string;
+  numeroDossier: string;
   numeroEnregistrement: string;
   numeroTransfert: string | null;
   prenom: string;

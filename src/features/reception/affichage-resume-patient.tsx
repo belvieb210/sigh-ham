@@ -6,6 +6,7 @@ import {
   couleurBadgeTypeVisite,
   type DonneesResumePatient,
 } from "@/lib/reception/resume-patient";
+import { LigneNumeroVisiteResume } from "@/components/ui/ligne-numero-visite-resume";
 import { useTraductionsReception } from "@/hooks/use-traductions-reception";
 
 interface PropsAffichageResumePatient {
@@ -70,6 +71,12 @@ export function AffichageResumePatient({
             <dd className="font-medium text-texte-principal">{resume.assurance}</dd>
           </div>
           <div className="col-span-2">
+            <LigneNumeroVisiteResume
+              label={t("reception.panneau.numeroVisite")}
+              numeroDossier={resume.numeroVisite}
+            />
+          </div>
+          <div className="col-span-2">
             <dt className="text-texte-secondaire">{t("reception.panneau.telephone")}</dt>
             <dd className="font-medium text-texte-principal">{resume.telephone}</dd>
           </div>
@@ -106,6 +113,10 @@ export function AffichageResumePatient({
         </span>
       )}
       <dl className="mt-4 w-full space-y-2 text-left text-sm">
+        <LigneNumeroVisiteResume
+          label={t("reception.panneau.numeroVisite")}
+          numeroDossier={resume.numeroVisite}
+        />
         <div className="flex justify-between gap-2">
           <dt className="text-texte-secondaire">{t("reception.panneau.age")}</dt>
           <dd className="font-medium text-texte-principal">{ageAffiche}</dd>

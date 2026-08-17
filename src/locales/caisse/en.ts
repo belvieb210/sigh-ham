@@ -134,6 +134,7 @@ export const caisseEn = {
     aucunPatient: "No patient selected",
     age: "Age",
     telephone: "Phone",
+    numeroVisite: "Visit No.",
     orientationRapide: "Quick orientation",
     aideOrientation:
       "Paid invoices section only: pick a destination, then confirm via ⋮ — the patient appears at destination only after confirmation.",
@@ -441,6 +442,7 @@ export const caisseEn = {
     age: "Age",
     telephone: "Phone",
     dossier: "File",
+    numeroVisite: "Visit No.",
     aucuneLigne: "No lines on this invoice.",
     selectionnerFacture: "Select an invoice to show the summary.",
     nbExamens: "{{count}} exam",

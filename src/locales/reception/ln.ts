@@ -70,6 +70,7 @@ export const receptionLn = {
     aucunPatient: "Patient moko te oyo eponami",
     age: "Mbula",
     telephone: "Téléphone",
+    numeroVisite: "N° visite",
     adresse: "Adresse",
     assurance: "Assurance",
   },

@@ -396,6 +396,7 @@ export function mapperDossierVisite(dossier: DossierVisite): PatientEnregistre {
   return {
     cleListe: dossier.id,
     dossierId: dossier.id,
+    numeroDossier: dossier.numeroDossier,
     id: patient.numeroPatient,
     nom: `${patient.nom} ${patient.prenom}`,
     telephone: patient.telephone ?? "—",

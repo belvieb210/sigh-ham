@@ -134,6 +134,7 @@ export const pharmacieEn = {
       "{{count}} patient(s) selected: check destination rooms to route them together.",
     age: "Age",
     telephone: "Phone",
+    numeroVisite: "Visit No.",
     motif: "Reason",
     provenance: "From",
     actionVente: "Sale",

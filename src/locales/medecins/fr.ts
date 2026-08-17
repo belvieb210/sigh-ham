@@ -189,6 +189,7 @@ export const medecinsFr = {
       "{{count}} patient(s) cochés : cochez les salles de destination pour les orienter tous ensemble.",
     age: "Âge",
     telephone: "Téléphone",
+    numeroVisite: "N° visite",
     motif: "Motif",
     provenance: "Provenance",
     actionConsultation: "Consultation",

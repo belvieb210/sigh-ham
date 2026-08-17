@@ -6,6 +6,7 @@ import { Activity, History } from "lucide-react";
 import { OrientationRapideInfirmiers } from "@/features/infirmiers/orientation-rapide-infirmiers";
 import { useOrientationInfirmiers } from "@/features/infirmiers/contexte-orientation-infirmiers";
 import { useSelectionInfirmiersOptionnel } from "@/features/infirmiers/contexte-selection-infirmiers";
+import { LigneNumeroVisiteResume } from "@/components/ui/ligne-numero-visite-resume";
 import { cn } from "@/lib/utils";
 
 function useGestionOrientation() {
@@ -51,6 +52,10 @@ function ResumeEtOrientation() {
           )}
         </div>
         <div className="mt-4 space-y-2 text-left text-xs">
+          <LigneNumeroVisiteResume
+            label={t("infirmiers.panneau.numeroVisite")}
+            numeroDossier={resume?.numeroDossier}
+          />
           <div className="flex justify-between gap-2">
             <span className="text-texte-secondaire">{t("infirmiers.panneau.age")}</span>
             <span className="font-medium text-texte-principal">{resume?.age ?? "â"}</span>

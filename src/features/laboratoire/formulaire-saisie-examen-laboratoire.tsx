@@ -28,6 +28,7 @@ import {
 import type { ConfigSaisieParametre } from "@/lib/laboratoire/config-saisie-parametre";
 import { ChampSaisieParametre } from "@/features/laboratoire/champ-saisie-parametre";
 import { cn } from "@/lib/utils";
+import { afficherNumeroVisite, compactNumeroPatOuVis } from "@/lib/numeros/affichage";
 import type { MetaCalculsFormulaire } from "@/lib/laboratoire/calculs-automatiques";
 import { estChampCalculeAutomatique } from "@/lib/laboratoire/calculs-automatiques";
 
@@ -714,12 +715,16 @@ export function FormulaireSaisieExamenLaboratoire({
             </div>
             <div>
               <dt className="text-xs text-slate-500">{t("laboratoire.saisieResultats.numeroDossier")}</dt>
-              <dd className="font-mono text-slate-800">{patient.numeroTransfert ?? "—"}</dd>
+              <dd className="font-mono text-slate-800">
+                {afficherNumeroVisite(patient.numeroDossier)}
+              </dd>
             </div>
-            {patient.numeroEnregistrement && (
+            {patient.numeroTransfert && (
               <div>
                 <dt className="text-xs text-slate-500">{t("laboratoire.saisieResultats.numeroDemande")}</dt>
-                <dd className="font-mono text-slate-800">{patient.numeroEnregistrement}</dd>
+                <dd className="font-mono text-slate-800">
+                  {compactNumeroPatOuVis(patient.numeroTransfert)}
+                </dd>
               </div>
             )}
           </dl>

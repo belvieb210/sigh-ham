@@ -27,6 +27,7 @@ import type {
 } from "@/lib/laboratoire/saisie-resultats-types";
 import { televerserPieceJointeLaboratoire } from "@/features/laboratoire/televerser-piece-jointe-laboratoire";
 import { cn } from "@/lib/utils";
+import { afficherNumeroVisite } from "@/lib/numeros/affichage";
 import {
   appliquerCalculsAutomatiques,
   validerCalculsPourVerification,
@@ -398,7 +399,7 @@ export function ContenuSaisieResultatsLaboratoire({
         patient
           ? t("laboratoire.saisieResultats.sousTitrePatient", {
               nom: `${patient.prenom} ${patient.nom}`,
-              numero: patient.numeroEnregistrement,
+              numero: afficherNumeroVisite(patient.numeroDossier),
             })
           : t("laboratoire.saisieResultats.sousTitre")
       }

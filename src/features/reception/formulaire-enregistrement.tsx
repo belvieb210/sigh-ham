@@ -399,9 +399,10 @@ export const FormulaireEnregistrement = forwardRef<
       ville: formulaire.ville,
       assurance: formulaire.assurance,
       numeroPatient: numeroPatientActif,
+      numeroVisite: visiteResume?.numeroVisite ?? null,
       photoUrl: photoUrlExistante,
     });
-  }, [formulaire, numeroPatientActif, photoUrlExistante, definirDepuisFormulaire]);
+  }, [formulaire, numeroPatientActif, photoUrlExistante, visiteResume?.numeroVisite, definirDepuisFormulaire]);
 
   useEffect(() => {
     if (!champsEglise || estComplet || etape !== 2) return;

@@ -68,6 +68,7 @@ export const receptionHi = {
     aucunPatient: "कोई रोगी चयनित नहीं",
     age: "आयु",
     telephone: "फ़ोन",
+    numeroVisite: "विज़िट संख्या",
     adresse: "पता",
     assurance: "बीमा",
   },

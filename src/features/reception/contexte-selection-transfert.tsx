@@ -147,6 +147,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
           definirDepuisDonneesCompletes({
             ...donnees,
             dossierId: patient.dossierId ?? donnees.dossierId,
+            numeroVisite: patient.numeroDossier ?? donnees.numeroVisite,
           });
         }
       } catch {

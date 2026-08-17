@@ -68,6 +68,7 @@ export const receptionHe = {
     aucunPatient: "לא נבחר מטופל",
     age: "גיל",
     telephone: "טלפון",
+    numeroVisite: "מס׳ ביקור",
     adresse: "כתובת",
     assurance: "ביטוח",
   },

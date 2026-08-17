@@ -23,6 +23,7 @@ export interface ResumePatientMedecins {
   initiales: string;
   nomComplet: string;
   numeroPatient: string | null;
+  numeroDossier: string | null;
   dossierId: string | null;
   age: string;
   telephone: string;
@@ -35,6 +36,7 @@ export const RESUME_MEDECINS_VIDE: ResumePatientMedecins = {
   initiales: "—",
   nomComplet: "Aucun patient sélectionné",
   numeroPatient: null,
+  numeroDossier: null,
   dossierId: null,
   age: "—",
   telephone: "—",
@@ -93,6 +95,7 @@ export function FournisseurSelectionMedecins({ children }: { children: ReactNode
         initiales: initiales(patient.prenom, patient.nom),
         nomComplet: patient.nomComplet,
         numeroPatient: patient.numeroPatient,
+        numeroDossier: patient.numeroDossier,
         dossierId: patient.dossierId,
         age: patient.age !== null ? `${patient.age} ans` : "—",
         telephone: patient.telephone || "—",

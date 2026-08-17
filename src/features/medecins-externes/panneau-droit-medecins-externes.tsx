@@ -6,6 +6,7 @@ import { ClipboardList, FlaskConical, Stethoscope } from "lucide-react";
 import { OrientationRapideMedecinsExternes } from "@/features/medecins-externes/orientation-rapide-medecins-externes";
 import { useOrientationMedecinsExternes } from "@/features/medecins-externes/contexte-orientation-medecins-externes";
 import { useSelectionMedecinsExternesOptionnel } from "@/features/medecins-externes/contexte-selection-medecins-externes";
+import { LigneNumeroVisiteResume } from "@/components/ui/ligne-numero-visite-resume";
 import { cn } from "@/lib/utils";
 
 function useGestionOrientation() {
@@ -51,6 +52,10 @@ function ResumeEtOrientation() {
           )}
         </div>
         <div className="mt-4 space-y-2 text-left text-xs">
+          <LigneNumeroVisiteResume
+            label={t("medecinsExternes.panneau.numeroVisite")}
+            numeroDossier={resume?.numeroDossier}
+          />
           <div className="flex justify-between gap-2">
             <span className="text-texte-secondaire">{t("medecinsExternes.panneau.age")}</span>
             <span className="font-medium text-texte-principal">{resume?.age ?? "â€”"}</span>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { Download, FileText, Loader2 } from "lucide-react";
+import { LigneNumeroVisiteResume } from "@/components/ui/ligne-numero-visite-resume";
 import type {
   HistoriqueCompletDossierInfirmiers,
   PatientHistoriqueInfirmiers,
@@ -58,10 +59,14 @@ export function PanneauDroitHistoriqueInfirmiers({
                 {patient.nomComplet}
               </p>
               <p className="font-mono text-[11px] text-texte-secondaire">
-                {patient.numeroDossier}
+                {patient.numeroPatient}
               </p>
             </div>
             <div className="mt-4 space-y-2 text-left text-xs">
+              <LigneNumeroVisiteResume
+                label={t("infirmiers.panneau.numeroVisite")}
+                numeroDossier={patient.numeroDossier}
+              />
               <div className="flex justify-between gap-2">
                 <span className="text-texte-secondaire">{t("infirmiers.panneau.age")}</span>
                 <span className="font-medium">

@@ -6,6 +6,7 @@ import { BedDouble, FlaskConical, Pill, Stethoscope } from "lucide-react";
 import { OrientationRapideMedecins } from "@/features/medecins/orientation-rapide-medecins";
 import { useOrientationMedecins } from "@/features/medecins/contexte-orientation-medecins";
 import { useSelectionMedecinsOptionnel } from "@/features/medecins/contexte-selection-medecins";
+import { LigneNumeroVisiteResume } from "@/components/ui/ligne-numero-visite-resume";
 import { cn } from "@/lib/utils";
 
 function useGestionOrientation() {
@@ -51,6 +52,10 @@ function ResumeEtOrientation() {
           )}
         </div>
         <div className="mt-4 space-y-2 text-left text-xs">
+          <LigneNumeroVisiteResume
+            label={t("medecins.panneau.numeroVisite")}
+            numeroDossier={resume?.numeroDossier}
+          />
           <div className="flex justify-between gap-2">
             <span className="text-texte-secondaire">{t("medecins.panneau.age")}</span>
             <span className="font-medium text-texte-principal">{resume?.age ?? "—"}</span>

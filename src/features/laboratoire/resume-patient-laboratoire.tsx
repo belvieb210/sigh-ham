@@ -9,6 +9,7 @@ import {
   numeroDossierVisiteLaboratoire,
   codeTransfertLaboratoire,
 } from "@/features/laboratoire/utils-affichage";
+import { cn } from "@/lib/utils";
 
 interface PropsResumePatientLaboratoire {
   patient: PatientFileLaboratoire | null;
@@ -19,14 +20,21 @@ interface PropsResumePatientLaboratoire {
 function Ligne({
   label,
   valeur,
+  mono,
 }: {
   label: string;
   valeur: string;
+  mono?: boolean;
 }) {
   return (
     <div className="flex justify-between gap-2">
       <dt className="shrink-0 text-texte-secondaire">{label}</dt>
-      <dd className="max-w-[65%] truncate text-right font-medium text-texte-principal">
+      <dd
+        className={cn(
+          "max-w-[65%] truncate text-right font-medium text-texte-principal",
+          mono && "font-mono"
+        )}
+      >
         {valeur}
       </dd>
     </div>
@@ -61,7 +69,6 @@ export function ResumePatientLaboratoire({
         <dl className="mt-4 w-full space-y-2 text-left text-xs">
           <Ligne label={t("laboratoire.panneau.age")} valeur="—" />
           <Ligne label={t("laboratoire.panneau.telephone")} valeur="—" />
-          <Ligne label={t("laboratoire.panneau.numeroEnregistrement")} valeur="—" />
           <Ligne label={t("laboratoire.panneau.numeroVisite")} valeur="—" />
           <Ligne label={t("laboratoire.panneau.numeroTransfert")} valeur="—" />
           <Ligne label={t("laboratoire.panneau.heureTransfert")} valeur="—" />
@@ -106,10 +113,12 @@ export function ResumePatientLaboratoire({
         <Ligne
           label={t("laboratoire.panneau.numeroVisite")}
           valeur={numeroDossierVisiteLaboratoire(patient)}
+          mono
         />
         <Ligne
           label={t("laboratoire.panneau.numeroTransfert")}
           valeur={codeTransfertLaboratoire(patient)}
+          mono
         />
         <Ligne
           label={t("laboratoire.panneau.heureTransfert")}

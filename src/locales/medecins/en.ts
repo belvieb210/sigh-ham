@@ -189,6 +189,7 @@ export const medecinsEn: MedecinsFr = {
       "{{count}} patient(s) checked: check destination wards to route them together.",
     age: "Age",
     telephone: "Phone",
+    numeroVisite: "Visit No.",
     motif: "Reason",
     provenance: "From",
     actionConsultation: "Consultation",

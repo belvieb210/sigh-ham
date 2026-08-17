@@ -99,6 +99,7 @@ export const medecinsExternesFr = {
     aideOrientationLot: "{{count}} patient(s) cochés.",
     age: "Âge",
     telephone: "Téléphone",
+    numeroVisite: "N° visite",
     motif: "Motif",
     provenance: "Provenance",
     actionConsultation: "Consultation",

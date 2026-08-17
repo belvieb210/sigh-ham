@@ -29,6 +29,7 @@ import { BadgeTypePersonneCaisse } from "@/features/caisse/badge-type-personne-c
 import { imprimerEtiquettesTubesFacture } from "@/lib/caisse/imprimer-etiquettes-tubes";
 import { imprimerRecuCaisseThermique } from "@/lib/caisse/imprimer-recu-thermique";
 import type { FactureResumeJour } from "@/lib/caisse/types";
+import { LigneNumeroVisiteResume } from "@/components/ui/ligne-numero-visite-resume";
 import { cn } from "@/lib/utils";
 
 function ouvrirFacturePharma(fac: FactureResumeJour) {
@@ -589,6 +590,10 @@ export function ContenuFacturesJourCaisse({
                       </p>
                     </div>
                     <div className="mt-5 space-y-2.5 border-t border-gris-bordure/70 pt-4 text-sm">
+                      <LigneNumeroVisiteResume
+                        label={t("caisse.factures.numeroVisite")}
+                        numeroDossier={factureSelectionnee.numeroDossier}
+                      />
                       <div className="flex justify-between gap-3">
                         <span className="text-texte-secondaire">{t("caisse.factures.age")}</span>
                         <span className="font-medium text-texte-principal">
@@ -603,14 +608,6 @@ export function ContenuFacturesJourCaisse({
                         </span>
                         <span className="font-medium text-texte-principal">
                           {factureSelectionnee.telephone || "—"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between gap-3">
-                        <span className="text-texte-secondaire">
-                          {t("caisse.factures.dossier")}
-                        </span>
-                        <span className="font-medium text-texte-principal">
-                          {factureSelectionnee.numeroDossier}
                         </span>
                       </div>
                     </div>

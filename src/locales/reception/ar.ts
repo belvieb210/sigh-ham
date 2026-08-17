@@ -68,6 +68,7 @@ export const receptionAr = {
     aucunPatient: "لم يُحدَّد أي مريض",
     age: "العمر",
     telephone: "الهاتف",
+    numeroVisite: "رقم الزيارة",
     adresse: "العنوان",
     assurance: "التأمين",
   },

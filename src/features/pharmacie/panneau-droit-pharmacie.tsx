@@ -6,6 +6,7 @@ import { Pill } from "lucide-react";
 import { OrientationRapidePharmacie } from "@/features/pharmacie/orientation-rapide-pharmacie";
 import { useOrientationPharmacie } from "@/features/pharmacie/contexte-orientation-pharmacie";
 import { useSelectionPharmacieOptionnel } from "@/features/pharmacie/contexte-selection-pharmacie";
+import { LigneNumeroVisiteResume } from "@/components/ui/ligne-numero-visite-resume";
 import { cn } from "@/lib/utils";
 
 function useGestionOrientation() {
@@ -51,6 +52,10 @@ function ResumeEtOrientation() {
           )}
         </div>
         <div className="mt-4 space-y-2 text-left text-xs">
+          <LigneNumeroVisiteResume
+            label={t("pharmacie.panneau.numeroVisite")}
+            numeroDossier={resume?.numeroDossier}
+          />
           <div className="flex justify-between gap-2">
             <span className="text-texte-secondaire">{t("pharmacie.panneau.age")}</span>
             <span className="font-medium text-texte-principal">{resume?.age ?? "—"}</span>

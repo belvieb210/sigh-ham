@@ -68,6 +68,7 @@ export const receptionLua = {
     aucunPatient: "Muntu wa maladi umwe ve wa kusala",
     age: "Myaka",
     telephone: "Téléphone",
+    numeroVisite: "N° visite",
     adresse: "Adresse",
     assurance: "Assurance",
   },

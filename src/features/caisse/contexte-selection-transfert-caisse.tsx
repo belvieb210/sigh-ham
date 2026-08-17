@@ -28,6 +28,7 @@ export interface ResumePatientCaisse {
   initiales: string;
   nomComplet: string;
   numeroPatient: string | null;
+  numeroDossier: string | null;
   dossierId: string | null;
   age: string;
   telephone: string;
@@ -38,6 +39,7 @@ export const RESUME_CAISSE_VIDE: ResumePatientCaisse = {
   initiales: "—",
   nomComplet: "Aucun patient sélectionné",
   numeroPatient: null,
+  numeroDossier: null,
   dossierId: null,
   age: "—",
   telephone: "—",
@@ -91,6 +93,7 @@ export function FournisseurSelectionTransfertCaisse({ children }: { children: Re
         initiales: initiales(patient.prenom, patient.nom),
         nomComplet: patient.nomComplet,
         numeroPatient: patient.numeroPatient,
+        numeroDossier: patient.numeroDossier,
         dossierId: patient.dossierId,
         age: age !== null ? `${age} ans` : "—",
         telephone: patient.telephone || "—",

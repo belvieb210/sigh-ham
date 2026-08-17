@@ -70,6 +70,7 @@ export const receptionSw = {
     aucunPatient: "Hakuna mgonjwa aliyechaguliwa",
     age: "Umri",
     telephone: "Simu",
+    numeroVisite: "Namba ya ziara",
     adresse: "Anwani",
     assurance: "Bima",
   },

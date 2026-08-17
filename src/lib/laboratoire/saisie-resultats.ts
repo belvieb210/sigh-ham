@@ -116,6 +116,7 @@ export async function chargerSaisieResultats(
 
   return {
     dossierId: dossier.id,
+    numeroDossier: dossier.numeroDossier,
     numeroEnregistrement: patient.numeroPatient,
     numeroTransfert: transfertCourant?.numeroTransfert ?? null,
     prenom: patient.prenom,

@@ -6,6 +6,7 @@ import { CalendarPlus, Printer, Receipt, Search } from "lucide-react";
 import { OrientationRapideCaisse } from "@/features/caisse/orientation-rapide-caisse";
 import { useOrientationCaisse } from "@/features/caisse/contexte-orientation-caisse";
 import { useSelectionTransfertCaisseOptionnel } from "@/features/caisse/contexte-selection-transfert-caisse";
+import { LigneNumeroVisiteResume } from "@/components/ui/ligne-numero-visite-resume";
 import { cn } from "@/lib/utils";
 
 function useGestionOrientation() {
@@ -51,6 +52,10 @@ function ResumeEtOrientation() {
           )}
         </div>
         <div className="mt-4 space-y-2 text-left text-xs">
+          <LigneNumeroVisiteResume
+            label={t("caisse.transferts.numeroVisite")}
+            numeroDossier={resume?.numeroDossier}
+          />
           <div className="flex justify-between gap-2">
             <span className="text-texte-secondaire">{t("caisse.transferts.age")}</span>
             <span className="font-medium text-texte-principal">{resume?.age ?? "—"}</span>

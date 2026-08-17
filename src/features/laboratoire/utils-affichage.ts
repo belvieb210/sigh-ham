@@ -4,6 +4,10 @@ import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import { cheminSaisieResultats } from "@/lib/laboratoire/saisie-resultats-types";
 import type { ActionEnregistrementResultat } from "@/lib/laboratoire/saisie-resultats-types";
 import type { StatutExamen } from "@/generated/prisma/client";
+import {
+  afficherNumeroVisite,
+  compactNumeroPatOuVis,
+} from "@/lib/numeros/affichage";
 
 type ExamenAvecNotes = {
   statut: StatutExamen | string;
@@ -89,19 +93,9 @@ export function statutsAnalyseDistincts(
   return [...ids];
 }
 
-/** Compacte PAT/VIS pour l’affichage (PAT-2026-00002 → PAT202600002). */
-function compactNumeroPatOuVis(valeur: string): string {
-  if (/^(PAT|VIS)/i.test(valeur)) {
-    return valeur.replace(/-/g, "").toUpperCase();
-  }
-  return valeur;
-}
-
-/** N° VIS du parcours (ex. VIS2026000001). */
+/** N° VIS du parcours (ex. VIS2026000001) — jamais le n° permanent. */
 export function numeroDossierVisiteLaboratoire(p: PatientFileLaboratoire) {
-  const brut = p.numeroDossier?.trim();
-  if (!brut) return "—";
-  return compactNumeroPatOuVis(brut);
+  return afficherNumeroVisite(p.numeroDossier);
 }
 
 /** N° PAT affiché en colonne « N° Patient » (ex. PAT202600002). */
@@ -121,9 +115,13 @@ export function numeroEnregistrementLaboratoire(p: PatientFileLaboratoire) {
   return uniques[0] ?? "—";
 }
 
-/** N° permanent patient (ex. 20260804008). */
+/** N° permanent patient (ex. 20260804008) — jamais le n° de visite. */
 export function numeroPermanentPatientLaboratoire(p: PatientFileLaboratoire) {
-  return p.numeroPatient || p.numeroEnregistrement || "—";
+  const permanent = p.numeroPatient?.trim();
+  if (permanent) return permanent;
+  const fallback = p.numeroEnregistrement?.trim();
+  if (fallback && fallback !== p.numeroDossier?.trim()) return fallback;
+  return "—";
 }
 
 /** @deprecated Alias — n° PAT de l'orientation */

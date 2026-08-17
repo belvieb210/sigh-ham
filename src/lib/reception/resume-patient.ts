@@ -5,6 +5,7 @@ export interface DonneesResumePatient {
   initiales: string;
   nomComplet: string;
   numeroPatient: string | null;
+  numeroVisite: string | null;
   dossierId: string | null;
   typeVisite: string;
   libelleTypeVisite: string;
@@ -20,6 +21,7 @@ export const RESUME_PATIENT_VIDE: DonneesResumePatient = {
   initiales: "—",
   nomComplet: "Aucun patient sélectionné",
   numeroPatient: null,
+  numeroVisite: null,
   dossierId: null,
   typeVisite: "nouveau",
   libelleTypeVisite: "—",
@@ -78,6 +80,7 @@ export function construireResumeDepuisFormulaire(input: {
   ville?: string;
   assurance?: string;
   numeroPatient?: string | null;
+  numeroVisite?: string | null;
   dossierId?: string | null;
   photoUrl?: string | null;
 }): DonneesResumePatient {
@@ -93,6 +96,7 @@ export function construireResumeDepuisFormulaire(input: {
     initiales: initialesPatient(prenom, nom),
     nomComplet: nomComplet || "Patient sans nom",
     numeroPatient: input.numeroPatient ?? null,
+    numeroVisite: input.numeroVisite ?? null,
     dossierId: input.dossierId ?? null,
     typeVisite: input.typeVisite ?? "nouveau",
     libelleTypeVisite: libelleTypeVisite(input.typeVisite ?? "nouveau"),
@@ -119,6 +123,7 @@ export function construireResumeDepuisDonneesFormulaire(
     ville: donnees.ville,
     assurance: donnees.assurance,
     numeroPatient: donnees.numeroPatient,
+    numeroVisite: donnees.numeroVisite ?? null,
     dossierId: donnees.dossierId ?? null,
     photoUrl: donnees.photoUrl,
   });

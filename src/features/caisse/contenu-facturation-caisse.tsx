@@ -609,12 +609,20 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           : peutCloturerSoldeAZero
             ? false
             : resteAPayer <= 0 || montantPaiement <= 0));
-  /** Montant affiché comme « à payer » : reste si avance déjà payée, sinon total */
+  /** Montant affiché comme « à payer » : le reste dès qu'un paiement existe, sinon le total */
   const montantDuJour = collecterPharmacieDepuisExamens
     ? restePharmacie
-    : soldeObligatoire || modeFacture === "SOLDE"
+    : factureCloturee ||
+        dejaPaye > 0.01 ||
+        soldeObligatoire ||
+        modeFacture === "SOLDE"
       ? resteAPayer
       : totalAPayer;
+  const montantPayeAffiche = factureCloturee
+    ? dejaPaye
+    : modeFacture === "AVANCE"
+      ? montantAvance
+      : montantPaiement;
   const resteApresCePaiement = Math.max(
     0,
     resteAPayer - (modeFacture === "AVANCE" ? montantAvance : montantPaiement)
@@ -643,6 +651,15 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     collecterPharmacieDepuisExamens,
     restePharmacie,
   ]);
+
+  useEffect(() => {
+    if (!dossier?.facturationDual.facturationComplete || enCours) return;
+    setMessage(t("caisse.facturation.factureDejaPayeeRetour"));
+    const timer = window.setTimeout(() => {
+      router.replace("/sigh/caisse/factures");
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [dossier?.facturationDual.facturationComplete, dossier?.dossierId, enCours, router, t]);
 
   useEffect(() => {
     if (
@@ -990,10 +1007,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         <div className="flex justify-between gap-3 pt-1">
           <span className="text-texte-secondaire">{t("caisse.facturation.montantPaye")}</span>
           <span className="font-medium">
-            {formaterMontantCaisse(
-              modeFacture === "AVANCE" ? montantAvance : montantPaiement,
-              devise
-            )}
+            {formaterMontantCaisse(montantPayeAffiche, devise)}
           </span>
         </div>
         <div className="flex justify-between gap-3">
@@ -1238,7 +1252,12 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                       {dossier.prenom} {dossier.nom}
                     </h2>
                     <BadgeTypePersonneCaisse estClientWalkIn={dossier.estClientWalkIn} />
-                    <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                    <span className={cn(
+                      "rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                      dossier.facturationDual.facturationComplete
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-amber-100 text-amber-800"
+                    )}>
                       {dossier.facturationDual.facturationComplete
                         ? t("caisse.facturation.paye")
                         : dossier.facturationDual.factureNormaleVerrouillee &&
@@ -1537,17 +1556,21 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                         min={0}
                         step="0.01"
                         max={resteAPayer}
-                        value={modeFacture === "AVANCE" ? montantAvance : montantPaiement}
+                        readOnly={factureCloturee}
+                        value={montantPayeAffiche}
                         onChange={(e) => {
+                          if (factureCloturee) return;
                           const valeur = arrondirMontantCaisse(Number(e.target.value) || 0);
                           if (modeFacture === "AVANCE") setMontantAvance(valeur);
                           else setMontantPaiement(valeur);
                         }}
                         className={cn(
                           "w-full rounded-lg border px-3 py-2.5 text-sm font-semibold",
-                          modeFacture === "AVANCE"
-                            ? "border-bleu-medical ring-1 ring-bleu-medical/20"
-                            : "border-gris-bordure"
+                          factureCloturee
+                            ? "border-gris-bordure bg-gris-tres-clair/50"
+                            : modeFacture === "AVANCE"
+                              ? "border-bleu-medical ring-1 ring-bleu-medical/20"
+                              : "border-gris-bordure"
                         )}
                       />
                     </label>

@@ -318,6 +318,7 @@ export const caisseFr = {
     encaisserPharmacie: "Encaisser pharmacie",
     cloturerFacture: "Clôturer la facture",
     factureDejaCloturee: "Facture clôturée",
+    factureDejaPayeeRetour: "Facture déjà payée — retour à la liste des factures.",
     encaisserPaiement: "Encaisser le paiement",
     ouvrirFiltres: "Ouvrir les filtres",
     fermerFiltres: "Fermer les filtres",

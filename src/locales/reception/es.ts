@@ -64,6 +64,8 @@ export const receptionEs = {
       "{{count}} patient(s) selected: check destination rooms to orient them all.",
     aideOrientationMultiAccueil:
       "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
+    aideOrientationReception:
+      "Marque una o varias salas de destino (Caja, Enfermería, Médico, Laboratorio, Farmacia, etc.).",
     destinationVerrouillee: "Esta transferencia ya no puede cambiar de destino.",
     aucunPatient: "Ningún paciente seleccionado",
     age: "Edad",

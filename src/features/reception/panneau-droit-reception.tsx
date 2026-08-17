@@ -10,11 +10,9 @@ import { useSelectionTransfertOptionnel } from "@/features/reception/contexte-se
 import { useEspaceApi } from "@/features/reception/contexte-espace-api";
 import {
   ORIENTATIONS_RAPIDES_MEDECINS_EXTERNES,
-  filtrerOrientationsMedecinsExternes,
 } from "@/constants/medecins-externes";
 import {
   ORIENTATIONS_RAPIDES_EGLISE,
-  filtrerOrientationsEglise,
 } from "@/constants/eglise";
 import { cn } from "@/lib/utils";
 

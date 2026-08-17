@@ -287,7 +287,7 @@ export async function restaurerSauvegarde(acteurId: string, nom: string) {
 
   await enregistrerAudit({
     utilisateurId: acteurId,
-    type: "IMPORT",
+    type: "MODIFICATION",
     entite: "Sauvegarde",
     action: `Restauration de ${nom} dans la base`,
     details: { fichier: nom, base: nomBaseDepuisUrl(urlPg()) },
@@ -317,7 +317,7 @@ export async function importerSauvegarde(
 
   await enregistrerAudit({
     utilisateurId: acteurId,
-    type: "IMPORT",
+    type: "CREATION",
     entite: "Sauvegarde",
     action: `Sauvegarde importée : ${nom}`,
     details: { fichier: nom, origine: brut },

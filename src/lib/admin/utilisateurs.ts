@@ -5,6 +5,10 @@ import { hasherMotDePasse } from "@/lib/auth/mot-de-passe";
 import { enregistrerAudit } from "@/lib/admin/audit";
 import { lireParametre } from "@/lib/admin/parametres";
 import { estRoleGereParServiceClient } from "@/constants/admin-utilisateurs";
+import {
+  sauvegarderPhotoUtilisateur,
+  supprimerPhotoUtilisateurLocale,
+} from "@/lib/auth/photo-utilisateur";
 
 const selectPublic = {
   id: true,
@@ -104,6 +108,7 @@ export async function creerUtilisateurAdmin(
     roleId: string;
     motDePasse: string;
     statut?: StatutUtilisateur;
+    notesAdmin?: string | null;
   }
 ) {
   const identifiant = data.identifiant.trim().toLowerCase();
@@ -145,6 +150,7 @@ export async function creerUtilisateurAdmin(
       roleId: data.roleId,
       motDePasseHash: hash,
       statut: data.statut ?? "ACTIF",
+      notesAdmin: data.notesAdmin?.trim() || null,
     },
     select: selectPublic,
   });
@@ -255,5 +261,33 @@ export async function mettreAJourUtilisateurAdmin(
     },
   });
 
+  return maj;
+}
+
+export async function mettreAJourPhotoUtilisateurAdmin(
+  acteur: { id: string },
+  id: string,
+  photo: File
+) {
+  const actuel = await prisma.utilisateur.findUnique({
+    where: { id },
+    select: { identifiant: true, photoUrl: true },
+  });
+  if (!actuel) throw new Error("Utilisateur introuvable.");
+
+  const photoUrl = await sauvegarderPhotoUtilisateur(id, photo);
+  const maj = await prisma.utilisateur.update({
+    where: { id },
+    data: { photoUrl },
+    select: selectPublic,
+  });
+  await supprimerPhotoUtilisateurLocale(actuel.photoUrl);
+  await enregistrerAudit({
+    utilisateurId: acteur.id,
+    type: "MODIFICATION",
+    entite: "Utilisateur",
+    entiteId: id,
+    action: `Photo utilisateur ${actuel.identifiant}`,
+  });
   return maj;
 }

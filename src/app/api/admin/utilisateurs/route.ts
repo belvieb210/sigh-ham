@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
         roleId: String(body.roleId ?? ""),
         motDePasse: String(body.motDePasse ?? ""),
         statut: (body.statut as StatutUtilisateur | undefined) ?? "ACTIF",
+        notesAdmin: body.notesAdmin != null ? String(body.notesAdmin) : undefined,
       }
     );
     return NextResponse.json({

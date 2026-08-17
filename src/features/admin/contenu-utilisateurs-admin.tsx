@@ -6,7 +6,7 @@ import {
   Eye,
   Loader2,
   MoreVertical,
-  Save,
+  Plus,
   Search,
   SlidersHorizontal,
   SquarePen,
@@ -24,7 +24,6 @@ import {
   BoutonsOutilsListe,
   telechargerCsv,
 } from "@/components/ui/boutons-outils-liste";
-import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import { EVENEMENT_ADMIN_UTILISATEURS_MODIFIES } from "@/constants/admin";
 import { estRoleGereParServiceClient } from "@/constants/admin-utilisateurs";
 import {
@@ -34,6 +33,11 @@ import {
   utilisateurCorrespondFiltresAdmin,
   type FiltresUtilisateursAdmin,
 } from "@/features/admin/formulaire-filtres-utilisateurs-admin";
+import {
+  FORM_UTILISATEUR_ADMIN_VIDE,
+  FormulaireUtilisateurAdmin,
+  type FormUtilisateurAdmin,
+} from "@/features/admin/formulaire-utilisateur-admin";
 import { cn } from "@/lib/utils";
 
 interface RoleOption {
@@ -70,40 +74,6 @@ const STATUTS = ["ACTIF", "INACTIF", "SUSPENDU"] as const;
 
 const CLASSE_BOUTON_ACTION =
   "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure text-slate-500 transition-colors hover:bg-gris-tres-clair hover:text-bleu-medical";
-
-const FORM_VIDE: {
-  identifiant: string;
-  email: string;
-  prenom: string;
-  nom: string;
-  telephone: string;
-  roleId: string;
-  motDePasse: string;
-  statut: "ACTIF" | "INACTIF" | "SUSPENDU";
-  messagerieBloquee: boolean;
-  notesAdmin: string;
-} = {
-  identifiant: "",
-  email: "",
-  prenom: "",
-  nom: "",
-  telephone: "",
-  roleId: "",
-  motDePasse: "",
-  statut: "ACTIF",
-  messagerieBloquee: false,
-  notesAdmin: "",
-};
-
-function roleCreationDefaut(roles: RoleOption[]) {
-  return (
-    roles.find((r) => r.code === "RECEPTIONNISTE")?.id ??
-    roles.find((r) => !estRoleGereParServiceClient(r.code) && r.code !== "SUPER_ADMIN")
-      ?.id ??
-    roles[0]?.id ??
-    ""
-  );
-}
 
 function classeBadgeRole(code: string) {
   if (code.includes("ADMIN")) return "bg-violet-100 text-violet-800";
@@ -181,7 +151,8 @@ export function ContenuUtilisateursAdmin({
   const [erreur, setErreur] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [selectionId, setSelectionId] = useState<string | null>(null);
-  const [form, setForm] = useState({ ...FORM_VIDE });
+  const [form, setForm] = useState<FormUtilisateurAdmin>({ ...FORM_UTILISATEUR_ADMIN_VIDE });
+  const [photo, setPhoto] = useState<File | null>(null);
   const [modePanneau, setModePanneau] = useState<ModePanneau>("creation");
   const [menuOuvertId, setMenuOuvertId] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -217,7 +188,6 @@ export function ContenuUtilisateursAdmin({
       setListe(uData.utilisateurs ?? []);
       setRoles(rolesListe);
       setSalles(sData.salles ?? []);
-      setForm((f) => (f.roleId ? f : { ...f, roleId: roleCreationDefaut(rolesListe) }));
     } catch (e: unknown) {
       setErreur(e instanceof Error ? e.message : t("admin.utilisateurs.erreur"));
     } finally {
@@ -255,10 +225,8 @@ export function ContenuUtilisateursAdmin({
     setModePanneau("creation");
     setSelectionId(null);
     setMenuOuvertId(null);
-    setForm({
-      ...FORM_VIDE,
-      roleId: roleCreationDefaut(roles),
-    });
+    setForm({ ...FORM_UTILISATEUR_ADMIN_VIDE });
+    setPhoto(null);
     setMessage(null);
     setErreur(null);
   };
@@ -272,11 +240,14 @@ export function ContenuUtilisateursAdmin({
       nom: u.nom,
       telephone: u.telephone ?? "",
       roleId: u.role.id,
+      salleCode: u.role.salle?.code ?? "",
       motDePasse: "",
+      confirmationMotDePasse: "",
       statut: u.statut,
       messagerieBloquee: u.messagerieBloquee ?? false,
       notesAdmin: u.notesAdmin ?? "",
     });
+    setPhoto(null);
     setMessage(null);
     setErreur(null);
   };
@@ -369,23 +340,55 @@ export function ContenuUtilisateursAdmin({
   };
 
   const soumettre = async () => {
+    if (
+      !form.prenom.trim() ||
+      !form.nom.trim() ||
+      !form.email.trim() ||
+      !form.roleId ||
+      !form.salleCode ||
+      (modeCreation && !form.identifiant.trim())
+    ) {
+      setErreur(t("admin.utilisateurs.champsRequis"));
+      return;
+    }
+    if (modeCreation && !form.motDePasse) {
+      setErreur(t("admin.utilisateurs.champsRequis"));
+      return;
+    }
+    if (form.motDePasse && form.motDePasse !== form.confirmationMotDePasse) {
+      setErreur(t("admin.utilisateurs.mdpDifferents"));
+      return;
+    }
+
     setEnCours(true);
     setErreur(null);
     setMessage(null);
     try {
+      let utilisateurIdCible = selectionId;
       if (modeCreation) {
         const res = await fetch("/api/admin/utilisateurs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify({
+            identifiant: form.identifiant,
+            email: form.email,
+            prenom: form.prenom,
+            nom: form.nom,
+            telephone: form.telephone || null,
+            roleId: form.roleId,
+            motDePasse: form.motDePasse,
+            statut: form.statut,
+            notesAdmin: form.notesAdmin || null,
+          }),
         });
-        const data = (await res.json()) as { message?: string };
+        const data = (await res.json()) as {
+          message?: string;
+          utilisateur?: { id: string };
+        };
         if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
+        utilisateurIdCible = data.utilisateur?.id ?? null;
         setMessage(data.message ?? t("admin.utilisateurs.cree"));
-        setForm({
-          ...FORM_VIDE,
-          roleId: roleCreationDefaut(roles),
-        });
+        setForm({ ...FORM_UTILISATEUR_ADMIN_VIDE });
       } else if (selectionId) {
         const res = await fetch(`/api/admin/utilisateurs/${selectionId}`, {
           method: "PATCH",
@@ -406,6 +409,21 @@ export function ContenuUtilisateursAdmin({
         if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
         setMessage(data.message ?? t("admin.utilisateurs.maj"));
       }
+
+      if (photo && utilisateurIdCible) {
+        const fd = new FormData();
+        fd.append("photo", photo);
+        const photoRes = await fetch(
+          `/api/admin/utilisateurs/${utilisateurIdCible}/photo`,
+          { method: "POST", body: fd }
+        );
+        const photoData = (await photoRes.json()) as { message?: string };
+        if (!photoRes.ok) {
+          throw new Error(photoData.message ?? t("admin.common.erreur"));
+        }
+      }
+
+      setPhoto(null);
       window.dispatchEvent(new Event(EVENEMENT_ADMIN_UTILISATEURS_MODIFIES));
       await charger();
     } catch (e: unknown) {
@@ -458,6 +476,10 @@ export function ContenuUtilisateursAdmin({
             </label>
 
             <div className="flex shrink-0 items-center justify-end gap-2">
+              <Bouton type="button" taille="petit" onClick={ouvrirCreation}>
+                <Plus className="h-4 w-4" />
+                {t("admin.utilisateurs.creer")}
+              </Bouton>
               <button
                 type="button"
                 onClick={() => setFiltresOuverts((o) => !o)}
@@ -721,242 +743,20 @@ export function ContenuUtilisateursAdmin({
             )}
           </div>
 
-          <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-            <div className="mb-3 flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-bold text-texte-principal">
-                  {modePanneau === "creation"
-                    ? t("admin.utilisateurs.formCreation")
-                    : modePanneau === "consultation"
-                      ? t("admin.utilisateurs.formConsultation")
-                      : t("admin.utilisateurs.formEdition")}
-                </h3>
-                <p className="mt-0.5 text-xs text-texte-secondaire">
-                  {modePanneau === "creation"
-                    ? t("admin.utilisateurs.formCreationAide")
-                    : modePanneau === "consultation"
-                      ? t("admin.utilisateurs.formConsultationAide")
-                      : t("admin.utilisateurs.formEditionAide")}
-                </p>
-              </div>
-              {!modeCreation ? (
-                <button
-                  type="button"
-                  onClick={ouvrirCreation}
-                  aria-label={t("admin.utilisateurs.fermerFormulaire")}
-                  className="rounded-lg p-1 text-texte-secondaire hover:bg-gris-tres-clair hover:text-texte-principal"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              ) : null}
-            </div>
-
-            <div className="space-y-3">
-              {modeCreation ? (
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.utilisateurs.champs.identifiant")}
-                  </label>
-                  <input
-                    className={cn(
-                      CLASSE_CHAMP_RECEPTION,
-                      lectureSeule && "cursor-not-allowed bg-slate-50"
-                    )}
-                    value={form.identifiant}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, identifiant: e.target.value }))
-                    }
-                  />
-                </div>
-              ) : (
-                <p className="text-xs text-texte-secondaire">{form.identifiant}</p>
-              )}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.utilisateurs.champs.prenom")}
-                  </label>
-                  <input
-                    className={cn(
-                      CLASSE_CHAMP_RECEPTION,
-                      lectureSeule && "cursor-not-allowed bg-slate-50"
-                    )}
-                    value={form.prenom}
-                    disabled={lectureSeule}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, prenom: e.target.value }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.utilisateurs.champs.nom")}
-                  </label>
-                  <input
-                    className={cn(
-                      CLASSE_CHAMP_RECEPTION,
-                      lectureSeule && "cursor-not-allowed bg-slate-50"
-                    )}
-                    value={form.nom}
-                    disabled={lectureSeule}
-                    onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("admin.utilisateurs.champs.email")}
-                </label>
-                <input
-                  className={cn(
-                    CLASSE_CHAMP_RECEPTION,
-                    lectureSeule && "cursor-not-allowed bg-slate-50"
-                  )}
-                  value={form.email}
-                  disabled={lectureSeule}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("admin.utilisateurs.champs.telephone")}
-                </label>
-                <input
-                  className={cn(
-                    CLASSE_CHAMP_RECEPTION,
-                    lectureSeule && "cursor-not-allowed bg-slate-50"
-                  )}
-                  value={form.telephone}
-                  disabled={lectureSeule}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, telephone: e.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("admin.utilisateurs.champs.role")}
-                </label>
-                <select
-                  className={cn(
-                    CLASSE_CHAMP_RECEPTION,
-                    lectureSeule && "cursor-not-allowed bg-slate-50"
-                  )}
-                  value={form.roleId}
-                  disabled={lectureSeule}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, roleId: e.target.value }))
-                  }
-                >
-                  {roles
-                    .filter(
-                      (r) =>
-                        !modeCreation ||
-                        (!estRoleGereParServiceClient(r.code) &&
-                          r.code !== "SUPER_ADMIN")
-                    )
-                    .map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.nom}
-                        {r.salle ? ` (${r.salle.nom})` : ""}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div>
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("admin.utilisateurs.champs.statut")}
-                </label>
-                <select
-                  className={cn(
-                    CLASSE_CHAMP_RECEPTION,
-                    lectureSeule && "cursor-not-allowed bg-slate-50"
-                  )}
-                  value={form.statut}
-                  disabled={lectureSeule}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      statut: e.target.value as (typeof STATUTS)[number],
-                    }))
-                  }
-                >
-                  {STATUTS.map((s) => (
-                    <option key={s} value={s}>
-                      {t(`admin.utilisateurs.statuts.${s}`)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={form.messagerieBloquee}
-                  disabled={lectureSeule}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, messagerieBloquee: e.target.checked }))
-                  }
-                />
-                {t("admin.utilisateurs.champs.messagerieBloquee")}
-              </label>
-              <div>
-                <label className={CLASSE_LABEL_RECEPTION}>
-                  {t("admin.utilisateurs.champs.notesAdmin")}
-                </label>
-                <textarea
-                  className={cn(
-                    CLASSE_CHAMP_RECEPTION,
-                    lectureSeule && "cursor-not-allowed bg-slate-50"
-                  )}
-                  rows={2}
-                  maxLength={250}
-                  value={form.notesAdmin}
-                  disabled={lectureSeule}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, notesAdmin: e.target.value }))
-                  }
-                />
-                {!lectureSeule ? (
-                  <p className="mt-0.5 text-right text-[10px] text-texte-secondaire">
-                    {form.notesAdmin.length}/250
-                  </p>
-                ) : null}
-              </div>
-              {!lectureSeule ? (
-                <>
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>
-                      {modeCreation
-                        ? t("admin.utilisateurs.champs.motDePasse")
-                        : t("admin.utilisateurs.champs.nouveauMotDePasse")}
-                    </label>
-                    <input
-                      type="password"
-                      className={cn(
-                        CLASSE_CHAMP_RECEPTION,
-                        lectureSeule && "cursor-not-allowed bg-slate-50"
-                      )}
-                      value={form.motDePasse}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, motDePasse: e.target.value }))
-                      }
-                      placeholder={
-                        modeCreation ? undefined : t("admin.utilisateurs.mdpOptionnel")
-                      }
-                    />
-                  </div>
-                  <Bouton type="button" onClick={() => void soumettre()} disabled={enCours}>
-                    {enCours ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4" />
-                    )}
-                    {t("admin.common.enregistrer")}
-                  </Bouton>
-                </>
-              ) : null}
-            </div>
-          </div>
+          <FormulaireUtilisateurAdmin
+            form={form}
+            onChange={setForm}
+            roles={roles}
+            salles={salles}
+            modePanneau={modePanneau}
+            lectureSeule={lectureSeule}
+            enCours={enCours}
+            photo={photo}
+            photoUrlExistante={liste.find((u) => u.id === selectionId)?.photoUrl}
+            onPhoto={setPhoto}
+            onSoumettre={() => void soumettre()}
+            onAnnuler={ouvrirCreation}
+          />
         </div>
       </div>
     </MiseEnPageAdmin>

@@ -80,7 +80,7 @@ export const communEn = {
     titre: "Sign in",
     description: "Access reserved for staff of",
     identifiant: "Username or email",
-    placeholderIdentifiant: "your.username",
+    placeholderIdentifiant: "belvie.bokulu or user@ham.local",
     motDePasse: "Password",
     afficherMotDePasse: "Show password",
     masquerMotDePasse: "Hide password",

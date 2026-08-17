@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ContenuParametresAdmin } from "@/features/admin/contenu-parametres-admin";
+import { ContenuSecuriteAdmin } from "@/features/admin/contenu-securite-admin";
 import { verifierAccesAdmin } from "@/lib/auth/garde-salle";
 import { propsUtilisateurAdmin } from "@/lib/auth/props-utilisateur-admin";
 
@@ -11,9 +11,6 @@ export const metadata: Metadata = {
 export default async function Page() {
   const utilisateur = await verifierAccesAdmin();
   return (
-    <ContenuParametresAdmin
-      utilisateur={propsUtilisateurAdmin(utilisateur)}
-      categorie="securite"
-    />
+    <ContenuSecuriteAdmin utilisateur={propsUtilisateurAdmin(utilisateur)} />
   );
 }

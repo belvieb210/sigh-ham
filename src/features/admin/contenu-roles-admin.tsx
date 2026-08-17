@@ -1,32 +1,49 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, Save, Shield } from "lucide-react";
+import {
+  Eye,
+  Loader2,
+  Search,
+  Shield,
+  SlidersHorizontal,
+  SquarePen,
+  X,
+} from "lucide-react";
 import {
   MiseEnPageAdmin,
   type UtilisateurAdmin,
 } from "@/features/admin/mise-en-page-admin";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
-import { Bouton } from "@/components/ui/bouton";
+import {
+  BoutonsOutilsListe,
+  telechargerCsv,
+} from "@/components/ui/boutons-outils-liste";
+import {
+  PaginationListe,
+  paginerListe,
+} from "@/components/ui/pagination-liste";
+import {
+  compterFiltresRolesAdmin,
+  FILTRES_ROLES_ADMIN_VIDES,
+  FormulaireFiltresRolesAdmin,
+  roleCorrespondFiltresAdmin,
+  type FiltresRolesAdmin,
+} from "@/features/admin/formulaire-filtres-roles-admin";
+import {
+  FormulairePermissionsRoleAdmin,
+  type PermissionItemAdmin,
+  type RoleSelectionneAdmin,
+} from "@/features/admin/formulaire-permissions-role-admin";
+import { cn } from "@/lib/utils";
 
-interface PermissionItem {
-  id: string;
-  code: string;
-  nom: string;
-  description: string | null;
-  module: string | null;
-}
+type RoleItem = RoleSelectionneAdmin;
+type ModePanneau = "vide" | "consultation" | "edition";
 
-interface RoleItem {
-  id: string;
-  code: string;
-  nom: string;
-  description: string | null;
-  systeme: boolean;
-  salle: { code: string; nom: string } | null;
-  _count: { utilisateurs: number; permissions: number };
-}
+const ROLES_PAR_PAGE = 16;
+const CLASSE_BOUTON_ACTION =
+  "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure text-slate-500 transition-colors hover:bg-gris-tres-clair hover:text-bleu-medical";
 
 export function ContenuRolesAdmin({
   utilisateur,
@@ -35,42 +52,92 @@ export function ContenuRolesAdmin({
 }) {
   const { t } = useTranslation();
   const [roles, setRoles] = useState<RoleItem[]>([]);
-  const [catalogue, setCatalogue] = useState<PermissionItem[]>([]);
+  const [catalogue, setCatalogue] = useState<PermissionItemAdmin[]>([]);
+  const [rechercheRapide, setRechercheRapide] = useState("");
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillon, setBrouillon] = useState<FiltresRolesAdmin>(FILTRES_ROLES_ADMIN_VIDES);
+  const [appliques, setAppliques] = useState<FiltresRolesAdmin>(FILTRES_ROLES_ADMIN_VIDES);
+  const [idsCoches, setIdsCoches] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
   const [selectionId, setSelectionId] = useState<string | null>(null);
   const [selectionCodes, setSelectionCodes] = useState<Set<string>>(new Set());
+  const [modePanneau, setModePanneau] = useState<ModePanneau>("vide");
   const [erreur, setErreur] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  const [chargement, setChargement] = useState(true);
+  const chargeRef = useRef(false);
 
-  useEffect(() => {
-    void Promise.all([
-      fetch("/api/admin/roles").then((r) => r.json()),
-      fetch("/api/admin/permissions").then((r) => r.json()),
-    ])
-      .then(([rData, pData]) => {
-        if (rData.message && !rData.roles) throw new Error(rData.message);
-        if (pData.message && !pData.permissions) throw new Error(pData.message);
-        setRoles(rData.roles ?? []);
-        setCatalogue(pData.permissions ?? []);
-      })
-      .catch((e: unknown) =>
-        setErreur(e instanceof Error ? e.message : t("admin.roles.erreur"))
-      );
+  const charger = useCallback(async () => {
+    setChargement(true);
+    setErreur(null);
+    try {
+      const [rRes, pRes] = await Promise.all([
+        fetch("/api/admin/roles"),
+        fetch("/api/admin/permissions"),
+      ]);
+      const rData = (await rRes.json()) as { roles?: RoleItem[]; message?: string };
+      const pData = (await pRes.json()) as {
+        permissions?: PermissionItemAdmin[];
+        message?: string;
+      };
+      if (!rRes.ok) throw new Error(rData.message ?? t("admin.roles.erreur"));
+      if (!pRes.ok) throw new Error(pData.message ?? t("admin.roles.erreur"));
+      setRoles(rData.roles ?? []);
+      setCatalogue(pData.permissions ?? []);
+    } catch (e: unknown) {
+      setErreur(e instanceof Error ? e.message : t("admin.roles.erreur"));
+    } finally {
+      setChargement(false);
+    }
   }, [t]);
 
-  const roleSelectionne = useMemo(
-    () => roles.find((r) => r.id === selectionId) ?? null,
-    [roles, selectionId]
+  useEffect(() => {
+    if (chargeRef.current) return;
+    chargeRef.current = true;
+    void charger();
+  }, [charger]);
+
+  const salles = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of roles) {
+      if (r.salle) map.set(r.salle.code, r.salle.nom);
+    }
+    return [...map.entries()]
+      .map(([code, nom]) => ({ code, nom }))
+      .sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
+  }, [roles]);
+
+  const listeFiltree = useMemo(
+    () =>
+      roles.filter((r) => roleCorrespondFiltresAdmin(r, appliques, rechercheRapide)),
+    [roles, appliques, rechercheRapide]
   );
 
-  const ouvrirRole = async (role: RoleItem) => {
+  const pageData = useMemo(
+    () => paginerListe(listeFiltree, page, ROLES_PAR_PAGE),
+    [listeFiltree, page]
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [rechercheRapide, appliques]);
+
+  const nbFiltres = compterFiltresRolesAdmin(appliques);
+  const toutSelectionne =
+    listeFiltree.length > 0 && listeFiltree.every((r) => idsCoches.includes(r.id));
+  const roleSelectionne = roles.find((r) => r.id === selectionId) ?? null;
+  const lectureSeule = modePanneau !== "edition";
+
+  const chargerPermissions = async (role: RoleItem, mode: ModePanneau) => {
     setSelectionId(role.id);
+    setModePanneau(mode);
     setMessage(null);
     setErreur(null);
     try {
       const res = await fetch(`/api/admin/roles/${role.id}/permissions`);
       const data = (await res.json()) as {
-        permissions?: PermissionItem[];
+        permissions?: PermissionItemAdmin[];
         message?: string;
       };
       if (!res.ok) throw new Error(data.message ?? t("admin.roles.erreur"));
@@ -80,11 +147,28 @@ export function ContenuRolesAdmin({
     }
   };
 
+  const fermerPanneau = () => {
+    setModePanneau("vide");
+    setSelectionId(null);
+    setSelectionCodes(new Set());
+  };
+
   const togglePerm = (id: string) => {
     setSelectionCodes((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleModule = (ids: string[], tous: boolean) => {
+    setSelectionCodes((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) {
+        if (tous) next.add(id);
+        else next.delete(id);
+      }
       return next;
     });
   };
@@ -106,10 +190,7 @@ export function ContenuRolesAdmin({
       setRoles((prev) =>
         prev.map((r) =>
           r.id === selectionId
-            ? {
-                ...r,
-                _count: { ...r._count, permissions: selectionCodes.size },
-              }
+            ? { ...r, _count: { ...r._count, permissions: selectionCodes.size } }
             : r
         )
       );
@@ -120,15 +201,41 @@ export function ContenuRolesAdmin({
     }
   };
 
-  const parModule = useMemo(() => {
-    const map = new Map<string, PermissionItem[]>();
-    for (const p of catalogue) {
-      const cle = p.module ?? "GENERAL";
-      if (!map.has(cle)) map.set(cle, []);
-      map.get(cle)!.push(p);
-    }
-    return [...map.entries()];
-  }, [catalogue]);
+  const basculerCoche = (id: string) => {
+    setIdsCoches((ids) =>
+      ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]
+    );
+  };
+
+  const basculerSelectionTout = () => {
+    setIdsCoches(toutSelectionne ? [] : listeFiltree.map((r) => r.id));
+  };
+
+  const exporterSelection = () => {
+    const coches = new Set(idsCoches);
+    const cibles =
+      coches.size > 0 ? listeFiltree.filter((r) => coches.has(r.id)) : listeFiltree;
+    if (cibles.length === 0) return;
+    telechargerCsv(
+      `admin-roles-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        t("admin.roles.colonnes.role"),
+        t("admin.roles.champs.code"),
+        t("admin.roles.colonnes.service"),
+        t("admin.roles.colonnes.type"),
+        t("admin.roles.colonnes.utilisateurs"),
+        t("admin.roles.permissions"),
+      ],
+      cibles.map((r) => [
+        r.nom,
+        r.code,
+        r.salle?.nom ?? "",
+        r.systeme ? t("admin.roles.systeme") : t("admin.roles.metier"),
+        String(r._count.utilisateurs),
+        String(r._count.permissions),
+      ])
+    );
+  };
 
   return (
     <MiseEnPageAdmin
@@ -147,126 +254,212 @@ export function ContenuRolesAdmin({
           ]}
         />
 
-        {erreur ? (
-          <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-sm text-red-700">
-            {erreur}
-          </p>
-        ) : null}
+        <div className="mt-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <label className="flex h-11 min-w-[180px] w-full max-w-md flex-1 items-center gap-2 rounded-lg border-2 border-slate-400 bg-white px-3 text-sm text-texte-principal shadow-sm transition-colors focus-within:border-bleu-medical focus-within:ring-2 focus-within:ring-bleu-medical/25">
+              <Search className="h-4 w-4 shrink-0 text-slate-600" />
+              <input
+                type="search"
+                value={rechercheRapide}
+                onChange={(e) => setRechercheRapide(e.target.value)}
+                placeholder={t("admin.roles.recherche")}
+                className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-slate-600"
+              />
+              {rechercheRapide ? (
+                <button
+                  type="button"
+                  onClick={() => setRechercheRapide("")}
+                  aria-label={t("admin.roles.effacerRecherche")}
+                  className="shrink-0 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </label>
+            <div className="flex shrink-0 items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setFiltresOuverts((o) => !o)}
+                aria-expanded={filtresOuverts}
+                className={cn(
+                  "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+                  filtresOuverts
+                    ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                    : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
+                )}
+              >
+                <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
+                <span
+                  className={cn(
+                    "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
+                    nbFiltres > 0 ? "bg-red-500" : "bg-slate-400"
+                  )}
+                >
+                  {nbFiltres}
+                </span>
+              </button>
+              <BoutonsOutilsListe
+                toutSelectionne={toutSelectionne}
+                onSelectionnerTout={basculerSelectionTout}
+                onExporter={exporterSelection}
+                labelSelectionnerTout={t("reception.liste.selectionnerTout")}
+                labelExporter={t("reception.liste.exporterSelection")}
+              />
+            </div>
+          </div>
+          {filtresOuverts ? (
+            <FormulaireFiltresRolesAdmin
+              valeurs={brouillon}
+              onChange={setBrouillon}
+              onRechercher={() => {
+                setAppliques(brouillon);
+                setPage(1);
+              }}
+              onReinitialiser={() => {
+                setBrouillon(FILTRES_ROLES_ADMIN_VIDES);
+                setAppliques(FILTRES_ROLES_ADMIN_VIDES);
+                setPage(1);
+              }}
+              salles={salles}
+            />
+          ) : null}
+        </div>
+
         {message ? (
-          <p className="mt-4 rounded-lg border border-green-200 bg-green-50 px-2 py-1.5 text-sm text-green-800">
+          <p className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800">
             {message}
           </p>
         ) : null}
+        {erreur ? (
+          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+            {erreur}
+          </p>
+        ) : null}
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-[340px_1fr]">
+        <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
           <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-            <table className="tableau-sigh">
-              <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
-                <tr>
-                  <th className="px-3 py-2">{t("admin.roles.colonnes.role")}</th>
-                  <th className="px-3 py-2">{t("admin.roles.colonnes.type")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {roles.map((r) => (
-                  <tr
-                    key={r.id}
-                    className={`cursor-pointer border-t border-gris-bordure ${
-                      selectionId === r.id ? "bg-bleu-medical-clair/40" : ""
-                    }`}
-                    onClick={() => void ouvrirRole(r)}
-                  >
-                    <td className="px-3 py-2">
-                      <p className="font-medium">{r.nom}</p>
-                      <p className="text-xs text-texte-secondaire">
-                        {r.code} · {r._count.permissions} perm. ·{" "}
-                        {r._count.utilisateurs} user(s)
-                      </p>
-                    </td>
-                    <td className="px-3 py-2 text-xs">
-                      {r.systeme
-                        ? t("admin.roles.systeme")
-                        : t("admin.roles.metier")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-            {!roleSelectionne ? (
-              <p className="text-sm text-texte-secondaire">
-                {t("admin.roles.aideSelection")}
+            {chargement ? (
+              <p className="flex items-center gap-2 p-6 text-sm text-texte-secondaire">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t("admin.common.chargement")}
+              </p>
+            ) : listeFiltree.length === 0 ? (
+              <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
+                {t("admin.roles.aucunResultat")}
               </p>
             ) : (
               <>
-                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-bold text-texte-principal">
-                      {roleSelectionne.nom}
-                    </h3>
-                    <p className="text-xs text-texte-secondaire">
-                      {roleSelectionne.code}
-                      {roleSelectionne.salle
-                        ? ` · ${roleSelectionne.salle.nom}`
-                        : ""}
-                    </p>
-                    <p className="mt-1 text-sm text-texte-secondaire">
-                      {roleSelectionne.description ||
-                        t("admin.roles.sansDescription")}
-                    </p>
-                  </div>
-                  <Bouton
-                    type="button"
-                    taille="petit"
-                    disabled={enCours}
-                    onClick={() => void enregistrer()}
-                  >
-                    {enCours ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4" />
-                    )}
-                    {t("admin.common.enregistrer")}
-                  </Bouton>
+                <div className="conteneur-tableau-sigh">
+                  <table className="tableau-sigh min-w-[640px]">
+                    <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
+                      <tr>
+                        <th className="w-10 px-3 py-2">
+                          <span className="sr-only">
+                            {t("reception.liste.selectionnerTout")}
+                          </span>
+                        </th>
+                        <th className="px-3 py-2">{t("admin.roles.colonnes.role")}</th>
+                        <th className="hidden px-3 py-2 md:table-cell">
+                          {t("admin.roles.colonnes.service")}
+                        </th>
+                        <th className="px-3 py-2">{t("admin.roles.colonnes.type")}</th>
+                        <th className="px-3 py-2 text-center">
+                          {t("admin.roles.colonnes.actions")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pageData.itemsPage.map((r) => (
+                        <tr
+                          key={r.id}
+                          className={cn(
+                            "cursor-pointer border-t border-gris-bordure hover:bg-bleu-medical-clair/20",
+                            selectionId === r.id && "bg-bleu-medical-clair/30"
+                          )}
+                          onClick={() => void chargerPermissions(r, "consultation")}
+                        >
+                          <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={idsCoches.includes(r.id)}
+                              onChange={() => basculerCoche(r.id)}
+                              aria-label={r.nom}
+                            />
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <p className="font-medium text-texte-principal">{r.nom}</p>
+                            <p className="text-xs text-texte-secondaire">
+                              {r.code} · {r._count.permissions} perm. ·{" "}
+                              {r._count.utilisateurs}{" "}
+                              {t("admin.roles.colonnes.utilisateurs").toLowerCase()}
+                            </p>
+                          </td>
+                          <td className="hidden px-3 py-2.5 text-sm md:table-cell">
+                            {r.salle?.nom ?? "—"}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <span
+                              className={cn(
+                                "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                                r.systeme
+                                  ? "bg-violet-50 text-violet-800"
+                                  : "bg-sky-50 text-sky-800"
+                              )}
+                            >
+                              {r.systeme
+                                ? t("admin.roles.systeme")
+                                : t("admin.roles.metier")}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => void chargerPermissions(r, "consultation")}
+                                className={CLASSE_BOUTON_ACTION}
+                                title={t("admin.roles.voir")}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void chargerPermissions(r, "edition")}
+                                className={CLASSE_BOUTON_ACTION}
+                                title={t("admin.roles.editer")}
+                              >
+                                <SquarePen className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-
-                <div className="space-y-4">
-                  {parModule.map(([module, perms]) => (
-                    <div key={module}>
-                      <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-texte-secondaire">
-                        {module}
-                      </p>
-                      <ul className="space-y-2">
-                        {perms.map((p) => (
-                          <li key={p.id}>
-                            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gris-bordure px-3 py-2 hover:bg-gris-tres-clair/60">
-                              <input
-                                type="checkbox"
-                                className="mt-1"
-                                checked={selectionCodes.has(p.id)}
-                                onChange={() => togglePerm(p.id)}
-                              />
-                              <span>
-                                <span className="block text-sm font-medium text-texte-principal">
-                                  {p.nom}
-                                </span>
-                                <span className="block text-xs text-texte-secondaire">
-                                  {p.code}
-                                  {p.description ? ` — ${p.description}` : ""}
-                                </span>
-                              </span>
-                            </label>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
+                <PaginationListe
+                  page={pageData.pageCourante}
+                  totalPages={pageData.totalPages}
+                  totalItems={listeFiltree.length}
+                  parPage={ROLES_PAR_PAGE}
+                  onChange={setPage}
+                  labelPrec={t("reception.liste.prec")}
+                  labelSuiv={t("reception.liste.suiv")}
+                />
               </>
             )}
           </div>
+
+          <FormulairePermissionsRoleAdmin
+            role={roleSelectionne}
+            catalogue={catalogue}
+            selectionIds={selectionCodes}
+            onToggle={togglePerm}
+            onToggleModule={toggleModule}
+            lectureSeule={lectureSeule}
+            enCours={enCours}
+            onEnregistrer={() => void enregistrer()}
+            onAnnuler={fermerPanneau}
+          />
         </div>
       </div>
     </MiseEnPageAdmin>

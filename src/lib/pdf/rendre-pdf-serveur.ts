@@ -22,7 +22,7 @@ export async function bufferDepuisDocumentPdf(
   element: ReactElement
 ): Promise<Buffer> {
   enregistrerPolicesPdfServeur();
-  const instance = pdf(element);
+  const instance = pdf(element as Parameters<typeof pdf>[0]);
 
   const avecBuffer = instance as {
     toBuffer?: () => Promise<Buffer | AsyncIterable<Uint8Array | Buffer | string>>;

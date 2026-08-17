@@ -1,6 +1,5 @@
 import "server-only";
 import Redis from "ioredis";
-import { CANAUX_REDIS } from "@/lib/redis/canaux";
 
 export { CANAUX_REDIS } from "@/lib/redis/canaux";
 

@@ -316,11 +316,13 @@ export async function listerPatientsEnAttenteCaisse(options?: {
   const dossiersAvecMedicaments = new Set(ordonnancesAvecMed.map((o) => o.dossierId));
 
   const facturesParDossier = new Map<string, FacturesDossier>();
+  const dossiersAvecFacturePayee = new Set<string>();
   const lignesExamensFactureesParDossier = new Map<
     string,
     { libelle: string; montant: number }[]
   >();
   for (const f of factures) {
+    if (f.statut === "PAYEE") dossiersAvecFacturePayee.add(f.dossierId);
     const courant = facturesParDossier.get(f.dossierId) ?? {
       examens: null,
       pharmacie: null,
@@ -454,6 +456,8 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       factureExamensPayee: etat.factureExamensPayee,
       facturePharmaciePayee: etat.facturePharmaciePayee,
       facturationComplete: etat.facturationComplete,
+      aUneFacturePayee:
+        dossiersAvecFacturePayee.has(dossier.id) || etat.facturationComplete,
     });
   }
 

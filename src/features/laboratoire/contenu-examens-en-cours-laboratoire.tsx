@@ -229,7 +229,14 @@ export function ContenuExamensEnCoursLaboratoire({
           : examens[0]!.libelle,
     });
     if (!resultat.ok) {
-      setMessageAction(t("laboratoire.actions.erreurImpression"));
+      setMessageAction(
+        resultat.erreur &&
+          !["pdf_indisponible", "pdf_vide", "erreur_reseau", "contexte_serveur"].includes(
+            resultat.erreur
+          )
+          ? resultat.erreur
+          : t("laboratoire.actions.erreurImpression")
+      );
     }
   };
 

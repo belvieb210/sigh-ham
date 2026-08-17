@@ -58,10 +58,15 @@ async function resoudreQrFactureDossier(
   dossierId: string,
   request?: Request
 ): Promise<string | null> {
-  const factureId = await resoudreFactureIdPourQrPdfLabo(dossierId);
-  if (!factureId) return null;
-  const url = urlRecuFactureAbsolue(factureId, request);
-  return genererQrCodeDataUrl(url);
+  try {
+    const factureId = await resoudreFactureIdPourQrPdfLabo(dossierId);
+    if (!factureId) return null;
+    const url = urlRecuFactureAbsolue(factureId, request);
+    return genererQrCodeDataUrl(url);
+  } catch (e) {
+    console.error("[chargerDonneesResultatExamenPdf] QR facture", e);
+    return null;
+  }
 }
 
 export async function chargerDonneesResultatExamenPdf(
@@ -97,11 +102,10 @@ export async function chargerDonneesResultatExamenPdf(
   const remarque = extraireRemarqueSansOrientation(notesSansPj);
 
   const prescripteur = examen.prescripteur;
-  const medecinExterne = prescripteur.medecinExterne;
-  const medecinDemandeur = formaterNomPrescripteur(
-    prescripteur.prenom,
-    prescripteur.nom
-  );
+  const medecinExterne = prescripteur?.medecinExterne;
+  const medecinDemandeur = prescripteur
+    ? formaterNomPrescripteur(prescripteur.prenom, prescripteur.nom)
+    : "—";
   const cnomMedecin = medecinExterne?.numeroOrdre?.trim() || null;
 
   const ordreParId = new Map(

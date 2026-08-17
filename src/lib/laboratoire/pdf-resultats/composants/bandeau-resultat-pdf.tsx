@@ -72,7 +72,9 @@ export function BandeauPatientResultatPdf({
   return (
     <View style={stylesResultatPdf.bandeauPatient}>
       <View style={stylesResultatPdf.bandeauAvatarWrap}>
-        <Image src={avatarPath} style={stylesResultatPdf.bandeauAvatar} />
+        {avatarPath ? (
+          <Image src={avatarPath} style={stylesResultatPdf.bandeauAvatar} />
+        ) : null}
       </View>
       <View style={stylesResultatPdf.bandeauContenu}>
         <LigneBandeau

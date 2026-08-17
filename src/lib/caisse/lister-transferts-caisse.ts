@@ -30,7 +30,13 @@ function raccourcirOrientation(nom: string): string {
 }
 
 function patientEstPayePourTransfertSortant(p: PatientFileCaisse): boolean {
-  return p.facturationComplete || p.factureExamensPayee || p.facturePharmaciePayee;
+  return (
+    p.aUneFacturePayee ||
+    p.facturationComplete ||
+    p.factureExamensPayee ||
+    p.facturePharmaciePayee ||
+    p.statutFacture === "PAYEE"
+  );
 }
 
 function libelleStatutEntrant(opts: {
@@ -60,11 +66,16 @@ function libelleStatutPayeSortant(opts: {
   statutTransfert: string | null;
   enRecuperation: boolean;
   facturationComplete?: boolean;
+  aUneFacturePayee?: boolean;
 }): { statut: string; statutCouleur: string } {
   if (opts.enRecuperation && opts.statutTransfert === "REFUSE") {
     return { statut: "Rejeté", statutCouleur: "bg-red-100 text-red-700" };
   }
-  if (opts.statutFacture === "PAYEE" || opts.facturationComplete) {
+  if (
+    opts.statutFacture === "PAYEE" ||
+    opts.facturationComplete ||
+    opts.aUneFacturePayee
+  ) {
     return { statut: "Payée", statutCouleur: "bg-emerald-100 text-emerald-700" };
   }
   if (opts.statutTransfert === "EN_ATTENTE") {
@@ -121,6 +132,7 @@ function mapperPatientTransfert(
           statutTransfert: sortant?.statut ?? null,
           enRecuperation: enRecuperationSortant,
           facturationComplete: p.facturationComplete,
+          aUneFacturePayee: p.aUneFacturePayee,
         });
 
   return {

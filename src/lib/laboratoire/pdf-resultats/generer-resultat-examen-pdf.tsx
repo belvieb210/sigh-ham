@@ -1,6 +1,5 @@
 import "server-only";
 
-import { pdf } from "@react-pdf/renderer";
 import {
   DocumentResultatExamenPdf,
   DocumentResultatsMultiExamensPdf,
@@ -10,10 +9,8 @@ import {
   chargerDonneesResultatsMultiExamensPdf,
 } from "@/lib/laboratoire/pdf-resultats/charger-donnees-resultat-pdf";
 import { nomFichierResultatPdf } from "@/lib/laboratoire/pdf-resultats/nom-fichier-resultat-pdf";
-import {
-  cheminsAssetsPdfServeur,
-  enregistrerPolicesPdfServeur,
-} from "@/lib/pdf/assets-pdf-serveur";
+import { cheminsAssetsPdfServeur } from "@/lib/pdf/assets-pdf-serveur";
+import { bufferDepuisDocumentPdf } from "@/lib/pdf/rendre-pdf-serveur";
 
 export type PdfResultatExamenGenere = {
   buffer: Buffer;
@@ -28,23 +25,20 @@ export async function genererBufferPdfResultatExamen(
   const donnees = await chargerDonneesResultatExamenPdf(dossierId, examenId, request);
   if (!donnees) return null;
 
-  enregistrerPolicesPdfServeur();
   const { logo, signature, avatarHomme, avatarFemme } = cheminsAssetsPdfServeur();
 
-  const instance = pdf(
+  const buffer = await bufferDepuisDocumentPdf(
     <DocumentResultatExamenPdf
       donnees={donnees}
       logoPath={logo}
-      signaturePath={signature}
+      signaturePath={signature || undefined}
       avatarHomme={avatarHomme}
       avatarFemme={avatarFemme}
     />
   );
 
-  const blob = await instance.toBlob();
-  const arrayBuffer = await blob.arrayBuffer();
   return {
-    buffer: Buffer.from(arrayBuffer),
+    buffer,
     nomFichier: nomFichierResultatPdf({
       numeroPatient: donnees.patient.numeroPatient,
       nbExamens: 1,
@@ -66,23 +60,20 @@ export async function genererBufferPdfResultatsMultiExamens(
   );
   if (!pages.length) return null;
 
-  enregistrerPolicesPdfServeur();
   const { logo, signature, avatarHomme, avatarFemme } = cheminsAssetsPdfServeur();
 
-  const instance = pdf(
+  const buffer = await bufferDepuisDocumentPdf(
     <DocumentResultatsMultiExamensPdf
       pages={pages}
       logoPath={logo}
-      signaturePath={signature}
+      signaturePath={signature || undefined}
       avatarHomme={avatarHomme}
       avatarFemme={avatarFemme}
     />
   );
 
-  const blob = await instance.toBlob();
-  const arrayBuffer = await blob.arrayBuffer();
   return {
-    buffer: Buffer.from(arrayBuffer),
+    buffer,
     nomFichier: nomFichierResultatPdf({
       numeroPatient: pages[0]!.patient.numeroPatient,
       nbExamens: pages.length,

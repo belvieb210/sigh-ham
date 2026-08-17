@@ -84,7 +84,7 @@ export function EnTetePdfInfirmiersServeur({
     <>
       <View style={styles.enTete}>
         <View style={styles.enTeteGauche}>
-          <Image src={logoPath} style={styles.logo} />
+          {logoPath ? <Image src={logoPath} style={styles.logo} /> : null}
           <View style={styles.enTeteInfos}>
             <Text style={styles.nomLabo}>{nom}</Text>
             <Text style={styles.sousNom}>

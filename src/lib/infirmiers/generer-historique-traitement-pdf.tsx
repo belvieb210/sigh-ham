@@ -4,7 +4,6 @@ import {
   StyleSheet,
   Text,
   View,
-  pdf,
 } from "@react-pdf/renderer";
 import {
   CartePatientPdfInfirmiers,
@@ -12,10 +11,8 @@ import {
   PiedPdfInfirmiersServeur,
 } from "@/lib/infirmiers/en-tete-pdf-infirmiers-serveur";
 import { formaterDateAffichage } from "@/lib/infirmiers/fiche-traitement-utils";
-import {
-  cheminsAssetsPdfServeur,
-  enregistrerPolicesPdfServeur,
-} from "@/lib/pdf/assets-pdf-serveur";
+import { cheminsAssetsPdfServeur } from "@/lib/pdf/assets-pdf-serveur";
+import { bufferDepuisDocumentPdf } from "@/lib/pdf/rendre-pdf-serveur";
 import type { FicheTraitementResume } from "@/lib/infirmiers/types-fiche-traitement";
 
 export interface DonneesHistoriqueTraitementPdf {
@@ -200,11 +197,8 @@ function DocumentHistoriqueTraitement({
 export async function genererPdfHistoriqueTraitementInfirmiers(
   data: DonneesHistoriqueTraitementPdf
 ): Promise<Buffer> {
-  enregistrerPolicesPdfServeur();
   const { logo } = cheminsAssetsPdfServeur();
-  const instance = pdf(
+  return bufferDepuisDocumentPdf(
     <DocumentHistoriqueTraitement data={data} logoPath={logo} />
   );
-  const blob = await instance.toBlob();
-  return Buffer.from(await blob.arrayBuffer());
 }

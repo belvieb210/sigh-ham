@@ -4,17 +4,14 @@ import {
   StyleSheet,
   Text,
   View,
-  pdf,
 } from "@react-pdf/renderer";
 import {
   CartePatientPdfInfirmiers,
   EnTetePdfInfirmiersServeur,
   PiedPdfInfirmiersServeur,
 } from "@/lib/infirmiers/en-tete-pdf-infirmiers-serveur";
-import {
-  cheminsAssetsPdfServeur,
-  enregistrerPolicesPdfServeur,
-} from "@/lib/pdf/assets-pdf-serveur";
+import { cheminsAssetsPdfServeur } from "@/lib/pdf/assets-pdf-serveur";
+import { bufferDepuisDocumentPdf } from "@/lib/pdf/rendre-pdf-serveur";
 import type { ConstanteVitaleResume } from "@/lib/infirmiers/types";
 import type { FormulaireCliniqueMedecins } from "@/lib/medecins/types";
 
@@ -243,11 +240,8 @@ function DocumentHistoriqueConsultation({
 export async function genererPdfHistoriqueConsultationInfirmiers(
   data: DonneesHistoriqueConsultationPdf
 ): Promise<Buffer> {
-  enregistrerPolicesPdfServeur();
   const { logo } = cheminsAssetsPdfServeur();
-  const instance = pdf(
+  return bufferDepuisDocumentPdf(
     <DocumentHistoriqueConsultation data={data} logoPath={logo} />
   );
-  const blob = await instance.toBlob();
-  return Buffer.from(await blob.arrayBuffer());
 }

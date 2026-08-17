@@ -1,6 +1,7 @@
 import "server-only";
 import { join } from "path";
 import { existsSync } from "fs";
+import { urlFichierLocalPdf } from "@/lib/pdf/assets-pdf-serveur";
 
 /** Résout une URL `/uploads/...` ou chemin relatif vers un fichier lisible par react-pdf. */
 export function resoudreCheminFichierPdf(url: string): string | null {
@@ -14,11 +15,11 @@ export function resoudreCheminFichierPdf(url: string): string | null {
   const rel = brut.replace(/^\//, "");
   if (rel.startsWith("uploads/")) {
     const local = join(process.cwd(), "public", rel);
-    if (existsSync(local)) return local;
+    if (existsSync(local)) return urlFichierLocalPdf(local);
   }
 
   const publicPath = join(process.cwd(), "public", rel);
-  if (existsSync(publicPath)) return publicPath;
+  if (existsSync(publicPath)) return urlFichierLocalPdf(publicPath);
 
   return null;
 }

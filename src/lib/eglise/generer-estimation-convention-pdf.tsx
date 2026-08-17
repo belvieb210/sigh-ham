@@ -4,14 +4,11 @@ import {
   Text,
   View,
   StyleSheet,
-  pdf,
   Image,
 } from "@react-pdf/renderer";
 import { INFOS_LEGALES_TICKET } from "@/constants/ticket-thermique";
-import {
-  cheminsAssetsPdfServeur,
-  enregistrerPolicesPdfServeur,
-} from "@/lib/pdf/assets-pdf-serveur";
+import { cheminsAssetsPdfServeur } from "@/lib/pdf/assets-pdf-serveur";
+import { bufferDepuisDocumentPdf } from "@/lib/pdf/rendre-pdf-serveur";
 
 export interface LigneEstimationConventionPdf {
   code: string;
@@ -408,9 +405,5 @@ function DocumentEstimationConvention({ data }: { data: DonneesEstimationConvent
 export async function genererPdfEstimationConvention(
   data: DonneesEstimationConventionPdf
 ): Promise<Buffer> {
-  enregistrerPolicesPdfServeur();
-  const instance = pdf(<DocumentEstimationConvention data={data} />);
-  const blob = await instance.toBlob();
-  const arrayBuffer = await blob.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+  return bufferDepuisDocumentPdf(<DocumentEstimationConvention data={data} />);
 }

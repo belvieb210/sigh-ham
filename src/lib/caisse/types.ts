@@ -44,6 +44,8 @@ export interface PatientFileCaisse {
   factureExamensPayee: boolean;
   facturePharmaciePayee: boolean;
   facturationComplete: boolean;
+  /** Au moins une facture examens ou pharmacie est PAYEE. */
+  aUneFacturePayee: boolean;
 }
 
 export type TypeFactureCaisseUi = "NORMALE" | "PHARMACIE";

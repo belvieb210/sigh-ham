@@ -10,7 +10,10 @@ import { reorienterPatientDepuisCaisse } from "@/lib/caisse/reorienter-patient-c
 import { estClientWalkInPharmacie, numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 import { creerTokenRecuFacture } from "@/lib/caisse/token-recu-public";
 import { evaluerEtatFacturationDual } from "@/lib/caisse/etat-facturation-dual";
-import { construireLignesFactureExamens } from "@/lib/caisse/construire-lignes-facture-examens";
+import {
+  construireLignesFactureExamens,
+  extraireLignesExamensNonFacturees,
+} from "@/lib/caisse/construire-lignes-facture-examens";
 import { prescrireExamensInitiaux } from "@/lib/reception/prescrire-examens-initiaux";
 import type {
   DestinationApresEncaissement,
@@ -205,19 +208,11 @@ export async function obtenirDossierFacturation(
     : null;
 
   const facturesExamens = dossier.factures.filter((f) => !estFacturePharmacie(f));
-  const factureExamensBrute =
-    (factureParam && !estFacturePharmacie(factureParam) ? factureParam : null) ??
+  const factureExamensOuverte =
     facturesExamens.find((f) => f.statut !== "ANNULEE" && f.statut !== "PAYEE") ??
-    facturesExamens[0] ??
     null;
-
-  const facturePharmacieBrute =
-    factureParam && estFacturePharmacie(factureParam) ? factureParam : null;
-
-  const pharmacie = await obtenirSectionPharmacieDossier(
-    dossierId,
-    facturePharmacieBrute?.id
-  );
+  const factureExamensPayeeRecente =
+    facturesExamens.find((f) => f.statut === "PAYEE") ?? null;
 
   const lignesExamensPrescrits = construireLignesFactureExamens(
     dossier.examensLaboratoire.map((ex) => ({
@@ -226,6 +221,39 @@ export async function obtenirDossierFacturation(
       typeExamen: ex.typeExamen,
       paquetBilan: ex.paquetBilan,
     }))
+  );
+  const lignesExamensDejaFacturees = facturesExamens
+    .filter((f) => f.statut !== "ANNULEE")
+    .flatMap((f) =>
+      f.lignes.map((l) => ({
+        libelle: l.libelle,
+        montant: decimalVersNombre(l.montant),
+      }))
+    );
+  const lignesExamensNonFacturees = extraireLignesExamensNonFacturees(
+    lignesExamensPrescrits,
+    lignesExamensDejaFacturees
+  );
+  const aDesExamensNonFactures = lignesExamensNonFacturees.length > 0;
+
+  const factureParamExamens =
+    factureParam && !estFacturePharmacie(factureParam) ? factureParam : null;
+  const factureExamensBrute = aDesExamensNonFactures
+    ? factureExamensOuverte
+    : (factureParamExamens && factureParamExamens.statut !== "ANNULEE"
+        ? factureParamExamens
+        : null) ??
+      factureExamensOuverte ??
+      factureExamensPayeeRecente ??
+      facturesExamens[0] ??
+      null;
+
+  const facturePharmacieBrute =
+    factureParam && estFacturePharmacie(factureParam) ? factureParam : null;
+
+  const pharmacie = await obtenirSectionPharmacieDossier(
+    dossierId,
+    facturePharmacieBrute?.id
   );
 
   const historiquePaiements = dossier.factures.flatMap((f) =>
@@ -254,7 +282,9 @@ export async function obtenirDossierFacturation(
 
   const factureExamens = construireDetailFacture(
     factureExamensBrute,
-    lignesExamensPrescrits,
+    aDesExamensNonFactures && !factureExamensBrute
+      ? lignesExamensNonFacturees
+      : lignesExamensPrescrits,
     historiquePaiements.filter((p) =>
       factureExamensBrute
         ? p.numeroRecu === factureExamensBrute.numeroFacture.replace(/^FAC-/, "REC-")
@@ -280,9 +310,12 @@ export async function obtenirDossierFacturation(
   const facturationDual = evaluerEtatFacturationDual({
     nombreExamens: dossier.examensLaboratoire.length,
     aDesMedicaments: pharmacie.aDesMedicaments,
-    statutFactureExamens: factureExamens.statut,
+    statutFactureExamens: aDesExamensNonFactures
+      ? (factureExamensOuverte?.statut ?? null)
+      : factureExamens.statut,
     statutFacturePharmacie: pharmacie.facture?.statut ?? null,
     enFile: Boolean(fileAttente),
+    aDesExamensNonFactures,
   });
   statutAttente = facturationDual.statutAttente;
 
@@ -363,21 +396,32 @@ export async function preparerFactureDossier(
   );
   if (!detail) throw new Error("Dossier introuvable.");
 
-  if (detail.facture.id && detail.facture.statut !== "ANNULEE") {
+  const factureExamens = detail.examens.facture;
+  const factureExamensOuverte =
+    Boolean(factureExamens.id) &&
+    factureExamens.statut != null &&
+    factureExamens.statut !== "ANNULEE" &&
+    factureExamens.statut !== "PAYEE";
+
+  if (factureExamensOuverte) {
     if (options?.devise) {
       const devise = options.devise === "USD" ? "USD" : "CDF";
-      if (detail.facture.devise !== devise) {
+      if (factureExamens.devise !== devise) {
         await prisma.facture.update({
-          where: { id: detail.facture.id },
+          where: { id: factureExamens.id as string },
           data: { devise },
         });
-        return obtenirDossierFacturation(dossierId, detail.facture.id);
+        return obtenirDossierFacturation(dossierId, factureExamens.id ?? undefined);
       }
     }
     return detail;
   }
 
-  const lignesPositives = detail.examens.facture.lignes.filter((l) => l.montant > 0);
+  if (factureExamens.statut === "PAYEE") {
+    return detail;
+  }
+
+  const lignesPositives = factureExamens.lignes.filter((l) => l.montant > 0);
   if (lignesPositives.length === 0) {
     throw new Error("Aucune prestation facturable pour ce dossier.");
   }

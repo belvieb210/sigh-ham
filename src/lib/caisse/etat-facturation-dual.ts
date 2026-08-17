@@ -27,12 +27,16 @@ export function evaluerEtatFacturationDual(params: {
   statutFactureExamens: StatutFacture | null;
   statutFacturePharmacie: StatutFacture | null;
   enFile: boolean;
+  /** Examens prescrits pas encore sur une facture (complémentaire après paiement). */
+  aDesExamensNonFactures?: boolean;
 }): EtatFacturationDual {
   const aDesExamens = params.nombreExamens > 0;
   const aDesMedicaments = params.aDesMedicaments;
+  const aDesExamensNonFactures = Boolean(params.aDesExamensNonFactures);
 
   const factureExamensPayee =
-    !aDesExamens || factureEstPayee(params.statutFactureExamens);
+    !aDesExamens ||
+    (factureEstPayee(params.statutFactureExamens) && !aDesExamensNonFactures);
   const facturePharmaciePayee =
     !aDesMedicaments || factureEstPayee(params.statutFacturePharmacie);
 
@@ -42,7 +46,9 @@ export function evaluerEtatFacturationDual(params: {
     facturePharmaciePayee;
 
   const factureNormaleVerrouillee =
-    aDesExamens && factureEstPayee(params.statutFactureExamens);
+    aDesExamens &&
+    factureEstPayee(params.statutFactureExamens) &&
+    !aDesExamensNonFactures;
   const facturePharmacieVerrouillee =
     aDesMedicaments && factureEstPayee(params.statutFacturePharmacie);
 

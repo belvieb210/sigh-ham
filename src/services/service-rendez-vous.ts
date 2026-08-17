@@ -7,7 +7,46 @@ export interface ReponseReservationRendezVous {
   reference?: string;
 }
 
-/** Génère les dates disponibles (14 prochains jours ouvrables) */
+/** On peut réserver jusqu’à la fin de l’année suivante. */
+const HORIZON_ANNEES = 1;
+
+export function anneeMinReservation(ref = new Date()): number {
+  return ref.getFullYear();
+}
+
+export function anneeMaxReservation(ref = new Date()): number {
+  return ref.getFullYear() + HORIZON_ANNEES;
+}
+
+export function estDateReservable(dateIso: string, maintenant = new Date()): boolean {
+  const date = parseDateIso(dateIso);
+  if (!date) return false;
+  if (date.getDay() === 0) return false;
+
+  const debutAujourdhui = new Date(
+    maintenant.getFullYear(),
+    maintenant.getMonth(),
+    maintenant.getDate()
+  );
+  if (date < debutAujourdhui) return false;
+
+  const finHorizon = new Date(anneeMaxReservation(maintenant), 11, 31);
+  return date <= finHorizon;
+}
+
+/** Jours ouvrables (lun.–sam.) d’un mois — `mois` = 0–11. */
+export function genererDatesDuMois(annee: number, mois: number): string[] {
+  const dates: string[] = [];
+  const dernierJour = new Date(annee, mois + 1, 0).getDate();
+  for (let jour = 1; jour <= dernierJour; jour++) {
+    const date = new Date(annee, mois, jour);
+    if (date.getDay() === 0) continue;
+    dates.push(formatDateIso(date));
+  }
+  return dates;
+}
+
+/** Génère les dates disponibles (prochains jours ouvrables à partir d’aujourd’hui). */
 export function genererDatesDisponibles(nombreJours = 21): string[] {
   const dates: string[] = [];
   const aujourdhui = new Date();
@@ -16,7 +55,7 @@ export function genererDatesDisponibles(nombreJours = 21): string[] {
   let compteur = 0;
   let offset = 0;
 
-  while (compteur < nombreJours && offset < 45) {
+  while (compteur < nombreJours && offset < 400) {
     const date = new Date(aujourdhui);
     date.setDate(aujourdhui.getDate() + offset);
     offset++;

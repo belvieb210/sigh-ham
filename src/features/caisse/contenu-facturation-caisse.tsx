@@ -653,15 +653,6 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   ]);
 
   useEffect(() => {
-    if (!dossier?.facturationDual.facturationComplete || enCours) return;
-    setMessage(t("caisse.facturation.factureDejaPayeeRetour"));
-    const timer = window.setTimeout(() => {
-      router.replace("/sigh/caisse/factures");
-    }, 1200);
-    return () => window.clearTimeout(timer);
-  }, [dossier?.facturationDual.facturationComplete, dossier?.dossierId, enCours, router, t]);
-
-  useEffect(() => {
     if (
       !dossier ||
       typeFactureUi === "PHARMACIE" ||

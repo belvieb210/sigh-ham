@@ -8,7 +8,10 @@ import {
 } from "@/lib/caisse/etat-facturation-dual";
 import { estClientWalkInPharmacie, numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 import type { PatientFileCaisse, StatsCaisseJour } from "@/lib/caisse/types";
-import { construireLignesFactureExamens } from "@/lib/caisse/construire-lignes-facture-examens";
+import {
+  construireLignesFactureExamens,
+  extraireLignesExamensNonFacturees,
+} from "@/lib/caisse/construire-lignes-facture-examens";
 
 function decimalVersNombre(valeur: { toNumber?: () => number } | number | string): number {
   if (typeof valeur === "number") return valeur;
@@ -40,11 +43,11 @@ interface FacturesDossier {
   pharmacie: ResumeFacture | null;
 }
 
-function prioriteStatutFacture(statut: StatutFacture): number {
-  if (statut === "PAYEE") return 4;
-  if (statut === "PARTIELLEMENT_PAYEE") return 3;
-  if (statut === "EMISE") return 2;
-  if (statut === "BROUILLON") return 1;
+function prioriteFactureATraiter(statut: StatutFacture): number {
+  if (statut === "PARTIELLEMENT_PAYEE") return 4;
+  if (statut === "EMISE") return 3;
+  if (statut === "BROUILLON") return 2;
+  if (statut === "PAYEE") return 1;
   return 0;
 }
 
@@ -53,7 +56,7 @@ function retenirMeilleureFacture(
   candidate: ResumeFacture
 ): ResumeFacture {
   if (!courante) return candidate;
-  return prioriteStatutFacture(candidate.statut) >= prioriteStatutFacture(courante.statut)
+  return prioriteFactureATraiter(candidate.statut) >= prioriteFactureATraiter(courante.statut)
     ? candidate
     : courante;
 }
@@ -295,7 +298,7 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       include: {
         paiements: { orderBy: { payeLe: "desc" }, take: 1 },
         ventePharmacie: { select: { id: true } },
-        lignes: { select: { id: true } },
+        lignes: { select: { id: true, libelle: true, montant: true } },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -313,6 +316,10 @@ export async function listerPatientsEnAttenteCaisse(options?: {
   const dossiersAvecMedicaments = new Set(ordonnancesAvecMed.map((o) => o.dossierId));
 
   const facturesParDossier = new Map<string, FacturesDossier>();
+  const lignesExamensFactureesParDossier = new Map<
+    string,
+    { libelle: string; montant: number }[]
+  >();
   for (const f of factures) {
     const courant = facturesParDossier.get(f.dossierId) ?? {
       examens: null,
@@ -331,6 +338,14 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       courant.pharmacie = retenirMeilleureFacture(courant.pharmacie, resume);
     } else {
       courant.examens = retenirMeilleureFacture(courant.examens, resume);
+      const lignes = lignesExamensFactureesParDossier.get(f.dossierId) ?? [];
+      for (const l of f.lignes) {
+        lignes.push({
+          libelle: l.libelle,
+          montant: decimalVersNombre(l.montant),
+        });
+      }
+      lignesExamensFactureesParDossier.set(f.dossierId, lignes);
     }
     facturesParDossier.set(f.dossierId, courant);
   }
@@ -345,14 +360,15 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       file.passage.transferts[0];
     const transfert = transfertEntrant;
     const examens = dossier.examensLaboratoire;
-    const montantEstime = construireLignesFactureExamens(
+    const lignesExamensPrescrits = construireLignesFactureExamens(
       examens.map((ex) => ({
         id: ex.id,
         paquetBilanId: ex.paquetBilanId,
         typeExamen: ex.typeExamen,
         paquetBilan: ex.paquetBilan,
       }))
-    ).reduce((acc, l) => acc + l.montant, 0);
+    );
+    const montantEstime = lignesExamensPrescrits.reduce((acc, l) => acc + l.montant, 0);
     const medecin =
       dossier.enregistrementsReception[0]?.medecinResponsable?.trim() || null;
     const provenance =
@@ -371,12 +387,19 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       facs.pharmacie?.nbLignes ??
       (aDesMedicaments && examens.length === 0 ? 1 : 0);
 
+    const aDesExamensNonFactures =
+      extraireLignesExamensNonFacturees(
+        lignesExamensPrescrits,
+        lignesExamensFactureesParDossier.get(dossier.id) ?? []
+      ).length > 0;
+
     const etat = evaluerEtatFacturationDual({
       nombreExamens: examens.length,
       aDesMedicaments,
       statutFactureExamens: facs.examens?.statut ?? null,
       statutFacturePharmacie: facs.pharmacie?.statut ?? null,
       enFile: true,
+      aDesExamensNonFactures,
     });
 
     if (exigerFactureEtablie && !etat.facturationComplete && !aFactureEtablie(facs)) {

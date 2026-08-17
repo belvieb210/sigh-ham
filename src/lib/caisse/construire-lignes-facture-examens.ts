@@ -52,3 +52,29 @@ export function construireLignesFactureExamens(
 
   return lignes;
 }
+
+/** Prestations prescrites absentes des factures examens non annulées. */
+export function extraireLignesExamensNonFacturees(
+  lignesPrescrites: LigneFactureExamensCaisse[],
+  lignesDejaFacturees: { libelle: string; montant: number }[]
+): LigneFactureExamensCaisse[] {
+  const restants = new Map<string, number>();
+  for (const ligne of lignesDejaFacturees) {
+    if (ligne.montant <= 0) continue;
+    const cle = ligne.libelle.trim().toLowerCase();
+    restants.set(cle, (restants.get(cle) ?? 0) + 1);
+  }
+
+  const nonFacturees: LigneFactureExamensCaisse[] = [];
+  for (const ligne of lignesPrescrites) {
+    if (ligne.montant <= 0) continue;
+    const cle = ligne.libelle.trim().toLowerCase();
+    const n = restants.get(cle) ?? 0;
+    if (n > 0) {
+      restants.set(cle, n - 1);
+    } else {
+      nonFacturees.push(ligne);
+    }
+  }
+  return nonFacturees;
+}

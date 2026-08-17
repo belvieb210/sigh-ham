@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
   Calendar,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   AlertCircle,
   User,
   Clock,
@@ -24,16 +26,17 @@ import { formaterDateAffichage, obtenirLocaleDate } from "@/lib/locale-date";
 import type { IdTypePrestation } from "@/constants/rendez-vous";
 import {
   type DonneesReservationRendezVous,
-  genererDatesDisponibles,
+  anneeMaxReservation,
+  anneeMinReservation,
+  estDateReservable,
   genererCreneauxDisponibles,
+  genererDatesDuMois,
   soumettreReservationRendezVous,
 } from "@/services/service-rendez-vous";
 import { cn } from "@/lib/utils";
 
 const CLASSE_CHAMP =
   "w-full rounded-xl border border-gris-bordure bg-white px-4 py-3 text-sm transition-colors focus:border-bleu-medical focus:outline-none focus:ring-2 focus:ring-bleu-medical/20";
-
-const DATES_DISPONIBLES = genererDatesDisponibles();
 
 export function FormulaireReservation() {
   const { t, i18n } = useTranslation();
@@ -57,6 +60,77 @@ export function FormulaireReservation() {
     premiereVisite: false,
     consentement: undefined,
   });
+
+  const maintenant = new Date();
+  const [vueCalendrier, setVueCalendrier] = useState({
+    annee: maintenant.getFullYear(),
+    mois: maintenant.getMonth(),
+  });
+
+  const datesDuMois = useMemo(
+    () => genererDatesDuMois(vueCalendrier.annee, vueCalendrier.mois),
+    [vueCalendrier.annee, vueCalendrier.mois]
+  );
+
+  const anneesReservables = useMemo(() => {
+    const min = anneeMinReservation();
+    const max = anneeMaxReservation();
+    const liste: number[] = [];
+    for (let a = min; a <= max; a++) liste.push(a);
+    return liste;
+  }, []);
+
+  const peutMoisPrecedent = useMemo(() => {
+    const now = new Date();
+    return (
+      vueCalendrier.annee > now.getFullYear() ||
+      (vueCalendrier.annee === now.getFullYear() &&
+        vueCalendrier.mois > now.getMonth())
+    );
+  }, [vueCalendrier]);
+
+  const peutMoisSuivant = useMemo(() => {
+    const maxAnnee = anneeMaxReservation();
+    return (
+      vueCalendrier.annee < maxAnnee ||
+      (vueCalendrier.annee === maxAnnee && vueCalendrier.mois < 11)
+    );
+  }, [vueCalendrier]);
+
+  const libelleMoisAnnee = new Date(
+    vueCalendrier.annee,
+    vueCalendrier.mois,
+    1
+  ).toLocaleDateString(localeDate, { month: "long", year: "numeric" });
+
+  const changerMois = (delta: number) => {
+    setVueCalendrier((prev) => {
+      const date = new Date(prev.annee, prev.mois + delta, 1);
+      const minAnnee = anneeMinReservation();
+      const maxAnnee = anneeMaxReservation();
+      const now = new Date();
+      let annee = date.getFullYear();
+      let mois = date.getMonth();
+      if (annee < minAnnee || (annee === now.getFullYear() && mois < now.getMonth())) {
+        annee = now.getFullYear();
+        mois = now.getMonth();
+      }
+      if (annee > maxAnnee) {
+        annee = maxAnnee;
+        mois = 11;
+      }
+      return { annee, mois };
+    });
+  };
+
+  const changerAnnee = (annee: number) => {
+    const now = new Date();
+    let mois = vueCalendrier.mois;
+    if (annee === now.getFullYear() && mois < now.getMonth()) {
+      mois = now.getMonth();
+    }
+    setVueCalendrier({ annee, mois });
+  };
 
   const creneaux =
     donnees.date ? genererCreneauxDisponibles(donnees.date) : [];
@@ -206,24 +280,73 @@ export function FormulaireReservation() {
                 <Calendar className="h-4 w-4 text-bleu-medical" />
                 {form.dateLabel}
               </label>
+
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => changerMois(-1)}
+                    disabled={!peutMoisPrecedent}
+                    aria-label={form.moisPrecedent}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gris-bordure bg-white text-texte-principal transition-colors hover:bg-gris-tres-clair disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <p className="min-w-[9.5rem] px-2 text-center text-sm font-bold capitalize text-[#2d2a6e]">
+                    {libelleMoisAnnee}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => changerMois(1)}
+                    disabled={!peutMoisSuivant}
+                    aria-label={form.moisSuivant}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gris-bordure bg-white text-texte-principal transition-colors hover:bg-gris-tres-clair disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <span className="text-texte-secondaire">{form.anneeLabel}</span>
+                  <select
+                    value={vueCalendrier.annee}
+                    onChange={(e) => changerAnnee(Number(e.target.value))}
+                    aria-label={form.anneeLabel}
+                    className="rounded-lg border border-gris-bordure bg-white px-3 py-2 text-sm font-semibold text-[#2d2a6e] focus:border-bleu-medical focus:outline-none focus:ring-2 focus:ring-bleu-medical/20"
+                  >
+                    {anneesReservables.map((annee) => (
+                      <option key={annee} value={annee}>
+                        {annee}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
-                {DATES_DISPONIBLES.slice(0, 15).map((dateIso) => {
+                {datesDuMois.map((dateIso) => {
                   const date = new Date(dateIso + "T12:00:00");
                   const selectionnee = donnees.date === dateIso;
+                  const reservable = estDateReservable(dateIso);
 
                   return (
                     <button
                       key={dateIso}
                       type="button"
+                      disabled={!reservable}
                       onClick={() => {
                         mettreAJour("date", dateIso);
                         mettreAJour("creneau", "");
                       }}
                       className={cn(
                         "rounded-xl border px-2 py-3 text-center transition-all",
-                        selectionnee
-                          ? "border-bleu-medical bg-bleu-medical-clair font-semibold text-bleu-medical"
-                          : "border-gris-bordure bg-white hover:border-bleu-medical/40"
+                        !reservable &&
+                          "cursor-not-allowed border-gris-bordure bg-slate-50 text-slate-400 opacity-60",
+                        reservable &&
+                          selectionnee &&
+                          "border-bleu-medical bg-bleu-medical-clair font-semibold text-bleu-medical",
+                        reservable &&
+                          !selectionnee &&
+                          "border-gris-bordure bg-white hover:border-bleu-medical/40"
                       )}
                     >
                       <span className="block text-[10px] uppercase text-texte-secondaire sm:text-xs">
@@ -233,7 +356,10 @@ export function FormulaireReservation() {
                         {date.getDate()}
                       </span>
                       <span className="block text-[10px] text-texte-secondaire sm:text-xs">
-                        {date.toLocaleDateString(localeDate, { month: "short" })}
+                        {date.toLocaleDateString(localeDate, {
+                          month: "short",
+                          year: "numeric",
+                        })}
                       </span>
                     </button>
                   );

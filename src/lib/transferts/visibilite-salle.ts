@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 /**
  * Statuts de transfert pour lesquels un patient est visible dans la salle destination.
- * EN_ATTENTE = en attente de confirmation à la réception → invisible ailleurs.
+ * EN_ATTENTE = en attente de confirmation dans la salle d'origine (menu ⋮) → invisible ailleurs.
  */
 export const STATUTS_TRANSFERT_VISIBLES_SALLE: StatutTransfert[] = [
   "ACCEPTE",
@@ -57,18 +57,49 @@ export function dedupliquerFilesAttenteParDossier<T extends FileAttenteAvecDossi
 }
 
 /**
- * Patients visibles dans la file d'attente d'une salle (transfert confirmé uniquement).
+ * Patients visibles dans la file d'une salle :
+ * — arrivée confirmée (origine a cliqué ⋮), ou
+ * — patient originaire de cette salle (walk-in, encore sur place).
+ * Un transfert EN_ATTENTE vers cette salle n'y apparaît jamais.
  */
 export async function listerPatientsFileAttenteSalle(codeSalle: CodeSalle) {
+  await nettoyerFilesAttenteNonConfirmees();
+
   const files = await prisma.fileAttente.findMany({
     where: {
       salle: { code: codeSalle },
       serviLe: null,
-      passage: {
-        transferts: {
-          some: filtreTransfertVisibleSalle(codeSalle),
+      AND: [
+        {
+          NOT: {
+            passage: {
+              transferts: {
+                some: {
+                  salleDestination: { code: codeSalle },
+                  statut: "EN_ATTENTE",
+                },
+              },
+            },
+          },
         },
-      },
+        {
+          OR: [
+            {
+              passage: {
+                transferts: { some: filtreTransfertVisibleSalle(codeSalle) },
+              },
+            },
+            {
+              passage: {
+                transferts: { some: { salleOrigine: { code: codeSalle } } },
+              },
+            },
+            {
+              passage: { transferts: { none: {} } },
+            },
+          ],
+        },
+      ],
     },
     include: {
       passage: {
@@ -111,14 +142,12 @@ export async function listerPatientsFileAttenteSalle(codeSalle: CodeSalle) {
 }
 
 /**
- * Supprime les files d'attente créées trop tôt sur la salle *destination*
- * d'un transfert encore EN_ATTENTE (invisible tant que non confirmé).
- * Ne touche pas la file de la salle d'origine (ex. patient encore à la caisse).
+ * Replace les files créées trop tôt sur la salle destination d'un transfert
+ * encore EN_ATTENTE : le patient reste dans la salle d'origine jusqu'au ⋮.
  */
 export async function nettoyerFilesAttenteNonConfirmees(): Promise<number> {
   const candidates = await prisma.fileAttente.findMany({
     where: {
-      serviLe: null,
       passage: {
         transferts: {
           some: { statut: "EN_ATTENTE" },
@@ -133,7 +162,7 @@ export async function nettoyerFilesAttenteNonConfirmees(): Promise<number> {
         select: {
           transferts: {
             where: { statut: "EN_ATTENTE" },
-            select: { salleDestinationId: true },
+            select: { salleDestinationId: true, salleOrigineId: true },
           },
         },
       },
@@ -156,18 +185,37 @@ export async function nettoyerFilesAttenteNonConfirmees(): Promise<number> {
     transfertsConfirmes.map((t) => `${t.passageId}:${t.salleDestinationId}`)
   );
 
-  const ids = candidates
-    .filter((f) =>
-      f.passage.transferts.some((t) => t.salleDestinationId === f.salleId)
-    )
-    .filter((f) => !dejaVisibles.has(`${f.passageId}:${f.salleId}`))
-    .map((f) => f.id);
-
-  if (ids.length === 0) return 0;
-
-  const result = await prisma.fileAttente.deleteMany({
-    where: { id: { in: ids } },
+  const prematures = candidates.filter((f) => {
+    const destEnAttente = f.passage.transferts.find(
+      (t) => t.salleDestinationId === f.salleId
+    );
+    if (!destEnAttente) return false;
+    return !dejaVisibles.has(`${f.passageId}:${f.salleId}`);
   });
 
-  return result.count;
+  if (prematures.length === 0) return 0;
+
+  let traites = 0;
+  for (const f of prematures) {
+    const destEnAttente = f.passage.transferts.find(
+      (t) => t.salleDestinationId === f.salleId
+    );
+    if (!destEnAttente) continue;
+
+    if (destEnAttente.salleOrigineId !== f.salleId) {
+      await prisma.fileAttente.update({
+        where: { id: f.id },
+        data: {
+          salleId: destEnAttente.salleOrigineId,
+          serviLe: null,
+          arriveLe: new Date(),
+        },
+      });
+    } else {
+      await prisma.fileAttente.delete({ where: { id: f.id } });
+    }
+    traites += 1;
+  }
+
+  return traites;
 }

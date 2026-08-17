@@ -1,10 +1,8 @@
 import "server-only";
 import type { StatutFacture } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import {
-  estNumeroFacturePharmacie,
-  evaluerEtatFacturationDual,
-} from "@/lib/caisse/etat-facturation-dual";
+import { estNumeroFacturePharmacie } from "@/lib/caisse/etat-facturation-dual";
+import { filtreTransfertVisibleSalle } from "@/lib/transferts/visibilite-salle";
 
 interface ResumeFactureDossier {
   examens: StatutFacture | null;
@@ -42,53 +40,16 @@ export async function dossierEligibleLaboratoire(
     where: {
       serviLe: null,
       salle: { code: "LABORATOIRE" },
-      passage: { dossierId },
+      passage: {
+        dossierId,
+        transferts: { some: filtreTransfertVisibleSalle("LABORATOIRE") },
+      },
     },
     select: { id: true },
   });
   if (enFile) return true;
 
-  const dossier = await prisma.dossierPatient.findUnique({
-    where: { id: dossierId },
-    select: {
-      examensLaboratoire: {
-        where: { statut: { not: "ANNULE" } },
-        select: { id: true },
-      },
-      factures: {
-        where: {
-          statut: { in: ["EMISE", "PARTIELLEMENT_PAYEE", "PAYEE"] },
-        },
-        select: {
-          statut: true,
-          numeroFacture: true,
-          ventePharmacie: { select: { id: true } },
-        },
-        orderBy: { createdAt: "desc" },
-      },
-      ordonnances: {
-        where: {
-          statut: { in: ["EN_ATTENTE", "PARTIELLEMENT_DELIVREE"] },
-          lignes: { some: {} },
-        },
-        select: { id: true },
-        take: 1,
-      },
-    },
-  });
-
-  if (!dossier || dossier.examensLaboratoire.length === 0) return false;
-
-  const facs = classerFacturesDossier(dossier.factures);
-  const etat = evaluerEtatFacturationDual({
-    nombreExamens: dossier.examensLaboratoire.length,
-    aDesMedicaments: dossier.ordonnances.length > 0,
-    statutFactureExamens: facs.examens,
-    statutFacturePharmacie: facs.pharmacie,
-    enFile: false,
-  });
-
-  return etat.factureExamensPayee;
+  return false;
 }
 
 export function filtrePrismaDossiersExamensPayes() {

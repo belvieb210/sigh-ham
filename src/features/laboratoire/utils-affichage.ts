@@ -89,9 +89,17 @@ export function statutsAnalyseDistincts(
   return [...ids];
 }
 
-/** N° visite affiché en labo (VIS-… ou ancien n° dossier). */
+/** Compacte PAT/VIS pour l’affichage (PAT-2026-00002 → PAT202600002). */
+function compactNumeroPatOuVis(valeur: string): string {
+  if (/^(PAT|VIS)/i.test(valeur)) {
+    return valeur.replace(/-/g, "").toUpperCase();
+  }
+  return valeur;
+}
+
+/** N° PAT affiché en colonne « N° Patient » (ex. PAT202600002). */
 export function numeroVisiteLaboratoire(p: PatientFileLaboratoire) {
-  return p.numeroDossier?.trim() || "—";
+  return numeroEnregistrementLaboratoire(p);
 }
 
 /** N° PAT (transfert / orientation). */
@@ -100,7 +108,7 @@ export function numeroEnregistrementLaboratoire(p: PatientFileLaboratoire) {
   if (!brut) return "—";
   const parties = brut
     .split(",")
-    .map((s) => s.trim())
+    .map((s) => compactNumeroPatOuVis(s.trim()))
     .filter(Boolean);
   const uniques = [...new Set(parties)];
   return uniques[0] ?? "—";

@@ -14,7 +14,8 @@ interface PropsMenuActionsTransfertCaisse {
 }
 
 /**
- * Menu ⋮ : confirmation entrante (vers caisse) ou sortante (depuis caisse).
+ * Menu ⋮ : confirmation sortante uniquement (depuis la caisse).
+ * L'arrivée à la caisse est confirmée dans la salle d'origine.
  */
 export function MenuActionsTransfertCaisse({
   patient,
@@ -40,9 +41,12 @@ export function MenuActionsTransfertCaisse({
     statutTransfert === "ACCEPTE" ||
     statutTransfert === "TERMINE";
 
-  const peutConfirmer = statutTransfert === "EN_ATTENTE" && !patient.enRecuperation;
-  const peutRejeter = statutTransfert === "EN_ATTENTE" && !patient.enRecuperation;
-  const peutRestaurer = patient.enRecuperation === true && statutTransfert === "REFUSE";
+  const peutConfirmer =
+    !estEntrant && statutTransfert === "EN_ATTENTE" && !patient.enRecuperation;
+  const peutRejeter =
+    !estEntrant && statutTransfert === "EN_ATTENTE" && !patient.enRecuperation;
+  const peutRestaurer =
+    !estEntrant && patient.enRecuperation === true && statutTransfert === "REFUSE";
 
   const mettreAJourPosition = useCallback(() => {
     const bouton = boutonRef.current;

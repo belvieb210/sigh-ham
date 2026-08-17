@@ -22,133 +22,21 @@ async function chargerTransfertEntrantCaisse(transfertId: string) {
   return transfert;
 }
 
-/** Accepte un patient transféré vers la caisse (visible en file après confirmation). */
-export async function confirmerTransfertEntrantCaisse(agentId: string, transfertId: string) {
-  const transfert = await chargerTransfertEntrantCaisse(transfertId);
-
-  if (transfert.statut !== "EN_ATTENTE") {
-    throw new Error("Seuls les transferts en attente peuvent être confirmés.");
-  }
-
-  if (!transfert.passageId) {
-    throw new Error("Passage associé au transfert introuvable.");
-  }
-
-  const freres = await prisma.transfert.findMany({
-    where: {
-      dossierId: transfert.dossierId,
-      passageId: transfert.passageId,
-      salleDestination: { code: "CAISSE" },
-      statut: "EN_ATTENTE",
-    },
-    include: { salleDestination: true },
-    orderBy: { emisLe: "asc" },
-  });
-
-  const aConfirmer = freres.length > 0 ? freres : [transfert];
-  const { inscrirePassagesDansSalles } = await import(
-    "@/lib/transferts/multi-destinations"
+/** La confirmation se fait uniquement dans la salle d'origine (menu ⋮). */
+export async function confirmerTransfertEntrantCaisse(_agentId: string, _transfertId: string) {
+  throw new Error(
+    "Ce transfert doit être confirmé depuis la salle d'origine via le menu ⋮."
   );
-
-  const resultat = await prisma.$transaction(async (tx) => {
-    const fileOrigine = await tx.fileAttente.findFirst({
-      where: {
-        passageId: transfert.passageId!,
-        serviLe: null,
-        salle: { code: transfert.salleOrigine.code },
-      },
-    });
-
-    if (fileOrigine) {
-      await tx.fileAttente.update({
-        where: { id: fileOrigine.id },
-        data: { serviLe: new Date() },
-      });
-    }
-
-    const inscriptions = await inscrirePassagesDansSalles(tx, {
-      passageOrigineId: transfert.passageId!,
-      dossierId: transfert.dossierId,
-      sallesDestinationIds: [aConfirmer[0]!.salleDestinationId],
-      motifBase: `Arrivée caisse depuis ${transfert.salleOrigine.nom}`,
-    });
-
-    for (let i = 0; i < aConfirmer.length; i++) {
-      const t = aConfirmer[i]!;
-      const inscription = inscriptions[i] ?? inscriptions[0]!;
-      await tx.transfert.update({
-        where: { id: t.id },
-        data: {
-          statut: "ACCEPTE",
-          recepteurId: agentId,
-          accepteLe: new Date(),
-          passageId: inscription.passageId,
-        },
-      });
-    }
-
-    await tx.dossierPatient.update({
-      where: { id: transfert.dossierId },
-      data: { statut: "EN_COURS" },
-    });
-
-    return {
-      transfertId: aConfirmer[0]!.id,
-      numeroPatient: transfert.dossier.patient.numeroPatient,
-      salleDestination: transfert.salleDestination.nom,
-    };
-  });
-
-  void import("@/lib/visites/evaluer-cloture-visite").then(({ evaluerEtCloturerVisite }) =>
-    evaluerEtCloturerVisite(transfert.dossierId)
-  );
-
-  return resultat;
 }
 
 export async function rejeterTransfertEntrantCaisse(
-  agentId: string,
-  transfertId: string,
-  motifRejet?: string
+  _agentId: string,
+  _transfertId: string,
+  _motifRejet?: string
 ) {
-  const transfert = await chargerTransfertEntrantCaisse(transfertId);
-
-  if (transfert.statut !== "EN_ATTENTE") {
-    throw new Error("Seuls les transferts en attente peuvent être rejetés.");
-  }
-
-  return prisma.$transaction(async (tx) => {
-    await tx.transfert.update({
-      where: { id: transfertId },
-      data: { statut: "REFUSE" },
-    });
-
-    await tx.transfertRecuperation.upsert({
-      where: { transfertId },
-      create: {
-        transfertId,
-        dossierId: transfert.dossierId,
-        patientId: transfert.dossier.patientId,
-        examensIds: [],
-        motifRejet: motifRejet?.trim() || "Transfert rejeté à la caisse",
-        rejeteParId: agentId,
-      },
-      update: {
-        statut: "EN_RECUPERATION",
-        examensIds: [],
-        motifRejet: motifRejet?.trim() || "Transfert rejeté à la caisse",
-        rejeteParId: agentId,
-        rejeteLe: new Date(),
-        recupereParId: null,
-        recupereLe: null,
-      },
-    });
-
-    return {
-      transfertId,
-      numeroPatient: transfert.dossier.patient.numeroPatient,
-    };
-  });
+  throw new Error(
+    "Ce transfert doit être rejeté depuis la salle d'origine via le menu ⋮."
+  );
 }
 
 export async function recupererTransfertEntrantCaisse(agentId: string, transfertId: string) {

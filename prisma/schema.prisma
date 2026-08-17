@@ -446,7 +446,7 @@ model Patient {
 
 model DossierPatient {
   id             String        @id @default(cuid())
-  numeroDossier  String        @unique @map("numero_dossier") // VIS-YYYY-XXXXXX (ou ancien YYYYMMDD)
+  numeroDossier  String        @unique @map("numero_dossier") // VISYYYY###### (ex. VIS2026000001)
   patientId      String        @map("patient_id")
   patient        Patient       @relation(fields: [patientId], references: [id])
   statut         StatutDossier @default(OUVERT)
@@ -500,7 +500,7 @@ model Passage {
 
 model Transfert {
   id                 String          @id @default(cuid())
-  /** N° PAT du parcours (ex. PAT-202600001) — identique pour tous les hops d'une même VIS. */
+  /** N° PAT du parcours (ex. PAT202600001) — identique pour tous les hops d'une même VIS. */
   numeroTransfert    String?         @map("numero_transfert")
   dossierId          String          @map("dossier_id")
   dossier            DossierPatient  @relation(fields: [dossierId], references: [id])

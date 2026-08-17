@@ -26,7 +26,7 @@ export interface PatientFileLaboratoire {
   numeroOrdre: number;
   provenance: string;
   medecinResponsable: string | null;
-  /** N° transfert (ex. PAT-202600001) — change à chaque orientation. */
+  /** N° transfert (ex. PAT202600001) — identique pour tous les hops d'une même VIS. */
   numeroTransfert: string | null;
   /** N° permanent patient (ex. 20260902012). */
   numeroEnregistrement: string;

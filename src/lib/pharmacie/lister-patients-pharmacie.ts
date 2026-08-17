@@ -1,7 +1,7 @@
 import "server-only";
 import { calculerAge } from "@/features/caisse/utils-format";
 import { prisma } from "@/lib/prisma";
-import { dedupliquerFilesAttenteParDossier } from "@/lib/transferts/visibilite-salle";
+import { listerPatientsFileAttenteSalle } from "@/lib/transferts/visibilite-salle";
 import type { PatientFilePharmacie, StatsPharmacieJour } from "@/lib/pharmacie/types";
 
 const COULEURS_ORIENTATION: Record<string, string> = {
@@ -61,32 +61,7 @@ function debutJourLocal(d = new Date()) {
 }
 
 export async function listerPatientsPharmacie(): Promise<PatientFilePharmacie[]> {
-  const files = await prisma.fileAttente.findMany({
-    where: {
-      salle: { code: "PHARMACIE" },
-      serviLe: null,
-    },
-    include: {
-      passage: {
-        include: {
-          dossier: {
-            include: {
-              patient: true,
-            },
-          },
-          transferts: {
-            orderBy: { emisLe: "desc" },
-            include: {
-              salleOrigine: { select: { code: true, nom: true } },
-              salleDestination: { select: { code: true, nom: true } },
-            },
-          },
-        },
-      },
-    },
-    orderBy: { numeroOrdre: "asc" },
-  });
-  const filesDedup = dedupliquerFilesAttenteParDossier(files);
+  const filesDedup = await listerPatientsFileAttenteSalle("PHARMACIE");
   const dossierIds = filesDedup.map((f) => f.passage.dossier.id);
 
   const transfertsSortants =
@@ -182,7 +157,7 @@ export async function listerPatientsPharmacie(): Promise<PatientFilePharmacie[]>
   );
 }
 
-/** Ordonnances en attente avec transfert vers pharmacie non encore confirmé à l'origine. */
+/** Ordonnances dont le transfert vers la pharmacie a déjà été confirmé à l'origine. */
 async function listerOrdonnancesEnAttentePharmacie(
   dossierIdsDejaPresents: Set<string>
 ): Promise<PatientFilePharmacie[]> {
@@ -207,7 +182,7 @@ async function listerOrdonnancesEnAttentePharmacie(
     where: {
       dossierId: { in: dossierIds },
       salleDestination: { code: "PHARMACIE" },
-      statut: { in: ["EN_ATTENTE", "ACCEPTE", "EN_TRAITEMENT"] },
+      statut: { in: ["ACCEPTE", "EN_TRAITEMENT"] },
     },
     include: {
       salleOrigine: { select: { code: true, nom: true } },
@@ -231,7 +206,6 @@ async function listerOrdonnancesEnAttentePharmacie(
     const patient = o.dossier.patient;
     const provenance =
       t.salleOrigine?.nom?.trim() || t.salleOrigine?.code || "Médecin";
-    const enAttenteConfirmation = t.statut === "EN_ATTENTE";
 
     resultats.push({
       cleListe: `ord-${o.id}`,
@@ -247,16 +221,12 @@ async function listerOrdonnancesEnAttentePharmacie(
       sexe: patient.sexe ?? null,
       motif: `Ordonnance (${o.lignes.length} médicament(s))`,
       provenance,
-      orientation: enAttenteConfirmation ? "En attente confirmation" : "Pharmacie",
-      orientationCouleur: enAttenteConfirmation
-        ? "bg-orange-100 text-orange-800"
-        : "bg-emerald-100 text-emerald-800",
+      orientation: "Pharmacie",
+      orientationCouleur: "bg-emerald-100 text-emerald-800",
       codeSalleDestination: "PHARMACIE",
       codesSalleDestination: ["PHARMACIE"],
-      statut: enAttenteConfirmation ? "À confirmer (origine)" : "Ordonnance reçue",
-      statutCouleur: enAttenteConfirmation
-        ? "bg-orange-100 text-orange-800"
-        : "bg-emerald-100 text-emerald-800",
+      statut: "Ordonnance reçue",
+      statutCouleur: "bg-emerald-100 text-emerald-800",
       heure: formaterHeure(o.prescritLe.toISOString()),
       arriveeLe: o.prescritLe.toISOString(),
       transfertId: t.id,

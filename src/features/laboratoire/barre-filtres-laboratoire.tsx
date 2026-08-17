@@ -24,6 +24,8 @@ interface PropsBarreFiltresLaboratoire {
   idPrefix?: string;
   /** Boutons supplémentaires après le filtre (ex. patients) */
   actionsApresFiltre?: ReactNode;
+  /** Barres N° permanent / N° PAT au-dessus de la liste */
+  rechercheNumeros?: ReactNode;
 }
 
 export function BarreFiltresLaboratoire({
@@ -38,6 +40,7 @@ export function BarreFiltresLaboratoire({
   onReinitialiser,
   idPrefix = "filtre-labo",
   actionsApresFiltre,
+  rechercheNumeros,
 }: PropsBarreFiltresLaboratoire) {
   const { t } = useTranslation();
   const nbFiltres = compterFiltresLaboratoire(appliques);
@@ -85,6 +88,8 @@ export function BarreFiltresLaboratoire({
           {actionsApresFiltre}
         </div>
       </div>
+
+      {rechercheNumeros}
 
       {filtresOuverts && (
         <FormulaireFiltresLaboratoire

@@ -12,7 +12,7 @@ import {
 
 interface PropsResumePatientLaboratoire {
   patient: PatientFileLaboratoire | null;
-  /** Labo : affiche le N° transfert (PAT-…). Autres salles : N° permanent seulement. */
+  /** Labo : affiche le N° transfert (PAT…). Autres salles : N° permanent seulement. */
   variante?: "labo" | "salle";
 }
 
@@ -104,12 +104,12 @@ export function ResumePatientLaboratoire({
           label={t("laboratoire.panneau.examens")}
           valeur={String(patient.nombreExamens)}
         />
-        {variante === "labo" ? (
+        {variante === "labo" ? null : (
           <Ligne
             label={t("laboratoire.panneau.numeroVisite")}
             valeur={numeroVisiteLaboratoire(patient)}
           />
-        ) : null}
+        )}
         <Ligne
           label={t("laboratoire.panneau.numeroTransfert")}
           valeur={codeTransfertLaboratoire(patient)}

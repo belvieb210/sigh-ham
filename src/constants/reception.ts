@@ -225,7 +225,7 @@ export interface PatientEnregistre {
   cleListe: string;
   /** Dossier de visite associé */
   dossierId: string;
-  /** N° patient affiché (ex. PAT-2026-0002) */
+  /** N° patient affiché (ex. PAT202600002) */
   id: string;
   nom: string;
   telephone: string;

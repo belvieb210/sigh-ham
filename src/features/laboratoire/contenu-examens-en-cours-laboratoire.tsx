@@ -45,6 +45,11 @@ import {
   trierPatientsParArriveeDesc,
 } from "@/features/laboratoire/utils-affichage";
 import {
+  BarresRechercheNumerosLaboratoire,
+  queryRechercheNumerosLabo,
+  useRechercheNumerosLabo,
+} from "@/features/laboratoire/barres-recherche-numeros-laboratoire";
+import {
   CelluleBadgesStatutExamens,
   CelluleListeExamens,
 } from "@/features/laboratoire/cellule-examens-statut-laboratoire";
@@ -93,6 +98,7 @@ export function ContenuExamensEnCoursLaboratoire({
   const [messageAction, setMessageAction] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const { menu, ouvrirSurPatient, fermer } = useMenuContextuelLabo();
+  const rechercheNumeros = useRechercheNumerosLabo();
 
   const titrePage = pageStatut
     ? t(`laboratoire.orientationsStatut.${pageStatut}.label`)
@@ -105,7 +111,9 @@ export function ContenuExamensEnCoursLaboratoire({
     setChargement(true);
     setErreur(null);
     try {
-      const res = await fetch("/api/laboratoire/patients");
+      const res = await fetch(
+        `/api/laboratoire/patients${queryRechercheNumerosLabo(rechercheNumeros.applique)}`
+      );
       const data = (await res.json()) as {
         patients?: PatientFileLaboratoire[];
         erreur?: string;
@@ -121,7 +129,7 @@ export function ContenuExamensEnCoursLaboratoire({
     } finally {
       setChargement(false);
     }
-  }, [t]);
+  }, [t, rechercheNumeros.applique.numeroPermanent, rechercheNumeros.applique.numeroPat]);
 
   useEffect(() => {
     void charger();
@@ -151,7 +159,12 @@ export function ContenuExamensEnCoursLaboratoire({
     setPage(1);
     setDossiersDeveloppes(new Set());
     setExamensCoches(new Set());
-  }, [filtresAppliques, pageStatut]);
+  }, [
+    filtresAppliques,
+    pageStatut,
+    rechercheNumeros.applique.numeroPermanent,
+    rechercheNumeros.applique.numeroPat,
+  ]);
 
   const estPageDrApprouve = pageStatut === "DR_APPROUVE";
 
@@ -495,6 +508,14 @@ export function ContenuExamensEnCoursLaboratoire({
                   : t("laboratoire.examensEnCours.sousTitreListe", {
                       count: filtres.length,
                     })
+            }
+            rechercheNumeros={
+              <BarresRechercheNumerosLaboratoire
+                numeroPermanent={rechercheNumeros.saisie.numeroPermanent}
+                numeroPat={rechercheNumeros.saisie.numeroPat}
+                onChangePermanent={rechercheNumeros.setNumeroPermanent}
+                onChangePat={rechercheNumeros.setNumeroPat}
+              />
             }
             filtresOuverts={filtresOuverts}
             onToggle={() => setFiltresOuverts((o) => !o)}

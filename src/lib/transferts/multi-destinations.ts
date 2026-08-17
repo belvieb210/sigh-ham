@@ -245,27 +245,5 @@ export async function synchroniserTransfertsEnAttente(params: {
     };
   });
 
-  if (resultat.destinationsCreees.length > 0) {
-    const dossier = await prisma.dossierPatient.findUnique({
-      where: { id: params.dossierId },
-      include: { patient: true },
-    });
-    if (dossier) {
-      const { evenementDemandeTransfert } = await import(
-        "@/lib/notifications/evenements-metier"
-      );
-      for (const dest of resultat.destinationsCreees) {
-        void evenementDemandeTransfert({
-          patientId: dossier.patientId,
-          nom: dossier.patient.nom,
-          prenom: dossier.patient.prenom,
-          numeroPatient: dossier.patient.numeroPatient,
-          salleDestination: dest.code,
-          transfertId: dest.transfertId,
-        });
-      }
-    }
-  }
-
   return resultat;
 }

@@ -83,9 +83,42 @@ async function prochainNumeroClientPharmacie(
   return `${prefixPh}${formaterCompteurAnnuel(maxSeq + 1)}`;
 }
 
+function anneeCourante(date = new Date()): number {
+  return date.getFullYear();
+}
+
+/** PAT202600002 — sans tiret, année calendaire + séquence annuelle sur 5 chiffres. */
+function formaterNumeroPat(annee: number, sequence: number): string {
+  return `PAT${annee}${String(sequence).padStart(5, "0")}`;
+}
+
+/** VIS2026000001 — sans tiret, année calendaire + séquence annuelle sur 6 chiffres. */
+function formaterNumeroVis(annee: number, sequence: number): string {
+  return `VIS${annee}${String(sequence).padStart(6, "0")}`;
+}
+
+function extraireSequencePat(numero: string, annee: number): number | null {
+  const compact = numero.replace(/-/g, "").toUpperCase();
+  const m = /^PAT(\d{4})(\d+)$/.exec(compact);
+  if (!m) return null;
+  if (Number.parseInt(m[1]!, 10) !== annee) return null;
+  const seq = Number.parseInt(m[2]!, 10);
+  return Number.isFinite(seq) ? seq : null;
+}
+
+function extraireSequenceVis(numero: string, annee: number): number | null {
+  const compact = numero.replace(/-/g, "").toUpperCase();
+  const m = /^VIS(\d{4})(\d+)$/.exec(compact);
+  if (!m) return null;
+  if (Number.parseInt(m[1]!, 10) !== annee) return null;
+  const seq = Number.parseInt(m[2]!, 10);
+  return Number.isFinite(seq) ? seq : null;
+}
+
 /**
- * Réserve une plage de numéros PAT-YYYY##### sans collision (dans une transaction).
- * Verrou advisory + max séquence existante (pas un simple COUNT) pour éviter les doublons concurrents.
+ * Réserve une plage de numéros PATYYYY##### sans collision (dans une transaction).
+ * Verrou advisory + max séquence existante (y compris anciens formats avec tirets).
+ * L’année suit le calendrier : 2026 → PAT2026…, 2027 → PAT2027….
  */
 export async function reserverNumerosTransfert(
   tx: ClientTransaction,
@@ -96,33 +129,35 @@ export async function reserverNumerosTransfert(
 
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(8822017)`;
 
-  const annee = date.getFullYear();
-  const prefix = `PAT-${annee}`;
+  const annee = anneeCourante(date);
 
   const transferts = await tx.transfert.findMany({
-    where: { numeroTransfert: { startsWith: prefix } },
+    where: {
+      OR: [
+        { numeroTransfert: { startsWith: `PAT${annee}` } },
+        { numeroTransfert: { startsWith: `PAT-${annee}` } },
+      ],
+    },
     select: { numeroTransfert: true },
   });
 
   let maxSeq = 0;
   for (const t of transferts) {
     if (!t.numeroTransfert) continue;
-    const m = /^PAT-(\d{4})(\d+)$/.exec(t.numeroTransfert);
-    if (!m || Number.parseInt(m[1]!, 10) !== annee) continue;
-    const seq = Number.parseInt(m[2]!, 10);
-    if (Number.isFinite(seq)) maxSeq = Math.max(maxSeq, seq);
+    const seq = extraireSequencePat(t.numeroTransfert, annee);
+    if (seq != null) maxSeq = Math.max(maxSeq, seq);
   }
 
   const numeros: string[] = [];
   for (let i = 0; i < count; i++) {
-    numeros.push(`PAT-${annee}${String(maxSeq + 1 + i).padStart(5, "0")}`);
+    numeros.push(formaterNumeroPat(annee, maxSeq + 1 + i));
   }
   return numeros;
 }
 
 /**
  * N° de transfert annuel : PAT + année + séquence sur 5 chiffres.
- * Ex. PAT-202600001, PAT-202600002 — repart à PAT-202700001 en 2027.
+ * Ex. PAT202600001, PAT202600002 — repart à PAT202700001 au 1er janvier 2027.
  */
 export async function prochainNumeroTransfert(
   tx: ClientTransaction,
@@ -151,8 +186,9 @@ export async function numeroPatDuParcours(
 }
 
 /**
- * N° de visite : VIS-YYYY-XXXXXX (séquence annuelle, indépendante du n° patient).
- * Ex. VIS-2026-000001 — les dossiers existants (YYYYMMDD…) restent valides.
+ * N° de visite : VIS + année + séquence annuelle sur 6 chiffres.
+ * Ex. VIS2026000001 — les dossiers existants (VIS-2026-… / YYYYMMDD…) restent valides.
+ * Au 1er janvier 2027 la série passe à VIS2027000001.
  */
 async function prochainNumeroVisite(
   tx: ClientTransaction,
@@ -160,23 +196,25 @@ async function prochainNumeroVisite(
 ): Promise<string> {
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(8822018)`;
 
-  const annee = date.getFullYear();
-  const prefix = `VIS-${annee}-`;
+  const annee = anneeCourante(date);
 
   const dossiers = await tx.dossierPatient.findMany({
-    where: { numeroDossier: { startsWith: prefix } },
+    where: {
+      OR: [
+        { numeroDossier: { startsWith: `VIS${annee}` } },
+        { numeroDossier: { startsWith: `VIS-${annee}` } },
+      ],
+    },
     select: { numeroDossier: true },
   });
 
   let maxSeq = 0;
   for (const d of dossiers) {
-    const m = /^VIS-\d{4}-(\d+)$/.exec(d.numeroDossier);
-    if (!m) continue;
-    const seq = Number.parseInt(m[1]!, 10);
-    if (Number.isFinite(seq)) maxSeq = Math.max(maxSeq, seq);
+    const seq = extraireSequenceVis(d.numeroDossier, annee);
+    if (seq != null) maxSeq = Math.max(maxSeq, seq);
   }
 
-  return `${prefix}${String(maxSeq + 1).padStart(6, "0")}`;
+  return formaterNumeroVis(annee, maxSeq + 1);
 }
 
 /**
@@ -199,7 +237,7 @@ export async function genererNumeroEnregistrementVisite(tx: ClientTransaction) {
   return prochainNumeroVisite(tx);
 }
 
-/** Nouveau patient hospitalier : n° permanent + 1re visite VIS-YYYY-XXXXXX. */
+/** Nouveau patient hospitalier : n° permanent + 1re visite VISYYYY######. */
 export async function genererNumerosPatient(
   tx: ClientTransaction,
   date = new Date()

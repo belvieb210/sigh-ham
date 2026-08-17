@@ -21,6 +21,7 @@ import {
   PanneauDroitLaboratoire,
   SectionsMobileLaboratoire,
 } from "@/features/laboratoire/panneau-droit-laboratoire";
+import { MenuActionsTransfertLaboratoire } from "@/features/laboratoire/menu-actions-transfert-laboratoire";
 import type { IdActionRapideLabo } from "@/features/laboratoire/actions-rapides-laboratoire";
 import { BarreFiltresLaboratoire, BoutonsOutilsListeLaboratoire } from "@/features/laboratoire/barre-filtres-laboratoire";
 import {
@@ -42,6 +43,11 @@ import {
   numeroVisiteLaboratoire,
   trierPatientsParArriveeDesc,
 } from "@/features/laboratoire/utils-affichage";
+import {
+  BarresRechercheNumerosLaboratoire,
+  queryRechercheNumerosLabo,
+  useRechercheNumerosLabo,
+} from "@/features/laboratoire/barres-recherche-numeros-laboratoire";
 import type {
   DetailPatientLaboratoire,
   PatientFileLaboratoire,
@@ -79,12 +85,15 @@ export function ContenuPatientsLaboratoire({
   const [message, setMessage] = useState<string | null>(null);
   const [messageAction, setMessageAction] = useState<string | null>(null);
   const { menu, ouvrirSurPatient, fermer } = useMenuContextuelLabo();
+  const rechercheNumeros = useRechercheNumerosLabo();
 
   const charger = useCallback(async () => {
     setChargement(true);
     setErreur(null);
     try {
-      const res = await fetch("/api/laboratoire/patients");
+      const res = await fetch(
+        `/api/laboratoire/patients${queryRechercheNumerosLabo(rechercheNumeros.applique)}`
+      );
       const data = (await res.json()) as {
         patients?: PatientFileLaboratoire[];
         erreur?: string;
@@ -100,7 +109,7 @@ export function ContenuPatientsLaboratoire({
     } finally {
       setChargement(false);
     }
-  }, [t]);
+  }, [t, rechercheNumeros.applique.numeroPermanent, rechercheNumeros.applique.numeroPat]);
 
   useEffect(() => {
     void charger();
@@ -302,6 +311,14 @@ export function ContenuPatientsLaboratoire({
                     count: filtrés.length,
                   })
             }
+            rechercheNumeros={
+              <BarresRechercheNumerosLaboratoire
+                numeroPermanent={rechercheNumeros.saisie.numeroPermanent}
+                numeroPat={rechercheNumeros.saisie.numeroPat}
+                onChangePermanent={rechercheNumeros.setNumeroPermanent}
+                onChangePat={rechercheNumeros.setNumeroPat}
+              />
+            }
             filtresOuverts={filtresOuverts}
             onToggle={() => setFiltresOuverts((o) => !o)}
             brouillon={brouillonFiltres}
@@ -452,18 +469,21 @@ export function ContenuPatientsLaboratoire({
                             <td className="px-2 py-1.5">
                               <CelluleBadgesStatutExamens examens={p.examens} />
                             </td>
-                            <td className="px-1.5 py-1.5">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void ouvrirDetail(p.dossierId);
-                                }}
-                                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gris-bordure text-texte-secondaire hover:text-bleu-medical"
-                                title={t("laboratoire.patients.ouvrirDossier")}
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                              </button>
+                            <td className="px-1.5 py-1.5" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center gap-1">
+                                <MenuActionsTransfertLaboratoire
+                                  patient={p}
+                                  onRafraichir={() => void charger()}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => void ouvrirDetail(p.dossierId)}
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gris-bordure text-texte-secondaire hover:text-bleu-medical"
+                                  title={t("laboratoire.patients.ouvrirDossier")}
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );

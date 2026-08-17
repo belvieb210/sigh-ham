@@ -52,7 +52,7 @@ export interface DonneesFormulairePatient {
   photoUrl: string | null;
   /** Dossier de visite réutilisable (accueil, transfert non confirmé) */
   dossierId?: string;
-  /** N° de la dernière / visite en cours (VIS-… ou ancien format) */
+  /** N° de la dernière / visite en cours (VIS2026… ou ancien format) */
   numeroVisite?: string;
   visiteReutilisable?: boolean;
   visiteStatut?: string;

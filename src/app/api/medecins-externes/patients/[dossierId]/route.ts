@@ -21,7 +21,7 @@ interface ParamsRoute {
 }
 
 function estNumeroPatient(valeur: string): boolean {
-  return /^PAT-/i.test(valeur) || valeur.includes("-20");
+  return /^PAT/i.test(valeur) || valeur.includes("-20");
 }
 
 async function assertAppartenanceNumero(

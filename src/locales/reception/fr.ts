@@ -868,7 +868,7 @@ export const receptionFr = {
       placeholderNom: "Ex. KABILA",
       placeholderPrenom: "Ex. Joseph",
       placeholderTelephone: "Ex. 089…",
-      placeholderNumero: "Ex. PAT-2026-…",
+      placeholderNumero: "Ex. PAT2026…",
       reinitialiser: "Réinitialiser",
       rechercher: "Rechercher",
     },

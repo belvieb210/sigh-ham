@@ -31,7 +31,8 @@ export async function evenementNouveauPatient(params: {
 }
 
 /**
- * Notifie la salle de destination qu'un transfert est en attente de confirmation (⋮).
+ * Notifie la salle d'origine qu'un transfert attend sa confirmation (⋮).
+ * La destination n'est informée qu'après confirmation (`evenementPatientTransfere`).
  */
 export async function evenementDemandeTransfert(params: {
   patientId: string;
@@ -41,23 +42,7 @@ export async function evenementDemandeTransfert(params: {
   salleDestination: CodeSalle;
   transfertId: string;
 }) {
-  const lien = lienFileSalle(params.salleDestination);
-
-  await notifierSalle(params.salleDestination, {
-    type: "DEMANDE_TRANSFERT",
-    titre: "Transfert en attente",
-    message: `${params.prenom} ${params.nom} attend confirmation dans votre service.`,
-    module: params.salleDestination,
-    entite: "transfert",
-    entiteId: params.transfertId,
-    lien,
-    metadonnees: metadonneesNotificationI18n("DEMANDE_TRANSFERT", {
-      prenom: params.prenom,
-      nom: params.nom,
-      numero: params.numeroPatient,
-      patientId: params.patientId,
-    }),
-  }).catch(console.error);
+  void params;
 }
 
 /**

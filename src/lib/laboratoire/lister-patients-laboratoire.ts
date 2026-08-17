@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import { listerPatientsFileAttenteSalle } from "@/lib/transferts/visibilite-salle";
+import { listerPatientsFileAttenteSalle, filtreTransfertVisibleSalle, STATUTS_TRANSFERT_VISIBLES_SALLE } from "@/lib/transferts/visibilite-salle";
 import { calculerAge } from "@/features/caisse/utils-format";
 import { patientCorrespondPageStatut } from "@/features/laboratoire/utils-affichage";
 import { deriverStatutAnalyse } from "@/lib/laboratoire/orienter-statut-analyse";
@@ -26,11 +26,59 @@ function debutJourLocal(d = new Date()) {
   return x;
 }
 
-export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoire[]> {
+async function chargerPatParDossier(dossierIds: string[]): Promise<Map<string, string>> {
+  const pats = new Map<string, string>();
+  if (dossierIds.length === 0) return pats;
+
+  const transferts = await prisma.transfert.findMany({
+    where: {
+      dossierId: { in: dossierIds },
+      numeroTransfert: { not: null },
+    },
+    select: { dossierId: true, numeroTransfert: true },
+    orderBy: { emisLe: "asc" },
+  });
+
+  for (const t of transferts) {
+    if (t.numeroTransfert && !pats.has(t.dossierId)) {
+      pats.set(t.dossierId, t.numeroTransfert);
+    }
+  }
+  return pats;
+}
+
+function variantesNumeroPat(brut: string): string[] {
+  const trim = brut.trim();
+  const compact = trim.toUpperCase().replace(/[\s-]+/g, "");
+  const variantes = new Set<string>([trim, compact].filter(Boolean));
+  if (!compact) return [...variantes];
+
+  const avecPat = compact.startsWith("PAT") ? compact : `PAT${compact}`;
+  variantes.add(avecPat);
+
+  const m = /^PAT(\d{4})(\d+)$/.exec(avecPat);
+  if (m) {
+    variantes.add(`PAT${m[1]}${m[2]}`);
+    variantes.add(`PAT-${m[1]}${m[2]}`);
+    variantes.add(`PAT-${m[1]}-${m[2]}`);
+  }
+  return [...variantes];
+}
+
+export async function listerPatientsLaboratoire(opts?: {
+  numeroPermanent?: string;
+  numeroPat?: string;
+}): Promise<PatientFileLaboratoire[]> {
+  const numeroPermanent = opts?.numeroPermanent?.trim() ?? "";
+  const numeroPat = opts?.numeroPat?.trim() ?? "";
+  if (numeroPermanent || numeroPat) {
+    return listerParcoursLaboratoireParNumeros({ numeroPermanent, numeroPat });
+  }
+
   const files = await listerPatientsFileAttenteSalle("LABORATOIRE");
   const dossierIds = files.map((f) => f.passage.dossier.id);
 
-  const [factures, examensTous] = await Promise.all([
+  const [factures, examensTous, transfertsSortants, pats] = await Promise.all([
     prisma.facture.findMany({
       where: {
         dossierId: { in: dossierIds },
@@ -47,6 +95,27 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
           where: { dossierId: { in: dossierIds } },
           include: { typeExamen: true },
         }),
+    dossierIds.length === 0
+      ? Promise.resolve([])
+      : prisma.transfert.findMany({
+          where: {
+            dossierId: { in: dossierIds },
+            salleOrigine: { code: "LABORATOIRE" },
+            OR: [
+              { statut: "EN_ATTENTE" },
+              {
+                statut: "REFUSE",
+                recuperation: { statut: "EN_RECUPERATION" },
+              },
+            ],
+          },
+          include: {
+            salleDestination: { select: { code: true, nom: true } },
+            recuperation: { select: { statut: true } },
+          },
+          orderBy: { emisLe: "desc" },
+        }),
+    chargerPatParDossier(dossierIds),
   ]);
 
   const examensParDossier = new Map<string, typeof examensTous>();
@@ -69,6 +138,13 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
     });
   }
 
+  const sortantParDossier = new Map<string, (typeof transfertsSortants)[number][]>();
+  for (const t of transfertsSortants) {
+    const liste = sortantParDossier.get(t.dossierId) ?? [];
+    liste.push(t);
+    sortantParDossier.set(t.dossierId, liste);
+  }
+
   const patients = files.map((file) => {
     const dossier = file.passage.dossier;
     const patient = dossier.patient;
@@ -89,7 +165,17 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
       const n = `${prenom ?? ""} ${nom ?? ""}`.trim();
       return n || null;
     };
-    const orientation = "Laboratoire";
+    const sortants = sortantParDossier.get(dossier.id) ?? [];
+    const sortant = sortants[0];
+    const enRecuperation = sortants.some(
+      (s) => s.recuperation?.statut === "EN_RECUPERATION"
+    );
+    const destinations = [
+      ...new Set(sortants.map((s) => s.salleDestination.nom)),
+    ];
+    const orientation = destinations.length
+      ? destinations.join(", ")
+      : "Laboratoire";
 
     return {
       fileAttenteId: file.id,
@@ -111,7 +197,8 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
         transfert?.salleOrigine?.code ||
         "—",
       medecinResponsable: enreg?.medecinResponsable?.trim() || null,
-      numeroTransfert: transfert?.numeroTransfert ?? null,
+      numeroTransfert:
+        transfert?.numeroTransfert ?? pats.get(dossier.id) ?? null,
       numeroEnregistrement: patient.numeroPatient,
       heureTransfert: transfert?.emisLe?.toISOString() ?? file.arriveLe.toISOString(),
       heureEnregistrement: enreg?.enregistreLe?.toISOString() ?? null,
@@ -123,11 +210,11 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
       numeroFacture: fac?.numeroFacture ?? null,
       modePaiement: fac?.modePaiement ?? null,
       statutFacture: fac?.statut ?? null,
-      transfertSortantId: null,
-      statutTransfertSortant: null,
-      codeSalleDestination: null,
-      codesSalleDestination: [],
-      enRecuperation: false,
+      transfertSortantId: sortant?.id ?? null,
+      statutTransfertSortant: sortant?.statut ?? null,
+      codeSalleDestination: sortant?.salleDestination.code ?? null,
+      codesSalleDestination: sortants.map((s) => s.salleDestination.code),
+      enRecuperation,
       orientation,
     };
   });
@@ -137,11 +224,248 @@ export async function listerPatientsLaboratoire(): Promise<PatientFileLaboratoir
   );
 }
 
+async function trouverDossierIdsRechercheLabo(opts: {
+  numeroPermanent: string;
+  numeroPat: string;
+}): Promise<string[]> {
+  const filtreTransfertLabo = {
+    salleDestination: { code: "LABORATOIRE" as const },
+    statut: { in: [...STATUTS_TRANSFERT_VISIBLES_SALLE] },
+  };
+
+  let filtrePatient: { patientId: { in: string[] } } | undefined;
+  if (opts.numeroPermanent) {
+    const q = opts.numeroPermanent.replace(/\s+/g, "");
+    const patients = await prisma.patient.findMany({
+      where: {
+        OR: [
+          { numeroPatient: q },
+          { numeroPatient: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      select: { id: true },
+      take: 20,
+    });
+    if (patients.length === 0) return [];
+    filtrePatient = { patientId: { in: patients.map((p) => p.id) } };
+  }
+
+  if (opts.numeroPat) {
+    const variantes = variantesNumeroPat(opts.numeroPat);
+    const transfertsPat = await prisma.transfert.findMany({
+      where: {
+        ...(filtrePatient ? { dossier: filtrePatient } : {}),
+        OR: variantes.map((v) => ({
+          numeroTransfert: { equals: v, mode: "insensitive" as const },
+        })),
+      },
+      select: { dossierId: true },
+    });
+    const idsPat = [...new Set(transfertsPat.map((t) => t.dossierId))];
+    if (idsPat.length === 0) return [];
+
+    const dossiersPat = await prisma.dossierPatient.findMany({
+      where: {
+        id: { in: idsPat },
+        examensLaboratoire: { some: {} },
+        transferts: { some: filtreTransfertLabo },
+      },
+      select: { id: true },
+    });
+    return dossiersPat.map((d) => d.id);
+  }
+
+  const dossiers = await prisma.dossierPatient.findMany({
+    where: {
+      ...filtrePatient,
+      examensLaboratoire: { some: {} },
+      transferts: { some: filtreTransfertLabo },
+    },
+    select: { id: true },
+    orderBy: { createdAt: "desc" },
+  });
+  return dossiers.map((d) => d.id);
+}
+
+async function listerParcoursLaboratoireParNumeros(opts: {
+  numeroPermanent: string;
+  numeroPat: string;
+}): Promise<PatientFileLaboratoire[]> {
+  const dossierIds = await trouverDossierIdsRechercheLabo(opts);
+  if (dossierIds.length === 0) return [];
+  return chargerPatientsLaboratoireParDossiers(dossierIds);
+}
+
+async function chargerPatientsLaboratoireParDossiers(
+  dossierIds: string[]
+): Promise<PatientFileLaboratoire[]> {
+  const [dossiers, factures, pats, transfertsSortants] = await Promise.all([
+    prisma.dossierPatient.findMany({
+      where: { id: { in: dossierIds } },
+      include: {
+        patient: true,
+        examensLaboratoire: { include: { typeExamen: true } },
+        enregistrementsReception: {
+          orderBy: { enregistreLe: "desc" },
+          take: 1,
+          include: { agent: { select: { prenom: true, nom: true } } },
+        },
+        passages: {
+          where: { statut: { not: "ANNULE" } },
+          orderBy: { createdAt: "desc" },
+          include: {
+            fileAttente: { include: { salle: { select: { code: true } } } },
+            transferts: {
+              where: { salleDestination: { code: "LABORATOIRE" } },
+              orderBy: { emisLe: "desc" },
+              include: {
+                salleOrigine: { select: { code: true, nom: true } },
+                emetteur: { select: { prenom: true, nom: true } },
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.facture.findMany({
+      where: {
+        dossierId: { in: dossierIds },
+        statut: { in: ["EMISE", "PARTIELLEMENT_PAYEE", "PAYEE"] },
+      },
+      include: { paiements: { orderBy: { payeLe: "desc" }, take: 1 } },
+      orderBy: { createdAt: "desc" },
+    }),
+    chargerPatParDossier(dossierIds),
+    prisma.transfert.findMany({
+      where: {
+        dossierId: { in: dossierIds },
+        salleOrigine: { code: "LABORATOIRE" },
+      },
+      include: {
+        salleDestination: { select: { code: true, nom: true } },
+        recuperation: { select: { statut: true } },
+      },
+      orderBy: { emisLe: "desc" },
+    }),
+  ]);
+
+  const factureParDossier = new Map<
+    string,
+    { numeroFacture: string; statut: string; modePaiement: string | null }
+  >();
+  for (const f of factures) {
+    if (factureParDossier.has(f.dossierId)) continue;
+    factureParDossier.set(f.dossierId, {
+      numeroFacture: f.numeroFacture,
+      statut: f.statut,
+      modePaiement: extraireModeFacture(f.paiements[0]?.reference),
+    });
+  }
+
+  const sortantParDossier = new Map<string, (typeof transfertsSortants)[number][]>();
+  for (const t of transfertsSortants) {
+    const liste = sortantParDossier.get(t.dossierId) ?? [];
+    liste.push(t);
+    sortantParDossier.set(t.dossierId, liste);
+  }
+
+  const formaterNom = (prenom?: string | null, nom?: string | null) => {
+    const n = `${prenom ?? ""} ${nom ?? ""}`.trim();
+    return n || null;
+  };
+
+  const resultats: PatientFileLaboratoire[] = [];
+
+  for (const dossier of dossiers) {
+    const patient = dossier.patient;
+    const passageLabo =
+      dossier.passages.find(
+        (p) => p.fileAttente?.salle.code === "LABORATOIRE"
+      ) ??
+      dossier.passages.find((p) => p.transferts.length > 0) ??
+      dossier.passages[0];
+    const transfert = passageLabo?.transferts[0];
+    const file = passageLabo?.fileAttente;
+    const examens = dossier.examensLaboratoire.map((ex) => ({
+      id: ex.id,
+      libelle: ex.typeExamen.libelle,
+      categorie: ex.typeExamen.categorie,
+      statut: ex.statut,
+      code: ex.typeExamen.code,
+      notes: ex.notes ?? null,
+    }));
+    const fac = factureParDossier.get(dossier.id) ?? null;
+    const enreg = dossier.enregistrementsReception[0] ?? null;
+    const arrivee =
+      file?.arriveLe ?? transfert?.emisLe ?? dossier.createdAt;
+    const sortants = sortantParDossier.get(dossier.id) ?? [];
+    const sortant = sortants[0];
+    const enRecuperation = sortants.some(
+      (s) => s.recuperation?.statut === "EN_RECUPERATION"
+    );
+    const destinations = [
+      ...new Set(sortants.map((s) => s.salleDestination.nom)),
+    ];
+    const orientation = destinations.length
+      ? destinations.join(", ")
+      : "Laboratoire";
+
+    resultats.push({
+      fileAttenteId: file?.id ?? dossier.id,
+      passageId: passageLabo?.id ?? "",
+      transfertId: transfert?.id ?? "",
+      dossierId: dossier.id,
+      numeroPatient: patient.numeroPatient,
+      numeroDossier: dossier.numeroDossier,
+      prenom: patient.prenom,
+      nom: patient.nom,
+      telephone: patient.telephone,
+      sexe: patient.sexe ?? null,
+      dateNaissance: patient.dateNaissance?.toISOString() ?? null,
+      age: calculerAge(patient.dateNaissance?.toISOString() ?? null),
+      arriveeLe: arrivee.toISOString(),
+      numeroOrdre: file?.numeroOrdre ?? 0,
+      provenance:
+        transfert?.salleOrigine?.nom?.trim() ||
+        transfert?.salleOrigine?.code ||
+        "—",
+      medecinResponsable: enreg?.medecinResponsable?.trim() || null,
+      numeroTransfert: transfert?.numeroTransfert ?? pats.get(dossier.id) ?? null,
+      numeroEnregistrement: patient.numeroPatient,
+      heureTransfert: transfert?.emisLe?.toISOString() ?? arrivee.toISOString(),
+      heureEnregistrement: enreg?.enregistreLe?.toISOString() ?? null,
+      enregistrePar: formaterNom(enreg?.agent?.prenom, enreg?.agent?.nom),
+      transferePar: formaterNom(transfert?.emetteur?.prenom, transfert?.emetteur?.nom),
+      examens,
+      nombreExamens: examens.length,
+      statutAnalyse: deriverStatutAnalyse(examens),
+      numeroFacture: fac?.numeroFacture ?? null,
+      modePaiement: fac?.modePaiement ?? null,
+      statutFacture: fac?.statut ?? null,
+      transfertSortantId: sortant?.id ?? null,
+      statutTransfertSortant: sortant?.statut ?? null,
+      codeSalleDestination: sortant?.salleDestination.code ?? null,
+      codesSalleDestination: sortants.map((s) => s.salleDestination.code),
+      enRecuperation,
+      orientation,
+    });
+  }
+
+  const ordre = new Map(dossierIds.map((id, i) => [id, i]));
+  return resultats.sort(
+    (a, b) => (ordre.get(a.dossierId) ?? 0) - (ordre.get(b.dossierId) ?? 0)
+  );
+}
+
 export async function obtenirDetailPatientLaboratoire(
   dossierId: string
 ): Promise<DetailPatientLaboratoire | null> {
   const patients = await listerPatientsLaboratoire();
   let base = patients.find((p) => p.dossierId === dossierId);
+  if (!base) {
+    const historiques = await chargerPatientsLaboratoireParDossiers([dossierId]);
+    base = historiques[0] ?? undefined;
+  }
   if (!base) {
     const { listerTransfertsSortantsLaboratoire } = await import(
       "@/lib/laboratoire/lister-transferts-sortants"
@@ -250,7 +574,10 @@ export async function commencerAnalysesDossier(
     where: {
       serviLe: null,
       salle: { code: "LABORATOIRE" },
-      passage: { dossierId },
+      passage: {
+        dossierId,
+        transferts: { some: filtreTransfertVisibleSalle("LABORATOIRE") },
+      },
     },
     select: { id: true },
   });

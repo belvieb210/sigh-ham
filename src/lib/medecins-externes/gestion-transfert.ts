@@ -177,26 +177,14 @@ export async function confirmerTransfertMedecinsExternes(
 }
 
 /**
- * Confirme immédiatement un transfert ME sortant pour inscrire le patient
- * dans la file de la salle destination (visible caisse, labo, etc.).
+ * Ne confirme plus automatiquement : la salle d'origine doit valider via ⋮.
  */
 export async function confirmerOrientationMedecinsExternes(
-  agentId: string,
-  medecinExterneId: string,
-  transfertId: string | null | undefined
+  _agentId: string,
+  _medecinExterneId: string,
+  _transfertId: string | null | undefined
 ) {
-  if (!transfertId) return null;
-
-  const transfert = await prisma.transfert.findUnique({
-    where: { id: transfertId },
-    select: { statut: true },
-  });
-
-  if (!transfert || transfert.statut !== "EN_ATTENTE") {
-    return null;
-  }
-
-  return confirmerTransfertMedecinsExternes(agentId, medecinExterneId, transfertId);
+  return null;
 }
 
 export interface ResultatTransfertMedecinsExternes {
@@ -208,34 +196,19 @@ export interface ResultatTransfertMedecinsExternes {
   confirme?: boolean;
 }
 
-/** Crée le transfert puis le confirme pour affichage immédiat en destination. */
+/** Laisse le transfert EN_ATTENTE : confirmation manuelle via le menu ⋮. */
 export async function finaliserTransfertMedecinsExternes(
-  agentId: string,
-  medecinExterneId: string,
+  _agentId: string,
+  _medecinExterneId: string,
   resultat: ResultatTransfertMedecinsExternes
 ) {
-  const transfertId = resultat.transfertIds?.[0] ?? resultat.transfertId ?? null;
-  const confirme = await confirmerOrientationMedecinsExternes(
-    agentId,
-    medecinExterneId,
-    transfertId
-  );
-
-  if (confirme) {
-    return {
-      ...resultat,
-      ...confirme,
-      confirme: true,
-      message: `Patient transféré vers ${confirme.salleDestination}.`,
-    };
-  }
-
   return {
     ...resultat,
+    confirme: false,
     message:
       resultat.salleDestination != null
-        ? `Patient transféré vers ${resultat.salleDestination}.`
-        : "Transfert effectué.",
+        ? `Transfert vers ${resultat.salleDestination} créé. Confirmez via le menu ⋮.`
+        : "Transfert créé. Confirmez via le menu ⋮.",
   };
 }
 

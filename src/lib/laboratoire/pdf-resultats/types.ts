@@ -23,7 +23,7 @@ export interface DonneesPatientResultatPdf {
   dossierId: string;
   numeroEnregistrement: string;
   numeroPatient: string;
-  /** N° transfert PAT (ex. PAT-202600001) — usage interne, non affiché sur le PDF. */
+  /** N° transfert PAT (ex. PAT202600001) — usage interne, non affiché sur le PDF. */
   numeroTransfert: string | null;
   nom: string;
   prenom: string;

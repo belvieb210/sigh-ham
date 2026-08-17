@@ -1,7 +1,7 @@
 import "server-only";
 import type { StatutFacture } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { listerPatientsFileAttenteSalle, dedupliquerFilesAttenteParDossier } from "@/lib/transferts/visibilite-salle";
+import { listerPatientsFileAttenteSalle } from "@/lib/transferts/visibilite-salle";
 import {
   estNumeroFacturePharmacie,
   evaluerEtatFacturationDual,
@@ -69,41 +69,29 @@ function aFactureEtablie(facs: FacturesDossier): boolean {
 }
 
 /**
- * Réinscrit en file caisse les dossiers facturés (payés ou établis) encore sans
- * transfert sortant confirmé — ex. patient payé hors file ou file dans une autre salle.
+ * Réinscrit en file caisse les dossiers déjà arrivés à la caisse (transfert
+ * entrant confirmé) encore sans transfert sortant confirmé.
+ * Ne crée jamais de file destination pour un transfert encore EN_ATTENTE.
  */
 async function synchroniserCandidatsTransfertsCaisse() {
   const salleCaisse = await prisma.salle.findUnique({ where: { code: "CAISSE" } });
   if (!salleCaisse) return;
 
-  const debutJour = new Date();
-  debutJour.setHours(0, 0, 0, 0);
-
   const dossiers = await prisma.dossierPatient.findMany({
     where: {
       statut: { in: ["OUVERT", "EN_COURS"] },
-      OR: [
-        {
-          passages: {
+      passages: {
+        some: {
+          statut: { not: "ANNULE" },
+          fileAttente: { salleId: salleCaisse.id },
+          transferts: {
             some: {
-              statut: { not: "ANNULE" },
-              fileAttente: { salleId: salleCaisse.id },
+              salleDestination: { code: "CAISSE" },
+              statut: { in: ["ACCEPTE", "EN_TRAITEMENT", "TERMINE"] },
             },
           },
         },
-        {
-          factures: {
-            some: {
-              statut: { in: ["EMISE", "PARTIELLEMENT_PAYEE", "PAYEE"] },
-              OR: [
-                { emiseLe: { gte: debutJour } },
-                { updatedAt: { gte: debutJour } },
-                { paiements: { some: { payeLe: { gte: debutJour } } } },
-              ],
-            },
-          },
-        },
-      ],
+      },
     },
     select: {
       id: true,
@@ -235,18 +223,43 @@ async function reintegrerPatientsCaisseNonConfirmes() {
         select: {
           transferts: {
             where: {
-              salleOrigine: { code: "CAISSE" },
-              statut: { in: ["ACCEPTE", "EN_TRAITEMENT", "TERMINE"] },
+              OR: [
+                {
+                  salleOrigine: { code: "CAISSE" },
+                  statut: { in: ["ACCEPTE", "EN_TRAITEMENT", "TERMINE"] },
+                },
+                {
+                  salleDestination: { code: "CAISSE" },
+                  statut: "EN_ATTENTE",
+                },
+              ],
             },
-            select: { id: true },
-            take: 1,
+            select: {
+              id: true,
+              statut: true,
+              salleOrigine: { select: { code: true } },
+              salleDestination: { select: { code: true } },
+            },
           },
         },
       },
     },
   });
 
-  const aReouvrir = sortis.filter((f) => f.passage.transferts.length === 0).map((f) => f.id);
+  const aReouvrir = sortis
+    .filter((f) => {
+      const incomingEnAttente = f.passage.transferts.some(
+        (t) => t.salleDestination.code === "CAISSE" && t.statut === "EN_ATTENTE"
+      );
+      if (incomingEnAttente) return false;
+      const sortantConfirme = f.passage.transferts.some(
+        (t) =>
+          t.salleOrigine.code === "CAISSE" &&
+          (t.statut === "ACCEPTE" || t.statut === "EN_TRAITEMENT" || t.statut === "TERMINE")
+      );
+      return !sortantConfirme;
+    })
+    .map((f) => f.id);
   if (aReouvrir.length === 0) return;
 
   await prisma.fileAttente.updateMany({
@@ -255,54 +268,8 @@ async function reintegrerPatientsCaisseNonConfirmes() {
   });
 }
 
-const includePassageCaisse = {
-  passage: {
-    include: {
-      dossier: {
-        include: {
-          patient: true,
-          examensLaboratoire: {
-            where: { statut: { not: "ANNULE" as const } },
-            include: { typeExamen: true, paquetBilan: true },
-          },
-          enregistrementsReception: {
-            orderBy: { enregistreLe: "desc" as const },
-            take: 1,
-            select: {
-              medecinResponsable: true,
-              enregistreLe: true,
-              agent: { select: { prenom: true, nom: true } },
-            },
-          },
-        },
-      },
-      transferts: {
-        orderBy: { emisLe: "desc" as const },
-        include: {
-          salleOrigine: { select: { code: true, nom: true } },
-          salleDestination: { select: { code: true, nom: true } },
-          emetteur: { select: { prenom: true, nom: true } },
-        },
-      },
-    },
-  },
-} as const;
-
-/** Tous les patients en file caisse (y compris facture payée en attente de transfert). */
-async function listerFileAttenteCaissePourTransferts() {
-  const files = await prisma.fileAttente.findMany({
-    where: {
-      salle: { code: "CAISSE" },
-      serviLe: null,
-    },
-    include: includePassageCaisse,
-    orderBy: { numeroOrdre: "asc" },
-  });
-  return dedupliquerFilesAttenteParDossier(files);
-}
-
 export async function listerPatientsEnAttenteCaisse(options?: {
-  /** Page transferts : file élargie + réintégration des dossiers facturés. */
+  /** Page transferts : réintégration des dossiers facturés encore à la caisse. */
   pourPageTransferts?: boolean;
   /** Si true, exclut les dossiers sans facture établie (section « factures payées »). */
   exigerFactureEtablie?: boolean;
@@ -314,9 +281,7 @@ export async function listerPatientsEnAttenteCaisse(options?: {
   }
   await reintegrerPatientsCaisseNonConfirmes();
 
-  const files = pourTransferts
-    ? await listerFileAttenteCaissePourTransferts()
-    : await listerPatientsFileAttenteSalle("CAISSE");
+  const files = await listerPatientsFileAttenteSalle("CAISSE");
 
   const dossierIds = files.map((f) => f.passage.dossier.id);
   if (dossierIds.length === 0) return [];
@@ -483,6 +448,16 @@ export async function obtenirStatsCaisseJour(): Promise<StatsCaisseJour> {
       where: {
         salle: { code: "CAISSE" },
         serviLe: null,
+        NOT: {
+          passage: {
+            transferts: {
+              some: {
+                salleDestination: { code: "CAISSE" },
+                statut: "EN_ATTENTE",
+              },
+            },
+          },
+        },
       },
     }),
     prisma.facture.count({

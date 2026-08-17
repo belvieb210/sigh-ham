@@ -16,10 +16,17 @@ export async function GET(request: NextRequest) {
 
   try {
     const vue = request.nextUrl.searchParams.get("vue") ?? "file";
+    const numeroPermanent =
+      request.nextUrl.searchParams.get("numeroPermanent")?.trim() || "";
+    const numeroPat = request.nextUrl.searchParams.get("numeroPat")?.trim() || "";
     const patients =
       vue === "sortants"
         ? await listerTransfertsSortantsLaboratoire()
-        : await listerPatientsLaboratoire();
+        : await listerPatientsLaboratoire(
+            numeroPermanent || numeroPat
+              ? { numeroPermanent, numeroPat }
+              : undefined
+          );
     return NextResponse.json({ patients, vue });
   } catch (e) {
     console.error("[api/laboratoire/patients]", e);

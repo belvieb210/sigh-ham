@@ -30,7 +30,7 @@ interface PropsLignesTableauDrApprouve {
   onSelectionnerTousExamensPatient: (examens: ExamenFileLaboratoire[]) => void;
   onImprimerExamensSelectionnes: (examens: ExamenFileLaboratoire[]) => void;
   onContextMenu?: (e: React.MouseEvent) => void;
-  /** Labo : PAT-… ; autres salles : N° permanent */
+  /** Labo : PAT… ; autres salles : N° permanent */
   varianteNumero?: "labo" | "salle";
 }
 

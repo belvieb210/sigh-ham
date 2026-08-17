@@ -78,8 +78,7 @@ export async function obtenirDossierVentePharmacie(
   const venteActive = await prisma.ventePharmacie.findFirst({
     where: {
       dossierId,
-      statut: { in: ["BROUILLON", "TRANSMISE", "PAYEE"] },
-      type: "DIRECTE",
+      statut: { in: ["BROUILLON", "TRANSMISE", "PAYEE", "DELIVREE"] },
     },
     include: {
       lignes: { include: { medicament: true }, orderBy: { medicament: { nom: "asc" } } },

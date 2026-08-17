@@ -215,7 +215,7 @@ export const pharmacieFr = {
     creerTransmettre: "Créer et transmettre à la caisse",
     transmise: "Vente transmise à la caisse.",
     transmiseFacture:
-      "Facture {{numero}} créée. Confirmez le transfert vers la caisse dans Patients.",
+      "Facture {{numero}} créée et transmise à la caisse.",
     transmettre: "Transmettre à la caisse",
     remettre: "Remettre (FEFO)",
     prenom: "Prénom",
@@ -228,9 +228,9 @@ export const pharmacieFr = {
     ligneMedicamentInvalide:
       "Un ou plusieurs médicaments du panier sont invalides. Retirez-les et ajoutez-les à nouveau via la recherche.",
     dejaTransmise:
-      "La facture {{numero}} est déjà transmise. Confirmez le transfert dans Patients.",
+      "La facture {{numero}} est déjà transmise à la caisse. Après paiement, le client apparaîtra dans Paiements validés pour la remise.",
     dejaTransmiseBouton: "Déjà transmise à la caisse",
-    factureExistante: "Facture {{numero}} — en attente de confirmation du transfert.",
+    factureExistante: "Facture {{numero}} — en attente d'encaissement à la caisse.",
     vide: "Aucune vente",
     clientsEnregistres: "Clients et patients ({{count}})",
     aucunClient: "Aucun client en attente. Enregistrez un nouveau client.",

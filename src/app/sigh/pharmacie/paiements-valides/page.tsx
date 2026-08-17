@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ContenuPaiementsValidesPharmacie } from "@/features/pharmacie/contenu-paiements-valides-pharmacie";
 import { verifierAccesPharmacie } from "@/lib/auth/garde-salle";
 import { propsUtilisateurPharmacie } from "@/lib/auth/props-utilisateur-pharmacie";
@@ -12,8 +13,10 @@ export default async function Page() {
   const utilisateur = await verifierAccesPharmacie();
 
   return (
-    <ContenuPaiementsValidesPharmacie
-      utilisateur={propsUtilisateurPharmacie(utilisateur)}
-    />
+    <Suspense fallback={null}>
+      <ContenuPaiementsValidesPharmacie
+        utilisateur={propsUtilisateurPharmacie(utilisateur)}
+      />
+    </Suspense>
   );
 }

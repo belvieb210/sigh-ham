@@ -215,7 +215,7 @@ export const pharmacieEn = {
     transmettre: "Send to cashier",
     transmise: "Sale sent to cashier.",
     transmiseFacture:
-      "Invoice {{numero}} created. Confirm the transfer to cashier in Patients.",
+      "Invoice {{numero}} created and sent to cashier.",
     remettre: "Dispense (FEFO)",
     prenom: "First name",
     nom: "Last name",
@@ -227,9 +227,9 @@ export const pharmacieEn = {
     ligneMedicamentInvalide:
       "One or more medicines in the cart are invalid. Remove them and add again via search.",
     dejaTransmise:
-      "Invoice {{numero}} was already sent. Confirm the transfer in Patients.",
+      "Invoice {{numero}} was already sent to cashier. After payment, the client will appear in Validated payments for dispensing.",
     dejaTransmiseBouton: "Already sent to cashier",
-    factureExistante: "Invoice {{numero}} — awaiting transfer confirmation.",
+    factureExistante: "Invoice {{numero}} — awaiting cashier payment.",
     vide: "No sales",
     clientsEnregistres: "Clients and patients ({{count}})",
     aucunClient: "No waiting clients. Register a new client.",

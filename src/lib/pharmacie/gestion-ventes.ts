@@ -118,14 +118,25 @@ export async function transmettreVenteACaisse(
       },
     });
 
-    await preparerTransfertVentePharmacieVersCaisse(
+    const prep = await preparerTransfertVentePharmacieVersCaisse(
       pharmacienId,
       vente.dossierId,
       tx
     );
 
-    return { facture, vente: maj };
+    return { facture, vente: maj, transfertId: prep.transfertId };
   });
+
+  const transfert = await prisma.transfert.findUnique({
+    where: { id: resultat.transfertId },
+    select: { statut: true },
+  });
+  if (transfert?.statut === "EN_ATTENTE") {
+    const { confirmerTransfertPharmacie } = await import(
+      "@/lib/pharmacie/gestion-transfert-pharmacie"
+    );
+    await confirmerTransfertPharmacie(pharmacienId, resultat.transfertId);
+  }
 
   return resultat;
 }
@@ -175,12 +186,19 @@ export async function marquerVentePayeeParFacture(factureId: string) {
     where: { factureId },
   });
   if (!vente) return null;
-  if (vente.statut !== "TRANSMISE") return vente;
+  if (vente.statut === "PAYEE" || vente.statut === "DELIVREE") return vente;
 
-  return prisma.ventePharmacie.update({
+  const maj = await prisma.ventePharmacie.update({
     where: { id: vente.id },
     data: { statut: "PAYEE", payeeLe: new Date() },
   });
+
+  const { retirerDossierDeLaFilePharmacie } = await import(
+    "@/lib/pharmacie/circuit-vente"
+  );
+  await retirerDossierDeLaFilePharmacie(vente.dossierId);
+
+  return maj;
 }
 
 export async function delivrerVente(pharmacienId: string, venteId: string) {

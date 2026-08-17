@@ -1,6 +1,7 @@
 import "server-only";
 import { calculerAge } from "@/features/caisse/utils-format";
 import { listerPatientsPharmacie } from "@/lib/pharmacie/lister-patients-pharmacie";
+import { idsDossiersVentePharmacieAvancee } from "@/lib/pharmacie/circuit-vente";
 import { numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 import { prisma } from "@/lib/prisma";
 
@@ -45,7 +46,7 @@ export async function listerClientsVentePharmacie(): Promise<ClientVentePharmaci
   const debut = new Date();
   debut.setHours(0, 0, 0, 0);
 
-  const [file, clientsJour, ordonnances] = await Promise.all([
+  const [file, clientsJour, ordonnances, horsFile] = await Promise.all([
     listerPatientsPharmacie(),
     prisma.dossierPatient.findMany({
       where: {
@@ -75,11 +76,13 @@ export async function listerClientsVentePharmacie(): Promise<ClientVentePharmaci
       orderBy: { prescritLe: "desc" },
       take: 30,
     }),
+    idsDossiersVentePharmacieAvancee(),
   ]);
 
   const map = new Map<string, ClientVentePharmacie>();
 
   for (const p of file) {
+    if (horsFile.has(p.dossierId)) continue;
     map.set(p.dossierId, {
       dossierId: p.dossierId,
       numeroDossier: p.numeroDossier,
@@ -101,6 +104,7 @@ export async function listerClientsVentePharmacie(): Promise<ClientVentePharmaci
   }
 
   for (const o of ordonnances) {
+    if (horsFile.has(o.dossierId)) continue;
     const patient = o.dossier.patient;
     const montant = o.lignes.reduce(
       (s, l) => s + decimal(l.medicament.prixUnitaire) * l.quantite,
@@ -135,6 +139,7 @@ export async function listerClientsVentePharmacie(): Promise<ClientVentePharmaci
 
   for (const d of clientsJour) {
     if (d.ventesPharmacie.length > 0) continue;
+    if (horsFile.has(d.id)) continue;
     if (map.has(d.id)) continue;
     const patient = d.patient;
     map.set(d.id, {

@@ -934,18 +934,7 @@ export async function encaisserFacture(caissierId: string, donnees: DonneesEncai
       const { marquerVentePayeeParFacture } = await import(
         "@/lib/pharmacie/gestion-ventes"
       );
-      const vente = await marquerVentePayeeParFacture(resultat.factureId);
-      if (vente) {
-        try {
-          await reorienterPatientDepuisCaisse(
-            caissierId,
-            donnees.dossierId,
-            "PHARMACIE"
-          );
-        } catch {
-          /* patient hors file caisse éventuel */
-        }
-      }
+      await marquerVentePayeeParFacture(resultat.factureId);
     } catch (e) {
       console.error("[encaisserFacture] vente pharmacie", e);
     }

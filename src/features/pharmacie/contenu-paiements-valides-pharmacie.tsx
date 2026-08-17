@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Loader2, SlidersHorizontal } from "lucide-react";
 import {
@@ -225,6 +226,8 @@ export function ContenuPaiementsValidesPharmacie({
   utilisateur: UtilisateurPharmacie;
 }) {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
+  const dossierInitial = searchParams.get("dossier");
   const [paiements, setPaiements] = useState<PaiementValidePharmacie[]>([]);
   const [chargement, setChargement] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -248,6 +251,12 @@ export function ContenuPaiementsValidesPharmacie({
   useEffect(() => {
     void charger();
   }, [charger]);
+
+  useEffect(() => {
+    if (!dossierInitial || paiements.length === 0) return;
+    const cible = paiements.find((p) => p.dossierId === dossierInitial);
+    if (cible) setSelectionne(cible);
+  }, [dossierInitial, paiements]);
 
   const nbFiltresActifs = compterFiltresPaiementsValides(filtresAppliques);
 

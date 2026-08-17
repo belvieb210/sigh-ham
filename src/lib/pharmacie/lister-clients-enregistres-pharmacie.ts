@@ -42,13 +42,14 @@ export async function listerClientsEnregistresPharmacie(): Promise<
       numeroDossier: { startsWith: "PH-" },
       motifOuverture: "Vente pharmacie",
       createdAt: { gte: limite },
+      ventesPharmacie: {
+        none: { statut: { in: ["TRANSMISE", "PAYEE", "DELIVREE"] } },
+      },
     },
     include: {
       patient: true,
       ventesPharmacie: {
-        where: {
-          statut: { in: ["BROUILLON", "TRANSMISE", "PAYEE", "DELIVREE"] },
-        },
+        where: { statut: "BROUILLON" },
         take: 1,
       },
     },

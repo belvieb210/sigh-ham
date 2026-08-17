@@ -2,6 +2,7 @@ import "server-only";
 import { calculerAge } from "@/features/caisse/utils-format";
 import { prisma } from "@/lib/prisma";
 import { listerPatientsFileAttenteSalle } from "@/lib/transferts/visibilite-salle";
+import { idsDossiersVentePharmacieAvancee, synchroniserVentesPayeesDepuisFactures } from "@/lib/pharmacie/circuit-vente";
 import type { PatientFilePharmacie, StatsPharmacieJour } from "@/lib/pharmacie/types";
 
 const COULEURS_ORIENTATION: Record<string, string> = {
@@ -61,6 +62,8 @@ function debutJourLocal(d = new Date()) {
 }
 
 export async function listerPatientsPharmacie(): Promise<PatientFilePharmacie[]> {
+  await synchroniserVentesPayeesDepuisFactures();
+
   const filesDedup = await listerPatientsFileAttenteSalle("PHARMACIE");
   const dossierIds = filesDedup.map((f) => f.passage.dossier.id);
 
@@ -152,9 +155,14 @@ export async function listerPatientsPharmacie(): Promise<PatientFilePharmacie[]>
 
   const ids = new Set(resultats.map((p) => p.dossierId));
   const ordonnances = await listerOrdonnancesEnAttentePharmacie(ids);
-  return [...resultats, ...ordonnances].sort(
-    (a, b) => new Date(b.arriveeLe).getTime() - new Date(a.arriveeLe).getTime()
+  const horsFile = await idsDossiersVentePharmacieAvancee(
+    [...ids, ...ordonnances.map((o) => o.dossierId)]
   );
+  return [...resultats, ...ordonnances]
+    .filter((p) => !horsFile.has(p.dossierId))
+    .sort(
+      (a, b) => new Date(b.arriveeLe).getTime() - new Date(a.arriveeLe).getTime()
+    );
 }
 
 /** Ordonnances dont le transfert vers la pharmacie a déjà été confirmé à l'origine. */

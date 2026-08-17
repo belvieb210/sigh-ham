@@ -1,6 +1,7 @@
 import "server-only";
 import { calculerAge } from "@/features/caisse/utils-format";
 import { numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
+import { synchroniserVentesPayeesDepuisFactures } from "@/lib/pharmacie/circuit-vente";
 import { prisma } from "@/lib/prisma";
 
 function decimal(n: { toNumber?: () => number } | number | null | undefined) {
@@ -48,6 +49,8 @@ export interface PaiementValidePharmacie {
 
 /** Ventes pharmacie dont le paiement a été validé à la caisse (PAYEE ou DELIVREE). */
 export async function listerPaiementsValidesPharmacie(): Promise<PaiementValidePharmacie[]> {
+  await synchroniserVentesPayeesDepuisFactures();
+
   const ventes = await prisma.ventePharmacie.findMany({
     where: { statut: { in: ["PAYEE", "DELIVREE"] } },
     include: {

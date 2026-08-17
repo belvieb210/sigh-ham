@@ -128,6 +128,15 @@ export function ContenuFacturationVentePharmacie({
         if (!res.ok || !data.dossier) {
           throw new Error(data.erreur ?? t("pharmacie.common.erreur"));
         }
+        if (
+          data.dossier.venteStatut === "PAYEE" ||
+          data.dossier.venteStatut === "DELIVREE"
+        ) {
+          router.replace(
+            `/sigh/pharmacie/paiements-valides?dossier=${encodeURIComponent(id)}`
+          );
+          return;
+        }
         setDossier(data.dossier);
         setLignes(
           data.dossier.lignesOrdonnance.map((l) => ({
@@ -145,7 +154,7 @@ export function ContenuFacturationVentePharmacie({
         setChargementDossier(false);
       }
     },
-    [t]
+    [t, router]
   );
 
   useEffect(() => {

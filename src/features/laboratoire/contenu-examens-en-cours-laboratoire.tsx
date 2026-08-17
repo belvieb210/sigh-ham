@@ -38,6 +38,7 @@ import {
 } from "@/features/laboratoire/formulaire-filtres-laboratoire";
 import {
   cheminSaisieResultatsPatient,
+  cleLignePatientLabo,
   couleurStatutAnalyse,
   libellesExamensDemandes,
   numeroVisiteLaboratoire,
@@ -46,7 +47,6 @@ import {
 } from "@/features/laboratoire/utils-affichage";
 import {
   BarresRechercheNumerosLaboratoire,
-  queryRechercheNumerosLabo,
   useRechercheNumerosLabo,
 } from "@/features/laboratoire/barres-recherche-numeros-laboratoire";
 import {
@@ -111,9 +111,16 @@ export function ContenuExamensEnCoursLaboratoire({
     setChargement(true);
     setErreur(null);
     try {
-      const res = await fetch(
-        `/api/laboratoire/patients${queryRechercheNumerosLabo(rechercheNumeros.applique)}`
-      );
+      const params = new URLSearchParams();
+      if (pageStatut === "DR_APPROUVE") params.set("vue", "dr-approuve");
+      if (rechercheNumeros.applique.numeroPermanent) {
+        params.set("numeroPermanent", rechercheNumeros.applique.numeroPermanent);
+      }
+      if (rechercheNumeros.applique.numeroPat) {
+        params.set("numeroPat", rechercheNumeros.applique.numeroPat);
+      }
+      const qs = params.toString();
+      const res = await fetch(`/api/laboratoire/patients${qs ? `?${qs}` : ""}`);
       const data = (await res.json()) as {
         patients?: PatientFileLaboratoire[];
         erreur?: string;
@@ -129,7 +136,7 @@ export function ContenuExamensEnCoursLaboratoire({
     } finally {
       setChargement(false);
     }
-  }, [t, rechercheNumeros.applique.numeroPermanent, rechercheNumeros.applique.numeroPat]);
+  }, [t, pageStatut, rechercheNumeros.applique.numeroPermanent, rechercheNumeros.applique.numeroPat]);
 
   useEffect(() => {
     void charger();
@@ -605,15 +612,17 @@ export function ContenuExamensEnCoursLaboratoire({
                     </thead>
                     <tbody className="divide-y divide-gris-bordure">
                       {pageData.itemsPage.map((p) => {
-                        const selectionne = selectionId === p.dossierId;
+                        const cle = cleLignePatientLabo(p);
+                        const selectionne =
+                          selectionId === cle || selectionId === p.dossierId;
 
                         if (estPageDrApprouve) {
                           return (
                             <LignesTableauDrApprouve
-                              key={p.dossierId}
+                              key={cle}
                               patient={p}
                               selectionne={selectionne}
-                              developpe={dossiersDeveloppes.has(p.dossierId)}
+                              developpe={dossiersDeveloppes.has(cle)}
                               patientCoche={idsCoches.has(p.dossierId)}
                               examensCoches={examensCoches}
                               onSelectionnerPatient={() => selectionner(p.dossierId)}
@@ -626,7 +635,7 @@ export function ContenuExamensEnCoursLaboratoire({
                                 });
                               }}
                               onBasculerDeveloppement={() =>
-                                basculerDeveloppementPatient(p.dossierId)
+                                basculerDeveloppementPatient(cle)
                               }
                               onBasculerCocheExamen={basculerCocheExamen}
                               onSelectionnerTousExamensPatient={(examens) =>

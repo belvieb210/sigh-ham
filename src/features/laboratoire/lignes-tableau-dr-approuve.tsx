@@ -8,9 +8,10 @@ import {
   CelluleListeExamens,
 } from "@/features/laboratoire/cellule-examens-statut-laboratoire";
 import {
+  cleLignePatientLabo,
   examensPourPageStatut,
-  numeroVisiteLaboratoire,
   numeroPermanentPatientLaboratoire,
+  numeroVisiteLaboratoire,
 } from "@/features/laboratoire/utils-affichage";
 import type { ExamenFileLaboratoire, PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import { cn } from "@/lib/utils";
@@ -64,7 +65,7 @@ export function LignesTableauDrApprouve({
   return (
     <>
       <tr
-        id={`analyse-${patient.dossierId}`}
+        id={`analyse-${cleLignePatientLabo(patient)}`}
         onClick={onSelectionnerPatient}
         onContextMenu={onContextMenu}
         className={cn(
@@ -93,6 +94,7 @@ export function LignesTableauDrApprouve({
           <p className="truncate text-[10px] text-texte-secondaire">
             {patient.age != null ? `${patient.age} ans` : "—"}
             {patient.sexe ? ` / ${patient.sexe}` : ""}
+            {patient.numeroFacture ? ` · ${patient.numeroFacture}` : ""}
           </p>
         </td>
         <td className="hidden px-2 py-1.5 text-[11px] text-texte-secondaire lg:table-cell">

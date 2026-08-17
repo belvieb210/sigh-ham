@@ -19,6 +19,11 @@ function orientationExamen(ex: ExamenAvecNotes): IdOrientationStatutAnalyse | nu
   return lireOrientationAnalyseDepuisNotes(ex.notes);
 }
 
+/** Clé d’une ligne tableau (un dossier, ou un dossier + une facture). */
+export function cleLignePatientLabo(p: Pick<PatientFileLaboratoire, "dossierId" | "cleListe">) {
+  return p.cleListe || p.dossierId;
+}
+
 /** Examens visibles sur une page de suivi (filtrage par statut d'examen). */
 export function examensPourPageStatut<
   T extends ExamenAvecNotes,

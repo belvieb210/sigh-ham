@@ -330,7 +330,8 @@ export const laboratoireFr = {
     },
     DR_APPROUVE: {
       label: "Dr approuve",
-      description: "Validation médicale du biologiste",
+      description:
+        "Résultats validés par le biologiste — restent visibles ici, même après sortie de file, un dossier / une facture par ligne",
     },
   },
   actions: {

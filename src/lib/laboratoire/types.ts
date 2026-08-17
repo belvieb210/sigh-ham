@@ -13,6 +13,8 @@ export interface PatientFileLaboratoire {
   fileAttenteId: string;
   passageId: string;
   transfertId: string;
+  /** Ligne unique (dossier, ou dossier+facture si plusieurs factures). */
+  cleListe?: string;
   dossierId: string;
   numeroPatient: string;
   numeroDossier: string;

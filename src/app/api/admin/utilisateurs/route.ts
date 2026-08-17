@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
       q: sp.get("q") ?? undefined,
       roleId: sp.get("roleId") ?? undefined,
       statut: (sp.get("statut") as StatutUtilisateur | null) ?? undefined,
+      limite: 200,
     });
     return NextResponse.json({ utilisateurs });
   } catch (error) {

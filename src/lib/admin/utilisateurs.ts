@@ -182,6 +182,10 @@ export async function mettreAJourUtilisateurAdmin(
   });
   if (!cible) throw new Error("Utilisateur introuvable.");
 
+  if (acteur.id === id && data.statut && data.statut !== "ACTIF") {
+    throw new Error("Vous ne pouvez pas désactiver votre propre compte.");
+  }
+
   if (
     cible.role.code === "SUPER_ADMIN" &&
     acteur.role.code !== "SUPER_ADMIN" &&
@@ -233,6 +237,10 @@ export async function mettreAJourUtilisateurAdmin(
     },
     select: selectPublic,
   });
+
+  if (maj.statut !== "ACTIF") {
+    await prisma.session.deleteMany({ where: { utilisateurId: id } });
+  }
 
   await enregistrerAudit({
     utilisateurId: acteur.id,

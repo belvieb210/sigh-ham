@@ -13,6 +13,7 @@ export default async function Page() {
   return (
     <ContenuUtilisateursAdmin
       utilisateur={propsUtilisateurAdmin(utilisateur)}
+      utilisateurId={utilisateur.id}
     />
   );
 }

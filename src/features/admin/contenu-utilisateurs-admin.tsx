@@ -1,17 +1,40 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, Plus, Save, Users } from "lucide-react";
+import {
+  Eye,
+  Loader2,
+  MoreVertical,
+  Save,
+  Search,
+  SlidersHorizontal,
+  SquarePen,
+  Users,
+  X,
+} from "lucide-react";
 import {
   MiseEnPageAdmin,
   type UtilisateurAdmin,
 } from "@/features/admin/mise-en-page-admin";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 import { Bouton } from "@/components/ui/bouton";
+import { AvatarUtilisateur } from "@/components/ui/avatar-utilisateur";
+import {
+  BoutonsOutilsListe,
+  telechargerCsv,
+} from "@/components/ui/boutons-outils-liste";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import { EVENEMENT_ADMIN_UTILISATEURS_MODIFIES } from "@/constants/admin";
 import { estRoleGereParServiceClient } from "@/constants/admin-utilisateurs";
+import {
+  compterFiltresUtilisateursAdmin,
+  FILTRES_UTILISATEURS_ADMIN_VIDES,
+  FormulaireFiltresUtilisateursAdmin,
+  utilisateurCorrespondFiltresAdmin,
+  type FiltresUtilisateursAdmin,
+} from "@/features/admin/formulaire-filtres-utilisateurs-admin";
+import { cn } from "@/lib/utils";
 
 interface RoleOption {
   id: string;
@@ -21,6 +44,11 @@ interface RoleOption {
   salle: { code: string; nom: string } | null;
 }
 
+interface SalleOption {
+  code: string;
+  nom: string;
+}
+
 interface UtilisateurItem {
   id: string;
   identifiant: string;
@@ -28,6 +56,7 @@ interface UtilisateurItem {
   prenom: string;
   nom: string;
   telephone: string | null;
+  photoUrl?: string | null;
   statut: "ACTIF" | "INACTIF" | "SUSPENDU";
   messagerieBloquee?: boolean;
   notesAdmin?: string | null;
@@ -35,7 +64,12 @@ interface UtilisateurItem {
   role: RoleOption;
 }
 
+type ModePanneau = "creation" | "consultation" | "edition";
+
 const STATUTS = ["ACTIF", "INACTIF", "SUSPENDU"] as const;
+
+const CLASSE_BOUTON_ACTION =
+  "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure text-slate-500 transition-colors hover:bg-gris-tres-clair hover:text-bleu-medical";
 
 const FORM_VIDE: {
   identifiant: string;
@@ -61,36 +95,108 @@ const FORM_VIDE: {
   notesAdmin: "",
 };
 
+function roleCreationDefaut(roles: RoleOption[]) {
+  return (
+    roles.find((r) => r.code === "RECEPTIONNISTE")?.id ??
+    roles.find((r) => !estRoleGereParServiceClient(r.code) && r.code !== "SUPER_ADMIN")
+      ?.id ??
+    roles[0]?.id ??
+    ""
+  );
+}
+
+function classeBadgeRole(code: string) {
+  if (code.includes("ADMIN")) return "bg-violet-100 text-violet-800";
+  if (code.includes("MEDECIN")) return "bg-sky-100 text-sky-800";
+  if (code.includes("LABO")) return "bg-emerald-100 text-emerald-800";
+  if (code.includes("CAISSE")) return "bg-orange-100 text-orange-800";
+  if (code.includes("PHARMA")) return "bg-teal-100 text-teal-800";
+  if (code.includes("INFIRM")) return "bg-pink-100 text-pink-800";
+  if (code.includes("RECEPT")) return "bg-indigo-100 text-indigo-800";
+  return "bg-slate-100 text-slate-700";
+}
+
+function classeBadgeStatut(statut: UtilisateurItem["statut"]) {
+  if (statut === "ACTIF") return "bg-emerald-50 text-emerald-700";
+  if (statut === "INACTIF") return "bg-red-50 text-red-700";
+  return "bg-amber-50 text-amber-800";
+}
+
+function formaterDerniereConnexion(
+  iso: string | null,
+  locale: string,
+  t: (cle: string) => string
+) {
+  if (!iso) return t("admin.utilisateurs.jamaisConnecte");
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return t("admin.utilisateurs.jamaisConnecte");
+
+  const maintenant = new Date();
+  const debutAujourdhui = new Date(
+    maintenant.getFullYear(),
+    maintenant.getMonth(),
+    maintenant.getDate()
+  );
+  const debutHier = new Date(debutAujourdhui);
+  debutHier.setDate(debutHier.getDate() - 1);
+  const heure = date.toLocaleTimeString(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  if (date >= debutAujourdhui) {
+    return `${t("admin.utilisateurs.aujourdhui")} ${heure}`;
+  }
+  if (date >= debutHier) {
+    return `${t("admin.utilisateurs.hier")} ${heure}`;
+  }
+  return `${date.toLocaleDateString(locale, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })} ${heure}`;
+}
+
 export function ContenuUtilisateursAdmin({
   utilisateur,
+  utilisateurId,
 }: {
   utilisateur: UtilisateurAdmin;
+  utilisateurId: string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [liste, setListe] = useState<UtilisateurItem[]>([]);
   const [roles, setRoles] = useState<RoleOption[]>([]);
-  const [q, setQ] = useState("");
-  const [filtreRoleId, setFiltreRoleId] = useState("");
-  const [filtreStatut, setFiltreStatut] = useState("");
+  const [salles, setSalles] = useState<SalleOption[]>([]);
+  const [rechercheRapide, setRechercheRapide] = useState("");
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillon, setBrouillon] = useState<FiltresUtilisateursAdmin>(
+    FILTRES_UTILISATEURS_ADMIN_VIDES
+  );
+  const [appliques, setAppliques] = useState<FiltresUtilisateursAdmin>(
+    FILTRES_UTILISATEURS_ADMIN_VIDES
+  );
+  const [idsCoches, setIdsCoches] = useState<string[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [selectionId, setSelectionId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...FORM_VIDE });
-  const [modeCreation, setModeCreation] = useState(false);
+  const [modePanneau, setModePanneau] = useState<ModePanneau>("creation");
+  const [menuOuvertId, setMenuOuvertId] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const modeCreation = modePanneau === "creation";
+  const lectureSeule = modePanneau === "consultation";
 
   const charger = useCallback(async () => {
     setChargement(true);
     setErreur(null);
     try {
-      const [uRes, rRes] = await Promise.all([
-        fetch(
-          `/api/admin/utilisateurs?q=${encodeURIComponent(q)}${
-            filtreRoleId ? `&roleId=${encodeURIComponent(filtreRoleId)}` : ""
-          }${filtreStatut ? `&statut=${encodeURIComponent(filtreStatut)}` : ""}`
-        ),
+      const [uRes, rRes, sRes] = await Promise.all([
+        fetch("/api/admin/utilisateurs"),
         fetch("/api/admin/roles"),
+        fetch("/api/admin/salles"),
       ]);
       const uData = (await uRes.json()) as {
         utilisateurs?: UtilisateurItem[];
@@ -100,36 +206,64 @@ export function ContenuUtilisateursAdmin({
         roles?: RoleOption[];
         message?: string;
       };
+      const sData = (await sRes.json()) as {
+        salles?: SalleOption[];
+        message?: string;
+      };
       if (!uRes.ok) throw new Error(uData.message ?? t("admin.utilisateurs.erreur"));
       if (!rRes.ok) throw new Error(rData.message ?? t("admin.roles.erreur"));
+      if (!sRes.ok) throw new Error(sData.message ?? t("admin.services.erreur"));
+      const rolesListe = rData.roles ?? [];
       setListe(uData.utilisateurs ?? []);
-      setRoles(rData.roles ?? []);
+      setRoles(rolesListe);
+      setSalles(sData.salles ?? []);
+      setForm((f) => (f.roleId ? f : { ...f, roleId: roleCreationDefaut(rolesListe) }));
     } catch (e: unknown) {
-      setErreur(
-        e instanceof Error ? e.message : t("admin.utilisateurs.erreur")
-      );
+      setErreur(e instanceof Error ? e.message : t("admin.utilisateurs.erreur"));
     } finally {
       setChargement(false);
     }
-  }, [q, filtreRoleId, filtreStatut, t]);
+  }, [t]);
 
   useEffect(() => {
     void charger();
   }, [charger]);
 
+  const listeFiltree = useMemo(
+    () =>
+      liste.filter((u) =>
+        utilisateurCorrespondFiltresAdmin(u, appliques, rechercheRapide)
+      ),
+    [liste, appliques, rechercheRapide]
+  );
+
+  const nbFiltres = compterFiltresUtilisateursAdmin(appliques);
+  const toutSelectionne =
+    listeFiltree.length > 0 && listeFiltree.every((u) => idsCoches.includes(u.id));
+
+  useEffect(() => {
+    if (!menuOuvertId) return;
+    const fermer = (e: MouseEvent) => {
+      if (menuRef.current?.contains(e.target as Node)) return;
+      setMenuOuvertId(null);
+    };
+    document.addEventListener("mousedown", fermer);
+    return () => document.removeEventListener("mousedown", fermer);
+  }, [menuOuvertId]);
+
   const ouvrirCreation = () => {
-    setModeCreation(true);
+    setModePanneau("creation");
     setSelectionId(null);
+    setMenuOuvertId(null);
     setForm({
       ...FORM_VIDE,
-      roleId: roles.find((r) => r.code === "RECEPTIONNISTE")?.id ?? roles[0]?.id ?? "",
+      roleId: roleCreationDefaut(roles),
     });
     setMessage(null);
     setErreur(null);
   };
 
-  const selectionner = (u: UtilisateurItem) => {
-    setModeCreation(false);
+  const remplirFormulaire = (u: UtilisateurItem) => {
     setSelectionId(u.id);
     setForm({
       identifiant: u.identifiant,
@@ -147,6 +281,93 @@ export function ContenuUtilisateursAdmin({
     setErreur(null);
   };
 
+  const consulter = (u: UtilisateurItem) => {
+    setModePanneau("consultation");
+    setMenuOuvertId(null);
+    remplirFormulaire(u);
+  };
+
+  const editer = (u: UtilisateurItem) => {
+    setModePanneau("edition");
+    setMenuOuvertId(null);
+    remplirFormulaire(u);
+  };
+
+  const changerStatut = async (
+    u: UtilisateurItem,
+    statut: "ACTIF" | "INACTIF"
+  ) => {
+    setMenuOuvertId(null);
+    if (statut === "INACTIF" && u.id === utilisateurId) {
+      setErreur(t("admin.utilisateurs.impossibleSeDesactiver"));
+      return;
+    }
+    setEnCours(true);
+    setErreur(null);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/utilisateurs/${u.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statut }),
+      });
+      const data = (await res.json()) as { message?: string };
+      if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
+      setMessage(
+        statut === "ACTIF"
+          ? t("admin.utilisateurs.active")
+          : t("admin.utilisateurs.desactive")
+      );
+      if (selectionId === u.id) {
+        setForm((f) => ({ ...f, statut }));
+      }
+      window.dispatchEvent(new Event(EVENEMENT_ADMIN_UTILISATEURS_MODIFIES));
+      await charger();
+    } catch (e: unknown) {
+      setErreur(e instanceof Error ? e.message : t("admin.common.erreur"));
+    } finally {
+      setEnCours(false);
+    }
+  };
+
+  const basculerCoche = (id: string) => {
+    setIdsCoches((ids) =>
+      ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]
+    );
+  };
+
+  const basculerSelectionTout = () => {
+    setIdsCoches(toutSelectionne ? [] : listeFiltree.map((u) => u.id));
+  };
+
+  const exporterSelection = () => {
+    const coches = new Set(idsCoches);
+    const cibles =
+      coches.size > 0 ? listeFiltree.filter((u) => coches.has(u.id)) : listeFiltree;
+    if (cibles.length === 0) return;
+    telechargerCsv(
+      `admin-utilisateurs-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        t("admin.utilisateurs.colonnes.utilisateur"),
+        t("admin.utilisateurs.champs.identifiant"),
+        t("admin.utilisateurs.champs.email"),
+        t("admin.utilisateurs.colonnes.role"),
+        t("admin.utilisateurs.colonnes.salle"),
+        t("admin.utilisateurs.colonnes.statut"),
+        t("admin.utilisateurs.colonnes.derniereConnexion"),
+      ],
+      cibles.map((u) => [
+        `${u.prenom} ${u.nom}`,
+        u.identifiant,
+        u.email ?? "",
+        u.role.nom,
+        u.role.salle?.nom ?? "",
+        t(`admin.utilisateurs.statuts.${u.statut}`),
+        formaterDerniereConnexion(u.derniereConnexion, i18n.language, t),
+      ])
+    );
+  };
+
   const soumettre = async () => {
     setEnCours(true);
     setErreur(null);
@@ -161,7 +382,10 @@ export function ContenuUtilisateursAdmin({
         const data = (await res.json()) as { message?: string };
         if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
         setMessage(data.message ?? t("admin.utilisateurs.cree"));
-        setModeCreation(false);
+        setForm({
+          ...FORM_VIDE,
+          roleId: roleCreationDefaut(roles),
+        });
       } else if (selectionId) {
         const res = await fetch(`/api/admin/utilisateurs/${selectionId}`, {
           method: "PATCH",
@@ -191,8 +415,6 @@ export function ContenuUtilisateursAdmin({
     }
   };
 
-  const formulaireVisible = modeCreation || Boolean(selectionId);
-
   return (
     <MiseEnPageAdmin
       utilisateur={utilisateur}
@@ -210,44 +432,82 @@ export function ContenuUtilisateursAdmin({
           ]}
         />
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <input
-            className={CLASSE_CHAMP_RECEPTION}
-            style={{ maxWidth: 280 }}
-            placeholder={t("admin.utilisateurs.recherche")}
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          <select
-            className={CLASSE_CHAMP_RECEPTION}
-            style={{ maxWidth: 200 }}
-            value={filtreRoleId}
-            onChange={(e) => setFiltreRoleId(e.target.value)}
-          >
-            <option value="">{t("admin.utilisateurs.tousRoles")}</option>
-            {roles.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.nom}
-              </option>
-            ))}
-          </select>
-          <select
-            className={CLASSE_CHAMP_RECEPTION}
-            style={{ maxWidth: 160 }}
-            value={filtreStatut}
-            onChange={(e) => setFiltreStatut(e.target.value)}
-          >
-            <option value="">{t("admin.utilisateurs.tousStatuts")}</option>
-            {STATUTS.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-          <Bouton type="button" taille="petit" onClick={ouvrirCreation}>
-            <Plus className="h-4 w-4" />
-            {t("admin.utilisateurs.creer")}
-          </Bouton>
+        <div className="mt-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <label className="flex h-11 min-w-[180px] w-full max-w-md flex-1 items-center gap-2 rounded-lg border-2 border-slate-400 bg-white px-3 text-sm text-texte-principal shadow-sm transition-colors focus-within:border-bleu-medical focus-within:ring-2 focus-within:ring-bleu-medical/25">
+              <Search className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+              <input
+                type="search"
+                value={rechercheRapide}
+                onChange={(e) => setRechercheRapide(e.target.value)}
+                placeholder={t("admin.utilisateurs.recherche")}
+                aria-label={t("admin.utilisateurs.recherche")}
+                autoComplete="off"
+                className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-slate-600"
+              />
+              {rechercheRapide ? (
+                <button
+                  type="button"
+                  onClick={() => setRechercheRapide("")}
+                  aria-label={t("admin.utilisateurs.effacerRecherche")}
+                  className="shrink-0 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </label>
+
+            <div className="flex shrink-0 items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setFiltresOuverts((o) => !o)}
+                aria-expanded={filtresOuverts}
+                aria-label={
+                  filtresOuverts
+                    ? t("reception.tableau.fermerFiltres")
+                    : t("reception.tableau.ouvrirFiltres")
+                }
+                className={cn(
+                  "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+                  filtresOuverts
+                    ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                    : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
+                )}
+              >
+                <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
+                <span
+                  className={cn(
+                    "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
+                    nbFiltres > 0 ? "bg-red-500" : "bg-slate-400"
+                  )}
+                >
+                  {nbFiltres}
+                </span>
+              </button>
+              <BoutonsOutilsListe
+                toutSelectionne={toutSelectionne}
+                onSelectionnerTout={basculerSelectionTout}
+                onExporter={exporterSelection}
+                labelSelectionnerTout={t("reception.liste.selectionnerTout")}
+                labelExporter={t("reception.liste.exporterSelection")}
+              />
+            </div>
+          </div>
+
+          {filtresOuverts ? (
+            <FormulaireFiltresUtilisateursAdmin
+              valeurs={brouillon}
+              onChange={setBrouillon}
+              onRechercher={() => setAppliques(brouillon)}
+              onReinitialiser={() => {
+                setBrouillon(FILTRES_UTILISATEURS_ADMIN_VIDES);
+                setAppliques(FILTRES_UTILISATEURS_ADMIN_VIDES);
+              }}
+              roles={roles.map((r) => ({ id: r.id, nom: r.nom }))}
+              salles={salles.map((s) => ({ code: s.code, nom: s.nom }))}
+              statuts={STATUTS}
+            />
+          ) : null}
         </div>
 
         {message ? (
@@ -264,245 +524,438 @@ export function ContenuUtilisateursAdmin({
         <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
           <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
             {chargement ? (
-              <p className="p-6 text-sm text-texte-secondaire">
+              <p className="flex items-center gap-2 p-6 text-sm text-texte-secondaire">
+                <Loader2 className="h-4 w-4 animate-spin" />
                 {t("admin.common.chargement")}
               </p>
+            ) : listeFiltree.length === 0 ? (
+              <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
+                {t("admin.utilisateurs.aucunResultat")}
+              </p>
             ) : (
-              <table className="tableau-sigh">
-                <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
-                  <tr>
-                    <th className="px-3 py-2">{t("admin.utilisateurs.colonnes.nom")}</th>
-                    <th className="px-3 py-2">{t("admin.utilisateurs.colonnes.role")}</th>
-                    <th className="px-3 py-2">{t("admin.utilisateurs.colonnes.statut")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {liste.map((u) => (
-                    <tr
-                      key={u.id}
-                      className={`cursor-pointer border-t border-gris-bordure hover:bg-bleu-medical-clair/20 ${
-                        selectionId === u.id ? "bg-bleu-medical-clair/30" : ""
-                      }`}
-                      onClick={() => selectionner(u)}
-                    >
-                      <td className="px-3 py-2.5">
-                        <p className="font-medium">
-                          {u.prenom} {u.nom}
-                        </p>
-                        <p className="text-xs text-texte-secondaire">
-                          {u.identifiant}
-                        </p>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <p>{u.role.nom}</p>
-                        <p className="text-[10px] text-texte-secondaire">
-                          {u.role.salle?.nom ?? u.role.code}
-                        </p>
-                        {estRoleGereParServiceClient(u.role.code) && (
-                          <span className="mt-1 inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-800">
-                            {t("admin.utilisateurs.serviceClient")}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span className="rounded-full bg-gris-tres-clair px-2 py-0.5 text-xs font-medium">
-                          {u.statut}
+              <div className="conteneur-tableau-sigh">
+                <table className="tableau-sigh min-w-[640px]">
+                  <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
+                    <tr>
+                      <th className="w-10 px-3 py-2">
+                        <span className="sr-only">
+                          {t("reception.liste.selectionnerTout")}
                         </span>
-                        {u.messagerieBloquee && (
-                          <span className="ml-1 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-800">
-                            {t("admin.utilisateurs.messagerieBloquee")}
-                          </span>
-                        )}
-                      </td>
+                      </th>
+                      <th className="px-3 py-2">
+                        {t("admin.utilisateurs.colonnes.utilisateur")}
+                      </th>
+                      <th className="px-3 py-2">{t("admin.utilisateurs.colonnes.role")}</th>
+                      <th className="hidden px-3 py-2 md:table-cell">
+                        {t("admin.utilisateurs.colonnes.salle")}
+                      </th>
+                      <th className="px-3 py-2">{t("admin.utilisateurs.colonnes.statut")}</th>
+                      <th className="hidden px-3 py-2 lg:table-cell">
+                        {t("admin.utilisateurs.colonnes.derniereConnexion")}
+                      </th>
+                      <th className="px-3 py-2 text-center">
+                        {t("admin.utilisateurs.colonnes.actions")}
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {listeFiltree.map((u) => (
+                      <tr
+                        key={u.id}
+                        className={cn(
+                          "cursor-pointer border-t border-gris-bordure hover:bg-bleu-medical-clair/20",
+                          selectionId === u.id && "bg-bleu-medical-clair/30"
+                        )}
+                        onClick={() => consulter(u)}
+                      >
+                        <td
+                          className="px-3 py-2.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={idsCoches.includes(u.id)}
+                            onChange={() => basculerCoche(u.id)}
+                            aria-label={`${u.prenom} ${u.nom}`}
+                          />
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <div className="flex items-center gap-2.5">
+                            <AvatarUtilisateur
+                              prenom={u.prenom}
+                              nom={u.nom}
+                              photoUrl={u.photoUrl}
+                              taille="sm"
+                            />
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-texte-principal">
+                                {u.prenom} {u.nom}
+                              </p>
+                              <p className="truncate text-xs text-texte-secondaire">
+                                {u.email || u.identifiant}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-full px-2 py-0.5 text-xs font-semibold",
+                              classeBadgeRole(u.role.code)
+                            )}
+                          >
+                            {u.role.nom}
+                          </span>
+                          {estRoleGereParServiceClient(u.role.code) ? (
+                            <span className="mt-1 block text-[10px] font-semibold text-violet-800">
+                              {t("admin.utilisateurs.serviceClient")}
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="hidden px-3 py-2.5 text-sm md:table-cell">
+                          {u.role.salle?.nom ?? "—"}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                              classeBadgeStatut(u.statut)
+                            )}
+                          >
+                            {t(`admin.utilisateurs.statuts.${u.statut}`)}
+                          </span>
+                          {u.messagerieBloquee ? (
+                            <span className="ml-1 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-800">
+                              {t("admin.utilisateurs.messagerieBloquee")}
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="hidden px-3 py-2.5 text-xs text-texte-secondaire lg:table-cell">
+                          {formaterDerniereConnexion(
+                            u.derniereConnexion,
+                            i18n.language,
+                            t
+                          )}
+                        </td>
+                        <td
+                          className="px-3 py-2.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => consulter(u)}
+                              className={CLASSE_BOUTON_ACTION}
+                              aria-label={t("admin.utilisateurs.voir")}
+                              title={t("admin.utilisateurs.voir")}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => editer(u)}
+                              className={CLASSE_BOUTON_ACTION}
+                              aria-label={t("admin.utilisateurs.editer")}
+                              title={t("admin.utilisateurs.editer")}
+                            >
+                              <SquarePen className="h-4 w-4" />
+                            </button>
+                            <div
+                              className="relative"
+                              ref={menuOuvertId === u.id ? menuRef : undefined}
+                            >
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setMenuOuvertId((id) => (id === u.id ? null : u.id))
+                                }
+                                className={CLASSE_BOUTON_ACTION}
+                                aria-label={t("admin.utilisateurs.plusActions")}
+                                title={t("admin.utilisateurs.plusActions")}
+                                aria-expanded={menuOuvertId === u.id}
+                                aria-haspopup="menu"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+                              {menuOuvertId === u.id ? (
+                                <div
+                                  role="menu"
+                                  className="absolute right-0 top-10 z-20 min-w-[220px] overflow-hidden rounded-lg border border-gris-bordure bg-white py-1 shadow-lg"
+                                >
+                                  {u.statut === "ACTIF" ? (
+                                    <button
+                                      type="button"
+                                      role="menuitem"
+                                      disabled={enCours || u.id === utilisateurId}
+                                      onClick={() => void changerStatut(u, "INACTIF")}
+                                      title={
+                                        u.id === utilisateurId
+                                          ? t("admin.utilisateurs.impossibleSeDesactiver")
+                                          : undefined
+                                      }
+                                      className="block w-full px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      {t("admin.utilisateurs.desactiverCompte")}
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      role="menuitem"
+                                      disabled={enCours}
+                                      onClick={() => void changerStatut(u, "ACTIF")}
+                                      className="block w-full px-3 py-2 text-left text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                                    >
+                                      {t("admin.utilisateurs.activerCompte")}
+                                    </button>
+                                  )}
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
 
           <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-            {!formulaireVisible ? (
-              <p className="text-sm text-texte-secondaire">
-                {t("admin.utilisateurs.aideSelection")}
-              </p>
-            ) : (
-              <div className="space-y-3">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
                 <h3 className="text-sm font-bold text-texte-principal">
-                  {modeCreation
+                  {modePanneau === "creation"
                     ? t("admin.utilisateurs.formCreation")
-                    : t("admin.utilisateurs.formEdition")}
+                    : modePanneau === "consultation"
+                      ? t("admin.utilisateurs.formConsultation")
+                      : t("admin.utilisateurs.formEdition")}
                 </h3>
-                {modeCreation ? (
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>
-                      {t("admin.utilisateurs.champs.identifiant")}
-                    </label>
-                    <input
-                      className={CLASSE_CHAMP_RECEPTION}
-                      value={form.identifiant}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, identifiant: e.target.value }))
-                      }
-                    />
-                  </div>
-                ) : (
-                  <p className="text-xs text-texte-secondaire">
-                    {form.identifiant}
-                  </p>
-                )}
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>
-                      {t("admin.utilisateurs.champs.prenom")}
-                    </label>
-                    <input
-                      className={CLASSE_CHAMP_RECEPTION}
-                      value={form.prenom}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, prenom: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>
-                      {t("admin.utilisateurs.champs.nom")}
-                    </label>
-                    <input
-                      className={CLASSE_CHAMP_RECEPTION}
-                      value={form.nom}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, nom: e.target.value }))
-                      }
-                    />
-                  </div>
-                </div>
+                <p className="mt-0.5 text-xs text-texte-secondaire">
+                  {modePanneau === "creation"
+                    ? t("admin.utilisateurs.formCreationAide")
+                    : modePanneau === "consultation"
+                      ? t("admin.utilisateurs.formConsultationAide")
+                      : t("admin.utilisateurs.formEditionAide")}
+                </p>
+              </div>
+              {!modeCreation ? (
+                <button
+                  type="button"
+                  onClick={ouvrirCreation}
+                  aria-label={t("admin.utilisateurs.fermerFormulaire")}
+                  className="rounded-lg p-1 text-texte-secondaire hover:bg-gris-tres-clair hover:text-texte-principal"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              ) : null}
+            </div>
+
+            <div className="space-y-3">
+              {modeCreation ? (
                 <div>
                   <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.utilisateurs.champs.email")}
+                    {t("admin.utilisateurs.champs.identifiant")}
                   </label>
                   <input
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.email}
+                    className={cn(
+                      CLASSE_CHAMP_RECEPTION,
+                      lectureSeule && "cursor-not-allowed bg-slate-50"
+                    )}
+                    value={form.identifiant}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, email: e.target.value }))
+                      setForm((f) => ({ ...f, identifiant: e.target.value }))
+                    }
+                  />
+                </div>
+              ) : (
+                <p className="text-xs text-texte-secondaire">{form.identifiant}</p>
+              )}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className={CLASSE_LABEL_RECEPTION}>
+                    {t("admin.utilisateurs.champs.prenom")}
+                  </label>
+                  <input
+                    className={cn(
+                      CLASSE_CHAMP_RECEPTION,
+                      lectureSeule && "cursor-not-allowed bg-slate-50"
+                    )}
+                    value={form.prenom}
+                    disabled={lectureSeule}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, prenom: e.target.value }))
                     }
                   />
                 </div>
                 <div>
                   <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.utilisateurs.champs.telephone")}
+                    {t("admin.utilisateurs.champs.nom")}
                   </label>
                   <input
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.telephone}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, telephone: e.target.value }))
-                    }
+                    className={cn(
+                      CLASSE_CHAMP_RECEPTION,
+                      lectureSeule && "cursor-not-allowed bg-slate-50"
+                    )}
+                    value={form.nom}
+                    disabled={lectureSeule}
+                    onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))}
                   />
                 </div>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.utilisateurs.champs.role")}
-                  </label>
-                  <select
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.roleId}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, roleId: e.target.value }))
-                    }
-                  >
-                    {roles
-                      .filter(
-                        (r) =>
-                          !modeCreation ||
-                          (!estRoleGereParServiceClient(r.code) &&
-                            r.code !== "SUPER_ADMIN")
-                      )
-                      .map((r) => (
+              </div>
+              <div>
+                <label className={CLASSE_LABEL_RECEPTION}>
+                  {t("admin.utilisateurs.champs.email")}
+                </label>
+                <input
+                  className={cn(
+                    CLASSE_CHAMP_RECEPTION,
+                    lectureSeule && "cursor-not-allowed bg-slate-50"
+                  )}
+                  value={form.email}
+                  disabled={lectureSeule}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className={CLASSE_LABEL_RECEPTION}>
+                  {t("admin.utilisateurs.champs.telephone")}
+                </label>
+                <input
+                  className={cn(
+                    CLASSE_CHAMP_RECEPTION,
+                    lectureSeule && "cursor-not-allowed bg-slate-50"
+                  )}
+                  value={form.telephone}
+                  disabled={lectureSeule}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, telephone: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <label className={CLASSE_LABEL_RECEPTION}>
+                  {t("admin.utilisateurs.champs.role")}
+                </label>
+                <select
+                  className={cn(
+                    CLASSE_CHAMP_RECEPTION,
+                    lectureSeule && "cursor-not-allowed bg-slate-50"
+                  )}
+                  value={form.roleId}
+                  disabled={lectureSeule}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, roleId: e.target.value }))
+                  }
+                >
+                  {roles
+                    .filter(
+                      (r) =>
+                        !modeCreation ||
+                        (!estRoleGereParServiceClient(r.code) &&
+                          r.code !== "SUPER_ADMIN")
+                    )
+                    .map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.nom}
                         {r.salle ? ` (${r.salle.nom})` : ""}
                       </option>
                     ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.utilisateurs.champs.statut")}
-                  </label>
-                  <select
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.statut}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        statut: e.target.value as (typeof STATUTS)[number],
-                      }))
-                    }
-                  >
-                    {STATUTS.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={form.messagerieBloquee}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, messagerieBloquee: e.target.checked }))
-                    }
-                  />
-                  {t("admin.utilisateurs.champs.messagerieBloquee")}
-                </label>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.utilisateurs.champs.notesAdmin")}
-                  </label>
-                  <textarea
-                    className={CLASSE_CHAMP_RECEPTION}
-                    rows={2}
-                    value={form.notesAdmin}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, notesAdmin: e.target.value }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {modeCreation
-                      ? t("admin.utilisateurs.champs.motDePasse")
-                      : t("admin.utilisateurs.champs.nouveauMotDePasse")}
-                  </label>
-                  <input
-                    type="password"
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.motDePasse}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, motDePasse: e.target.value }))
-                    }
-                    placeholder={
-                      modeCreation ? undefined : t("admin.utilisateurs.mdpOptionnel")
-                    }
-                  />
-                </div>
-                <Bouton
-                  type="button"
-                  onClick={() => void soumettre()}
-                  disabled={enCours}
-                >
-                  {enCours ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  {t("admin.common.enregistrer")}
-                </Bouton>
+                </select>
               </div>
-            )}
+              <div>
+                <label className={CLASSE_LABEL_RECEPTION}>
+                  {t("admin.utilisateurs.champs.statut")}
+                </label>
+                <select
+                  className={cn(
+                    CLASSE_CHAMP_RECEPTION,
+                    lectureSeule && "cursor-not-allowed bg-slate-50"
+                  )}
+                  value={form.statut}
+                  disabled={lectureSeule}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      statut: e.target.value as (typeof STATUTS)[number],
+                    }))
+                  }
+                >
+                  {STATUTS.map((s) => (
+                    <option key={s} value={s}>
+                      {t(`admin.utilisateurs.statuts.${s}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.messagerieBloquee}
+                  disabled={lectureSeule}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, messagerieBloquee: e.target.checked }))
+                  }
+                />
+                {t("admin.utilisateurs.champs.messagerieBloquee")}
+              </label>
+              <div>
+                <label className={CLASSE_LABEL_RECEPTION}>
+                  {t("admin.utilisateurs.champs.notesAdmin")}
+                </label>
+                <textarea
+                  className={cn(
+                    CLASSE_CHAMP_RECEPTION,
+                    lectureSeule && "cursor-not-allowed bg-slate-50"
+                  )}
+                  rows={2}
+                  maxLength={250}
+                  value={form.notesAdmin}
+                  disabled={lectureSeule}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, notesAdmin: e.target.value }))
+                  }
+                />
+                {!lectureSeule ? (
+                  <p className="mt-0.5 text-right text-[10px] text-texte-secondaire">
+                    {form.notesAdmin.length}/250
+                  </p>
+                ) : null}
+              </div>
+              {!lectureSeule ? (
+                <>
+                  <div>
+                    <label className={CLASSE_LABEL_RECEPTION}>
+                      {modeCreation
+                        ? t("admin.utilisateurs.champs.motDePasse")
+                        : t("admin.utilisateurs.champs.nouveauMotDePasse")}
+                    </label>
+                    <input
+                      type="password"
+                      className={cn(
+                        CLASSE_CHAMP_RECEPTION,
+                        lectureSeule && "cursor-not-allowed bg-slate-50"
+                      )}
+                      value={form.motDePasse}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, motDePasse: e.target.value }))
+                      }
+                      placeholder={
+                        modeCreation ? undefined : t("admin.utilisateurs.mdpOptionnel")
+                      }
+                    />
+                  </div>
+                  <Bouton type="button" onClick={() => void soumettre()} disabled={enCours}>
+                    {enCours ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    {t("admin.common.enregistrer")}
+                  </Bouton>
+                </>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>

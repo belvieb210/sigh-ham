@@ -6,7 +6,7 @@ import type { PatientFileLaboratoire } from "@/lib/laboratoire/types";
 import {
   initialesPatient,
   numeroPermanentPatientLaboratoire,
-  numeroVisiteLaboratoire,
+  numeroDossierVisiteLaboratoire,
   codeTransfertLaboratoire,
 } from "@/features/laboratoire/utils-affichage";
 
@@ -35,7 +35,6 @@ function Ligne({
 
 export function ResumePatientLaboratoire({
   patient,
-  variante = "labo",
 }: PropsResumePatientLaboratoire) {
   const { t, i18n } = useTranslation();
 
@@ -104,12 +103,10 @@ export function ResumePatientLaboratoire({
           label={t("laboratoire.panneau.examens")}
           valeur={String(patient.nombreExamens)}
         />
-        {variante === "labo" ? null : (
-          <Ligne
-            label={t("laboratoire.panneau.numeroVisite")}
-            valeur={numeroVisiteLaboratoire(patient)}
-          />
-        )}
+        <Ligne
+          label={t("laboratoire.panneau.numeroVisite")}
+          valeur={numeroDossierVisiteLaboratoire(patient)}
+        />
         <Ligne
           label={t("laboratoire.panneau.numeroTransfert")}
           valeur={codeTransfertLaboratoire(patient)}

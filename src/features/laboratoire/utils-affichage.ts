@@ -97,6 +97,13 @@ function compactNumeroPatOuVis(valeur: string): string {
   return valeur;
 }
 
+/** N° VIS du parcours (ex. VIS2026000001). */
+export function numeroDossierVisiteLaboratoire(p: PatientFileLaboratoire) {
+  const brut = p.numeroDossier?.trim();
+  if (!brut) return "—";
+  return compactNumeroPatOuVis(brut);
+}
+
 /** N° PAT affiché en colonne « N° Patient » (ex. PAT202600002). */
 export function numeroVisiteLaboratoire(p: PatientFileLaboratoire) {
   return numeroEnregistrementLaboratoire(p);

@@ -47,10 +47,12 @@ export function BarreFiltresLaboratoire({
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-        <div className="min-w-0">{rechercheNumeros}</div>
+      <div className="relative flex min-h-11 items-center gap-3">
+        <div className="z-10 flex min-w-0 flex-1 items-center pr-2">
+          {rechercheNumeros}
+        </div>
 
-        <div className="min-w-0 px-1 text-center">
+        <div className="pointer-events-none absolute inset-x-0 flex flex-col items-center justify-center px-36 text-center">
           {titre ? (
             <h2 className="text-xs font-bold uppercase tracking-widest text-texte-principal">
               {titre}
@@ -61,7 +63,7 @@ export function BarreFiltresLaboratoire({
           ) : null}
         </div>
 
-        <div className="flex items-center justify-end gap-2">
+        <div className="z-10 flex shrink-0 items-center justify-end gap-2">
           <button
             type="button"
             onClick={onToggle}

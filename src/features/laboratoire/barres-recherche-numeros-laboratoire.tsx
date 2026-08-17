@@ -10,7 +10,7 @@ export interface RechercheNumerosLabo {
 }
 
 const CLASSE_CHAMP =
-  "flex h-11 min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm text-texte-principal shadow-sm transition-colors focus-within:border-bleu-medical focus-within:ring-2 focus-within:ring-bleu-medical/20";
+  "flex h-11 w-[min(100%,220px)] min-w-[148px] shrink-0 items-center gap-2 rounded-lg border-2 border-slate-400 bg-white px-3 text-sm text-texte-principal shadow-sm transition-colors focus-within:border-bleu-medical focus-within:ring-2 focus-within:ring-bleu-medical/25";
 
 function ChampRechercheNumero({
   valeur,
@@ -27,7 +27,7 @@ function ChampRechercheNumero({
 }) {
   return (
     <label className={CLASSE_CHAMP}>
-      <Search className="h-4 w-4 shrink-0 text-slate-500" aria-hidden />
+      <Search className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
       <input
         type="text"
         value={valeur}
@@ -35,7 +35,7 @@ function ChampRechercheNumero({
         placeholder={placeholder}
         aria-label={ariaLabel}
         autoComplete="off"
-        className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-slate-500"
+        className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-slate-600"
       />
       {valeur ? (
         <button
@@ -65,7 +65,7 @@ export function BarresRechercheNumerosLaboratoire({
   const { t } = useTranslation();
 
   return (
-    <div className="flex min-w-0 gap-2">
+    <div className="flex min-w-0 flex-nowrap items-center gap-2">
       <ChampRechercheNumero
         valeur={numeroPermanent}
         onChange={onChangePermanent}

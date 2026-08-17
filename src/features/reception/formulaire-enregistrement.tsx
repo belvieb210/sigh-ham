@@ -33,6 +33,7 @@ import { ChampDateNaissance } from "@/features/reception/champ-date-naissance";
 import { useResumePatient } from "@/features/reception/contexte-resume-patient";
 import { cn } from "@/lib/utils";
 import { lireReponseJson } from "@/lib/api/lire-reponse-json";
+import { afficherNumeroPatientPermanent } from "@/lib/numeros/affichage";
 import { resultatRechercheVersPatientEnregistre } from "@/lib/reception/resultat-recherche-vers-patient-enregistre";
 import type {
   DonneesFormulairePatient,
@@ -235,8 +236,10 @@ export const FormulaireEnregistrement = forwardRef<
     (donnees: DonneesFormulairePatient, typeVisite = "ancien") => {
       setFormulaire(mapperPrefillVersEtat({ ...donnees, typeVisite }));
       setSexe(donnees.sexe);
-      setNumeroEnregistrement(donnees.numeroEnregistrement);
       setNumeroPatientActif(donnees.numeroPatient);
+      setNumeroEnregistrement(
+        afficherNumeroPatientPermanent(donnees.numeroPatient, donnees.numeroEnregistrement)
+      );
       setVisiteResume({
         numeroVisite: donnees.numeroVisite,
         statut: donnees.visiteStatut,
@@ -348,8 +351,10 @@ export const FormulaireEnregistrement = forwardRef<
       })
       .then((data) => {
         if (annule) return;
-        setNumeroEnregistrement(data.numeroEnregistrement);
         setNumeroPatientActif(data.numeroPatient);
+        setNumeroEnregistrement(
+          afficherNumeroPatientPermanent(data.numeroPatient, data.numeroEnregistrement)
+        );
       })
       .catch(() => {
         if (!annule) setErreur(t("reception.erreurs.numerosImpossible"));
@@ -367,8 +372,13 @@ export const FormulaireEnregistrement = forwardRef<
 
     setFormulaire(mapperPrefillVersEtat(donneesPrefill));
     setSexe(donneesPrefill.sexe);
-    setNumeroEnregistrement(donneesPrefill.numeroEnregistrement);
     setNumeroPatientActif(donneesPrefill.numeroPatient);
+    setNumeroEnregistrement(
+      afficherNumeroPatientPermanent(
+        donneesPrefill.numeroPatient,
+        donneesPrefill.numeroEnregistrement
+      )
+    );
     setVisiteResume({
       numeroVisite: donneesPrefill.numeroVisite,
       statut: donneesPrefill.visiteStatut,
@@ -821,7 +831,10 @@ export const FormulaireEnregistrement = forwardRef<
                   </label>
                   <input
                     readOnly
-                    value={estComplet ? numeroEnregistrement : numeroEnregistrement || "20260101001"}
+                    value={
+                      afficherNumeroPatientPermanent(numeroPatientActif, numeroEnregistrement) ||
+                      (estComplet ? "—" : "20260101001")
+                    }
                     className={cn(CLASSE_CHAMP_RECEPTION, "bg-gris-tres-clair")}
                   />
                 </div>

@@ -66,7 +66,7 @@ export const receptionZh = {
     aideOrientationMultiAccueil:
       "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     aideOrientationReception:
-      "勾选一个或多个目的地科室（收费处、护理站、医生、化验室、药房等）。",
+      "勾选一个或多个目的地科室（护理站、医生、收费处）。",
     destinationVerrouillee: "此转介已无法更改目的地。",
     aucunPatient: "未选择患者",
     age: "年龄",

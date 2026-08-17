@@ -65,7 +65,7 @@ export const receptionAr = {
     aideOrientationMultiAccueil:
       "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     aideOrientationReception:
-      "حدد غرفة أو أكثر للوجهة (الصندوق، التمريض، الطبيب، المختبر، الصيدلية، إلخ).",
+      "حدد غرفة أو أكثر للوجهة (التمريض، الطبيب، الصندوق).",
     destinationVerrouillee: "لا يمكن تغيير وجهة هذا التحويل بعد الآن.",
     aucunPatient: "لم يُحدَّد أي مريض",
     age: "العمر",

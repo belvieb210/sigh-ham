@@ -58,7 +58,7 @@ function LiensNavigation({
   };
 
   return (
-    <>
+    <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-start justify-between border-b border-gris-bordure px-4 py-4">
         <div className="min-w-0 flex-1">
           <LogoHam taille="petit" href="/sigh/reception" className="max-w-full" />
@@ -78,7 +78,7 @@ function LiensNavigation({
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
         <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-texte-secondaire">
           {t("reception.layout.reception")}
         </p>
@@ -154,7 +154,7 @@ function LiensNavigation({
         </ul>
       </nav>
 
-      <div className="space-y-2 border-t border-gris-bordure p-3">
+      <div className="mt-auto space-y-2 border-t border-gris-bordure p-3">
         <Link
           href="/sigh/reception/profil"
           onClick={onFermer}
@@ -191,7 +191,7 @@ function LiensNavigation({
           </button>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -214,7 +214,7 @@ export function BarreLateraleReception({
   return (
     <>
       {/* Sidebar desktop — jamais visible sous lg */}
-      <aside className="hidden h-full w-[260px] shrink-0 flex-col border-r border-gris-bordure bg-white lg:flex">
+      <aside className="hidden h-full min-h-0 w-[260px] shrink-0 flex-col self-stretch border-r border-gris-bordure bg-white lg:flex">
         <LiensNavigation utilisateur={utilisateur} />
       </aside>
 

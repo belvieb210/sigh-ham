@@ -126,7 +126,7 @@ const COULEUR_MOBILE_DEFAUT = "border-gris-bordure bg-white";
 const COULEUR_MOBILE_INFIRMIERS =
   "border-bleu-medical bg-bleu-medical-clair ring-2 ring-bleu-medical/20";
 
-/** Réception : toutes les salles cliniques sauf elle-même */
+/** Réception : Infirmiers, Médecin, Caisse uniquement */
 export const ORIENTATIONS_RAPIDES = metaOrientationsSauf("RECEPTION").map((o) => ({
   ...o,
   couleurMobile:

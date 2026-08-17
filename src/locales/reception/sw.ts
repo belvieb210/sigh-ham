@@ -67,7 +67,7 @@ export const receptionSw = {
     aideOrientationMultiAccueil:
       "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     aideOrientationReception:
-      "Chagua chumba kimoja au zaidi cha marudio (Malipo, Wauguzi, Daktari, Maabara, Famasia, n.k.).",
+      "Chagua chumba kimoja au zaidi cha marudio (Wauguzi, Daktari, Malipo).",
     destinationVerrouillee: "Uhamisho huu hauwezi tena kubadilisha marudio.",
     aucunPatient: "Hakuna mgonjwa aliyechaguliwa",
     age: "Umri",

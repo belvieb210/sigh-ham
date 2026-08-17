@@ -67,7 +67,7 @@ export const receptionLn = {
     aideOrientationMultiAccueil:
       "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     aideOrientationReception:
-      "Pona chambre moko to mingi ya destination (Caisse, Infirmiers, Médecin, Laboratoire, Pharmacie, etc.).",
+      "Pona chambre moko to mingi ya destination (Infirmiers, Médecin, Caisse).",
     destinationVerrouillee: "Transfert oyo ekoki kobongola destination lisusu te.",
     aucunPatient: "Patient moko te oyo eponami",
     age: "Mbula",

@@ -64,7 +64,7 @@ export const receptionEn = {
     aideOrientationMultiAccueil:
       "Check one or more rooms, then use Manual transfer. After confirmation (⋮), the patient appears in each chosen room.",
     aideOrientationReception:
-      "Check one or more destination rooms (Cashier, Nurses, Doctor, Laboratory, Pharmacy, etc.).",
+      "Check one or more destination rooms (Nurses, Doctor, Cashier).",
     destinationVerrouillee:
       "Transfer already confirmed: quick routing can no longer be changed.",
     aucunPatient: "No patient selected",

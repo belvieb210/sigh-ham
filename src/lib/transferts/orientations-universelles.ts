@@ -81,11 +81,13 @@ export const META_ORIENTATION_SALLE: Record<
 
 /**
  * Destinations autorisées par salle d'origine.
- * Salles absentes (RECEPTION, CAISSE, LABORATOIRE) : toutes les autres salles cliniques.
+ * Salles absentes (CAISSE, LABORATOIRE) : toutes les autres salles cliniques.
+ * Réception : uniquement Infirmiers, Médecin et Caisse.
  */
 export const ORIENTATIONS_DESTINATION_PAR_SALLE: Partial<
   Record<CodeSalle, readonly CodeSalle[]>
 > = {
+  RECEPTION: ["INFIRMIERS", "MEDECINS", "CAISSE"],
   INFIRMIERS: ["MEDECINS"],
   MEDECINS: ["CAISSE"],
   MEDECINS_EXTERNES: ["CAISSE"],

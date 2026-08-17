@@ -65,7 +65,7 @@ export const receptionHi = {
     aideOrientationMultiAccueil:
       "Cochez une ou plusieurs salles, puis utilisez Transfert manuel. Après confirmation (⋮), le patient apparaît dans chaque salle choisie.",
     aideOrientationReception:
-      "एक या अधिक गंतव्य कक्ष चुनें (कैशियर, नर्स, डॉक्टर, प्रयोगशाला, फार्मेसी, आदि)।",
+      "एक या अधिक गंतव्य कक्ष चुनें (नर्स, डॉक्टर, कैशियर)।",
     destinationVerrouillee: "यह स्थानांतरण अब गंतव्य नहीं बदल सकता।",
     aucunPatient: "कोई रोगी चयनित नहीं",
     age: "आयु",

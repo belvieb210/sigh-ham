@@ -156,7 +156,7 @@ function BlocOrientation({
         <p className="mb-2 text-xs text-texte-secondaire">
           {t("reception.panneau.aideOrientationReception", {
             defaultValue:
-              "Cochez la ou les salles de destination (Caisse, Infirmiers, Médecin, Laboratoire, Pharmacie, etc.).",
+              "Cochez la ou les salles de destination (Infirmiers, Médecin, Caisse).",
           })}
         </p>
       )}

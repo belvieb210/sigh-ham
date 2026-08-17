@@ -127,13 +127,14 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   }, []);
 
   const chargerDossier = useCallback(
-    async (id: string) => {
+    async (id: string, factureCible?: string | null) => {
       setChargementDossier(true);
       setErreur(null);
       setRechercheExamenOuverte(false);
       setMontantAvance(0);
       try {
-        const url = `/api/caisse/patients/${id}${factureId ? `?facture=${encodeURIComponent(factureId)}` : ""}`;
+        const facturePourUrl = factureCible !== undefined ? factureCible : factureId;
+        const url = `/api/caisse/patients/${id}${facturePourUrl ? `?facture=${encodeURIComponent(facturePourUrl)}` : ""}`;
         const res = await fetch(url);
         const data = (await res.json()) as {
           dossier?: DossierFacturationCaisse;
@@ -150,8 +151,8 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         setTypeFactureUi(typeInitial);
         if (typeInitial === "PHARMACIE") {
           setTransfererApres(true);
-          setFactureId(data.dossier.pharmacie.facture?.id ?? factureId);
-        } else if (!factureId) {
+          setFactureId(data.dossier.pharmacie.facture?.id ?? null);
+        } else if (!facturePourUrl) {
           setFactureId(data.dossier.examens.facture.id);
         }
         const ctx =
@@ -175,11 +176,14 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         const fraisDeja = lignesCharge
           .filter((l) => l.libelle === "Frais divers")
           .reduce((a, l) => a + l.montant, 0);
-        const dejaPayeCharge = ctx.facture?.montantPaye ?? data.dossier.facture.montantPaye;
-        const remiseInitiale = Math.min(
-          Math.max(0, data.dossier.remiseProposee || 0, remiseDeja),
-          totalExamensCharge
-        );
+        const dejaPayeCharge = ctx.facture?.montantPaye ?? 0;
+        const remiseInitiale =
+          typeInitial === "PHARMACIE"
+            ? Math.min(remiseDeja, totalExamensCharge)
+            : Math.min(
+                Math.max(0, data.dossier.remiseProposee || 0, remiseDeja),
+                totalExamensCharge
+              );
         const totalDu = Math.max(
           0,
           totalExamensCharge - remiseInitiale + fraisDeja
@@ -189,7 +193,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         setFraisDivers(arrondirMontantCaisse(fraisDeja));
         setMontantAvance(0);
         // Avance déjà encaissée → mode Solde + montant = reste (après remise)
-        if (data.dossier.facture.isPharmacie ? false : data.dossier.examens.facture.aUneAvance) {
+        if (typeInitial !== "PHARMACIE" && data.dossier.examens.facture.aUneAvance) {
           setModeFacture("SOLDE");
         } else {
           setModeFacture("CASH");
@@ -247,6 +251,10 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     if (type === "PHARMACIE") {
       const idPh = dossier?.pharmacie.facture?.id ?? null;
       setFactureId(idPh);
+      setRemise(0);
+      setFraisDivers(0);
+      setModeFacture("CASH");
+      setTransfererApres(true);
     } else {
       const idEx = dossier?.examens.facture.id ?? null;
       setFactureId(idEx);
@@ -258,6 +266,13 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     const lignes = modePharmacie ? dossier.pharmacie.lignes : dossier.examens.lignes;
     return lignes.filter((l) => l.montant > 0 && l.libelle !== "Frais divers");
   }, [dossier, modePharmacie]);
+
+  const lignesPharmaciePositives = useMemo(() => {
+    if (!dossier) return [];
+    return dossier.pharmacie.lignes.filter(
+      (l) => l.montant > 0 && l.libelle !== "Frais divers"
+    );
+  }, [dossier]);
 
   const factureContextuelle = useMemo(() => {
     if (!dossier) return null;
@@ -558,8 +573,22 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     () => lignesVisibles.reduce((acc, l) => acc + l.montant, 0),
     [lignesVisibles]
   );
-  const sousTotal = Math.max(0, totalExamens - (remise || 0));
-  const totalAPayer = sousTotal + (fraisDivers || 0);
+  const restePharmacie = Math.max(
+    0,
+    lignesPharmaciePositives.reduce((acc, l) => acc + l.montant, 0) -
+      (dossier?.pharmacie.facture?.montantPaye ?? 0)
+  );
+  const pharmacieAEncaisser =
+    Boolean(dossier?.pharmacie.aDesMedicaments) &&
+    !Boolean(dossier?.facturationDual.facturePharmacieVerrouillee) &&
+    (restePharmacie > 0.01 || lignesPharmaciePositives.length > 0);
+  const collecterPharmacieDepuisExamens =
+    !modePharmacie &&
+    pharmacieAEncaisser &&
+    Boolean(dossier?.facturationDual.factureNormaleVerrouillee);
+  const remiseApplicable = modePharmacie ? 0 : remise || 0;
+  const sousTotal = Math.max(0, totalExamens - remiseApplicable);
+  const totalAPayer = sousTotal + (modePharmacie ? 0 : fraisDivers || 0);
   const dejaPaye = factureContextuelle?.montantPaye ?? 0;
   const resteAPayer = Math.max(0, totalAPayer - dejaPaye);
   const factureCloturee = modePharmacie
@@ -572,14 +601,20 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     soldeObligatoire && modeFacture === "SOLDE" && resteAPayer <= 0.01;
   const encaissementDesactive =
     enCours ||
-    factureCloturee ||
-    (modeFacture === "AVANCE"
-      ? montantAvance <= 0
-      : peutCloturerSoldeAZero
-        ? false
-        : resteAPayer <= 0 || montantPaiement <= 0);
+    (collecterPharmacieDepuisExamens
+      ? lignesPharmaciePositives.length === 0
+      : factureCloturee ||
+        (modeFacture === "AVANCE"
+          ? montantAvance <= 0
+          : peutCloturerSoldeAZero
+            ? false
+            : resteAPayer <= 0 || montantPaiement <= 0));
   /** Montant affiché comme « à payer » : reste si avance déjà payée, sinon total */
-  const montantDuJour = soldeObligatoire || modeFacture === "SOLDE" ? resteAPayer : totalAPayer;
+  const montantDuJour = collecterPharmacieDepuisExamens
+    ? restePharmacie
+    : soldeObligatoire || modeFacture === "SOLDE"
+      ? resteAPayer
+      : totalAPayer;
   const resteApresCePaiement = Math.max(
     0,
     resteAPayer - (modeFacture === "AVANCE" ? montantAvance : montantPaiement)
@@ -592,12 +627,40 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   }, [soldeObligatoire, modeFacture]);
 
   useEffect(() => {
+    if (collecterPharmacieDepuisExamens) {
+      setMontantPaiement(arrondirMontantCaisse(restePharmacie));
+      return;
+    }
     if (modeFacture === "AVANCE") {
       setMontantPaiement(arrondirMontantCaisse(montantAvance));
     } else {
       setMontantPaiement(arrondirMontantCaisse(resteAPayer));
     }
-  }, [resteAPayer, modeFacture, montantAvance]);
+  }, [
+    resteAPayer,
+    modeFacture,
+    montantAvance,
+    collecterPharmacieDepuisExamens,
+    restePharmacie,
+  ]);
+
+  useEffect(() => {
+    if (
+      !dossier ||
+      typeFactureUi === "PHARMACIE" ||
+      !dossier.facturationDual.factureNormaleVerrouillee ||
+      !dossier.pharmacie.aDesMedicaments ||
+      dossier.facturationDual.facturePharmacieVerrouillee
+    ) {
+      return;
+    }
+    setTypeFactureUi("PHARMACIE");
+    setFactureId(dossier.pharmacie.facture?.id ?? null);
+    setTransfererApres(true);
+    setRemise(0);
+    setFraisDivers(0);
+    setModeFacture("CASH");
+  }, [dossier, typeFactureUi]);
 
   const selectionnerPatientFile = (patient: PatientFileCaisse) => {
     setDossierId(patient.dossierId);
@@ -628,8 +691,20 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   };
 
   const encaisser = async () => {
-    if (!dossierId) return;
-    if (lignesVisibles.length === 0) {
+    if (!dossierId || !dossier) return;
+
+    const collecterPharmacie = collecterPharmacieDepuisExamens;
+    const typeEffectif: TypeFactureCaisseUi = collecterPharmacie
+      ? "PHARMACIE"
+      : typeFactureUi;
+    const lignesEffectives =
+      typeEffectif === "PHARMACIE" ? lignesPharmaciePositives : lignesVisibles;
+
+    if (lignesEffectives.length === 0) {
+      if (collecterPharmacie) {
+        setTypeFactureUi("PHARMACIE");
+        setFactureId(dossier.pharmacie.facture?.id ?? null);
+      }
       setErreur(t("caisse.facturation.aucuneLigne"));
       return;
     }
@@ -638,14 +713,23 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     setErreur(null);
     setMessage(null);
     try {
-      if (soldeObligatoire && modeFacture !== "SOLDE") {
+      if (collecterPharmacie) {
+        setTypeFactureUi("PHARMACIE");
+        setFactureId(dossier.pharmacie.facture?.id ?? null);
+        setModeFacture("CASH");
+        setRemise(0);
+        setFraisDivers(0);
+        setTransfererApres(true);
+      }
+
+      if (!collecterPharmacie && soldeObligatoire && modeFacture !== "SOLDE") {
         throw new Error(t("caisse.facturation.modeSoldeObligatoire"));
       }
-      if (!soldeObligatoire && modeFacture === "SOLDE") {
+      if (!collecterPharmacie && !soldeObligatoire && modeFacture === "SOLDE") {
         throw new Error(t("caisse.facturation.modeSoldeIndisponible"));
       }
 
-      if (modeFacture === "AVANCE") {
+      if (!collecterPharmacie && modeFacture === "AVANCE") {
         if (montantAvance <= 0) {
           throw new Error(t("caisse.facturation.avanceInvalide"));
         }
@@ -654,15 +738,30 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         }
       }
 
-      const montantAEncaisser =
-        modeFacture === "AVANCE" ? montantAvance : montantPaiement;
+      const montantAEncaisser = collecterPharmacie
+        ? restePharmacie
+        : modeFacture === "AVANCE"
+          ? montantAvance
+          : montantPaiement;
 
       const clotureSoldeSansPaiement =
-        modeFacture === "SOLDE" && resteAPayer <= 0.01;
+        !collecterPharmacie && modeFacture === "SOLDE" && resteAPayer <= 0.01;
 
       if (!clotureSoldeSansPaiement && montantAEncaisser <= 0) {
         throw new Error(t("caisse.facturation.erreurEncaissement"));
       }
+
+      const factureIdPrep = collecterPharmacie
+        ? dossier.pharmacie.facture?.id ?? null
+        : factureId;
+      const remisePrep = collecterPharmacie ? 0 : remise;
+      const fraisPrep = collecterPharmacie ? 0 : fraisDivers;
+      const modeFacturePrep = collecterPharmacie ? "CASH" : modeFacture;
+      const destinationPrep = transfererApres
+        ? typeEffectif === "PHARMACIE"
+          ? "PHARMACIE"
+          : destinationApres
+        : "AUCUNE";
 
       // 1) Enregistrer / préparer la facture
       const prep = await fetch("/api/caisse/factures", {
@@ -670,9 +769,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dossierId,
-          factureId,
+          factureId: factureIdPrep,
           devise,
-          typeFacture: typeFactureUi,
+          typeFacture: typeEffectif,
         }),
       });
       const prepData = (await prep.json()) as {
@@ -686,7 +785,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
       }
       setDossier(prepData.dossier);
       const factureEncaisseId =
-        typeFactureUi === "PHARMACIE"
+        typeEffectif === "PHARMACIE"
           ? prepData.dossier.pharmacie.facture?.id
           : prepData.dossier.examens.facture.id;
       if (factureEncaisseId) setFactureId(factureEncaisseId);
@@ -697,24 +796,24 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dossierId,
-          factureId: factureEncaisseId ?? factureId,
-          typeFacture: typeFactureUi,
+          factureId: factureEncaisseId ?? factureIdPrep,
+          typeFacture: typeEffectif,
           montant: clotureSoldeSansPaiement ? 0 : montantAEncaisser,
           modePaiement: modePrisma,
-          modeFacture,
-          remise,
-          fraisDivers,
+          modeFacture: modeFacturePrep,
+          remise: remisePrep,
+          fraisDivers: fraisPrep,
           devise,
           reference: [
             `recu=${numeroRecu}`,
             `devise=${devise}`,
-            fraisDivers > 0 ? `frais=${fraisDivers}` : null,
-            modeFacture === "AVANCE" ? `avance=${montantAvance}` : null,
+            fraisPrep > 0 ? `frais=${fraisPrep}` : null,
+            modeFacturePrep === "AVANCE" ? `avance=${montantAvance}` : null,
             notes.trim() || null,
           ]
             .filter(Boolean)
             .join("|"),
-          destinationApres: transfererApres ? destinationApres : "AUCUNE",
+          destinationApres: destinationPrep,
         }),
       });
       const data = (await res.json()) as {
@@ -749,19 +848,25 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
       }
 
       if (dual.typeFactureRecommande) {
-        setTypeFactureUi(dual.typeFactureRecommande);
-        setFactureId(null);
-        if (dual.typeFactureRecommande === "PHARMACIE") {
+        const suivant = dual.typeFactureRecommande;
+        const factureSuivante =
+          suivant === "PHARMACIE"
+            ? data.dossier.pharmacie.facture?.id ?? null
+            : data.dossier.examens.facture.id;
+        setTypeFactureUi(suivant);
+        setFactureId(factureSuivante);
+        if (suivant === "PHARMACIE") {
           setTransfererApres(true);
+          setRemise(0);
+          setFraisDivers(0);
+          setModeFacture("CASH");
         }
         setMessage(
           dual.factureNormaleVerrouillee
             ? t("caisse.facturation.examensPayesRestePharmacie")
             : t("caisse.facturation.pharmaciePayeeResteExamens")
         );
-        if (dossierId) {
-          await chargerDossier(dossierId);
-        }
+        await chargerDossier(dossierId, factureSuivante);
         return;
       }
 
@@ -1664,11 +1769,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                   ) : (
                     <Check className="h-4 w-4" />
                   )}
-                  {factureCloturee
+                  {factureCloturee && !collecterPharmacieDepuisExamens
                     ? t("caisse.facturation.factureDejaCloturee")
-                    : peutCloturerSoldeAZero
+                    : peutCloturerSoldeAZero && !collecterPharmacieDepuisExamens
                       ? t("caisse.facturation.cloturerFacture")
-                      : modePharmacie
+                      : modePharmacie || collecterPharmacieDepuisExamens
                         ? t("caisse.facturation.encaisserPharmacie")
                         : t("caisse.facturation.validerEncaisser")}
                 </Bouton>
@@ -1722,11 +1827,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                 >
                   {enCours ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : factureCloturee ? (
+                  ) : factureCloturee && !collecterPharmacieDepuisExamens ? (
                     t("caisse.facturation.factureDejaCloturee")
-                  ) : peutCloturerSoldeAZero ? (
+                  ) : peutCloturerSoldeAZero && !collecterPharmacieDepuisExamens ? (
                     t("caisse.facturation.cloturerFacture")
-                  ) : modePharmacie ? (
+                  ) : modePharmacie || collecterPharmacieDepuisExamens ? (
                     t("caisse.facturation.encaisserPharmacie")
                   ) : (
                     t("caisse.facturation.encaisserPaiement")

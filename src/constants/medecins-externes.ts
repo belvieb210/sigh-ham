@@ -113,15 +113,13 @@ export const CODES_ORIENTATION_MEDECINS_EXTERNES: CodeSalle[] = ["CAISSE"];
 export function filtrerOrientationsMedecinsExternes(
   orientations: string[]
 ): CodeSalle[] {
-  const codes = [
+  return [
     ...new Set(
       orientations
         .map((o) => o.trim())
         .filter((o) => o === "CAISSE") as CodeSalle[]
     ),
   ];
-  if (codes.length === 0) return ["CAISSE"];
-  return codes;
 }
 
 export const EVENEMENT_MEDECINS_EXTERNES_MODIFIE =

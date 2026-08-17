@@ -81,12 +81,11 @@ export const META_ORIENTATION_SALLE: Record<
 
 /**
  * Destinations autorisées par salle d'origine.
- * Salles absentes (CAISSE, LABORATOIRE) : toutes les autres salles cliniques.
+ * Salles absentes (RECEPTION, CAISSE, LABORATOIRE) : toutes les autres salles cliniques.
  */
 export const ORIENTATIONS_DESTINATION_PAR_SALLE: Partial<
   Record<CodeSalle, readonly CodeSalle[]>
 > = {
-  RECEPTION: ["CAISSE", "INFIRMIERS", "MEDECINS"],
   INFIRMIERS: ["MEDECINS"],
   MEDECINS: ["CAISSE"],
   MEDECINS_EXTERNES: ["CAISSE"],
@@ -146,8 +145,7 @@ export function orientationsInitialesDepuisPatient(
         ? [codeUnique]
         : [];
   const filtrees = filtrerOrientationsAutorisees(origine, candidats);
-  if (filtrees.length > 0) return filtrees;
-  return [orientationDefautPourSalle(origine)];
+  return filtrees;
 }
 
 export function metaOrientationsSauf(origine: CodeSalle) {

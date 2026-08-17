@@ -20,21 +20,18 @@ const ContexteOrientation = createContext<ContexteOrientationRapide | null>(null
 
 export function FournisseurOrientationRapide({
   children,
-  initial = ["INFIRMIERS"],
+  initial = [],
 }: {
   children: ReactNode;
   initial?: string[];
 }) {
   const [orientations, setOrientations] = useState<string[]>(
-    initial.length > 0 ? initial : ["INFIRMIERS"]
+    initial.length > 0 ? initial : []
   );
 
-  const definirOrientations = useCallback(
-    (values: string[]) => {
-      setOrientations(values.length > 0 ? values : initial.length > 0 ? initial : ["INFIRMIERS"]);
-    },
-    [initial]
-  );
+  const definirOrientations = useCallback((values: string[]) => {
+    setOrientations(values);
+  }, []);
 
   const definirOrientation = useCallback((value: string) => {
     setOrientations([value]);
@@ -42,7 +39,7 @@ export function FournisseurOrientationRapide({
 
   const valeur = useMemo(
     () => ({
-      orientation: orientations[0] ?? initial[0] ?? "INFIRMIERS",
+      orientation: orientations[0] ?? initial[0] ?? "",
       orientations,
       definirOrientation,
       definirOrientations,

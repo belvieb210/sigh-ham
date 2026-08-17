@@ -68,15 +68,13 @@ export const ORIENTATIONS_RAPIDES_EGLISE = metaOrientationsSauf("EGLISE");
 export const CODES_ORIENTATION_EGLISE: CodeSalle[] = ["CAISSE"];
 
 export function filtrerOrientationsEglise(orientations: string[]): CodeSalle[] {
-  const codes = [
+  return [
     ...new Set(
       orientations
         .map((o) => o.trim())
         .filter((o) => o === "CAISSE") as CodeSalle[]
     ),
   ];
-  if (codes.length === 0) return ["CAISSE"];
-  return codes;
 }
 
 export const EVENEMENT_EGLISE_PATIENTS_MODIFIES = "sigh:eglise-patients-modifies";

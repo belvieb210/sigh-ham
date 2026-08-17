@@ -158,14 +158,15 @@ export async function obtenirSectionPharmacieDossier(
   }
 
   const factureMappee = mapperFacturePharmacie(facturePharmacie);
+  const lignesFacturePositives = (factureMappee?.lignes ?? []).filter(
+    (l) => l.montant > 0 && l.libelle !== "Frais divers"
+  );
 
-  if (factureMappee && factureMappee.lignes.length > 0) {
+  if (lignesFacturePositives.length > 0 && factureMappee) {
     return {
       aDesMedicaments: true,
       ordonnanceId: ordonnance?.id ?? null,
-      lignes: factureMappee.lignes.filter(
-        (l) => l.montant > 0 && l.libelle !== "Frais divers"
-      ),
+      lignes: lignesFacturePositives,
       facture: factureMappee,
     };
   }

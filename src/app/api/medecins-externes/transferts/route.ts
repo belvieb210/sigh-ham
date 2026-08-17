@@ -22,7 +22,7 @@ const OPTIONS_ME = (medecinExterneId: string) =>
   });
 
 function extraireOrientations(body: unknown): string[] {
-  if (!body || typeof body !== "object") return ["CAISSE"];
+  if (!body || typeof body !== "object") return [];
   const b = body as {
     orientations?: string[];
     orientation?: string;
@@ -108,6 +108,13 @@ export async function POST(request: NextRequest) {
         dossierId?: string;
       };
       const orientations = extraireOrientations(body);
+
+      if (orientations.length === 0) {
+        return NextResponse.json(
+          { message: "Sélectionnez au moins une destination." },
+          { status: 400 }
+        );
+      }
 
       let dossierId = corps.dossierId?.trim() || "";
 

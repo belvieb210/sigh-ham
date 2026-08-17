@@ -52,17 +52,16 @@ export async function orienterPatientsEnSerie(
  */
 /**
  * Bascule une destination en multi-sélection.
- * Si le clic décocherait la dernière option, on la garde (relance l'orientation).
+ * Décoche aussi la dernière option (aucune salle précochée).
  */
 export function basculerOrientationsMulti(
   orientations: string[],
   value: string
 ): string[] {
   const deja = orientations.includes(value);
-  const suivant = deja
+  return deja
     ? orientations.filter((v) => v !== value)
     : [...orientations, value];
-  return suivant.length > 0 ? suivant : [value];
 }
 
 export function creerDebounce<T extends (...args: never[]) => void>(

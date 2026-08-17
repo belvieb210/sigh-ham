@@ -138,6 +138,8 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
         definirOrientations(patient.codesSalleDestination);
       } else if (patient.codeSalleDestination) {
         definirOrientations([patient.codeSalleDestination]);
+      } else {
+        definirOrientations([]);
       }
 
       try {
@@ -170,7 +172,7 @@ export function FournisseurSelectionTransfert({ children }: { children: ReactNod
           espace.prefixeApi.includes("medecins-externes") ||
             espace.prefixeApi.includes("eglise")
             ? "La destination autorisée est la Caisse."
-            : "Sélectionnez Caisse, Infirmiers ou Médecin."
+            : "Sélectionnez au moins une salle de destination."
         );
         return;
       }

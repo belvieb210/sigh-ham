@@ -14,7 +14,6 @@ import {
   FormulaireFiltresFacturationCaisse,
   type FiltresFacturationCaisse,
 } from "@/features/caisse/formulaire-filtres-facturation-caisse";
-import { useOrientationInfirmiers } from "@/features/infirmiers/contexte-orientation-infirmiers";
 import { useSelectionInfirmiersOptionnel } from "@/features/infirmiers/contexte-selection-infirmiers";
 import {
   MiseEnPageInfirmiers,
@@ -129,7 +128,6 @@ export function CorpsConsultationInfirmiers() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const dossierUrl = searchParams.get("dossier")?.trim() ?? "";
-  const { definirOrientations } = useOrientationInfirmiers();
 
   const {
     patientSelectionne,
@@ -311,7 +309,6 @@ export function CorpsConsultationInfirmiers() {
         throw new Error(data.message ?? t("infirmiers.consultation.erreurSave"));
       }
       setMessage(data.message ?? t("infirmiers.consultation.enregistree"));
-      definirOrientations(["MEDECINS"]);
       await chargerPatients();
       fermerFormulaire();
       window.dispatchEvent(new CustomEvent(EVENEMENT_INFIRMIERS_PATIENTS_MODIFIES));

@@ -20,7 +20,7 @@ const OPTIONS_EGLISE = {
 };
 
 function extraireOrientations(body: unknown): string[] {
-  if (!body || typeof body !== "object") return ["CAISSE"];
+  if (!body || typeof body !== "object") return [];
   const b = body as { orientations?: string[]; orientation?: string };
   const brutes = [
     ...new Set(
@@ -121,6 +121,13 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ message: erreur }, { status: 400 });
         }
         orientations = filtrerOrientationsEglise([donnees.orientation!]);
+      }
+
+      if (orientations.length === 0) {
+        return NextResponse.json(
+          { message: "Sélectionnez au moins une destination." },
+          { status: 400 }
+        );
       }
 
       let dossierId = corps.dossierId?.trim() || "";

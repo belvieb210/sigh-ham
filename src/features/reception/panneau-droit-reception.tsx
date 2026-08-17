@@ -34,9 +34,8 @@ function useGestionOrientation(variante: "defaut" | "transferts") {
 
   const onOrientationsChange = (codes: string[]) => {
     const netoyes = codes.filter(Boolean);
-    if (netoyes.length === 0) return;
-
     if (variante === "transferts") {
+      if (netoyes.length === 0) return;
       if (!selection?.peutAppliquerOrientationRapide) return;
       definirOrientations(netoyes);
       void selection.changerOrientationsTransfert(netoyes);
@@ -158,7 +157,8 @@ function BlocOrientation({
       ) : (
         <p className="mb-2 text-xs text-texte-secondaire">
           {t("reception.panneau.aideOrientationReception", {
-            defaultValue: "Transfert vers la Caisse, les Infirmiers ou le Médecin.",
+            defaultValue:
+              "Cochez la ou les salles de destination (Caisse, Infirmiers, Médecin, Laboratoire, Pharmacie, etc.).",
           })}
         </p>
       )}

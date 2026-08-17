@@ -44,10 +44,8 @@ export function OrientationRapideCaisse({
   desactive = false,
 }: PropsOrientationRapideCaisse) {
   const { t } = useTranslation();
-  const [orientationInterne, setOrientationInterne] = useState("LABORATOIRE");
-  const [orientationsInternes, setOrientationsInternes] = useState<string[]>([
-    "LABORATOIRE",
-  ]);
+  const [orientationInterne, setOrientationInterne] = useState("");
+  const [orientationsInternes, setOrientationsInternes] = useState<string[]>([]);
 
   const orientations = orientationsControlees ?? orientationsInternes;
   const orientation = orientationControlee ?? orientationInterne;

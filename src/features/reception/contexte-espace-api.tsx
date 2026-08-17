@@ -22,8 +22,6 @@ export interface EspaceApiReceptionLike {
   evenementFocusRecherche: string;
   /** Affiche paroisse / date mariage / conjoint dans le formulaire. */
   afficherChampsEglise?: boolean;
-  /** Orientation initiale du wizard (défaut INFIRMIERS). */
-  orientationDefaut?: string;
 }
 
 export const ESPACE_API_RECEPTION: EspaceApiReceptionLike = {
@@ -44,7 +42,6 @@ export const ESPACE_API_MEDECINS_EXTERNES: EspaceApiReceptionLike = {
   evenementPatientRecherche: "sigh:medecins-externes-patient-recherche-selectionne",
   evenementPatientEpingleRecents: "sigh:medecins-externes-patient-epingle-recents",
   evenementFocusRecherche: "sigh:medecins-externes-focus-recherche",
-  orientationDefaut: "CAISSE",
 };
 
 export const ESPACE_API_EGLISE: EspaceApiReceptionLike = {
@@ -56,7 +53,6 @@ export const ESPACE_API_EGLISE: EspaceApiReceptionLike = {
   evenementPatientEpingleRecents: "sigh:eglise-patient-epingle-recents",
   evenementFocusRecherche: "sigh:eglise-focus-recherche",
   afficherChampsEglise: true,
-  orientationDefaut: "CAISSE",
 };
 
 const ContexteEspaceApi = createContext<EspaceApiReceptionLike>(ESPACE_API_RECEPTION);

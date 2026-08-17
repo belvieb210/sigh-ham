@@ -15,6 +15,7 @@ function useGestionOrientation() {
 
   const onOrientationsChange = (codes: string[]) => {
     definirOrientations(codes);
+    if (codes.length === 0) return;
     if (
       selection?.patientSelectionne ||
       (selection?.dossiersCoches?.length ?? 0) > 0

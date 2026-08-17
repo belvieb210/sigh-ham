@@ -9,7 +9,6 @@ import {
   type UtilisateurInfirmiers,
 } from "@/features/infirmiers/mise-en-page-infirmiers";
 import { PanneauDroitInfirmiers } from "@/features/infirmiers/panneau-droit-infirmiers";
-import { useOrientationInfirmiers } from "@/features/infirmiers/contexte-orientation-infirmiers";
 import type {
   ConstanteVitaleResume,
   PatientFileInfirmiers,
@@ -67,7 +66,6 @@ function FormulaireConstantesInfirmiers() {
   const { t, i18n } = useTranslation();
   const searchParams = useSearchParams();
   const dossierUrl = searchParams.get("dossier")?.trim() ?? "";
-  const { definirOrientations } = useOrientationInfirmiers();
 
   const [patients, setPatients] = useState<PatientFileInfirmiers[]>([]);
   const [dossierId, setDossierId] = useState(dossierUrl);
@@ -164,7 +162,6 @@ function FormulaireConstantesInfirmiers() {
       }
       setMessage(data.message ?? t("infirmiers.constantes.succes"));
       setForm(FORM_VIDE);
-      definirOrientations(["MEDECINS"]);
       await chargerDetail(dossierId);
       await chargerPatients();
       window.dispatchEvent(new CustomEvent(EVENEMENT_INFIRMIERS_PATIENTS_MODIFIES));

@@ -126,7 +126,7 @@ const COULEUR_MOBILE_DEFAUT = "border-gris-bordure bg-white";
 const COULEUR_MOBILE_INFIRMIERS =
   "border-bleu-medical bg-bleu-medical-clair ring-2 ring-bleu-medical/20";
 
-/** Réception : Caisse, Infirmiers et Médecins */
+/** Réception : toutes les salles cliniques sauf elle-même */
 export const ORIENTATIONS_RAPIDES = metaOrientationsSauf("RECEPTION").map((o) => ({
   ...o,
   couleurMobile:
@@ -143,9 +143,7 @@ export const CODES_ORIENTATION_RECEPTION: CodeSalle[] =
   orientationsAutoriseesDepuis("RECEPTION");
 
 export function filtrerOrientationsReception(orientations: string[]): CodeSalle[] {
-  const codes = filtrerOrientationsAutorisees("RECEPTION", orientations);
-  if (codes.length === 0) return ["INFIRMIERS"];
-  return codes;
+  return filtrerOrientationsAutorisees("RECEPTION", orientations);
 }
 
 export const MOTIFS_PRINCIPAUX = [

@@ -78,7 +78,7 @@ export function MiseEnPageEglise({
     <FournisseurEspaceApi espace={ESPACE_API_EGLISE}>
       <FournisseurNotifications>
         <FournisseurResumePatient>
-          <FournisseurOrientationRapide initial={["CAISSE"]}>
+          <FournisseurOrientationRapide>
             {activerSelectionTransfert ? (
               <FournisseurSelectionTransfert>{contenu}</FournisseurSelectionTransfert>
             ) : (

@@ -73,12 +73,8 @@ export function OrientationRapide({
 }: PropsOrientationRapide) {
   const { t } = useTranslation();
   const optionsListe = optionsProp ?? ORIENTATIONS_RAPIDES;
-  const [orientationInterne, setOrientationInterne] = useState<string>(
-    () => optionsListe[0]?.value ?? "INFIRMIERS"
-  );
-  const [orientationsInternes, setOrientationsInternes] = useState<string[]>([
-    optionsListe[0]?.value ?? "INFIRMIERS",
-  ]);
+  const [orientationInterne, setOrientationInterne] = useState<string>("");
+  const [orientationsInternes, setOrientationsInternes] = useState<string[]>([]);
   const orientations = orientationsControlees ?? orientationsInternes;
   const orientation = orientationControlee ?? orientationInterne;
 

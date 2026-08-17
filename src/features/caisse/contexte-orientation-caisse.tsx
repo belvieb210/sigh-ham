@@ -19,10 +19,10 @@ interface ContexteOrientationCaisse {
 const Contexte = createContext<ContexteOrientationCaisse | null>(null);
 
 export function FournisseurOrientationCaisse({ children }: { children: ReactNode }) {
-  const [orientations, setOrientations] = useState<string[]>(["LABORATOIRE"]);
+  const [orientations, setOrientations] = useState<string[]>([]);
 
   const definirOrientations = useCallback((values: string[]) => {
-    setOrientations(values.length > 0 ? values : ["LABORATOIRE"]);
+    setOrientations(values);
   }, []);
 
   const definirOrientation = useCallback((value: string) => {
@@ -31,7 +31,7 @@ export function FournisseurOrientationCaisse({ children }: { children: ReactNode
 
   const valeur = useMemo(
     () => ({
-      orientation: orientations[0] ?? "LABORATOIRE",
+      orientation: orientations[0] ?? "",
       orientations,
       definirOrientation,
       definirOrientations,

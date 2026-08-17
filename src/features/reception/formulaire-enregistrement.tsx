@@ -191,9 +191,7 @@ export const FormulaireEnregistrement = forwardRef<
   const [medecinResponsable, setMedecinResponsable] = useState("");
   const [remise, setRemise] = useState(0);
   const [modeEstimation, setModeEstimation] = useState(false);
-  const [orientation, setOrientation] = useState<string>(
-    espace.orientationDefaut ?? "INFIRMIERS"
-  );
+  const [orientation, setOrientation] = useState<string>("");
   const [paroisse, setParoisse] = useState("");
   const [selectionPatientEnCours, setSelectionPatientEnCours] = useState(false);
 
@@ -474,7 +472,7 @@ export const FormulaireEnregistrement = forwardRef<
     setPaquetsSelectionnes([]);
     setMedecinResponsable("");
     setModeEstimation(false);
-    setOrientation(espace.orientationDefaut ?? "INFIRMIERS");
+    setOrientation("");
     setParoisse("");
     if (!estComplet) {
       setNumeroEnregistrement("20260101001");

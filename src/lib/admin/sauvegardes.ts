@@ -35,11 +35,16 @@ export interface SauvegardeFichier {
 }
 
 export function urlPourOutilsPostgres(urlBrute: string): string {
-  const cleaned = urlBrute.trim().replace(/^["']|["']$/g, "");
+  let cleaned = urlBrute.trim().replace(/^["']|["']$/g, "");
+  cleaned = cleaned.replace(
+    /[?&](schema|connection_limit|pool_timeout|pgbouncer|socket_timeout)=[^&]*/gi,
+    ""
+  );
+  cleaned = cleaned.replace(/\?&+/g, "?").replace(/&&+/g, "&").replace(/[?&]$/, "");
   try {
     const u = new URL(cleaned);
     for (const cle of [...u.searchParams.keys()]) {
-      if (PARAMS_PRISMA.has(cle)) u.searchParams.delete(cle);
+      if (PARAMS_PRISMA.has(cle.toLowerCase())) u.searchParams.delete(cle);
     }
     let sortie = u.toString();
     if (sortie.endsWith("?")) sortie = sortie.slice(0, -1);
@@ -48,6 +53,30 @@ export function urlPourOutilsPostgres(urlBrute: string): string {
     const idx = cleaned.indexOf("?");
     return idx === -1 ? cleaned : cleaned.slice(0, idx);
   }
+}
+
+/** Connexion pg_dump/psql/pg_restore sans URI (évite le paramètre Prisma `schema`). */
+function connexionOutilsPostgres() {
+  const u = new URL(urlPg());
+  const database =
+    decodeURIComponent(u.pathname.replace(/^\//, "").split("/")[0] ?? "") || "postgres";
+  const env: NodeJS.ProcessEnv = { ...process.env };
+  if (u.password) env.PGPASSWORD = u.password;
+  const sslmode = u.searchParams.get("sslmode");
+  if (sslmode) env.PGSSLMODE = sslmode;
+  return {
+    env,
+    args: [
+      "-h",
+      u.hostname || "127.0.0.1",
+      "-p",
+      u.port || "5432",
+      "-U",
+      u.username || "postgres",
+      "-d",
+      database,
+    ],
+  };
 }
 
 export function nomBaseDepuisUrl(urlBrute: string): string {
@@ -162,9 +191,17 @@ export function cheminSauvegarde(nom: string): string {
   return join(DIR_BACKUPS, nom);
 }
 
-function executer(commande: string, args: string[], stdin?: NodeJS.ReadableStream) {
+function executer(
+  commande: string,
+  args: string[],
+  options?: { stdin?: NodeJS.ReadableStream; env?: NodeJS.ProcessEnv }
+) {
   return new Promise<void>((resolve, reject) => {
-    const child = spawn(commande, args, { shell: false, stdio: ["pipe", "pipe", "pipe"] });
+    const child = spawn(commande, args, {
+      shell: false,
+      stdio: ["pipe", "pipe", "pipe"],
+      env: options?.env ?? process.env,
+    });
     let stderr = "";
     child.stderr.on("data", (d) => {
       stderr += String(d);
@@ -184,6 +221,7 @@ function executer(commande: string, args: string[], stdin?: NodeJS.ReadableStrea
       if (code === 0) resolve();
       else reject(new Error(stderr.trim() || `${commande} exit ${code}`));
     });
+    const stdin = options?.stdin;
     if (stdin) {
       stdin.pipe(child.stdin);
       stdin.on("error", (err) => reject(err));
@@ -195,22 +233,26 @@ function executer(commande: string, args: string[], stdin?: NodeJS.ReadableStrea
 
 export async function declencherSauvegarde(acteurId: string) {
   await assurerDossierBackups();
-  const pgUrl = urlPg();
-  const nomBase = nomBaseDepuisUrl(pgUrl).replace(/[^\w.-]/g, "-").replace(/_/g, "-") || "sigh";
+  const { args, env } = connexionOutilsPostgres();
+  const nomBase = nomBaseDepuisUrl(urlPg()).replace(/[^\w.-]/g, "-").replace(/_/g, "-") || "sigh";
   const nom = `sigh-ham_${nomBase}_${tamponHorodatage()}.sql`;
   const chemin = join(DIR_BACKUPS, nom);
 
-  await executer("pg_dump", [
-    pgUrl,
-    "--no-owner",
-    "--no-acl",
-    "--clean",
-    "--if-exists",
-    "--encoding=UTF8",
-    "--format=plain",
-    "-f",
-    chemin,
-  ]);
+  await executer(
+    "pg_dump",
+    [
+      ...args,
+      "--no-owner",
+      "--no-acl",
+      "--clean",
+      "--if-exists",
+      "--encoding=UTF8",
+      "--format=plain",
+      "-f",
+      chemin,
+    ],
+    { env }
+  );
 
   await enregistrerAudit({
     utilisateurId: acteurId,
@@ -225,27 +267,22 @@ export async function declencherSauvegarde(acteurId: string) {
 
 export async function restaurerSauvegarde(acteurId: string, nom: string) {
   const { chemin } = await resoudreSauvegarde(nom);
-  const pgUrl = urlPg();
+  const { args, env } = connexionOutilsPostgres();
 
   if (nom.endsWith(".dump")) {
-    await executer("pg_restore", [
-      "--clean",
-      "--if-exists",
-      "--no-owner",
-      "--no-acl",
-      "--dbname",
-      pgUrl,
-      chemin,
-    ]);
+    await executer(
+      "pg_restore",
+      ["--clean", "--if-exists", "--no-owner", "--no-acl", ...args, chemin],
+      { env }
+    );
   } else {
     const source = nom.endsWith(".gz")
       ? createReadStream(chemin).pipe(createGunzip())
       : createReadStream(chemin);
-    await executer(
-      "psql",
-      [pgUrl, "-v", "ON_ERROR_STOP=1", "--quiet"],
-      source as NodeJS.ReadableStream
-    );
+    await executer("psql", [...args, "-v", "ON_ERROR_STOP=1", "--quiet"], {
+      stdin: source as NodeJS.ReadableStream,
+      env,
+    });
   }
 
   await enregistrerAudit({
@@ -253,7 +290,7 @@ export async function restaurerSauvegarde(acteurId: string, nom: string) {
     type: "IMPORT",
     entite: "Sauvegarde",
     action: `Restauration de ${nom} dans la base`,
-    details: { fichier: nom, base: nomBaseDepuisUrl(pgUrl) },
+    details: { fichier: nom, base: nomBaseDepuisUrl(urlPg()) },
   });
 
   return { nom };

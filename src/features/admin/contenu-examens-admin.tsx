@@ -1,8 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FlaskConical, Loader2, Plus, Save } from "lucide-react";
+import {
+  Eye,
+  FlaskConical,
+  Loader2,
+  MoreVertical,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  SquarePen,
+  X,
+} from "lucide-react";
 import {
   MiseEnPageAdmin,
   type UtilisateurAdmin,
@@ -10,9 +20,26 @@ import {
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 import { Bouton } from "@/components/ui/bouton";
 import {
-  CLASSE_CHAMP_RECEPTION,
-  CLASSE_LABEL_RECEPTION,
-} from "@/constants/reception";
+  BoutonsOutilsListe,
+  telechargerCsv,
+} from "@/components/ui/boutons-outils-liste";
+import {
+  PaginationListe,
+  paginerListe,
+} from "@/components/ui/pagination-liste";
+import {
+  compterFiltresExamensAdmin,
+  FILTRES_EXAMENS_ADMIN_VIDES,
+  FormulaireFiltresExamensAdmin,
+  examenCorrespondFiltresAdmin,
+  type FiltresExamensAdmin,
+} from "@/features/admin/formulaire-filtres-examens-admin";
+import {
+  FORM_EXAMEN_ADMIN_VIDE,
+  FormulaireExamenAdmin,
+  type FormExamenAdmin,
+} from "@/features/admin/formulaire-examen-admin";
+import { cn } from "@/lib/utils";
 
 type ExamenItem = {
   id: string;
@@ -25,15 +52,28 @@ type ExamenItem = {
   packPrenuptial: boolean;
 };
 
-const FORM_VIDE = {
-  code: "",
-  libelle: "",
-  categorie: "",
-  prix: "0",
-  delaiHeures: "24",
-  actif: true,
-  packPrenuptial: false,
-};
+type ModePanneau = "creation" | "consultation" | "edition";
+
+const EXAMENS_PAR_PAGE = 16;
+
+const CLASSE_BOUTON_ACTION =
+  "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure text-slate-500 transition-colors hover:bg-gris-tres-clair hover:text-bleu-medical";
+
+function formaterPrix(n: number) {
+  return `${n.toLocaleString("fr-FR")} FC`;
+}
+
+function itemVersForm(item: ExamenItem): FormExamenAdmin {
+  return {
+    code: item.code,
+    libelle: item.libelle,
+    categorie: item.categorie,
+    prix: String(item.prix),
+    delaiHeures: String(item.delaiHeures),
+    actif: item.actif,
+    packPrenuptial: item.packPrenuptial,
+  };
+}
 
 export function ContenuExamensAdmin({
   utilisateur,
@@ -42,66 +82,203 @@ export function ContenuExamensAdmin({
 }) {
   const { t } = useTranslation();
   const [liste, setListe] = useState<ExamenItem[]>([]);
-  const [q, setQ] = useState("");
-  const [filtreActif, setFiltreActif] = useState("");
+  const [rechercheRapide, setRechercheRapide] = useState("");
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillon, setBrouillon] = useState<FiltresExamensAdmin>(
+    FILTRES_EXAMENS_ADMIN_VIDES
+  );
+  const [appliques, setAppliques] = useState<FiltresExamensAdmin>(
+    FILTRES_EXAMENS_ADMIN_VIDES
+  );
+  const [idsCoches, setIdsCoches] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [selectionId, setSelectionId] = useState<string | null>(null);
-  const [modeCreation, setModeCreation] = useState(false);
-  const [form, setForm] = useState({ ...FORM_VIDE });
+  const [form, setForm] = useState<FormExamenAdmin>({ ...FORM_EXAMEN_ADMIN_VIDE });
+  const [modePanneau, setModePanneau] = useState<ModePanneau>("creation");
+  const [menuOuvertId, setMenuOuvertId] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const lectureSeule = modePanneau === "consultation";
 
   const charger = useCallback(async () => {
     setChargement(true);
     setErreur(null);
     try {
-      const params = new URLSearchParams();
-      if (q.trim()) params.set("q", q.trim());
-      if (filtreActif) params.set("actif", filtreActif);
-      const res = await fetch(`/api/admin/examens?${params}`);
+      const res = await fetch("/api/admin/examens");
       const data = (await res.json()) as {
         examens?: ExamenItem[];
         message?: string;
       };
-      if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
+      if (!res.ok) throw new Error(data.message ?? t("admin.examens.erreur"));
       setListe(data.examens ?? []);
     } catch (e: unknown) {
-      setErreur(e instanceof Error ? e.message : t("admin.common.erreur"));
+      setErreur(e instanceof Error ? e.message : t("admin.examens.erreur"));
     } finally {
       setChargement(false);
     }
-  }, [q, filtreActif, t]);
+  }, [t]);
 
   useEffect(() => {
     void charger();
   }, [charger]);
 
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of liste) {
+      if (e.categorie.trim()) set.add(e.categorie.trim());
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "fr"));
+  }, [liste]);
+
+  const listeFiltree = useMemo(
+    () =>
+      liste.filter((e) =>
+        examenCorrespondFiltresAdmin(e, appliques, rechercheRapide)
+      ),
+    [liste, appliques, rechercheRapide]
+  );
+
+  const pageData = useMemo(
+    () => paginerListe(listeFiltree, page, EXAMENS_PAR_PAGE),
+    [listeFiltree, page]
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [rechercheRapide, appliques]);
+
+  const nbFiltres = compterFiltresExamensAdmin(appliques);
+  const toutSelectionne =
+    listeFiltree.length > 0 &&
+    listeFiltree.every((e) => idsCoches.includes(e.id));
+
+  useEffect(() => {
+    if (!menuOuvertId) return;
+    const fermer = (e: MouseEvent) => {
+      if (menuRef.current?.contains(e.target as Node)) return;
+      setMenuOuvertId(null);
+    };
+    document.addEventListener("mousedown", fermer);
+    return () => document.removeEventListener("mousedown", fermer);
+  }, [menuOuvertId]);
+
   const ouvrirCreation = () => {
-    setModeCreation(true);
+    setModePanneau("creation");
     setSelectionId(null);
-    setForm({ ...FORM_VIDE });
+    setMenuOuvertId(null);
+    setForm({ ...FORM_EXAMEN_ADMIN_VIDE });
     setMessage(null);
     setErreur(null);
   };
 
-  const ouvrirEdition = (item: ExamenItem) => {
-    setModeCreation(false);
+  const consulter = (item: ExamenItem) => {
+    setModePanneau("consultation");
     setSelectionId(item.id);
-    setForm({
-      code: item.code,
-      libelle: item.libelle,
-      categorie: item.categorie,
-      prix: String(item.prix),
-      delaiHeures: String(item.delaiHeures),
-      actif: item.actif,
-      packPrenuptial: item.packPrenuptial,
-    });
+    setMenuOuvertId(null);
+    setForm(itemVersForm(item));
     setMessage(null);
     setErreur(null);
   };
 
-  const sauvegarder = async () => {
+  const editer = (item: ExamenItem) => {
+    setModePanneau("edition");
+    setSelectionId(item.id);
+    setMenuOuvertId(null);
+    setForm(itemVersForm(item));
+    setMessage(null);
+    setErreur(null);
+  };
+
+  const basculerCoche = (id: string) => {
+    setIdsCoches((ids) =>
+      ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]
+    );
+  };
+
+  const basculerSelectionTout = () => {
+    if (toutSelectionne) {
+      setIdsCoches([]);
+      return;
+    }
+    setIdsCoches(listeFiltree.map((e) => e.id));
+  };
+
+  const exporterSelection = () => {
+    const coches = new Set(idsCoches);
+    const cibles =
+      coches.size > 0
+        ? listeFiltree.filter((e) => coches.has(e.id))
+        : listeFiltree;
+    if (cibles.length === 0) return;
+    telechargerCsv(
+      `admin-examens-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        t("admin.examens.code"),
+        t("admin.examens.libelle"),
+        t("admin.examens.categorie"),
+        t("admin.examens.prix"),
+        t("admin.examens.delai"),
+        t("admin.examens.colonnes.statut"),
+        t("admin.examens.packPrenuptial"),
+      ],
+      cibles.map((e) => [
+        e.code,
+        e.libelle,
+        e.categorie,
+        String(e.prix),
+        String(e.delaiHeures),
+        e.actif ? t("admin.examens.actif") : t("admin.examens.inactif"),
+        e.packPrenuptial ? t("admin.examens.oui") : t("admin.examens.non"),
+      ])
+    );
+  };
+
+  const changerActif = async (item: ExamenItem, actif: boolean) => {
+    setEnCours(true);
+    setErreur(null);
+    setMessage(null);
+    setMenuOuvertId(null);
+    try {
+      const res = await fetch(`/api/admin/examens/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actif }),
+      });
+      const data = (await res.json()) as { message?: string; examen?: ExamenItem };
+      if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
+      setMessage(
+        actif ? t("admin.examens.active") : t("admin.examens.desactive")
+      );
+      if (selectionId === item.id && data.examen) {
+        setForm(itemVersForm(data.examen));
+      }
+      await charger();
+    } catch (e: unknown) {
+      setErreur(e instanceof Error ? e.message : t("admin.common.erreur"));
+    } finally {
+      setEnCours(false);
+    }
+  };
+
+  const soumettre = async () => {
+    if (!form.code.trim() || !form.libelle.trim() || !form.categorie.trim()) {
+      setErreur(t("admin.examens.champsRequis"));
+      return;
+    }
+    const prix = Number(form.prix);
+    const delaiHeures = Number(form.delaiHeures);
+    if (!Number.isFinite(prix) || prix < 0) {
+      setErreur(t("admin.examens.prixInvalide"));
+      return;
+    }
+    if (!Number.isFinite(delaiHeures) || delaiHeures < 1) {
+      setErreur(t("admin.examens.delaiInvalide"));
+      return;
+    }
+
     setEnCours(true);
     setErreur(null);
     setMessage(null);
@@ -110,17 +287,16 @@ export function ContenuExamensAdmin({
         code: form.code,
         libelle: form.libelle,
         categorie: form.categorie,
-        prix: Number(form.prix),
-        delaiHeures: Number(form.delaiHeures),
+        prix,
+        delaiHeures,
         actif: form.actif,
         packPrenuptial: form.packPrenuptial,
       };
+      const creation = modePanneau === "creation";
       const res = await fetch(
-        modeCreation
-          ? "/api/admin/examens"
-          : `/api/admin/examens/${selectionId}`,
+        creation ? "/api/admin/examens" : `/api/admin/examens/${selectionId}`,
         {
-          method: modeCreation ? "POST" : "PATCH",
+          method: creation ? "POST" : "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         }
@@ -130,10 +306,14 @@ export function ContenuExamensAdmin({
         examen?: ExamenItem;
       };
       if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
-      setMessage(data.message ?? t("admin.common.enregistrer"));
+      setMessage(
+        data.message ??
+          (creation ? t("admin.examens.cree") : t("admin.examens.maj"))
+      );
       if (data.examen) {
         setSelectionId(data.examen.id);
-        setModeCreation(false);
+        setModePanneau("edition");
+        setForm(itemVersForm(data.examen));
       }
       await charger();
     } catch (e: unknown) {
@@ -147,212 +327,320 @@ export function ContenuExamensAdmin({
     <MiseEnPageAdmin
       utilisateur={utilisateur}
       titre={t("admin.examens.titre")}
-      sousTitre={t("admin.examens.description")}
+      sousTitre={t("admin.layout.sousTitre")}
     >
-      <div className="mx-auto w-full max-w-[1200px] space-y-6">
+      <div className="mx-auto w-full max-w-[1200px]">
         <EnTetePageReception
           icone={FlaskConical}
           titre={t("admin.examens.titre")}
           description={t("admin.examens.description")}
           fil={[
             { label: t("admin.common.salle"), href: "/sigh/admin" },
-            { label: t("admin.examens.titre") },
+            { label: t("admin.examens.fil") },
           ]}
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-3">
-            <input
-              className={`${CLASSE_CHAMP_RECEPTION} max-w-xs`}
-              placeholder={t("admin.examens.recherche")}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-            <select
-              className={`${CLASSE_CHAMP_RECEPTION} max-w-[180px]`}
-              value={filtreActif}
-              onChange={(e) => setFiltreActif(e.target.value)}
-            >
-              <option value="">{t("admin.examens.tous")}</option>
-              <option value="true">{t("admin.examens.actifs")}</option>
-              <option value="false">{t("admin.examens.inactifs")}</option>
-            </select>
+        <div className="mt-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <label className="flex h-11 min-w-[180px] w-full max-w-md flex-1 items-center gap-2 rounded-lg border-2 border-slate-400 bg-white px-3 text-sm text-texte-principal shadow-sm transition-colors focus-within:border-bleu-medical focus-within:ring-2 focus-within:ring-bleu-medical/25">
+              <Search className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+              <input
+                type="search"
+                value={rechercheRapide}
+                onChange={(e) => setRechercheRapide(e.target.value)}
+                placeholder={t("admin.examens.recherche")}
+                aria-label={t("admin.examens.recherche")}
+                autoComplete="off"
+                className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-slate-600"
+              />
+              {rechercheRapide ? (
+                <button
+                  type="button"
+                  onClick={() => setRechercheRapide("")}
+                  aria-label={t("admin.examens.effacerRecherche")}
+                  className="shrink-0 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </label>
+
+            <div className="flex shrink-0 items-center justify-end gap-2">
+              <Bouton type="button" taille="petit" onClick={ouvrirCreation}>
+                <Plus className="h-4 w-4" />
+                {t("admin.examens.nouveau")}
+              </Bouton>
+              <button
+                type="button"
+                onClick={() => setFiltresOuverts((o) => !o)}
+                aria-expanded={filtresOuverts}
+                aria-label={
+                  filtresOuverts
+                    ? t("reception.tableau.fermerFiltres")
+                    : t("reception.tableau.ouvrirFiltres")
+                }
+                className={cn(
+                  "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+                  filtresOuverts
+                    ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                    : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
+                )}
+              >
+                <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
+                <span
+                  className={cn(
+                    "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
+                    nbFiltres > 0 ? "bg-red-500" : "bg-slate-400"
+                  )}
+                >
+                  {nbFiltres}
+                </span>
+              </button>
+              <BoutonsOutilsListe
+                toutSelectionne={toutSelectionne}
+                onSelectionnerTout={basculerSelectionTout}
+                onExporter={exporterSelection}
+                labelSelectionnerTout={t("reception.liste.selectionnerTout")}
+                labelExporter={t("reception.liste.exporterSelection")}
+              />
+            </div>
           </div>
-          <Bouton type="button" taille="petit" onClick={ouvrirCreation}>
-            <Plus className="h-4 w-4" />
-            {t("admin.examens.nouveau")}
-          </Bouton>
+
+          {filtresOuverts ? (
+            <FormulaireFiltresExamensAdmin
+              valeurs={brouillon}
+              onChange={setBrouillon}
+              onRechercher={() => {
+                setAppliques(brouillon);
+                setPage(1);
+              }}
+              onReinitialiser={() => {
+                setBrouillon(FILTRES_EXAMENS_ADMIN_VIDES);
+                setAppliques(FILTRES_EXAMENS_ADMIN_VIDES);
+                setPage(1);
+              }}
+              categories={categories}
+            />
+          ) : null}
         </div>
 
-        {erreur ? (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {erreur}
-          </p>
-        ) : null}
         {message ? (
-          <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <p className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800">
             {message}
           </p>
         ) : null}
+        {erreur ? (
+          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+            {erreur}
+          </p>
+        ) : null}
 
-        <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-          <div className="rounded-xl border border-gris-bordure bg-white shadow-sm">
+        <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+          <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
             {chargement ? (
-              <div className="flex items-center gap-2 p-6 text-sm text-texte-secondaire">
+              <p className="flex items-center gap-2 p-6 text-sm text-texte-secondaire">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {t("admin.common.chargement")}
-              </div>
-            ) : liste.length === 0 ? (
-              <p className="p-6 text-sm text-texte-secondaire">
-                {t("admin.examens.vide")}
+              </p>
+            ) : listeFiltree.length === 0 ? (
+              <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
+                {t("admin.examens.aucunResultat")}
               </p>
             ) : (
-              <ul className="divide-y divide-gris-bordure">
-                {liste.map((item) => (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      onClick={() => ouvrirEdition(item)}
-                      className={`flex w-full items-start justify-between gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-gris-tres-clair ${
-                        selectionId === item.id ? "bg-bleu-medical-clair/40" : ""
-                      }`}
-                    >
-                      <div>
-                        <p className="font-semibold text-texte-principal">
-                          {item.libelle}
-                        </p>
-                        <p className="text-xs text-texte-secondaire">
-                          {item.code} · {item.categorie} · {item.prix} $ ·{" "}
-                          {item.delaiHeures}h
-                        </p>
-                      </div>
-                      <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                          item.actif
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {item.actif
-                          ? t("admin.examens.actif")
-                          : t("admin.examens.inactif")}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <div className="conteneur-tableau-sigh">
+                  <table className="tableau-sigh min-w-[640px]">
+                    <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
+                      <tr>
+                        <th className="w-10 px-3 py-2">
+                          <span className="sr-only">
+                            {t("reception.liste.selectionnerTout")}
+                          </span>
+                        </th>
+                        <th className="px-3 py-2">{t("admin.examens.code")}</th>
+                        <th className="px-3 py-2">{t("admin.examens.libelle")}</th>
+                        <th className="hidden px-3 py-2 md:table-cell">
+                          {t("admin.examens.categorie")}
+                        </th>
+                        <th className="hidden px-3 py-2 lg:table-cell">
+                          {t("admin.examens.prix")}
+                        </th>
+                        <th className="px-3 py-2">
+                          {t("admin.examens.colonnes.statut")}
+                        </th>
+                        <th className="px-3 py-2 text-center">
+                          {t("admin.examens.colonnes.actions")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pageData.itemsPage.map((item) => (
+                        <tr
+                          key={item.id}
+                          className={cn(
+                            "cursor-pointer border-t border-gris-bordure hover:bg-bleu-medical-clair/20",
+                            selectionId === item.id && "bg-bleu-medical-clair/30"
+                          )}
+                          onClick={() => consulter(item)}
+                        >
+                          <td
+                            className="px-3 py-2.5"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={idsCoches.includes(item.id)}
+                              onChange={() => basculerCoche(item.id)}
+                              aria-label={item.libelle}
+                            />
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <span className="font-mono text-xs font-semibold text-texte-principal">
+                              {item.code}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <p className="font-medium text-texte-principal">
+                              {item.libelle}
+                            </p>
+                            <p className="text-xs text-texte-secondaire lg:hidden">
+                              {item.categorie} · {formaterPrix(item.prix)}
+                            </p>
+                          </td>
+                          <td className="hidden px-3 py-2.5 md:table-cell">
+                            <span className="inline-flex rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">
+                              {item.categorie}
+                            </span>
+                          </td>
+                          <td className="hidden px-3 py-2.5 text-sm tabular-nums lg:table-cell">
+                            {formaterPrix(item.prix)}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <span
+                              className={cn(
+                                "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                                item.actif
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : "bg-red-50 text-red-700"
+                              )}
+                            >
+                              {item.actif
+                                ? t("admin.examens.actif")
+                                : t("admin.examens.inactif")}
+                            </span>
+                            {item.packPrenuptial ? (
+                              <span className="ml-1 inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-800">
+                                {t("admin.examens.badgePack")}
+                              </span>
+                            ) : null}
+                          </td>
+                          <td
+                            className="px-3 py-2.5"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => consulter(item)}
+                                className={CLASSE_BOUTON_ACTION}
+                                aria-label={t("admin.examens.voir")}
+                                title={t("admin.examens.voir")}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => editer(item)}
+                                className={CLASSE_BOUTON_ACTION}
+                                aria-label={t("admin.examens.editer")}
+                                title={t("admin.examens.editer")}
+                              >
+                                <SquarePen className="h-4 w-4" />
+                              </button>
+                              <div
+                                className="relative"
+                                ref={
+                                  menuOuvertId === item.id ? menuRef : undefined
+                                }
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setMenuOuvertId((id) =>
+                                      id === item.id ? null : item.id
+                                    )
+                                  }
+                                  className={CLASSE_BOUTON_ACTION}
+                                  aria-label={t("admin.examens.plusActions")}
+                                  title={t("admin.examens.plusActions")}
+                                  aria-expanded={menuOuvertId === item.id}
+                                  aria-haspopup="menu"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </button>
+                                {menuOuvertId === item.id ? (
+                                  <div
+                                    role="menu"
+                                    className="absolute right-0 top-10 z-20 min-w-[240px] overflow-hidden rounded-lg border border-gris-bordure bg-white py-1 shadow-lg"
+                                  >
+                                    {item.actif ? (
+                                      <button
+                                        type="button"
+                                        role="menuitem"
+                                        disabled={enCours}
+                                        onClick={() =>
+                                          void changerActif(item, false)
+                                        }
+                                        className="block w-full px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
+                                      >
+                                        {t("admin.examens.exclureCatalogue")}
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        role="menuitem"
+                                        disabled={enCours}
+                                        onClick={() =>
+                                          void changerActif(item, true)
+                                        }
+                                        className="block w-full px-3 py-2 text-left text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                                      >
+                                        {t("admin.examens.inclureCatalogue")}
+                                      </button>
+                                    )}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <PaginationListe
+                  page={pageData.pageCourante}
+                  totalPages={pageData.totalPages}
+                  totalItems={listeFiltree.length}
+                  parPage={EXAMENS_PAR_PAGE}
+                  onChange={setPage}
+                  labelPrec={t("reception.liste.prec")}
+                  labelSuiv={t("reception.liste.suiv")}
+                />
+              </>
             )}
           </div>
 
-          {(modeCreation || selectionId) && (
-            <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-              <h3 className="text-sm font-semibold text-texte-principal">
-                {modeCreation
-                  ? t("admin.examens.nouveau")
-                  : t("admin.examens.modifier")}
-              </h3>
-              <div className="mt-3 space-y-3">
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.examens.code")}
-                  </label>
-                  <input
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.code}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, code: e.target.value }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.examens.libelle")}
-                  </label>
-                  <input
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.libelle}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, libelle: e.target.value }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.examens.categorie")}
-                  </label>
-                  <input
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.categorie}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, categorie: e.target.value }))
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>
-                      {t("admin.examens.prix")}
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      className={CLASSE_CHAMP_RECEPTION}
-                      value={form.prix}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, prix: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>
-                      {t("admin.examens.delai")}
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      className={CLASSE_CHAMP_RECEPTION}
-                      value={form.delaiHeures}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, delaiHeures: e.target.value }))
-                      }
-                    />
-                  </div>
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={form.actif}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, actif: e.target.checked }))
-                    }
-                  />
-                  {t("admin.examens.actif")}
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={form.packPrenuptial}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        packPrenuptial: e.target.checked,
-                      }))
-                    }
-                  />
-                  {t("admin.examens.packPrenuptial")}
-                </label>
-                <Bouton
-                  type="button"
-                  disabled={enCours}
-                  onClick={() => void sauvegarder()}
-                >
-                  <Save className="h-4 w-4" />
-                  {t("admin.common.enregistrer")}
-                </Bouton>
-              </div>
-            </div>
-          )}
+          <FormulaireExamenAdmin
+            form={form}
+            onChange={setForm}
+            categories={categories}
+            modePanneau={modePanneau}
+            lectureSeule={lectureSeule}
+            enCours={enCours}
+            onSoumettre={() => void soumettre()}
+            onAnnuler={ouvrirCreation}
+          />
         </div>
       </div>
     </MiseEnPageAdmin>

@@ -1,8 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, Pill, Plus, Save } from "lucide-react";
+import {
+  Eye,
+  Loader2,
+  MoreVertical,
+  Pill,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  SquarePen,
+  X,
+} from "lucide-react";
 import {
   MiseEnPageAdmin,
   type UtilisateurAdmin,
@@ -10,9 +20,26 @@ import {
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 import { Bouton } from "@/components/ui/bouton";
 import {
-  CLASSE_CHAMP_RECEPTION,
-  CLASSE_LABEL_RECEPTION,
-} from "@/constants/reception";
+  BoutonsOutilsListe,
+  telechargerCsv,
+} from "@/components/ui/boutons-outils-liste";
+import {
+  PaginationListe,
+  paginerListe,
+} from "@/components/ui/pagination-liste";
+import {
+  compterFiltresMedicamentsAdmin,
+  FILTRES_MEDICAMENTS_ADMIN_VIDES,
+  FormulaireFiltresMedicamentsAdmin,
+  medicamentCorrespondFiltresAdmin,
+  type FiltresMedicamentsAdmin,
+} from "@/features/admin/formulaire-filtres-medicaments-admin";
+import {
+  FORM_MEDICAMENT_ADMIN_VIDE,
+  FormulaireMedicamentAdmin,
+  type FormMedicamentAdmin,
+} from "@/features/admin/formulaire-medicament-admin";
+import { cn } from "@/lib/utils";
 
 type MedicamentItem = {
   id: string;
@@ -28,18 +55,31 @@ type MedicamentItem = {
   actif: boolean;
 };
 
-const FORM_VIDE = {
-  code: "",
-  nom: "",
-  categorie: "",
-  forme: "",
-  dosage: "",
-  prixAchat: "",
-  prixUnitaire: "0",
-  stockMinimum: "10",
-  emplacement: "",
-  actif: true,
-};
+type ModePanneau = "creation" | "consultation" | "edition";
+
+const MEDICAMENTS_PAR_PAGE = 16;
+
+const CLASSE_BOUTON_ACTION =
+  "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure text-slate-500 transition-colors hover:bg-gris-tres-clair hover:text-bleu-medical";
+
+function formaterPrix(n: number) {
+  return `${n.toLocaleString("fr-FR")} FC`;
+}
+
+function itemVersForm(item: MedicamentItem): FormMedicamentAdmin {
+  return {
+    code: item.code,
+    nom: item.nom,
+    categorie: item.categorie ?? "",
+    forme: item.forme ?? "",
+    dosage: item.dosage ?? "",
+    prixAchat: item.prixAchat != null ? String(item.prixAchat) : "",
+    prixUnitaire: String(item.prixUnitaire),
+    stockMinimum: String(item.stockMinimum),
+    emplacement: item.emplacement ?? "",
+    actif: item.actif,
+  };
+}
 
 export function ContenuMedicamentsAdmin({
   utilisateur,
@@ -48,69 +88,203 @@ export function ContenuMedicamentsAdmin({
 }) {
   const { t } = useTranslation();
   const [liste, setListe] = useState<MedicamentItem[]>([]);
-  const [q, setQ] = useState("");
-  const [filtreActif, setFiltreActif] = useState("");
+  const [rechercheRapide, setRechercheRapide] = useState("");
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillon, setBrouillon] = useState<FiltresMedicamentsAdmin>(
+    FILTRES_MEDICAMENTS_ADMIN_VIDES
+  );
+  const [appliques, setAppliques] = useState<FiltresMedicamentsAdmin>(
+    FILTRES_MEDICAMENTS_ADMIN_VIDES
+  );
+  const [idsCoches, setIdsCoches] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [selectionId, setSelectionId] = useState<string | null>(null);
-  const [modeCreation, setModeCreation] = useState(false);
-  const [form, setForm] = useState({ ...FORM_VIDE });
+  const [form, setForm] = useState<FormMedicamentAdmin>({
+    ...FORM_MEDICAMENT_ADMIN_VIDE,
+  });
+  const [modePanneau, setModePanneau] = useState<ModePanneau>("creation");
+  const [menuOuvertId, setMenuOuvertId] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const lectureSeule = modePanneau === "consultation";
 
   const charger = useCallback(async () => {
     setChargement(true);
     setErreur(null);
     try {
-      const params = new URLSearchParams();
-      if (q.trim()) params.set("q", q.trim());
-      if (filtreActif) params.set("actif", filtreActif);
-      const res = await fetch(`/api/admin/medicaments?${params}`);
+      const res = await fetch("/api/admin/medicaments");
       const data = (await res.json()) as {
         medicaments?: MedicamentItem[];
         message?: string;
       };
-      if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
+      if (!res.ok) throw new Error(data.message ?? t("admin.medicaments.erreur"));
       setListe(data.medicaments ?? []);
     } catch (e: unknown) {
-      setErreur(e instanceof Error ? e.message : t("admin.common.erreur"));
+      setErreur(e instanceof Error ? e.message : t("admin.medicaments.erreur"));
     } finally {
       setChargement(false);
     }
-  }, [q, filtreActif, t]);
+  }, [t]);
 
   useEffect(() => {
     void charger();
   }, [charger]);
 
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    for (const m of liste) {
+      if (m.categorie?.trim()) set.add(m.categorie.trim());
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "fr"));
+  }, [liste]);
+
+  const listeFiltree = useMemo(
+    () =>
+      liste.filter((m) =>
+        medicamentCorrespondFiltresAdmin(m, appliques, rechercheRapide)
+      ),
+    [liste, appliques, rechercheRapide]
+  );
+
+  const pageData = useMemo(
+    () => paginerListe(listeFiltree, page, MEDICAMENTS_PAR_PAGE),
+    [listeFiltree, page]
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [rechercheRapide, appliques]);
+
+  const nbFiltres = compterFiltresMedicamentsAdmin(appliques);
+  const toutSelectionne =
+    listeFiltree.length > 0 &&
+    listeFiltree.every((m) => idsCoches.includes(m.id));
+
+  useEffect(() => {
+    if (!menuOuvertId) return;
+    const fermer = (e: MouseEvent) => {
+      if (menuRef.current?.contains(e.target as Node)) return;
+      setMenuOuvertId(null);
+    };
+    document.addEventListener("mousedown", fermer);
+    return () => document.removeEventListener("mousedown", fermer);
+  }, [menuOuvertId]);
+
   const ouvrirCreation = () => {
-    setModeCreation(true);
+    setModePanneau("creation");
     setSelectionId(null);
-    setForm({ ...FORM_VIDE });
+    setMenuOuvertId(null);
+    setForm({ ...FORM_MEDICAMENT_ADMIN_VIDE });
     setMessage(null);
     setErreur(null);
   };
 
-  const ouvrirEdition = (item: MedicamentItem) => {
-    setModeCreation(false);
+  const consulter = (item: MedicamentItem) => {
+    setModePanneau("consultation");
     setSelectionId(item.id);
-    setForm({
-      code: item.code,
-      nom: item.nom,
-      categorie: item.categorie ?? "",
-      forme: item.forme ?? "",
-      dosage: item.dosage ?? "",
-      prixAchat: item.prixAchat != null ? String(item.prixAchat) : "",
-      prixUnitaire: String(item.prixUnitaire),
-      stockMinimum: String(item.stockMinimum),
-      emplacement: item.emplacement ?? "",
-      actif: item.actif,
-    });
+    setMenuOuvertId(null);
+    setForm(itemVersForm(item));
     setMessage(null);
     setErreur(null);
   };
 
-  const sauvegarder = async () => {
+  const editer = (item: MedicamentItem) => {
+    setModePanneau("edition");
+    setSelectionId(item.id);
+    setMenuOuvertId(null);
+    setForm(itemVersForm(item));
+    setMessage(null);
+    setErreur(null);
+  };
+
+  const basculerCoche = (id: string) => {
+    setIdsCoches((ids) =>
+      ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]
+    );
+  };
+
+  const basculerSelectionTout = () => {
+    if (toutSelectionne) {
+      setIdsCoches([]);
+      return;
+    }
+    setIdsCoches(listeFiltree.map((m) => m.id));
+  };
+
+  const exporterSelection = () => {
+    const coches = new Set(idsCoches);
+    const cibles =
+      coches.size > 0
+        ? listeFiltree.filter((m) => coches.has(m.id))
+        : listeFiltree;
+    if (cibles.length === 0) return;
+    telechargerCsv(
+      `admin-medicaments-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        t("admin.medicaments.code"),
+        t("admin.medicaments.nom"),
+        t("admin.medicaments.categorie"),
+        t("admin.medicaments.forme"),
+        t("admin.medicaments.dosage"),
+        t("admin.medicaments.prixUnitaire"),
+        t("admin.medicaments.colonnes.statut"),
+      ],
+      cibles.map((m) => [
+        m.code,
+        m.nom,
+        m.categorie ?? "",
+        m.forme ?? "",
+        m.dosage ?? "",
+        String(m.prixUnitaire),
+        m.actif ? t("admin.medicaments.actif") : t("admin.medicaments.inactif"),
+      ])
+    );
+  };
+
+  const changerActif = async (item: MedicamentItem, actif: boolean) => {
+    setEnCours(true);
+    setErreur(null);
+    setMessage(null);
+    setMenuOuvertId(null);
+    try {
+      const res = await fetch(`/api/admin/medicaments/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actif }),
+      });
+      const data = (await res.json()) as {
+        message?: string;
+        medicament?: MedicamentItem;
+      };
+      if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
+      setMessage(
+        actif ? t("admin.medicaments.active") : t("admin.medicaments.desactive")
+      );
+      if (selectionId === item.id && data.medicament) {
+        setForm(itemVersForm(data.medicament));
+      }
+      await charger();
+    } catch (e: unknown) {
+      setErreur(e instanceof Error ? e.message : t("admin.common.erreur"));
+    } finally {
+      setEnCours(false);
+    }
+  };
+
+  const soumettre = async () => {
+    if (!form.code.trim() || !form.nom.trim()) {
+      setErreur(t("admin.medicaments.champsRequis"));
+      return;
+    }
+    const prixUnitaire = Number(form.prixUnitaire);
+    if (!Number.isFinite(prixUnitaire) || prixUnitaire < 0) {
+      setErreur(t("admin.medicaments.prixInvalide"));
+      return;
+    }
+
     setEnCours(true);
     setErreur(null);
     setMessage(null);
@@ -122,17 +296,18 @@ export function ContenuMedicamentsAdmin({
         forme: form.forme || null,
         dosage: form.dosage || null,
         prixAchat: form.prixAchat === "" ? null : Number(form.prixAchat),
-        prixUnitaire: Number(form.prixUnitaire),
+        prixUnitaire,
         stockMinimum: Number(form.stockMinimum),
         emplacement: form.emplacement || null,
         actif: form.actif,
       };
+      const creation = modePanneau === "creation";
       const res = await fetch(
-        modeCreation
+        creation
           ? "/api/admin/medicaments"
           : `/api/admin/medicaments/${selectionId}`,
         {
-          method: modeCreation ? "POST" : "PATCH",
+          method: creation ? "POST" : "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         }
@@ -142,10 +317,14 @@ export function ContenuMedicamentsAdmin({
         medicament?: MedicamentItem;
       };
       if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
-      setMessage(data.message ?? t("admin.common.enregistrer"));
+      setMessage(
+        data.message ??
+          (creation ? t("admin.medicaments.cree") : t("admin.medicaments.maj"))
+      );
       if (data.medicament) {
         setSelectionId(data.medicament.id);
-        setModeCreation(false);
+        setModePanneau("edition");
+        setForm(itemVersForm(data.medicament));
       }
       await charger();
     } catch (e: unknown) {
@@ -159,256 +338,313 @@ export function ContenuMedicamentsAdmin({
     <MiseEnPageAdmin
       utilisateur={utilisateur}
       titre={t("admin.medicaments.titre")}
-      sousTitre={t("admin.medicaments.description")}
+      sousTitre={t("admin.layout.sousTitre")}
     >
-      <div className="mx-auto w-full max-w-[1200px] space-y-6">
+      <div className="mx-auto w-full max-w-[1200px]">
         <EnTetePageReception
           icone={Pill}
           titre={t("admin.medicaments.titre")}
           description={t("admin.medicaments.description")}
           fil={[
             { label: t("admin.common.salle"), href: "/sigh/admin" },
-            { label: t("admin.medicaments.titre") },
+            { label: t("admin.medicaments.fil") },
           ]}
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-3">
-            <input
-              className={`${CLASSE_CHAMP_RECEPTION} max-w-xs`}
-              placeholder={t("admin.medicaments.recherche")}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-            <select
-              className={`${CLASSE_CHAMP_RECEPTION} max-w-[180px]`}
-              value={filtreActif}
-              onChange={(e) => setFiltreActif(e.target.value)}
-            >
-              <option value="">{t("admin.medicaments.tous")}</option>
-              <option value="true">{t("admin.medicaments.actifs")}</option>
-              <option value="false">{t("admin.medicaments.inactifs")}</option>
-            </select>
+        <div className="mt-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <label className="flex h-11 min-w-[180px] w-full max-w-md flex-1 items-center gap-2 rounded-lg border-2 border-slate-400 bg-white px-3 text-sm text-texte-principal shadow-sm transition-colors focus-within:border-bleu-medical focus-within:ring-2 focus-within:ring-bleu-medical/25">
+              <Search className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+              <input
+                type="search"
+                value={rechercheRapide}
+                onChange={(e) => setRechercheRapide(e.target.value)}
+                placeholder={t("admin.medicaments.recherche")}
+                aria-label={t("admin.medicaments.recherche")}
+                autoComplete="off"
+                className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-slate-600"
+              />
+              {rechercheRapide ? (
+                <button
+                  type="button"
+                  onClick={() => setRechercheRapide("")}
+                  aria-label={t("admin.medicaments.effacerRecherche")}
+                  className="shrink-0 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </label>
+
+            <div className="flex shrink-0 items-center justify-end gap-2">
+              <Bouton type="button" taille="petit" onClick={ouvrirCreation}>
+                <Plus className="h-4 w-4" />
+                {t("admin.medicaments.nouveau")}
+              </Bouton>
+              <button
+                type="button"
+                onClick={() => setFiltresOuverts((o) => !o)}
+                aria-expanded={filtresOuverts}
+                aria-label={
+                  filtresOuverts
+                    ? t("reception.tableau.fermerFiltres")
+                    : t("reception.tableau.ouvrirFiltres")
+                }
+                className={cn(
+                  "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+                  filtresOuverts
+                    ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                    : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
+                )}
+              >
+                <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
+                <span
+                  className={cn(
+                    "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
+                    nbFiltres > 0 ? "bg-red-500" : "bg-slate-400"
+                  )}
+                >
+                  {nbFiltres}
+                </span>
+              </button>
+              <BoutonsOutilsListe
+                toutSelectionne={toutSelectionne}
+                onSelectionnerTout={basculerSelectionTout}
+                onExporter={exporterSelection}
+                labelSelectionnerTout={t("reception.liste.selectionnerTout")}
+                labelExporter={t("reception.liste.exporterSelection")}
+              />
+            </div>
           </div>
-          <Bouton type="button" taille="petit" onClick={ouvrirCreation}>
-            <Plus className="h-4 w-4" />
-            {t("admin.medicaments.nouveau")}
-          </Bouton>
+
+          {filtresOuverts ? (
+            <FormulaireFiltresMedicamentsAdmin
+              valeurs={brouillon}
+              onChange={setBrouillon}
+              onRechercher={() => {
+                setAppliques(brouillon);
+                setPage(1);
+              }}
+              onReinitialiser={() => {
+                setBrouillon(FILTRES_MEDICAMENTS_ADMIN_VIDES);
+                setAppliques(FILTRES_MEDICAMENTS_ADMIN_VIDES);
+                setPage(1);
+              }}
+              categories={categories}
+            />
+          ) : null}
         </div>
 
-        {erreur ? (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {erreur}
-          </p>
-        ) : null}
         {message ? (
-          <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <p className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800">
             {message}
           </p>
         ) : null}
+        {erreur ? (
+          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+            {erreur}
+          </p>
+        ) : null}
 
-        <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-          <div className="rounded-xl border border-gris-bordure bg-white shadow-sm">
+        <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+          <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
             {chargement ? (
-              <div className="flex items-center gap-2 p-6 text-sm text-texte-secondaire">
+              <p className="flex items-center gap-2 p-6 text-sm text-texte-secondaire">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {t("admin.common.chargement")}
-              </div>
-            ) : liste.length === 0 ? (
-              <p className="p-6 text-sm text-texte-secondaire">
-                {t("admin.medicaments.vide")}
+              </p>
+            ) : listeFiltree.length === 0 ? (
+              <p className="px-4 py-8 text-center text-sm text-texte-secondaire">
+                {t("admin.medicaments.aucunResultat")}
               </p>
             ) : (
-              <ul className="divide-y divide-gris-bordure">
-                {liste.map((item) => (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      onClick={() => ouvrirEdition(item)}
-                      className={`flex w-full items-start justify-between gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-gris-tres-clair ${
-                        selectionId === item.id ? "bg-bleu-medical-clair/40" : ""
-                      }`}
-                    >
-                      <div>
-                        <p className="font-semibold text-texte-principal">
-                          {item.nom}
-                        </p>
-                        <p className="text-xs text-texte-secondaire">
-                          {item.code}
-                          {item.forme ? ` · ${item.forme}` : ""}
-                          {item.dosage ? ` ${item.dosage}` : ""} ·{" "}
-                          {item.prixUnitaire} $
-                        </p>
-                      </div>
-                      <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                          item.actif
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {item.actif
-                          ? t("admin.medicaments.actif")
-                          : t("admin.medicaments.inactif")}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <div className="conteneur-tableau-sigh">
+                  <table className="tableau-sigh min-w-[640px]">
+                    <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
+                      <tr>
+                        <th className="w-10 px-3 py-2">
+                          <span className="sr-only">
+                            {t("reception.liste.selectionnerTout")}
+                          </span>
+                        </th>
+                        <th className="px-3 py-2">{t("admin.medicaments.code")}</th>
+                        <th className="px-3 py-2">{t("admin.medicaments.nom")}</th>
+                        <th className="hidden px-3 py-2 md:table-cell">
+                          {t("admin.medicaments.forme")}
+                        </th>
+                        <th className="hidden px-3 py-2 lg:table-cell">
+                          {t("admin.medicaments.prixUnitaire")}
+                        </th>
+                        <th className="px-3 py-2">
+                          {t("admin.medicaments.colonnes.statut")}
+                        </th>
+                        <th className="px-3 py-2 text-center">
+                          {t("admin.medicaments.colonnes.actions")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pageData.itemsPage.map((item) => (
+                        <tr
+                          key={item.id}
+                          className={cn(
+                            "cursor-pointer border-t border-gris-bordure hover:bg-bleu-medical-clair/20",
+                            selectionId === item.id && "bg-bleu-medical-clair/30"
+                          )}
+                          onClick={() => consulter(item)}
+                        >
+                          <td
+                            className="px-3 py-2.5"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={idsCoches.includes(item.id)}
+                              onChange={() => basculerCoche(item.id)}
+                              aria-label={item.nom}
+                            />
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <span className="font-mono text-xs font-semibold text-texte-principal">
+                              {item.code}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <p className="font-medium text-texte-principal">
+                              {item.nom}
+                            </p>
+                            <p className="text-xs text-texte-secondaire">
+                              {[item.categorie, item.dosage].filter(Boolean).join(" · ")}
+                            </p>
+                          </td>
+                          <td className="hidden px-3 py-2.5 text-sm md:table-cell">
+                            {item.forme ?? "—"}
+                          </td>
+                          <td className="hidden px-3 py-2.5 text-sm tabular-nums lg:table-cell">
+                            {formaterPrix(item.prixUnitaire)}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <span
+                              className={cn(
+                                "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                                item.actif
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : "bg-red-50 text-red-700"
+                              )}
+                            >
+                              {item.actif
+                                ? t("admin.medicaments.actif")
+                                : t("admin.medicaments.inactif")}
+                            </span>
+                          </td>
+                          <td
+                            className="px-3 py-2.5"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => consulter(item)}
+                                className={CLASSE_BOUTON_ACTION}
+                                aria-label={t("admin.medicaments.voir")}
+                                title={t("admin.medicaments.voir")}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => editer(item)}
+                                className={CLASSE_BOUTON_ACTION}
+                                aria-label={t("admin.medicaments.editer")}
+                                title={t("admin.medicaments.editer")}
+                              >
+                                <SquarePen className="h-4 w-4" />
+                              </button>
+                              <div
+                                className="relative"
+                                ref={
+                                  menuOuvertId === item.id ? menuRef : undefined
+                                }
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setMenuOuvertId((id) =>
+                                      id === item.id ? null : item.id
+                                    )
+                                  }
+                                  className={CLASSE_BOUTON_ACTION}
+                                  aria-label={t("admin.medicaments.plusActions")}
+                                  title={t("admin.medicaments.plusActions")}
+                                  aria-expanded={menuOuvertId === item.id}
+                                  aria-haspopup="menu"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </button>
+                                {menuOuvertId === item.id ? (
+                                  <div
+                                    role="menu"
+                                    className="absolute right-0 top-10 z-20 min-w-[240px] overflow-hidden rounded-lg border border-gris-bordure bg-white py-1 shadow-lg"
+                                  >
+                                    {item.actif ? (
+                                      <button
+                                        type="button"
+                                        role="menuitem"
+                                        disabled={enCours}
+                                        onClick={() =>
+                                          void changerActif(item, false)
+                                        }
+                                        className="block w-full px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
+                                      >
+                                        {t("admin.medicaments.exclureCatalogue")}
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        role="menuitem"
+                                        disabled={enCours}
+                                        onClick={() =>
+                                          void changerActif(item, true)
+                                        }
+                                        className="block w-full px-3 py-2 text-left text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                                      >
+                                        {t("admin.medicaments.inclureCatalogue")}
+                                      </button>
+                                    )}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <PaginationListe
+                  page={pageData.pageCourante}
+                  totalPages={pageData.totalPages}
+                  totalItems={listeFiltree.length}
+                  parPage={MEDICAMENTS_PAR_PAGE}
+                  onChange={setPage}
+                  labelPrec={t("reception.liste.prec")}
+                  labelSuiv={t("reception.liste.suiv")}
+                />
+              </>
             )}
           </div>
 
-          {(modeCreation || selectionId) && (
-            <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-              <h3 className="text-sm font-semibold text-texte-principal">
-                {modeCreation
-                  ? t("admin.medicaments.nouveau")
-                  : t("admin.medicaments.modifier")}
-              </h3>
-              <div className="mt-3 space-y-3">
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.medicaments.code")}
-                  </label>
-                  <input
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.code}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, code: e.target.value }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.medicaments.nom")}
-                  </label>
-                  <input
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.nom}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, nom: e.target.value }))
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>
-                      {t("admin.medicaments.categorie")}
-                    </label>
-                    <input
-                      className={CLASSE_CHAMP_RECEPTION}
-                      value={form.categorie}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, categorie: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>
-                      {t("admin.medicaments.forme")}
-                    </label>
-                    <input
-                      className={CLASSE_CHAMP_RECEPTION}
-                      value={form.forme}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, forme: e.target.value }))
-                      }
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>
-                    {t("admin.medicaments.dosage")}
-                  </label>
-                  <input
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.dosage}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, dosage: e.target.value }))
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>
-                      {t("admin.medicaments.prixAchat")}
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      className={CLASSE_CHAMP_RECEPTION}
-                      value={form.prixAchat}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, prixAchat: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>
-                      {t("admin.medicaments.prixUnitaire")}
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      className={CLASSE_CHAMP_RECEPTION}
-                      value={form.prixUnitaire}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, prixUnitaire: e.target.value }))
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>
-                      {t("admin.medicaments.stockMinimum")}
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      className={CLASSE_CHAMP_RECEPTION}
-                      value={form.stockMinimum}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, stockMinimum: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className={CLASSE_LABEL_RECEPTION}>
-                      {t("admin.medicaments.emplacement")}
-                    </label>
-                    <input
-                      className={CLASSE_CHAMP_RECEPTION}
-                      value={form.emplacement}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, emplacement: e.target.value }))
-                      }
-                    />
-                  </div>
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={form.actif}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, actif: e.target.checked }))
-                    }
-                  />
-                  {t("admin.medicaments.actif")}
-                </label>
-                <Bouton
-                  type="button"
-                  disabled={enCours}
-                  onClick={() => void sauvegarder()}
-                >
-                  <Save className="h-4 w-4" />
-                  {t("admin.common.enregistrer")}
-                </Bouton>
-              </div>
-            </div>
-          )}
+          <FormulaireMedicamentAdmin
+            form={form}
+            onChange={setForm}
+            categories={categories}
+            modePanneau={modePanneau}
+            lectureSeule={lectureSeule}
+            enCours={enCours}
+            onSoumettre={() => void soumettre()}
+            onAnnuler={ouvrirCreation}
+          />
         </div>
       </div>
     </MiseEnPageAdmin>

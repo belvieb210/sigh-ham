@@ -24,6 +24,10 @@ import {
   BoutonsOutilsListe,
   telechargerCsv,
 } from "@/components/ui/boutons-outils-liste";
+import {
+  PaginationListe,
+  paginerListe,
+} from "@/components/ui/pagination-liste";
 import { EVENEMENT_ADMIN_UTILISATEURS_MODIFIES } from "@/constants/admin";
 import { estRoleGereParServiceClient } from "@/constants/admin-utilisateurs";
 import {
@@ -71,6 +75,7 @@ interface UtilisateurItem {
 type ModePanneau = "creation" | "consultation" | "edition";
 
 const STATUTS = ["ACTIF", "INACTIF", "SUSPENDU"] as const;
+const UTILISATEURS_PAR_PAGE = 16;
 
 const CLASSE_BOUTON_ACTION =
   "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure text-slate-500 transition-colors hover:bg-gris-tres-clair hover:text-bleu-medical";
@@ -147,6 +152,7 @@ export function ContenuUtilisateursAdmin({
     FILTRES_UTILISATEURS_ADMIN_VIDES
   );
   const [idsCoches, setIdsCoches] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -206,6 +212,15 @@ export function ContenuUtilisateursAdmin({
       ),
     [liste, appliques, rechercheRapide]
   );
+
+  const pageData = useMemo(
+    () => paginerListe(listeFiltree, page, UTILISATEURS_PAR_PAGE),
+    [listeFiltree, page]
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [rechercheRapide, appliques]);
 
   const nbFiltres = compterFiltresUtilisateursAdmin(appliques);
   const toutSelectionne =
@@ -520,10 +535,14 @@ export function ContenuUtilisateursAdmin({
             <FormulaireFiltresUtilisateursAdmin
               valeurs={brouillon}
               onChange={setBrouillon}
-              onRechercher={() => setAppliques(brouillon)}
+              onRechercher={() => {
+                setAppliques(brouillon);
+                setPage(1);
+              }}
               onReinitialiser={() => {
                 setBrouillon(FILTRES_UTILISATEURS_ADMIN_VIDES);
                 setAppliques(FILTRES_UTILISATEURS_ADMIN_VIDES);
+                setPage(1);
               }}
               roles={roles.map((r) => ({ id: r.id, nom: r.nom }))}
               salles={salles.map((s) => ({ code: s.code, nom: s.nom }))}
@@ -555,6 +574,7 @@ export function ContenuUtilisateursAdmin({
                 {t("admin.utilisateurs.aucunResultat")}
               </p>
             ) : (
+              <>
               <div className="conteneur-tableau-sigh">
                 <table className="tableau-sigh min-w-[640px]">
                   <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
@@ -581,7 +601,7 @@ export function ContenuUtilisateursAdmin({
                     </tr>
                   </thead>
                   <tbody>
-                    {listeFiltree.map((u) => (
+                    {pageData.itemsPage.map((u) => (
                       <tr
                         key={u.id}
                         className={cn(
@@ -740,6 +760,16 @@ export function ContenuUtilisateursAdmin({
                   </tbody>
                 </table>
               </div>
+              <PaginationListe
+                page={pageData.pageCourante}
+                totalPages={pageData.totalPages}
+                totalItems={listeFiltree.length}
+                parPage={UTILISATEURS_PAR_PAGE}
+                onChange={setPage}
+                labelPrec={t("reception.liste.prec")}
+                labelSuiv={t("reception.liste.suiv")}
+              />
+              </>
             )}
           </div>
 

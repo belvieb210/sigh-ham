@@ -292,10 +292,12 @@ function resterSurExamen(
 
 /**
  * Après enregistrement d'un résultat, on reste sur la même visite/facture :
- * - s'il reste des examens du filtre d'origine (ex. autres En cours) ;
- * - sinon, s'il reste des examens au statut d'arrivée (ex. Valider alors que
- *   les autres examens de la facture sont déjà Dr approuvé → rester en Vérifiés) ;
- * - sinon → liste de destination de l'action, pour ce dossier uniquement.
+ * - s'il reste des examens du filtre d'origine (ex. autres Vérifiés à approuver) ;
+ * - après Valider : rester en Vérifiés sur cet examen, même si les autres de
+ *   la facture sont déjà Dr approuvé (ils ne doivent pas le faire disparaître) ;
+ * - après le dernier Approuver / Rejeter de cette visite : retour à la liste
+ *   d'origine (Vérifiés), pour continuer les autres patients et les autres
+ *   visites/factures — sans envoyer vers Dr approuvé.
  */
 export function determinerNavigationApresSauvegardeResultat(input: {
   statutOrigine: IdOrientationStatutAnalyse | null;
@@ -327,12 +329,8 @@ export function determinerNavigationApresSauvegardeResultat(input: {
     input.examens,
     statutArrivee
   );
-  // Valider : rester sur cette visite en Vérifiés, même si les autres examens
-  // de la facture sont déjà Dr approuvé (ils ne doivent pas faire disparaître celui-ci).
-  if (
-    restantsArrivee.length > 0 &&
-    (input.action === "verifier" || input.action === "brouillon")
-  ) {
+
+  if (input.action === "verifier" && restantsArrivee.length > 0) {
     const examenId =
       input.examenCourantId &&
       restantsArrivee.some((e) => e.id === input.examenCourantId)
@@ -341,7 +339,18 @@ export function determinerNavigationApresSauvegardeResultat(input: {
     return {
       type: "rester-saisie",
       examenId,
-      statutSaisie: statutArrivee,
+      statutSaisie: "VERIFIES",
+    };
+  }
+
+  if (input.action === "brouillon" && restantsArrivee.length > 0) {
+    return resterSurExamen(restantsArrivee, input, "EN_COURS");
+  }
+
+  if (input.statutOrigine) {
+    return {
+      type: "naviguer",
+      chemin: CHEMINS_STATUT_ANALYSE_LABO[input.statutOrigine],
     };
   }
 

@@ -90,8 +90,11 @@ export function ContenuSaisieResultatsLaboratoire({
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const statutFiltre = searchParams.get("statut") as IdOrientationStatutAnalyse | null;
+  const statutFiltreUrl = searchParams.get("statut") as IdOrientationStatutAnalyse | null;
   const examenIdFiltre = searchParams.get("examen");
+  const [statutAffichage, setStatutAffichage] =
+    useState<IdOrientationStatutAnalyse | null>(statutFiltreUrl);
+  const statutFiltre = statutAffichage;
 
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -107,7 +110,14 @@ export function ContenuSaisieResultatsLaboratoire({
   >({});
 
   const rechargerDonnees = useCallback(
-    async (options?: { silencieux?: boolean }): Promise<EtatExamenForm[] | null> => {
+    async (options?: {
+      silencieux?: boolean;
+      appliquerEtat?: boolean;
+    }): Promise<{
+      clones: EtatExamenForm[];
+      infosPatient: Omit<SaisieResultatsDto, "examens">;
+      fichiers: Record<string, FichierJoint[]>;
+    } | null> => {
       if (!options?.silencieux) {
         setChargement(true);
       }
@@ -130,25 +140,26 @@ export function ContenuSaisieResultatsLaboratoire({
         }
         const { examens: liste, ...infosPatient } = data.saisie;
         const clones = clonerEtat(data.saisie);
-        setPatient(infosPatient);
-        setExamens(clones);
-        setFichiersParExamen(
-          Object.fromEntries(
-            liste.map((ex) => [
-              ex.id,
-              ex.piecesJointes.map((pj, idx) => ({
-                id: `persist-${idx}-${pj.url}`,
-                nom: pj.nom,
-                url: pj.url,
-                mimeType: pj.mimeType,
-              })),
-            ])
-          )
+        const fichiers = Object.fromEntries(
+          liste.map((ex) => [
+            ex.id,
+            ex.piecesJointes.map((pj, idx) => ({
+              id: `persist-${idx}-${pj.url}`,
+              nom: pj.nom,
+              url: pj.url,
+              mimeType: pj.mimeType,
+            })),
+          ])
         );
-        if (!options?.silencieux) {
-          setExamenOuvertId((courant) => courant ?? liste[0]?.id ?? null);
+        if (options?.appliquerEtat !== false) {
+          setPatient(infosPatient);
+          setExamens(clones);
+          setFichiersParExamen(fichiers);
+          if (!options?.silencieux) {
+            setExamenOuvertId((courant) => courant ?? liste[0]?.id ?? null);
+          }
         }
-        return clones;
+        return { clones, infosPatient, fichiers };
       } catch {
         setErreur(t("laboratoire.saisieResultats.erreurChargement"));
         return null;
@@ -168,6 +179,10 @@ export function ContenuSaisieResultatsLaboratoire({
   useEffect(() => {
     void charger();
   }, [charger]);
+
+  useEffect(() => {
+    setStatutAffichage(statutFiltreUrl);
+  }, [statutFiltreUrl]);
 
   const examensAffichables = useMemo(() => {
     let list = examens;
@@ -361,19 +376,28 @@ export function ContenuSaisieResultatsLaboratoire({
 
       window.dispatchEvent(new CustomEvent(EVENT_RAFRAICHIR_NOTIFICATIONS));
 
-      const examensActualises = await rechargerDonnees({ silencieux: true });
-      if (!examensActualises) return;
+      const charge = await rechargerDonnees({
+        silencieux: true,
+        appliquerEtat: false,
+      });
+      if (!charge) return;
 
       const navigation = determinerNavigationApresSauvegardeResultat({
         statutOrigine: statutFiltre,
         action: options.action,
         dossierId,
-        examens: examensActualises,
+        examens: charge.clones,
         passerSuivant: options.passerSuivant,
         examenCourantId: examenOuvert.id,
       });
 
       if (navigation.type === "rester-saisie") {
+        if (navigation.statutSaisie) {
+          setStatutAffichage(navigation.statutSaisie);
+        }
+        setPatient(charge.infosPatient);
+        setExamens(charge.clones);
+        setFichiersParExamen(charge.fichiers);
         setExamenOuvertId(navigation.examenId);
         const statutUrl = navigation.statutSaisie ?? statutFiltre;
         if (statutUrl) {
@@ -385,6 +409,9 @@ export function ContenuSaisieResultatsLaboratoire({
         return;
       }
 
+      setPatient(charge.infosPatient);
+      setExamens(charge.clones);
+      setFichiersParExamen(charge.fichiers);
       router.push(navigation.chemin);
     } catch {
       setErreur(t("laboratoire.saisieResultats.erreurSauvegarde"));

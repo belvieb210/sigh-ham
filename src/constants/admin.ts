@@ -18,6 +18,7 @@ import {
   FlaskConical,
   Pill,
   Layers,
+  ContactRound,
 } from "lucide-react";
 
 export const NAVIGATION_ADMIN = {
@@ -28,6 +29,7 @@ export const NAVIGATION_ADMIN = {
   ],
   gouvernance: [
     { href: "/sigh/admin/utilisateurs", id: "utilisateurs", icone: Users },
+    { href: "/sigh/admin/patients", id: "patients", icone: ContactRound },
     { href: "/sigh/admin/roles", id: "roles", icone: Shield },
     { href: "/sigh/admin/services", id: "services", icone: Building2 },
   ],

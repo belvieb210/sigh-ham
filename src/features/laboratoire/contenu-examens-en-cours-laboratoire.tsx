@@ -113,6 +113,8 @@ export function ContenuExamensEnCoursLaboratoire({
     try {
       const params = new URLSearchParams();
       if (pageStatut === "DR_APPROUVE") params.set("vue", "dr-approuve");
+      if (pageStatut === "VERIFIES") params.set("vue", "verifies");
+      if (pageStatut === "REJETES") params.set("vue", "rejetes");
       if (rechercheNumeros.applique.numeroPermanent) {
         params.set("numeroPermanent", rechercheNumeros.applique.numeroPermanent);
       }

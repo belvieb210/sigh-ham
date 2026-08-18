@@ -238,10 +238,26 @@ export type NavigationApresSauvegardeResultat =
   | { type: "rester-saisie"; examenId: string }
   | { type: "naviguer"; chemin: string };
 
+function examenSaisieSuivant(
+  restants: ExamenAvecOrientation[],
+  examenCourantId?: string | null
+): string {
+  if (!examenCourantId) return restants[0]!.id;
+  const encorePresent = restants.find((e) => e.id === examenCourantId);
+  if (encorePresent && restants.length === 1) return encorePresent.id;
+  const idxCourant = restants.findIndex((e) => e.id === examenCourantId);
+  if (idxCourant >= 0) {
+    return restants[(idxCourant + 1) % restants.length]!.id;
+  }
+  return restants[0]!.id;
+}
+
 /**
  * Après enregistrement d'un résultat :
- * - s'il reste des examens sur la page d'origine → y rester (liste ou saisie suivante) ;
- * - sinon → retour à la liste d'origine sans patient sélectionné ;
+ * - s'il reste des examens du même dossier sur la page d'origine → rester en saisie
+ *   (examen suivant, ou l'examen courant s'il est encore dans le filtre) ;
+ * - sinon → aller à la page de destination de l'action (Vérifiés, Dr approuvé, …)
+ *   avec ce dossier, sans le mélanger aux autres visites du patient ;
  * - sans contexte d'origine → page de destination de l'action.
  */
 export function determinerNavigationApresSauvegardeResultat(input: {
@@ -250,6 +266,7 @@ export function determinerNavigationApresSauvegardeResultat(input: {
   dossierId: string;
   examens: ExamenAvecOrientation[];
   passerSuivant?: boolean;
+  examenCourantId?: string | null;
 }): NavigationApresSauvegardeResultat {
   const cheminDestination: Record<ActionEnregistrementResultat, string> = {
     brouillon: CHEMINS_STATUT_ANALYSE_LABO.EN_COURS,
@@ -263,20 +280,21 @@ export function determinerNavigationApresSauvegardeResultat(input: {
       input.examens,
       input.statutOrigine
     );
-    const cheminOrigine = CHEMINS_STATUT_ANALYSE_LABO[input.statutOrigine];
-
-    if (input.passerSuivant && restants.length > 0) {
-      return { type: "rester-saisie", examenId: restants[0]!.id };
-    }
 
     if (restants.length > 0) {
+      const garderCourant =
+        !input.passerSuivant &&
+        Boolean(
+          input.examenCourantId &&
+            restants.some((e) => e.id === input.examenCourantId)
+        );
       return {
-        type: "naviguer",
-        chemin: `${cheminOrigine}?dossier=${encodeURIComponent(input.dossierId)}`,
+        type: "rester-saisie",
+        examenId: garderCourant
+          ? input.examenCourantId!
+          : examenSaisieSuivant(restants, input.examenCourantId),
       };
     }
-
-    return { type: "naviguer", chemin: cheminOrigine };
   }
 
   return {

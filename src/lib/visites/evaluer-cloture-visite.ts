@@ -1,4 +1,5 @@
 import "server-only";
+import { lireOrientationAnalyseDepuisNotes } from "@/constants/laboratoire-orientations";
 import { prisma } from "@/lib/prisma";
 import { cloturerVisiteSiPossible } from "@/lib/visites/etat-visite";
 
@@ -17,6 +18,11 @@ async function aucunTransfertSortantEnAttente(
   return !sortant;
 }
 
+/**
+ * La file labo ne se libère que lorsque le biologiste a fini ce dossier
+ * (tous les examens Dr approuvés ou rejetés). Un simple « Valider »
+ * (TERMINE / Vérifiés) ne doit pas faire disparaître la visite.
+ */
 async function libererFileLaboSiExamensTermines(dossierId: string) {
   const recuperation = await prisma.transfertRecuperation.findFirst({
     where: { dossierId, statut: "EN_RECUPERATION" },
@@ -24,16 +30,18 @@ async function libererFileLaboSiExamensTermines(dossierId: string) {
   });
   if (recuperation) return;
 
-  const [enCours, avecExamens] = await Promise.all([
-    prisma.examenLaboratoire.count({
-      where: {
-        dossierId,
-        statut: { notIn: ["TERMINE", "ANNULE"] },
-      },
-    }),
-    prisma.examenLaboratoire.count({ where: { dossierId } }),
-  ]);
-  if (avecExamens === 0 || enCours > 0) return;
+  const examens = await prisma.examenLaboratoire.findMany({
+    where: { dossierId },
+    select: { statut: true, notes: true },
+  });
+  if (examens.length === 0) return;
+
+  const travailLaboFini = examens.every((e) => {
+    if (e.statut === "ANNULE") return true;
+    if (e.statut !== "TERMINE") return false;
+    return lireOrientationAnalyseDepuisNotes(e.notes) === "DR_APPROUVE";
+  });
+  if (!travailLaboFini) return;
 
   const files = await prisma.fileAttente.findMany({
     where: {

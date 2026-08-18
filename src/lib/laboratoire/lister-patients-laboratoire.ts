@@ -6,11 +6,20 @@ import { patientCorrespondPageStatut } from "@/features/laboratoire/utils-affich
 import { deriverStatutAnalyse } from "@/lib/laboratoire/orienter-statut-analyse";
 import { classerExamensFacture } from "@/lib/laboratoire/classer-examens-facture";
 import { estNumeroFacturePharmacie } from "@/lib/caisse/etat-facturation-dual";
+import {
+  lireOrientationAnalyseDepuisNotes,
+  type IdOrientationStatutAnalyse,
+} from "@/constants/laboratoire-orientations";
 import type {
   DetailPatientLaboratoire,
   PatientFileLaboratoire,
   StatsLaboratoireJour,
 } from "@/lib/laboratoire/types";
+
+type StatutAnalysePersistant = Extract<
+  IdOrientationStatutAnalyse,
+  "VERIFIES" | "DR_APPROUVE" | "REJETES"
+>;
 
 function extraireModeFacture(reference: string | null | undefined): string | null {
   if (!reference) return null;
@@ -468,16 +477,9 @@ function decimalLigne(valeur: { toNumber?: () => number } | number | string): nu
   return Number(valeur) || 0;
 }
 
-/** Dossiers ayant au moins un examen validé biologiste (hors file d’attente). */
-export async function listerDossierIdsAvecExamensDrApprouve(): Promise<string[]> {
-  const examens = await prisma.examenLaboratoire.findMany({
-    where: {
-      statut: "TERMINE",
-      notes: { contains: "laboOrientation=DR_APPROUVE" },
-    },
-    select: { dossierId: true, resultatLe: true },
-    orderBy: { resultatLe: "desc" },
-  });
+function dossierIdsUniquesDepuisExamens(
+  examens: { dossierId: string }[]
+): string[] {
   const vus = new Set<string>();
   const ids: string[] = [];
   for (const ex of examens) {
@@ -486,6 +488,52 @@ export async function listerDossierIdsAvecExamensDrApprouve(): Promise<string[]>
     ids.push(ex.dossierId);
   }
   return ids;
+}
+
+/** Dossiers ayant au moins un examen au statut d'analyse donné (hors file). */
+export async function listerDossierIdsAvecExamensOrientation(
+  orientation: StatutAnalysePersistant
+): Promise<string[]> {
+  if (orientation === "REJETES") {
+    const examens = await prisma.examenLaboratoire.findMany({
+      where: { statut: "ANNULE" },
+      select: { dossierId: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+    });
+    return dossierIdsUniquesDepuisExamens(examens);
+  }
+
+  if (orientation === "DR_APPROUVE") {
+    const examens = await prisma.examenLaboratoire.findMany({
+      where: {
+        statut: "TERMINE",
+        notes: { contains: "laboOrientation=DR_APPROUVE" },
+      },
+      select: { dossierId: true, resultatLe: true },
+      orderBy: { resultatLe: "desc" },
+    });
+    return dossierIdsUniquesDepuisExamens(examens);
+  }
+
+  const examens = await prisma.examenLaboratoire.findMany({
+    where: {
+      statut: "TERMINE",
+      NOT: { notes: { contains: "laboOrientation=DR_APPROUVE" } },
+    },
+    select: { dossierId: true, notes: true, resultatLe: true },
+    orderBy: { resultatLe: "desc" },
+  });
+  return dossierIdsUniquesDepuisExamens(
+    examens.filter((ex) => {
+      const o = lireOrientationAnalyseDepuisNotes(ex.notes);
+      return !o || o === "VERIFIES";
+    })
+  );
+}
+
+/** Dossiers ayant au moins un examen validé biologiste (hors file d’attente). */
+export async function listerDossierIdsAvecExamensDrApprouve(): Promise<string[]> {
+  return listerDossierIdsAvecExamensOrientation("DR_APPROUVE");
 }
 
 async function eclaterParFactureExamens(
@@ -582,14 +630,18 @@ async function eclaterParFactureExamens(
 }
 
 /**
- * Patients / visites avec examens Dr approuve, même après sortie de file labo.
- * Une ligne par dossier ; plusieurs factures examens → une ligne par facture.
+ * Patients / visites d'un statut d'analyse terminé, même après sortie de file labo.
+ * Les dossiers restent distincts : une autre visite du même patient (Reçus, etc.)
+ * n'est pas fusionnée ici.
  */
-export async function listerPatientsDrApprouveLaboratoire(opts?: {
-  numeroPermanent?: string;
-  numeroPat?: string;
-}): Promise<PatientFileLaboratoire[]> {
-  let dossierIds = await listerDossierIdsAvecExamensDrApprouve();
+export async function listerPatientsStatutPersistantLaboratoire(
+  pageStatut: StatutAnalysePersistant,
+  opts?: {
+    numeroPermanent?: string;
+    numeroPat?: string;
+  }
+): Promise<PatientFileLaboratoire[]> {
+  let dossierIds = await listerDossierIdsAvecExamensOrientation(pageStatut);
   if (dossierIds.length === 0) return [];
 
   const numeroPermanent = opts?.numeroPermanent?.trim() ?? "";
@@ -604,7 +656,21 @@ export async function listerPatientsDrApprouveLaboratoire(opts?: {
   }
 
   const patients = await chargerPatientsLaboratoireParDossiers(dossierIds);
-  return eclaterParFactureExamens(patients);
+  if (pageStatut === "DR_APPROUVE") {
+    return eclaterParFactureExamens(patients);
+  }
+  return patients.map((p) => ({ ...p, cleListe: p.dossierId }));
+}
+
+/**
+ * Patients / visites avec examens Dr approuve, même après sortie de file labo.
+ * Une ligne par dossier ; plusieurs factures examens → une ligne par facture.
+ */
+export async function listerPatientsDrApprouveLaboratoire(opts?: {
+  numeroPermanent?: string;
+  numeroPat?: string;
+}): Promise<PatientFileLaboratoire[]> {
+  return listerPatientsStatutPersistantLaboratoire("DR_APPROUVE", opts);
 }
 
 export async function obtenirDetailPatientLaboratoire(
@@ -665,10 +731,8 @@ export async function obtenirStatsLaboratoire(): Promise<StatsLaboratoireJour> {
     RECUS: patients.filter((p) => patientCorrespondPageStatut(p, "RECUS")).length,
     EN_COURS: patients.filter((p) => patientCorrespondPageStatut(p, "EN_COURS"))
       .length,
-    VERIFIES: patients.filter((p) => patientCorrespondPageStatut(p, "VERIFIES"))
-      .length,
-    REJETES: patients.filter((p) => patientCorrespondPageStatut(p, "REJETES"))
-      .length,
+    VERIFIES: (await listerDossierIdsAvecExamensOrientation("VERIFIES")).length,
+    REJETES: (await listerDossierIdsAvecExamensOrientation("REJETES")).length,
     DR_APPROUVE: (await listerDossierIdsAvecExamensDrApprouve()).length,
   };
 

@@ -370,6 +370,7 @@ export function ContenuSaisieResultatsLaboratoire({
         dossierId,
         examens: examensActualises,
         passerSuivant: options.passerSuivant,
+        examenCourantId: examenOuvert.id,
       });
 
       if (navigation.type === "rester-saisie") {
@@ -503,8 +504,12 @@ export function ContenuSaisieResultatsLaboratoire({
                       onValider={() =>
                         void envoyer({ action: "verifier", passerSuivant: true })
                       }
-                      onRejeter={() => void envoyer({ action: "rejeter" })}
-                      onApprouver={() => void envoyer({ action: "approuver" })}
+                      onRejeter={() =>
+                        void envoyer({ action: "rejeter", passerSuivant: true })
+                      }
+                      onApprouver={() =>
+                        void envoyer({ action: "approuver", passerSuivant: true })
+                      }
                       lienHistorique={construireLienHistorique(ex.id)}
                     />
                   )}

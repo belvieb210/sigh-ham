@@ -8,6 +8,7 @@ import {
   listerTypesExamen,
   messageErreurCatalogue,
 } from "@/lib/admin/catalogues";
+import { lireParametresBody } from "@/lib/admin/lire-parametres-examen";
 
 export async function GET(request: NextRequest) {
   const session = await obtenirSessionApiAdmin();
@@ -47,6 +48,13 @@ export async function POST(request: NextRequest) {
       actif: body.actif != null ? Boolean(body.actif) : undefined,
       packPrenuptial:
         body.packPrenuptial != null ? Boolean(body.packPrenuptial) : undefined,
+      formulaire: body.formulaire != null ? String(body.formulaire) : null,
+      serviceLabo: body.serviceLabo != null ? String(body.serviceLabo) : null,
+      specimen: body.specimen != null ? String(body.specimen) : null,
+      uniteDefaut: body.uniteDefaut != null ? String(body.uniteDefaut) : null,
+      rangeUsuelle: body.rangeUsuelle != null ? String(body.rangeUsuelle) : null,
+      description: body.description != null ? String(body.description) : null,
+      parametres: lireParametresBody(body.parametres),
     });
     return NextResponse.json({ message: "Examen créé.", examen }, { status: 201 });
   } catch (error) {

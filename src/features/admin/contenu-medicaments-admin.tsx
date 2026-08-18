@@ -39,6 +39,12 @@ import {
   FormulaireMedicamentAdmin,
   type FormMedicamentAdmin,
 } from "@/features/admin/formulaire-medicament-admin";
+import {
+  CATEGORIES_MEDICAMENT,
+  FORMES_MEDICAMENT,
+  choixDepuisValeur,
+  valeurDepuisChoix,
+} from "@/constants/catalogue-medicaments";
 import { cn } from "@/lib/utils";
 
 type MedicamentItem = {
@@ -51,8 +57,17 @@ type MedicamentItem = {
   prixAchat: number | null;
   prixUnitaire: number;
   stockMinimum: number;
+  stockMaximum: number | null;
   emplacement: string | null;
   actif: boolean;
+  firme: string | null;
+  telephoneFirme: string | null;
+  classeMedicamenteuse: string | null;
+  voieAdministration: string | null;
+  expirationLe: string | null;
+  recuPar: string | null;
+  autresInformations: string | null;
+  description: string | null;
 };
 
 type ModePanneau = "creation" | "consultation" | "edition";
@@ -67,16 +82,29 @@ function formaterPrix(n: number) {
 }
 
 function itemVersForm(item: MedicamentItem): FormMedicamentAdmin {
+  const categorie = choixDepuisValeur(item.categorie, CATEGORIES_MEDICAMENT);
+  const forme = choixDepuisValeur(item.forme, FORMES_MEDICAMENT);
   return {
     code: item.code,
     nom: item.nom,
-    categorie: item.categorie ?? "",
-    forme: item.forme ?? "",
+    categorieChoix: categorie.choix,
+    categorieAutre: categorie.autre,
+    formeChoix: forme.choix,
+    formeAutre: forme.autre,
     dosage: item.dosage ?? "",
+    voieAdministration: item.voieAdministration ?? "",
+    firme: item.firme ?? "",
+    telephoneFirme: item.telephoneFirme ?? "",
+    classeMedicamenteuse: item.classeMedicamenteuse ?? "",
     prixAchat: item.prixAchat != null ? String(item.prixAchat) : "",
     prixUnitaire: String(item.prixUnitaire),
     stockMinimum: String(item.stockMinimum),
+    stockMaximum: item.stockMaximum != null ? String(item.stockMaximum) : "",
     emplacement: item.emplacement ?? "",
+    expirationLe: item.expirationLe ?? "",
+    recuPar: item.recuPar ?? "",
+    autresInformations: item.autresInformations ?? "",
+    description: item.description ?? "",
     actif: item.actif,
   };
 }
@@ -228,8 +256,11 @@ export function ContenuMedicamentsAdmin({
         t("admin.medicaments.nom"),
         t("admin.medicaments.categorie"),
         t("admin.medicaments.forme"),
+        t("admin.medicaments.voieAdministration"),
         t("admin.medicaments.dosage"),
+        t("admin.medicaments.firme"),
         t("admin.medicaments.prixUnitaire"),
+        t("admin.medicaments.expirationLe"),
         t("admin.medicaments.colonnes.statut"),
       ],
       cibles.map((m) => [
@@ -237,8 +268,11 @@ export function ContenuMedicamentsAdmin({
         m.nom,
         m.categorie ?? "",
         m.forme ?? "",
+        m.voieAdministration ?? "",
         m.dosage ?? "",
+        m.firme ?? "",
         String(m.prixUnitaire),
+        m.expirationLe ?? "",
         m.actif ? t("admin.medicaments.actif") : t("admin.medicaments.inactif"),
       ])
     );
@@ -292,13 +326,22 @@ export function ContenuMedicamentsAdmin({
       const payload = {
         code: form.code,
         nom: form.nom,
-        categorie: form.categorie || null,
-        forme: form.forme || null,
+        categorie: valeurDepuisChoix(form.categorieChoix, form.categorieAutre),
+        forme: valeurDepuisChoix(form.formeChoix, form.formeAutre),
         dosage: form.dosage || null,
+        voieAdministration: form.voieAdministration || null,
+        firme: form.firme || null,
+        telephoneFirme: form.telephoneFirme || null,
+        classeMedicamenteuse: form.classeMedicamenteuse || null,
         prixAchat: form.prixAchat === "" ? null : Number(form.prixAchat),
         prixUnitaire,
         stockMinimum: Number(form.stockMinimum),
+        stockMaximum: form.stockMaximum === "" ? null : Number(form.stockMaximum),
         emplacement: form.emplacement || null,
+        expirationLe: form.expirationLe || null,
+        recuPar: form.recuPar || null,
+        autresInformations: form.autresInformations || null,
+        description: form.description || null,
         actif: form.actif,
       };
       const creation = modePanneau === "creation";
@@ -638,7 +681,6 @@ export function ContenuMedicamentsAdmin({
           <FormulaireMedicamentAdmin
             form={form}
             onChange={setForm}
-            categories={categories}
             modePanneau={modePanneau}
             lectureSeule={lectureSeule}
             enCours={enCours}

@@ -937,8 +937,17 @@ model Medicament {
   prixAchat     Decimal? @map("prix_achat") @db.Decimal(12, 2)
   prixUnitaire  Decimal  @map("prix_unitaire") @db.Decimal(12, 2)
   stockMinimum  Int      @default(10) @map("stock_minimum")
+  stockMaximum  Int?     @map("stock_maximum")
   emplacement   String?
   actif         Boolean  @default(true)
+  firme         String?
+  telephoneFirme String? @map("telephone_firme")
+  classeMedicamenteuse String? @map("classe_medicamenteuse")
+  voieAdministration String? @map("voie_administration")
+  expirationLe  DateTime? @map("expiration_le") @db.Date
+  recuPar       String?  @map("recu_par")
+  autresInformations String? @map("autres_informations") @db.Text
+  description   String?  @db.Text
 
   stocks             StockMedicament[]
   lots               LotMedicament[]

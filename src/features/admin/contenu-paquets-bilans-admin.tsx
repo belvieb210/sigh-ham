@@ -71,6 +71,13 @@ const PAQUETS_PAR_PAGE = 16;
 const CLASSE_BOUTON_ACTION =
   "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure text-slate-500 transition-colors hover:bg-gris-tres-clair hover:text-bleu-medical";
 
+function formaterPrixUsd(n: number) {
+  return `$ ${n.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 function calculerRemiseInitiale(prixForfait: number, somme: number): string {
   if (somme <= 0 || prixForfait <= 0) return "0";
   const pct = Math.round((1 - prixForfait / somme) * 100);
@@ -521,7 +528,7 @@ export function ContenuPaquetsBilansAdmin({
                                 {p.libelle}
                               </p>
                               <p className="text-xs text-texte-secondaire md:hidden">
-                                {p.nbExamens} · {p.prix.toLocaleString("fr-FR")} FC
+                                {p.nbExamens} · {formaterPrixUsd(p.prix)}
                               </p>
                             </td>
                             <td className="hidden px-3 py-2.5 text-sm md:table-cell">
@@ -529,11 +536,11 @@ export function ContenuPaquetsBilansAdmin({
                             </td>
                             <td className="hidden px-3 py-2.5 lg:table-cell">
                               <span className="font-semibold tabular-nums">
-                                {p.prix.toLocaleString("fr-FR")} FC
+                                {formaterPrixUsd(p.prix)}
                               </span>
                               <span className="ml-1 text-[10px] text-texte-secondaire">
                                 ({t("admin.paquetsBilans.sommeIndividuelle")}{" "}
-                                {p.prixSommeExamens.toLocaleString("fr-FR")})
+                                {formaterPrixUsd(p.prixSommeExamens)})
                               </span>
                             </td>
                             <td className="px-3 py-2.5">

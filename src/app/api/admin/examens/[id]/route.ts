@@ -7,6 +7,7 @@ import {
   messageErreurCatalogue,
   mettreAJourTypeExamen,
 } from "@/lib/admin/catalogues";
+import { lireParametresBody } from "@/lib/admin/lire-parametres-examen";
 
 export async function PATCH(
   request: NextRequest,
@@ -28,6 +29,45 @@ export async function PATCH(
       actif: body.actif != null ? Boolean(body.actif) : undefined,
       packPrenuptial:
         body.packPrenuptial != null ? Boolean(body.packPrenuptial) : undefined,
+      formulaire:
+        body.formulaire !== undefined
+          ? body.formulaire == null
+            ? null
+            : String(body.formulaire)
+          : undefined,
+      serviceLabo:
+        body.serviceLabo !== undefined
+          ? body.serviceLabo == null
+            ? null
+            : String(body.serviceLabo)
+          : undefined,
+      specimen:
+        body.specimen !== undefined
+          ? body.specimen == null
+            ? null
+            : String(body.specimen)
+          : undefined,
+      uniteDefaut:
+        body.uniteDefaut !== undefined
+          ? body.uniteDefaut == null
+            ? null
+            : String(body.uniteDefaut)
+          : undefined,
+      rangeUsuelle:
+        body.rangeUsuelle !== undefined
+          ? body.rangeUsuelle == null
+            ? null
+            : String(body.rangeUsuelle)
+          : undefined,
+      description:
+        body.description !== undefined
+          ? body.description == null
+            ? null
+            : String(body.description)
+          : undefined,
+      parametres: Array.isArray(body.parametres)
+        ? lireParametresBody(body.parametres)
+        : undefined,
     });
     return NextResponse.json({ message: "Examen mis à jour.", examen });
   } catch (error) {

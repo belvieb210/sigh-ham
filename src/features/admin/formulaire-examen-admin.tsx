@@ -2,10 +2,19 @@
 
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, Save, X } from "lucide-react";
+import { Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import { cn } from "@/lib/utils";
+
+export interface FormParametreExamenAdmin {
+  cle: string;
+  id?: string;
+  nom: string;
+  unite: string;
+  rangeUsuelle: string;
+  obligatoire: boolean;
+}
 
 export interface FormExamenAdmin {
   code: string;
@@ -15,6 +24,26 @@ export interface FormExamenAdmin {
   delaiHeures: string;
   actif: boolean;
   packPrenuptial: boolean;
+  description: string;
+  specimen: string;
+  serviceLabo: string;
+  formulaire: string;
+  uniteDefaut: string;
+  rangeUsuelle: string;
+  parametres: FormParametreExamenAdmin[];
+}
+
+export function nouveauParametreExamen(): FormParametreExamenAdmin {
+  return {
+    cle:
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `p-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    nom: "",
+    unite: "",
+    rangeUsuelle: "",
+    obligatoire: true,
+  };
 }
 
 export const FORM_EXAMEN_ADMIN_VIDE: FormExamenAdmin = {
@@ -25,7 +54,27 @@ export const FORM_EXAMEN_ADMIN_VIDE: FormExamenAdmin = {
   delaiHeures: "24",
   actif: true,
   packPrenuptial: false,
+  description: "",
+  specimen: "",
+  serviceLabo: "",
+  formulaire: "",
+  uniteDefaut: "",
+  rangeUsuelle: "",
+  parametres: [],
 };
+
+const SPECIMENS = [
+  "Sang",
+  "Sérum",
+  "Plasma",
+  "Sang total EDTA",
+  "Urine",
+  "Selles",
+  "LCR",
+  "Frottis",
+  "Expectoration",
+  "Liquide de ponction",
+];
 
 type ModePanneau = "creation" | "consultation" | "edition";
 
@@ -86,6 +135,16 @@ export function FormulaireExamenAdmin({
     cle: K,
     valeur: FormExamenAdmin[K]
   ) => onChange({ ...form, [cle]: valeur });
+
+  const majParametre = (
+    cle: string,
+    patch: Partial<FormParametreExamenAdmin>
+  ) => {
+    maj(
+      "parametres",
+      form.parametres.map((p) => (p.cle === cle ? { ...p, ...patch } : p))
+    );
+  };
 
   const titre =
     modePanneau === "creation"
@@ -169,6 +228,100 @@ export function FormulaireExamenAdmin({
               ))}
             </datalist>
           </div>
+          <div>
+            <LabelChamp htmlFor="admin-examen-description">
+              {t("admin.examens.descriptionChamp")}
+            </LabelChamp>
+            <textarea
+              id="admin-examen-description"
+              rows={3}
+              className={cn(classeChamp, "resize-y")}
+              value={form.description}
+              disabled={lectureSeule}
+              placeholder={t("admin.examens.placeholders.description")}
+              onChange={(e) => maj("description", e.target.value)}
+            />
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <TitreSection>{t("admin.examens.sections.prelevement")}</TitreSection>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <LabelChamp htmlFor="admin-examen-specimen">
+                {t("admin.examens.specimen")}
+              </LabelChamp>
+              <input
+                id="admin-examen-specimen"
+                className={classeChamp}
+                list="admin-examen-specimens"
+                value={form.specimen}
+                disabled={lectureSeule}
+                placeholder={t("admin.examens.placeholders.specimen")}
+                onChange={(e) => maj("specimen", e.target.value)}
+              />
+              <datalist id="admin-examen-specimens">
+                {SPECIMENS.map((s) => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
+            </div>
+            <div>
+              <LabelChamp htmlFor="admin-examen-service">
+                {t("admin.examens.serviceLabo")}
+              </LabelChamp>
+              <input
+                id="admin-examen-service"
+                className={classeChamp}
+                list="admin-examen-categories"
+                value={form.serviceLabo}
+                disabled={lectureSeule}
+                placeholder={t("admin.examens.placeholders.serviceLabo")}
+                onChange={(e) => maj("serviceLabo", e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <LabelChamp htmlFor="admin-examen-unite">
+                {t("admin.examens.uniteDefaut")}
+              </LabelChamp>
+              <input
+                id="admin-examen-unite"
+                className={classeChamp}
+                value={form.uniteDefaut}
+                disabled={lectureSeule}
+                placeholder={t("admin.examens.placeholders.unite")}
+                onChange={(e) => maj("uniteDefaut", e.target.value)}
+              />
+            </div>
+            <div>
+              <LabelChamp htmlFor="admin-examen-range">
+                {t("admin.examens.rangeUsuelle")}
+              </LabelChamp>
+              <input
+                id="admin-examen-range"
+                className={classeChamp}
+                value={form.rangeUsuelle}
+                disabled={lectureSeule}
+                placeholder={t("admin.examens.placeholders.range")}
+                onChange={(e) => maj("rangeUsuelle", e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <LabelChamp htmlFor="admin-examen-formulaire">
+              {t("admin.examens.formulaireLabo")}
+            </LabelChamp>
+            <input
+              id="admin-examen-formulaire"
+              className={classeChamp}
+              value={form.formulaire}
+              disabled={lectureSeule}
+              placeholder={t("admin.examens.placeholders.formulaire")}
+              onChange={(e) => maj("formulaire", e.target.value)}
+            />
+          </div>
         </section>
 
         <section className="space-y-3">
@@ -178,17 +331,25 @@ export function FormulaireExamenAdmin({
               <LabelChamp htmlFor="admin-examen-prix" requis>
                 {t("admin.examens.prix")}
               </LabelChamp>
-              <input
-                id="admin-examen-prix"
-                type="number"
-                min={0}
-                step="0.01"
-                className={classeChamp}
-                value={form.prix}
-                disabled={lectureSeule}
-                placeholder={t("admin.examens.placeholders.prix")}
-                onChange={(e) => maj("prix", e.target.value)}
-              />
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-texte-secondaire">
+                  $
+                </span>
+                <input
+                  id="admin-examen-prix"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className={cn(classeChamp, "pl-7")}
+                  value={form.prix}
+                  disabled={lectureSeule}
+                  placeholder={t("admin.examens.placeholders.prix")}
+                  onChange={(e) => maj("prix", e.target.value)}
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-texte-secondaire">
+                {t("admin.examens.aidePrix")}
+              </p>
             </div>
             <div>
               <LabelChamp htmlFor="admin-examen-delai" requis>
@@ -206,6 +367,120 @@ export function FormulaireExamenAdmin({
               />
             </div>
           </div>
+        </section>
+
+        <section className="space-y-3">
+          <div className="flex items-end justify-between gap-2 border-b border-gris-bordure pb-2">
+            <h4 className="text-sm font-bold text-bleu-medical">
+              {t("admin.examens.sections.parametres")}
+            </h4>
+            {!lectureSeule ? (
+              <button
+                type="button"
+                onClick={() =>
+                  maj("parametres", [...form.parametres, nouveauParametreExamen()])
+                }
+                className="inline-flex items-center gap-1 text-xs font-semibold text-bleu-medical hover:underline"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {t("admin.examens.ajouterParametre")}
+              </button>
+            ) : null}
+          </div>
+          <p className="text-[11px] text-texte-secondaire">
+            {t("admin.examens.aideParametres")}
+          </p>
+          {form.parametres.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-gris-bordure px-3 py-4 text-center text-xs text-texte-secondaire">
+              {t("admin.examens.aucunParametre")}
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {form.parametres.map((p, index) => (
+                <li
+                  key={p.cle}
+                  className="rounded-lg border border-gris-bordure bg-slate-50/70 p-3"
+                >
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-texte-secondaire">
+                      {t("admin.examens.parametreN", { n: index + 1 })}
+                    </span>
+                    {!lectureSeule ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          maj(
+                            "parametres",
+                            form.parametres.filter((x) => x.cle !== p.cle)
+                          )
+                        }
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-red-50 hover:text-red-700"
+                        aria-label={t("admin.examens.supprimerParametre")}
+                        title={t("admin.examens.supprimerParametre")}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <LabelChamp htmlFor={`param-nom-${p.cle}`} requis>
+                        {t("admin.examens.parametreNom")}
+                      </LabelChamp>
+                      <input
+                        id={`param-nom-${p.cle}`}
+                        className={classeChamp}
+                        value={p.nom}
+                        disabled={lectureSeule}
+                        placeholder={t("admin.examens.placeholders.parametreNom")}
+                        onChange={(e) => majParametre(p.cle, { nom: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <LabelChamp htmlFor={`param-unite-${p.cle}`}>
+                        {t("admin.examens.parametreUnite")}
+                      </LabelChamp>
+                      <input
+                        id={`param-unite-${p.cle}`}
+                        className={classeChamp}
+                        value={p.unite}
+                        disabled={lectureSeule}
+                        placeholder={t("admin.examens.placeholders.unite")}
+                        onChange={(e) => majParametre(p.cle, { unite: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <LabelChamp htmlFor={`param-range-${p.cle}`}>
+                        {t("admin.examens.parametreRange")}
+                      </LabelChamp>
+                      <input
+                        id={`param-range-${p.cle}`}
+                        className={classeChamp}
+                        value={p.rangeUsuelle}
+                        disabled={lectureSeule}
+                        placeholder={t("admin.examens.placeholders.range")}
+                        onChange={(e) =>
+                          majParametre(p.cle, { rangeUsuelle: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <label className="mt-2 inline-flex items-center gap-2 text-xs text-texte-principal">
+                    <input
+                      type="checkbox"
+                      className="accent-bleu-medical"
+                      checked={p.obligatoire}
+                      disabled={lectureSeule}
+                      onChange={(e) =>
+                        majParametre(p.cle, { obligatoire: e.target.checked })
+                      }
+                    />
+                    {t("admin.examens.parametreObligatoire")}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <section className="space-y-3">

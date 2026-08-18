@@ -38,8 +38,11 @@ export type FormPaquetBilan = {
 
 const PAR_PAGE_EXAMENS = 5;
 
-function formaterFc(montant: number) {
-  return `${montant.toLocaleString("fr-FR")} FC`;
+function formaterUsd(montant: number) {
+  return `$ ${montant.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 interface PropsFormulairePaquetBilanAdmin {
@@ -331,7 +334,7 @@ export function FormulairePaquetBilanAdmin({
                             {e.libelle}
                           </p>
                           <p className="text-[11px] text-texte-secondaire">
-                            {e.code} · {formaterFc(e.prix)}
+                            {e.code} · {formaterUsd(e.prix)}
                           </p>
                         </div>
                         <button
@@ -377,7 +380,7 @@ export function FormulairePaquetBilanAdmin({
                             {e.libelle}
                           </p>
                           <p className="text-[11px] text-texte-secondaire">
-                            {e.code} · {formaterFc(e.prix)}
+                            {e.code} · {formaterUsd(e.prix)}
                           </p>
                         </div>
                         <button
@@ -395,7 +398,7 @@ export function FormulairePaquetBilanAdmin({
                 <div className="border-t border-gris-bordure px-3 py-2 text-right text-xs text-texte-secondaire">
                   {t("admin.paquetsBilans.sommeSelection")} :{" "}
                   <span className="font-bold text-texte-principal">
-                    {formaterFc(sommeIndividuelle)}
+                    {formaterUsd(sommeIndividuelle)}
                   </span>
                 </div>
               </div>
@@ -448,7 +451,7 @@ export function FormulairePaquetBilanAdmin({
                 </span>
                 <input
                   readOnly
-                  value={formaterFc(prixApresRemise)}
+                  value={formaterUsd(prixApresRemise)}
                   className={cn(CLASSE_CHAMP_RECEPTION, "bg-gris-tres-clair")}
                 />
               </label>
@@ -520,7 +523,7 @@ export function FormulairePaquetBilanAdmin({
                     {t("admin.paquetsBilans.form.apercuPrixBilan")}
                   </p>
                   <p className="text-xl font-bold text-ham-plum">
-                    {formaterFc(prixForfait)}
+                    {formaterUsd(prixForfait)}
                   </p>
                 </div>
                 {economie > 0 && (
@@ -533,7 +536,7 @@ export function FormulairePaquetBilanAdmin({
               </div>
               {sommeIndividuelle > 0 && (
                 <p className="mt-2 text-[10px] text-texte-secondaire line-through">
-                  {formaterFc(sommeIndividuelle)}
+                  {formaterUsd(sommeIndividuelle)}
                 </p>
               )}
             </div>

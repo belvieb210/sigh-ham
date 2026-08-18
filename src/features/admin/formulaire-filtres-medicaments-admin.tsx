@@ -36,6 +36,8 @@ export interface MedicamentFiltrableAdmin {
   categorie: string | null;
   forme: string | null;
   dosage: string | null;
+  firme?: string | null;
+  classeMedicamenteuse?: string | null;
   actif: boolean;
 }
 
@@ -47,7 +49,7 @@ export function medicamentCorrespondFiltresAdmin(
   const q = rechercheRapide.trim().toLowerCase();
   if (q) {
     const haystack =
-      `${m.code} ${m.nom} ${m.categorie ?? ""} ${m.forme ?? ""} ${m.dosage ?? ""}`.toLowerCase();
+      `${m.code} ${m.nom} ${m.categorie ?? ""} ${m.forme ?? ""} ${m.dosage ?? ""} ${m.firme ?? ""} ${m.classeMedicamenteuse ?? ""}`.toLowerCase();
     if (!haystack.includes(q)) return false;
   }
 

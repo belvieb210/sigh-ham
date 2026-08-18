@@ -5,6 +5,7 @@ import {
 } from "@/lib/auth/garde-api-admin";
 import {
   creerMedicament,
+  extraireFicheMedicament,
   listerMedicaments,
   messageErreurCatalogue,
 } from "@/lib/admin/catalogues";
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
         body.stockMinimum != null ? Number(body.stockMinimum) : undefined,
       emplacement: body.emplacement != null ? String(body.emplacement) : null,
       actif: body.actif != null ? Boolean(body.actif) : undefined,
+      ...extraireFicheMedicament(body),
     });
     return NextResponse.json(
       { message: "Médicament créé.", medicament },

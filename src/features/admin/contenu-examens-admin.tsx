@@ -37,6 +37,7 @@ import {
 import {
   FORM_EXAMEN_ADMIN_VIDE,
   FormulaireExamenAdmin,
+  nouveauParametreExamen,
   type FormExamenAdmin,
 } from "@/features/admin/formulaire-examen-admin";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,20 @@ type ExamenItem = {
   delaiHeures: number;
   actif: boolean;
   packPrenuptial: boolean;
+  formulaire?: string | null;
+  serviceLabo?: string | null;
+  specimen?: string | null;
+  uniteDefaut?: string | null;
+  rangeUsuelle?: string | null;
+  description?: string | null;
+  parametres?: {
+    id: string;
+    nom: string;
+    unite: string | null;
+    rangeUsuelle: string | null;
+    obligatoire: boolean;
+    ordre: number;
+  }[];
 };
 
 type ModePanneau = "creation" | "consultation" | "edition";
@@ -59,8 +74,11 @@ const EXAMENS_PAR_PAGE = 16;
 const CLASSE_BOUTON_ACTION =
   "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure text-slate-500 transition-colors hover:bg-gris-tres-clair hover:text-bleu-medical";
 
-function formaterPrix(n: number) {
-  return `${n.toLocaleString("fr-FR")} FC`;
+function formaterPrixUsd(n: number) {
+  return `$ ${n.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 function itemVersForm(item: ExamenItem): FormExamenAdmin {
@@ -72,6 +90,20 @@ function itemVersForm(item: ExamenItem): FormExamenAdmin {
     delaiHeures: String(item.delaiHeures),
     actif: item.actif,
     packPrenuptial: item.packPrenuptial,
+    description: item.description ?? "",
+    specimen: item.specimen ?? "",
+    serviceLabo: item.serviceLabo ?? "",
+    formulaire: item.formulaire ?? "",
+    uniteDefaut: item.uniteDefaut ?? "",
+    rangeUsuelle: item.rangeUsuelle ?? "",
+    parametres: (item.parametres ?? []).map((p) => ({
+      ...nouveauParametreExamen(),
+      id: p.id,
+      nom: p.nom,
+      unite: p.unite ?? "",
+      rangeUsuelle: p.rangeUsuelle ?? "",
+      obligatoire: p.obligatoire,
+    })),
   };
 }
 
@@ -220,6 +252,7 @@ export function ContenuExamensAdmin({
         t("admin.examens.libelle"),
         t("admin.examens.categorie"),
         t("admin.examens.prix"),
+        t("admin.examens.specimen"),
         t("admin.examens.delai"),
         t("admin.examens.colonnes.statut"),
         t("admin.examens.packPrenuptial"),
@@ -229,6 +262,7 @@ export function ContenuExamensAdmin({
         e.libelle,
         e.categorie,
         String(e.prix),
+        e.specimen ?? "",
         String(e.delaiHeures),
         e.actif ? t("admin.examens.actif") : t("admin.examens.inactif"),
         e.packPrenuptial ? t("admin.examens.oui") : t("admin.examens.non"),
@@ -291,6 +325,19 @@ export function ContenuExamensAdmin({
         delaiHeures,
         actif: form.actif,
         packPrenuptial: form.packPrenuptial,
+        description: form.description,
+        specimen: form.specimen,
+        serviceLabo: form.serviceLabo,
+        formulaire: form.formulaire,
+        uniteDefaut: form.uniteDefaut,
+        rangeUsuelle: form.rangeUsuelle,
+        parametres: form.parametres.map((p) => ({
+          id: p.id ?? null,
+          nom: p.nom,
+          unite: p.unite,
+          rangeUsuelle: p.rangeUsuelle,
+          obligatoire: p.obligatoire,
+        })),
       };
       const creation = modePanneau === "creation";
       const res = await fetch(
@@ -503,8 +550,15 @@ export function ContenuExamensAdmin({
                             <p className="font-medium text-texte-principal">
                               {item.libelle}
                             </p>
-                            <p className="text-xs text-texte-secondaire lg:hidden">
-                              {item.categorie} · {formaterPrix(item.prix)}
+                            <p className="text-xs text-texte-secondaire">
+                              {item.specimen ? `${item.specimen} · ` : ""}
+                              {t("admin.examens.nbParametres", {
+                                count: item.parametres?.length ?? 0,
+                              })}
+                              <span className="lg:hidden">
+                                {" · "}
+                                {formaterPrixUsd(item.prix)}
+                              </span>
                             </p>
                           </td>
                           <td className="hidden px-3 py-2.5 md:table-cell">
@@ -513,7 +567,7 @@ export function ContenuExamensAdmin({
                             </span>
                           </td>
                           <td className="hidden px-3 py-2.5 text-sm tabular-nums lg:table-cell">
-                            {formaterPrix(item.prix)}
+                            {formaterPrixUsd(item.prix)}
                           </td>
                           <td className="px-3 py-2.5">
                             <span

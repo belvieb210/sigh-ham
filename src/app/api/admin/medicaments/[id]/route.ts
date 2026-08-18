@@ -4,6 +4,7 @@ import {
   reponseNonAutoriseAdmin,
 } from "@/lib/auth/garde-api-admin";
 import {
+  extraireFicheMedicament,
   messageErreurCatalogue,
   mettreAJourMedicament,
 } from "@/lib/admin/catalogues";
@@ -56,6 +57,7 @@ export async function PATCH(
             : String(body.emplacement)
           : undefined,
       actif: body.actif != null ? Boolean(body.actif) : undefined,
+      ...extraireFicheMedicament(body),
     });
     return NextResponse.json({ message: "Médicament mis à jour.", medicament });
   } catch (error) {

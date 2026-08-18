@@ -1,15 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
   ContactRound,
   Loader2,
   MoreVertical,
-  Search,
   SquarePen,
   Trash2,
-  X,
 } from "lucide-react";
 import {
   MiseEnPageAdmin,
@@ -17,10 +16,7 @@ import {
 } from "@/features/admin/mise-en-page-admin";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
 import { AvatarUtilisateur } from "@/components/ui/avatar-utilisateur";
-import {
-  BoutonsOutilsListe,
-  telechargerCsv,
-} from "@/components/ui/boutons-outils-liste";
+import { telechargerCsv } from "@/components/ui/boutons-outils-liste";
 import {
   PaginationListe,
   paginerListe,
@@ -31,6 +27,15 @@ import {
   type FormPatientAdmin,
   type TypePersonneAdmin,
 } from "@/features/admin/formulaire-patient-admin";
+import { BarreOutilsListeAdmin } from "@/features/admin/barre-outils-liste-admin";
+import {
+  compterFiltresPatientsAdmin,
+  FILTRES_PATIENTS_ADMIN_VIDES,
+  FormulaireFiltresPatientsAdmin,
+  personneCorrespondFiltresAdmin,
+  type FiltresPatientsAdmin,
+} from "@/features/admin/formulaire-filtres-patients-admin";
+import { MenuDeroulantPortail } from "@/features/admin/menu-deroulant-portail";
 import { cn } from "@/lib/utils";
 
 type PersonneItem = {
@@ -76,7 +81,7 @@ type ActionMenuPatient =
   | "annulerTransfert"
   | "restaurerTransfert";
 
-const PAR_PAGE = 10;
+const PAR_PAGE = 5;
 
 const CLASSE_BOUTON_ACTION =
   "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure text-slate-500 transition-colors hover:bg-gris-tres-clair hover:text-bleu-medical";
@@ -87,22 +92,6 @@ const CLASSE_BOUTON_SUPPRIMER =
 function dateIsoVersChamp(iso: string | null) {
   if (!iso) return "";
   return iso.slice(0, 10);
-}
-
-function correspondRecherche(p: PersonneItem, q: string) {
-  const s = q.trim().toLowerCase();
-  if (!s) return true;
-  const hay = [
-    p.prenom,
-    p.nom,
-    p.numeroPatient,
-    p.telephone ?? "",
-    p.email ?? "",
-    p.dernierDossier?.numeroDossier ?? "",
-  ]
-    .join(" ")
-    .toLowerCase();
-  return hay.includes(s);
 }
 
 function formaterDateRelative(
@@ -165,9 +154,18 @@ export function ContenuPatientsAdmin({
   utilisateur: UtilisateurAdmin;
 }) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const [patients, setPatients] = useState<PersonneItem[]>([]);
   const [clients, setClients] = useState<PersonneItem[]>([]);
   const [rechercheRapide, setRechercheRapide] = useState("");
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillon, setBrouillon] = useState<FiltresPatientsAdmin>(
+    FILTRES_PATIENTS_ADMIN_VIDES
+  );
+  const [appliques, setAppliques] = useState<FiltresPatientsAdmin>(
+    FILTRES_PATIENTS_ADMIN_VIDES
+  );
+  const [salles, setSalles] = useState<{ code: string; nom: string }[]>([]);
   const [idsCoches, setIdsCoches] = useState<string[]>([]);
   const [pagePatients, setPagePatients] = useState(1);
   const [pageClients, setPageClients] = useState(1);
@@ -179,8 +177,8 @@ export function ContenuPatientsAdmin({
   const [photo, setPhoto] = useState<File | null>(null);
   const [modePanneau, setModePanneau] = useState<ModePanneau | null>(null);
   const [menuOuvertId, setMenuOuvertId] = useState<string | null>(null);
+  const [menuAncre, setMenuAncre] = useState<HTMLElement | null>(null);
   const [enCours, setEnCours] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const toutes = useMemo(() => [...patients, ...clients], [patients, clients]);
   const selection = toutes.find((p) => p.id === selectionId) ?? null;
@@ -190,15 +188,22 @@ export function ContenuPatientsAdmin({
     setChargement(true);
     setErreur(null);
     try {
-      const res = await fetch("/api/admin/patients");
+      const [res, sRes] = await Promise.all([
+        fetch("/api/admin/patients"),
+        fetch("/api/admin/salles"),
+      ]);
       const data = (await res.json()) as {
         patients?: PersonneItem[];
         clients?: PersonneItem[];
         message?: string;
       };
+      const sData = (await sRes.json()) as {
+        salles?: { code: string; nom: string }[];
+      };
       if (!res.ok) throw new Error(data.message ?? t("admin.patients.erreur"));
       setPatients(data.patients ?? []);
       setClients(data.clients ?? []);
+      setSalles(sData.salles ?? []);
     } catch (e: unknown) {
       setErreur(e instanceof Error ? e.message : t("admin.patients.erreur"));
     } finally {
@@ -217,12 +222,18 @@ export function ContenuPatientsAdmin({
   }, [selection, modePanneau]);
 
   const patientsFiltres = useMemo(
-    () => patients.filter((p) => correspondRecherche(p, rechercheRapide)),
-    [patients, rechercheRapide]
+    () =>
+      patients.filter((p) =>
+        personneCorrespondFiltresAdmin(p, appliques, rechercheRapide)
+      ),
+    [patients, appliques, rechercheRapide]
   );
   const clientsFiltres = useMemo(
-    () => clients.filter((p) => correspondRecherche(p, rechercheRapide)),
-    [clients, rechercheRapide]
+    () =>
+      clients.filter((p) =>
+        personneCorrespondFiltresAdmin(p, appliques, rechercheRapide)
+      ),
+    [clients, appliques, rechercheRapide]
   );
   const filtresTous = useMemo(
     () => [...patientsFiltres, ...clientsFiltres],
@@ -241,25 +252,22 @@ export function ContenuPatientsAdmin({
   useEffect(() => {
     setPagePatients(1);
     setPageClients(1);
-  }, [rechercheRapide]);
+  }, [rechercheRapide, appliques]);
 
+  const nbFiltres = compterFiltresPatientsAdmin(appliques);
   const toutSelectionne =
     filtresTous.length > 0 && filtresTous.every((p) => idsCoches.includes(p.id));
 
-  useEffect(() => {
-    if (!menuOuvertId) return;
-    const fermer = (e: MouseEvent) => {
-      if (menuRef.current?.contains(e.target as Node)) return;
-      setMenuOuvertId(null);
-    };
-    document.addEventListener("mousedown", fermer);
-    return () => document.removeEventListener("mousedown", fermer);
-  }, [menuOuvertId]);
+  const fermerMenu = useCallback(() => {
+    setMenuOuvertId(null);
+    setMenuAncre(null);
+  }, []);
 
   const fermerPanneau = () => {
     setSelectionId(null);
     setModePanneau(null);
     setMenuOuvertId(null);
+    setMenuAncre(null);
     setForm({ ...FORM_PATIENT_ADMIN_VIDE });
     setPhoto(null);
   };
@@ -270,6 +278,7 @@ export function ContenuPatientsAdmin({
     setForm(formVersPersonne(p));
     setPhoto(null);
     setMenuOuvertId(null);
+    setMenuAncre(null);
     setMessage(null);
     setErreur(null);
   };
@@ -280,6 +289,7 @@ export function ContenuPatientsAdmin({
     setForm(formVersPersonne(p));
     setPhoto(null);
     setMenuOuvertId(null);
+    setMenuAncre(null);
     setMessage(null);
     setErreur(null);
   };
@@ -334,6 +344,7 @@ export function ContenuPatientsAdmin({
     setErreur(null);
     setMessage(null);
     setMenuOuvertId(null);
+    setMenuAncre(null);
     try {
       const res = await fetch(`/api/admin/patients/${p.id}`, { method: "DELETE" });
       const data = (await res.json()) as { message?: string };
@@ -348,10 +359,16 @@ export function ContenuPatientsAdmin({
     }
   };
 
-  const actionMenu = (_p: PersonneItem, _action: ActionMenuPatient) => {
+  const actionMenu = (p: PersonneItem, action: ActionMenuPatient) => {
     setMenuOuvertId(null);
-    setErreur(null);
-    setMessage(t("admin.patients.actionAVenir"));
+    setMenuAncre(null);
+    const routes: Record<ActionMenuPatient, string> = {
+      resultat: `/sigh/admin/patients/${p.id}/resultats`,
+      annulerTransfert: `/sigh/admin/patients/${p.id}/annuler-transfert`,
+      restaurerTransfert: `/sigh/admin/patients/${p.id}/restaurer-transfert`,
+      reinitialiser: `/sigh/admin/patients/${p.id}/reinitialiser`,
+    };
+    router.push(routes[action]);
   };
 
   const soumettre = async () => {
@@ -423,27 +440,31 @@ export function ContenuPatientsAdmin({
     }
     return (
       <>
-        <div className="conteneur-tableau-sigh">
-          <table className="tableau-sigh min-w-[640px]">
+        <div className="w-full max-w-full overflow-x-auto">
+          <table className="tableau-sigh w-full min-w-[720px] table-fixed">
             <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
               <tr>
-                <th className="w-10 px-3 py-2">
+                <th className="w-10 px-2 py-2">
                   <span className="sr-only">
                     {t("reception.liste.selectionnerTout")}
                   </span>
                 </th>
-                <th className="px-3 py-2">{t("admin.patients.colonnes.personne")}</th>
-                <th className="hidden px-3 py-2 md:table-cell">
+                <th className="px-2 py-2 text-left">
+                  {t("admin.patients.colonnes.personne")}
+                </th>
+                <th className="hidden w-[9.5rem] px-2 py-2 text-left xl:table-cell">
                   {t("admin.patients.colonnes.telephone")}
                 </th>
-                <th className="px-3 py-2">{t("admin.patients.colonnes.dossier")}</th>
-                <th className="hidden px-3 py-2 lg:table-cell">
+                <th className="w-[8.5rem] px-2 py-2 text-left">
+                  {t("admin.patients.colonnes.dossier")}
+                </th>
+                <th className="hidden w-[6.5rem] px-2 py-2 text-left 2xl:table-cell">
                   {t("admin.patients.colonnes.statut")}
                 </th>
-                <th className="hidden px-3 py-2 xl:table-cell">
+                <th className="hidden w-[7rem] px-2 py-2 text-left 2xl:table-cell">
                   {t("admin.patients.colonnes.derniereVisite")}
                 </th>
-                <th className="px-3 py-2 text-center">
+                <th className="w-[8.25rem] px-2 py-2 text-center">
                   {t("admin.patients.colonnes.actions")}
                 </th>
               </tr>
@@ -466,8 +487,8 @@ export function ContenuPatientsAdmin({
                       aria-label={`${p.prenom} ${p.nom}`}
                     />
                   </td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex items-center gap-2.5">
+                  <td className="px-2 py-2.5">
+                    <div className="flex min-w-0 items-center gap-2">
                       <AvatarUtilisateur
                         prenom={p.prenom}
                         nom={p.nom}
@@ -484,13 +505,13 @@ export function ContenuPatientsAdmin({
                       </div>
                     </div>
                   </td>
-                  <td className="hidden px-3 py-2.5 text-sm md:table-cell">
+                  <td className="hidden truncate whitespace-nowrap px-2 py-2.5 text-sm xl:table-cell">
                     {p.telephone || "—"}
                   </td>
-                  <td className="px-3 py-2.5 text-sm">
+                  <td className="truncate whitespace-nowrap px-2 py-2.5 text-sm">
                     {p.dernierDossier?.numeroDossier ?? "—"}
                   </td>
-                  <td className="hidden px-3 py-2.5 lg:table-cell">
+                  <td className="hidden px-2 py-2.5 2xl:table-cell">
                     {p.dernierDossier ? (
                       <span
                         className={cn(
@@ -508,15 +529,15 @@ export function ContenuPatientsAdmin({
                       "—"
                     )}
                   </td>
-                  <td className="hidden px-3 py-2.5 text-xs text-texte-secondaire xl:table-cell">
+                  <td className="hidden whitespace-nowrap px-2 py-2.5 text-xs text-texte-secondaire 2xl:table-cell">
                     {formaterDateRelative(
                       p.dernierDossier?.ouvertLe ?? null,
                       i18n.language,
                       t
                     )}
                   </td>
-                  <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-center gap-1.5">
+                  <td className="px-2 py-2.5" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"
                         onClick={() => void supprimer(p)}
@@ -536,55 +557,27 @@ export function ContenuPatientsAdmin({
                       >
                         <SquarePen className="h-4 w-4" />
                       </button>
-                      <div
-                        className="relative"
-                        ref={menuOuvertId === p.id ? menuRef : undefined}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          const cible = e.currentTarget;
+                          setMenuOuvertId((id) => {
+                            if (id === p.id) {
+                              setMenuAncre(null);
+                              return null;
+                            }
+                            setMenuAncre(cible);
+                            return p.id;
+                          });
+                        }}
+                        className={CLASSE_BOUTON_ACTION}
+                        aria-label={t("admin.patients.plusActions")}
+                        title={t("admin.patients.plusActions")}
+                        aria-expanded={menuOuvertId === p.id}
+                        aria-haspopup="menu"
                       >
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setMenuOuvertId((id) => (id === p.id ? null : p.id))
-                          }
-                          className={CLASSE_BOUTON_ACTION}
-                          aria-label={t("admin.patients.plusActions")}
-                          title={t("admin.patients.plusActions")}
-                          aria-expanded={menuOuvertId === p.id}
-                          aria-haspopup="menu"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                        {menuOuvertId === p.id ? (
-                          <div
-                            role="menu"
-                            className="absolute right-0 top-10 z-20 min-w-[220px] overflow-hidden rounded-lg border border-gris-bordure bg-white py-1 shadow-lg"
-                          >
-                            {(
-                              [
-                                ["resultat", "admin.patients.menu.resultat"],
-                                ["reinitialiser", "admin.patients.menu.reinitialiser"],
-                                [
-                                  "annulerTransfert",
-                                  "admin.patients.menu.annulerTransfert",
-                                ],
-                                [
-                                  "restaurerTransfert",
-                                  "admin.patients.menu.restaurerTransfert",
-                                ],
-                              ] as const
-                            ).map(([action, cle]) => (
-                              <button
-                                key={action}
-                                type="button"
-                                role="menuitem"
-                                onClick={() => actionMenu(p, action)}
-                                className="block w-full px-3 py-2 text-left text-sm text-texte-principal hover:bg-gris-tres-clair"
-                              >
-                                {t(cle)}
-                              </button>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -623,38 +616,35 @@ export function ContenuPatientsAdmin({
         />
 
         <div className="mt-4 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <label className="flex h-11 min-w-[180px] w-full max-w-md flex-1 items-center gap-2 rounded-lg border-2 border-slate-400 bg-white px-3 text-sm text-texte-principal shadow-sm transition-colors focus-within:border-bleu-medical focus-within:ring-2 focus-within:ring-bleu-medical/25">
-              <Search className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
-              <input
-                type="search"
-                value={rechercheRapide}
-                onChange={(e) => setRechercheRapide(e.target.value)}
-                placeholder={t("admin.patients.recherche")}
-                aria-label={t("admin.patients.recherche")}
-                autoComplete="off"
-                className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-slate-600"
-              />
-              {rechercheRapide ? (
-                <button
-                  type="button"
-                  onClick={() => setRechercheRapide("")}
-                  aria-label={t("admin.patients.effacerRecherche")}
-                  className="shrink-0 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              ) : null}
-            </label>
-
-            <BoutonsOutilsListe
-              toutSelectionne={toutSelectionne}
-              onSelectionnerTout={basculerSelectionTout}
-              onExporter={exporterSelection}
-              labelSelectionnerTout={t("reception.liste.selectionnerTout")}
-              labelExporter={t("reception.liste.exporterSelection")}
+          <BarreOutilsListeAdmin
+            recherche={rechercheRapide}
+            onRecherche={setRechercheRapide}
+            placeholder={t("admin.patients.recherche")}
+            filtresOuverts={filtresOuverts}
+            onFiltres={() => setFiltresOuverts((o) => !o)}
+            nbFiltres={nbFiltres}
+            toutSelectionne={toutSelectionne}
+            onSelectionnerTout={basculerSelectionTout}
+            onExporter={exporterSelection}
+          />
+          {filtresOuverts ? (
+            <FormulaireFiltresPatientsAdmin
+              valeurs={brouillon}
+              onChange={setBrouillon}
+              onRechercher={() => {
+                setAppliques(brouillon);
+                setPagePatients(1);
+                setPageClients(1);
+              }}
+              onReinitialiser={() => {
+                setBrouillon(FILTRES_PATIENTS_ADMIN_VIDES);
+                setAppliques(FILTRES_PATIENTS_ADMIN_VIDES);
+                setPagePatients(1);
+                setPageClients(1);
+              }}
+              salles={salles}
             />
-          </div>
+          ) : null}
         </div>
 
         {message ? (
@@ -668,7 +658,7 @@ export function ContenuPatientsAdmin({
           </p>
         ) : null}
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(22rem,1fr)]">
           <div className="space-y-4">
             <div className="overflow-visible rounded-xl border border-gris-bordure bg-white shadow-sm">
               <div className="border-b border-gris-bordure px-4 py-3">
@@ -736,6 +726,33 @@ export function ContenuPatientsAdmin({
           />
         </div>
       </div>
+      <MenuDeroulantPortail
+        ouvert={Boolean(menuOuvertId)}
+        ancre={menuAncre}
+        onFermer={fermerMenu}
+      >
+        {(
+          [
+            ["resultat", "admin.patients.menu.resultat"],
+            ["reinitialiser", "admin.patients.menu.reinitialiser"],
+            ["annulerTransfert", "admin.patients.menu.annulerTransfert"],
+            ["restaurerTransfert", "admin.patients.menu.restaurerTransfert"],
+          ] as const
+        ).map(([action, cle]) => (
+          <button
+            key={action}
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              const cible = toutes.find((x) => x.id === menuOuvertId);
+              if (cible) actionMenu(cible, action);
+            }}
+            className="block w-full px-3 py-2 text-left text-sm text-texte-principal hover:bg-gris-tres-clair"
+          >
+            {t(cle)}
+          </button>
+        ))}
+      </MenuDeroulantPortail>
     </MiseEnPageAdmin>
   );
 }

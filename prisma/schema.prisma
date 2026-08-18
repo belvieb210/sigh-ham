@@ -369,6 +369,7 @@ model Utilisateur {
   examensPrescrits         ExamenLaboratoire[]       @relation("ExamenPrescripteur")
   examensRealises          ExamenLaboratoire[]       @relation("ExamenTechnicien")
   journauxAudit            JournalAudit[]
+  operationsGouvernancePatient OperationGouvernancePatient[]
   messagesEnvoyes          Message[]
   recuperationsRejetees    TransfertRecuperation[] @relation("RecuperationRejetePar")
   recuperationsRecuperees  TransfertRecuperation[] @relation("RecuperationRecuperePar")
@@ -440,6 +441,7 @@ model Patient {
   dossiers DossierPatient[]
   recuperationsTransfert TransfertRecuperation[]
   conversations Conversation[]
+  operationsGouvernance OperationGouvernancePatient[]
 
   @@map("patients")
 }
@@ -1600,10 +1602,40 @@ model JournalAudit {
   details       Json?
   ipAddress     String?      @map("ip_address")
   createdAt     DateTime     @default(now()) @map("created_at")
+  operationGouvernance OperationGouvernancePatient?
 
   @@index([utilisateurId, createdAt])
   @@index([module, createdAt])
   @@map("journal_audit")
+}
+
+enum TypeOperationGouvernancePatient {
+  CONSULTATION_RESULTATS
+  ANNULATION_TRANSFERT
+  RESTAURATION_TRANSFERT
+  REINITIALISATION_VISITE
+}
+
+/** Trace durable des actions gouvernance patient (visible aussi dans le journal d'audit). */
+model OperationGouvernancePatient {
+  id             String                           @id @default(cuid())
+  type           TypeOperationGouvernancePatient
+  patientId      String                           @map("patient_id")
+  patient        Patient                          @relation(fields: [patientId], references: [id])
+  numeroPatient  String                           @map("numero_patient")
+  dossierId      String?                          @map("dossier_id")
+  numeroDossier  String?                          @map("numero_dossier")
+  utilisateurId  String                           @map("utilisateur_id")
+  utilisateur    Utilisateur                      @relation(fields: [utilisateurId], references: [id])
+  journalAuditId String?                          @unique @map("journal_audit_id")
+  journalAudit   JournalAudit?                    @relation(fields: [journalAuditId], references: [id])
+  action         String
+  snapshot       Json?
+  createdAt      DateTime                         @default(now()) @map("created_at")
+
+  @@index([patientId, createdAt])
+  @@index([type, createdAt])
+  @@map("operations_gouvernance_patient")
 }
 
 // ─── Administration / configuration système ──────────────────────────────────

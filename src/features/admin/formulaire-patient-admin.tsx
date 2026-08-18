@@ -1,9 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2, Save, X } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
+import {
+  PaginationListe,
+  paginerListe,
+} from "@/components/ui/pagination-liste";
 import { ZonePhotoPatient } from "@/features/reception/zone-photo-patient";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import { cn } from "@/lib/utils";
@@ -124,6 +129,15 @@ export function FormulairePatientAdmin({
   onFermer,
 }: Props) {
   const { t, i18n } = useTranslation();
+  const [pageDossiers, setPageDossiers] = useState(1);
+  const pageDossiersData = useMemo(
+    () => paginerListe(dossiers, pageDossiers, 4),
+    [dossiers, pageDossiers]
+  );
+  useEffect(() => {
+    setPageDossiers(1);
+  }, [numeroPatient, dossiers.length]);
+
   const classeChamp = cn(
     CLASSE_CHAMP_RECEPTION,
     lectureSeule && "cursor-not-allowed bg-slate-50"
@@ -431,29 +445,41 @@ export function FormulairePatientAdmin({
               {t("admin.patients.aucunDossier")}
             </p>
           ) : (
-            <ul className="space-y-2">
-              {dossiers.map((d) => (
-                <li
-                  key={d.id}
-                  className="rounded-lg border border-gris-bordure bg-slate-50 px-3 py-2 text-sm"
-                >
-                  <p className="font-medium text-texte-principal">
-                    {d.numeroDossier}
-                  </p>
-                  <p className="text-xs text-texte-secondaire">
-                    {t(`admin.patients.statutsDossier.${d.statut}`, {
-                      defaultValue: d.statut,
-                    })}
-                    {" · "}
-                    {new Date(d.ouvertLe).toLocaleDateString(i18n.language, {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
-                  </p>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="space-y-2">
+                {pageDossiersData.itemsPage.map((d) => (
+                  <li
+                    key={d.id}
+                    className="rounded-lg border border-gris-bordure bg-slate-50 px-3 py-2 text-sm"
+                  >
+                    <p className="font-medium text-texte-principal">
+                      {d.numeroDossier}
+                    </p>
+                    <p className="text-xs text-texte-secondaire">
+                      {t(`admin.patients.statutsDossier.${d.statut}`, {
+                        defaultValue: d.statut,
+                      })}
+                      {" · "}
+                      {new Date(d.ouvertLe).toLocaleDateString(i18n.language, {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              <PaginationListe
+                page={pageDossiersData.pageCourante}
+                totalPages={pageDossiersData.totalPages}
+                totalItems={dossiers.length}
+                parPage={4}
+                onChange={setPageDossiers}
+                compact
+                labelPrec={t("reception.liste.prec")}
+                labelSuiv={t("reception.liste.suiv")}
+              />
+            </>
           )}
         </section>
       </div>

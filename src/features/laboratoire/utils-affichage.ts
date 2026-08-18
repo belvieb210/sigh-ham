@@ -235,7 +235,12 @@ export function cheminSaisieResultatsPatient(
 }
 
 export type NavigationApresSauvegardeResultat =
-  | { type: "rester-saisie"; examenId: string }
+  | {
+      type: "rester-saisie";
+      examenId: string;
+      /** Filtre d'affichage à garder / basculer (ex. En cours → Vérifiés). */
+      statutSaisie?: IdOrientationStatutAnalyse;
+    }
   | { type: "naviguer"; chemin: string };
 
 function examenSaisieSuivant(
@@ -252,13 +257,45 @@ function examenSaisieSuivant(
   return restants[0]!.id;
 }
 
+const STATUT_APRES_ACTION: Record<
+  ActionEnregistrementResultat,
+  IdOrientationStatutAnalyse
+> = {
+  brouillon: "EN_COURS",
+  verifier: "VERIFIES",
+  rejeter: "REJETES",
+  approuver: "DR_APPROUVE",
+};
+
+function resterSurExamen(
+  restants: ExamenAvecOrientation[],
+  input: {
+    passerSuivant?: boolean;
+    examenCourantId?: string | null;
+  },
+  statutSaisie: IdOrientationStatutAnalyse
+): NavigationApresSauvegardeResultat {
+  const garderCourant =
+    !input.passerSuivant &&
+    Boolean(
+      input.examenCourantId &&
+        restants.some((e) => e.id === input.examenCourantId)
+    );
+  return {
+    type: "rester-saisie",
+    statutSaisie,
+    examenId: garderCourant
+      ? input.examenCourantId!
+      : examenSaisieSuivant(restants, input.examenCourantId),
+  };
+}
+
 /**
- * Après enregistrement d'un résultat :
- * - s'il reste des examens du même dossier sur la page d'origine → rester en saisie
- *   (examen suivant, ou l'examen courant s'il est encore dans le filtre) ;
- * - sinon → aller à la page de destination de l'action (Vérifiés, Dr approuvé, …)
- *   avec ce dossier, sans le mélanger aux autres visites du patient ;
- * - sans contexte d'origine → page de destination de l'action.
+ * Après enregistrement d'un résultat, on reste sur la même visite/facture :
+ * - s'il reste des examens du filtre d'origine (ex. autres En cours) ;
+ * - sinon, s'il reste des examens au statut d'arrivée (ex. Valider alors que
+ *   les autres examens de la facture sont déjà Dr approuvé → rester en Vérifiés) ;
+ * - sinon → liste de destination de l'action, pour ce dossier uniquement.
  */
 export function determinerNavigationApresSauvegardeResultat(input: {
   statutOrigine: IdOrientationStatutAnalyse | null;
@@ -276,25 +313,36 @@ export function determinerNavigationApresSauvegardeResultat(input: {
   };
 
   if (input.statutOrigine) {
-    const restants = filtrerExamensSaisieParStatut(
+    const restantsOrigine = filtrerExamensSaisieParStatut(
       input.examens,
       input.statutOrigine
     );
-
-    if (restants.length > 0) {
-      const garderCourant =
-        !input.passerSuivant &&
-        Boolean(
-          input.examenCourantId &&
-            restants.some((e) => e.id === input.examenCourantId)
-        );
-      return {
-        type: "rester-saisie",
-        examenId: garderCourant
-          ? input.examenCourantId!
-          : examenSaisieSuivant(restants, input.examenCourantId),
-      };
+    if (restantsOrigine.length > 0) {
+      return resterSurExamen(restantsOrigine, input, input.statutOrigine);
     }
+  }
+
+  const statutArrivee = STATUT_APRES_ACTION[input.action];
+  const restantsArrivee = filtrerExamensSaisieParStatut(
+    input.examens,
+    statutArrivee
+  );
+  // Valider : rester sur cette visite en Vérifiés, même si les autres examens
+  // de la facture sont déjà Dr approuvé (ils ne doivent pas faire disparaître celui-ci).
+  if (
+    restantsArrivee.length > 0 &&
+    (input.action === "verifier" || input.action === "brouillon")
+  ) {
+    const examenId =
+      input.examenCourantId &&
+      restantsArrivee.some((e) => e.id === input.examenCourantId)
+        ? input.examenCourantId
+        : restantsArrivee[0]!.id;
+    return {
+      type: "rester-saisie",
+      examenId,
+      statutSaisie: statutArrivee,
+    };
   }
 
   return {

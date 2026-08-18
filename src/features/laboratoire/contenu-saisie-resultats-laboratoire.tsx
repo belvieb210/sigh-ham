@@ -375,9 +375,10 @@ export function ContenuSaisieResultatsLaboratoire({
 
       if (navigation.type === "rester-saisie") {
         setExamenOuvertId(navigation.examenId);
-        if (statutFiltre) {
+        const statutUrl = navigation.statutSaisie ?? statutFiltre;
+        if (statutUrl) {
           router.replace(
-            `/sigh/laboratoire/saisie-resultats/${dossierId}?statut=${statutFiltre}`,
+            `/sigh/laboratoire/saisie-resultats/${dossierId}?statut=${statutUrl}`,
             { scroll: false }
           );
         }

@@ -56,6 +56,14 @@ export async function POST(request: NextRequest) {
       medecinNom: body.medecinNom,
     });
 
+    const { enregistrerAudit } = await import("@/lib/admin/audit");
+    await enregistrerAudit({
+      type: "CREATION",
+      module: "CLIENT",
+      entite: "RendezVous",
+      action: `Rendez-vous public — ${body.nomComplet.trim()} (${body.typePrestation.trim()}, ${body.date.trim()} ${body.creneau.trim()})`,
+    });
+
     return NextResponse.json({ succes: true, reference }, { status: 201 });
   } catch (error) {
     console.error("[POST /api/public/rendez-vous]", error);

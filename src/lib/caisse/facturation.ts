@@ -455,6 +455,16 @@ export async function preparerFactureDossier(
     });
   });
 
+  const { enregistrerAudit } = await import("@/lib/admin/audit");
+  await enregistrerAudit({
+    utilisateurId: caissierId ?? null,
+    type: "CREATION",
+    module: "CAISSE",
+    entite: "Facture",
+    entiteId: facture.id,
+    action: `Facture ${facture.numeroFacture} établie (${devise} ${montantTotal})`,
+  });
+
   return obtenirDossierFacturation(facture.dossierId);
 }
 

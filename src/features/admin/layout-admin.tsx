@@ -17,6 +17,7 @@ import { BoutonNotificationsEnTete } from "@/features/notifications/composants/b
 import { useNavigationAdmin } from "@/hooks/use-navigation-admin";
 import { useBrandingRuntime } from "@/hooks/use-branding-runtime";
 import type { UtilisateurAdmin } from "@/lib/auth/props-utilisateur-admin";
+import { BoutonThemeAdmin } from "@/features/admin/bouton-theme-admin";
 import { cn } from "@/lib/utils";
 
 interface PropsBarreLaterale {
@@ -211,11 +212,15 @@ export function EnTeteAdmin({
   sousTitre,
   utilisateur,
   onMenu,
+  sombre = false,
+  onBasculerTheme,
 }: {
   titre: string;
   sousTitre: string;
   utilisateur: UtilisateurAdmin;
   onMenu?: () => void;
+  sombre?: boolean;
+  onBasculerTheme?: () => void;
 }) {
   const { t } = useTranslation();
 
@@ -234,6 +239,9 @@ export function EnTeteAdmin({
           <h1 className="truncate text-sm font-bold text-texte-principal">{titre}</h1>
           <p className="truncate text-[10px] text-texte-secondaire">{sousTitre}</p>
         </div>
+        {onBasculerTheme ? (
+          <BoutonThemeAdmin sombre={sombre} onBasculer={onBasculerTheme} />
+        ) : null}
         <SelecteurLangue variante="compacte" className="hidden shrink-0 sm:block" />
         <BoutonNotificationsEnTete />
         <MenuProfilEntete
@@ -249,6 +257,9 @@ export function EnTeteAdmin({
           <p className="text-sm text-texte-secondaire">{sousTitre}</p>
         </div>
         <div className="flex flex-1 items-center justify-end gap-3">
+          {onBasculerTheme ? (
+            <BoutonThemeAdmin sombre={sombre} onBasculer={onBasculerTheme} />
+          ) : null}
           <SelecteurLangue />
           <BoutonNotificationsEnTete />
           <MenuProfilEntete

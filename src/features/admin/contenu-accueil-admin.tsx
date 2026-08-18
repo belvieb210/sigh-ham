@@ -3,20 +3,41 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import {
-  Activity,
-  ArrowRight,
-  BarChart3,
-  MessageSquare,
-  ScrollText,
-  ShieldAlert,
-  Users,
-} from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import {
   MiseEnPageAdmin,
   type UtilisateurAdmin,
 } from "@/features/admin/mise-en-page-admin";
-import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
+import { cn } from "@/lib/utils";
+
+interface EntreeAuditDash {
+  id: string;
+  type: string;
+  module: string | null;
+  entite: string;
+  action: string;
+  createdAt: string;
+  utilisateur: {
+    prenom: string;
+    nom: string;
+    identifiant: string;
+  } | null;
+}
+
+interface SessionDash {
+  id: string;
+  createdAt: string;
+  utilisateur: {
+    prenom: string;
+    nom: string;
+    identifiant: string;
+    role: {
+      nom: string;
+      salle: { code: string; nom: string } | null;
+    };
+  };
+  derniereAction: string | null;
+}
 
 interface StatsAdmin {
   kpis: {
@@ -34,29 +55,26 @@ interface StatsAdmin {
     examensTermines: number;
   };
   salles: { code: string; nom: string; enFile: number }[];
+  journal: EntreeAuditDash[];
+  sessions: SessionDash[];
   genereLe: string;
 }
 
-function CarteKpi({
-  label,
-  valeur,
-  hint,
-}: {
-  label: string;
-  valeur: number | string;
-  hint?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-texte-secondaire">
-        {label}
-      </p>
-      <p className="mt-2 text-2xl font-bold text-texte-principal">{valeur}</p>
-      {hint ? (
-        <p className="mt-1 text-xs text-texte-secondaire">{hint}</p>
-      ) : null}
-    </div>
-  );
+function libelleActeur(e: EntreeAuditDash, publicLabel: string) {
+  if (!e.utilisateur) return publicLabel;
+  return `${e.utilisateur.prenom} ${e.utilisateur.nom}`.trim();
+}
+
+function classeType(type: string) {
+  if (type === "CONNEXION") return "text-emerald-700";
+  if (type === "DECONNEXION") return "text-slate-500";
+  if (type === "CREATION") return "text-sky-700";
+  if (type === "MODIFICATION") return "text-amber-700";
+  if (type === "SUPPRESSION") return "text-red-700";
+  if (type === "EXPORT") return "text-violet-700";
+  if (type === "TRANSFERT") return "text-orange-700";
+  if (type === "CONSULTATION") return "text-bleu-medical";
+  return "text-texte-secondaire";
 }
 
 export function ContenuAccueilAdmin({
@@ -64,7 +82,7 @@ export function ContenuAccueilAdmin({
 }: {
   utilisateur: UtilisateurAdmin;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [stats, setStats] = useState<StatsAdmin | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -74,6 +92,7 @@ export function ContenuAccueilAdmin({
         const data = (await res.json()) as StatsAdmin & { message?: string };
         if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
         setStats(data);
+        setErreur(null);
       })
       .catch((e: unknown) => {
         setErreur(e instanceof Error ? e.message : t("admin.common.erreur"));
@@ -82,68 +101,71 @@ export function ContenuAccueilAdmin({
 
   useEffect(() => {
     charger();
-    const id = window.setInterval(charger, 30000);
+    const id = window.setInterval(charger, 15000);
     return () => window.clearInterval(id);
   }, [charger]);
 
-  const raccourcis = [
-    {
-      href: "/sigh/admin/utilisateurs",
-      icone: Users,
-      titre: t("admin.raccourcis.utilisateurs"),
-      desc: t("admin.raccourcis.utilisateursDesc"),
-    },
-    {
-      href: "/sigh/admin/audit",
-      icone: ScrollText,
-      titre: t("admin.raccourcis.audit"),
-      desc: t("admin.raccourcis.auditDesc"),
-    },
-    {
-      href: "/sigh/admin/parametres",
-      icone: BarChart3,
-      titre: t("admin.raccourcis.parametres"),
-      desc: t("admin.raccourcis.parametresDesc"),
-    },
-    {
-      href: "/sigh/admin/moderation",
-      icone: ShieldAlert,
-      titre: t("admin.raccourcis.moderation"),
-      desc: t("admin.raccourcis.moderationDesc"),
-    },
-    {
-      href: "/sigh/admin/paquets-bilans",
-      icone: Activity,
-      titre: t("admin.raccourcis.paquetsBilans"),
-      desc: t("admin.raccourcis.paquetsBilansDesc"),
-    },
-  ];
+  const fmtHeure = (iso: string) =>
+    new Date(iso).toLocaleString(i18n.language, {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+    });
+
+  const kpis = stats
+    ? [
+        {
+          label: t("admin.dashboard.utilisateursActifs"),
+          valeur: `${stats.kpis.utilisateursActifs}/${stats.kpis.utilisateursTotal}`,
+        },
+        {
+          label: t("admin.dashboard.sessions"),
+          valeur: String(stats.kpis.sessionsActives),
+        },
+        {
+          label: t("admin.dashboard.dossiersOuverts"),
+          valeur: String(stats.kpis.dossiersOuverts),
+        },
+        {
+          label: t("admin.dashboard.activiteJour"),
+          valeur: String(stats.kpis.connexionsJour),
+        },
+        {
+          label: t("admin.dashboard.facturesJour"),
+          valeur: String(stats.kpis.facturesJour),
+        },
+        {
+          label: t("admin.dashboard.examensTermines"),
+          valeur: String(stats.kpis.examensTermines),
+        },
+      ]
+    : [];
 
   return (
     <MiseEnPageAdmin
       utilisateur={utilisateur}
       titre={t("admin.dashboard.titre")}
-      sousTitre={t("admin.layout.sousTitre")}
+      sousTitre={t("admin.dashboard.description")}
     >
-      <div className="mx-auto w-full max-w-[1200px] space-y-6">
-        <EnTetePageReception
-          icone={Activity}
-          titre={t("admin.dashboard.titre")}
-          description={t("admin.dashboard.description")}
-          fil={[{ label: t("admin.common.salle") }]}
-        />
-
+      <div className="mx-auto w-full max-w-[1280px] space-y-5">
         {erreur ? (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
             {erreur}
           </p>
         ) : null}
 
-        {stats ? (
+        {!stats ? (
+          <div className="flex items-center gap-2 py-16 text-sm text-texte-secondaire">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {t("admin.common.chargement")}
+          </div>
+        ) : (
           <>
             {(stats.kpis.utilisateursSuspendus > 0 ||
               stats.kpis.sessionsActives > 50) && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <div className="border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
                 {stats.kpis.utilisateursSuspendus > 0 ? (
                   <p>
                     {t("admin.dashboard.alerteSuspendus", {
@@ -161,98 +183,196 @@ export function ContenuAccueilAdmin({
               </div>
             )}
 
-            <div className="grille-kpi-sigh lg:grid-cols-4">
-              <CarteKpi
-                label={t("admin.dashboard.utilisateursActifs")}
-                valeur={`${stats.kpis.utilisateursActifs}/${stats.kpis.utilisateursTotal}`}
-              />
-              <CarteKpi
-                label={t("admin.dashboard.sessions")}
-                valeur={stats.kpis.sessionsActives}
-              />
-              <CarteKpi
-                label={t("admin.dashboard.dossiersOuverts")}
-                valeur={stats.kpis.dossiersOuverts}
-                hint={`${stats.kpis.patientsTotal} ${t("admin.dashboard.patients")}`}
-              />
-              <CarteKpi
-                label={t("admin.dashboard.activiteJour")}
-                valeur={stats.kpis.connexionsJour}
-                hint={`${stats.kpis.messagesJour} ${t("admin.dashboard.messages")}`}
-              />
-            </div>
-
-            <section className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-              <div className="mb-4 flex items-center justify-between gap-2">
-                <h2 className="text-sm font-bold text-texte-principal">
-                  {t("admin.dashboard.filesSalles")}
-                </h2>
-                <Link
-                  href="/sigh/admin/supervision"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-bleu-medical hover:underline"
-                >
-                  {t("admin.dashboard.voirSupervision")}
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {stats.salles.map((s) => (
-                  <div
-                    key={s.code}
-                    className="flex items-center justify-between rounded-lg border border-gris-bordure px-3 py-2.5"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-texte-principal">
-                        {s.nom}
-                      </p>
-                      <p className="text-[10px] uppercase tracking-wide text-texte-secondaire">
-                        {s.code}
-                      </p>
-                    </div>
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${
-                        s.enFile > 0
-                          ? "bg-bleu-medical-clair text-bleu-medical"
-                          : "bg-gris-tres-clair text-texte-secondaire"
-                      }`}
-                    >
-                      {s.enFile}
-                    </span>
+            <section className="overflow-hidden border border-gris-bordure bg-white">
+              <div className="grid grid-cols-2 divide-x divide-y divide-gris-bordure sm:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
+                {kpis.map((k) => (
+                  <div key={k.label} className="px-4 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-texte-secondaire">
+                      {k.label}
+                    </p>
+                    <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-texte-principal">
+                      {k.valeur}
+                    </p>
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-[11px] text-texte-secondaire">
-                {t("admin.dashboard.majAuto")}{" "}
-                {new Date(stats.genereLe).toLocaleTimeString()}
-              </p>
+            </section>
+
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <section className="min-w-0 overflow-hidden border border-gris-bordure bg-white">
+                <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-2.5">
+                  <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-texte-secondaire">
+                    {t("admin.dashboard.filesSalles")}
+                  </h2>
+                  <Link
+                    href="/sigh/admin/supervision"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-bleu-medical hover:underline"
+                  >
+                    {t("admin.dashboard.voirSupervision")}
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[480px] text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-gris-bordure text-[10px] font-semibold uppercase tracking-wider text-texte-secondaire">
+                        <th className="px-4 py-2 font-semibold">
+                          {t("admin.dashboard.colService")}
+                        </th>
+                        <th className="px-4 py-2 font-semibold">
+                          {t("admin.dashboard.colCode")}
+                        </th>
+                        <th className="px-4 py-2 text-right font-semibold">
+                          {t("admin.dashboard.colFile")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.salles.map((s) => (
+                        <tr
+                          key={s.code}
+                          className="border-b border-gris-bordure last:border-0"
+                        >
+                          <td className="px-4 py-2 font-medium text-texte-principal">
+                            {s.nom}
+                          </td>
+                          <td className="px-4 py-2 font-mono text-[11px] text-texte-secondaire">
+                            {s.code}
+                          </td>
+                          <td
+                            className={cn(
+                              "px-4 py-2 text-right font-mono text-sm tabular-nums",
+                              s.enFile > 0
+                                ? "font-semibold text-bleu-medical"
+                                : "text-texte-secondaire"
+                            )}
+                          >
+                            {s.enFile}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section className="overflow-hidden border border-gris-bordure bg-white">
+                <div className="border-b border-gris-bordure px-4 py-2.5">
+                  <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-texte-secondaire">
+                    {t("admin.dashboard.sessionsEnLigne")}
+                  </h2>
+                </div>
+                {stats.sessions.length === 0 ? (
+                  <p className="px-4 py-8 text-center text-xs text-texte-secondaire">
+                    {t("admin.dashboard.aucuneSession")}
+                  </p>
+                ) : (
+                  <ul className="max-h-[420px] divide-y divide-gris-bordure overflow-y-auto">
+                    {stats.sessions.map((s) => (
+                      <li key={s.id} className="px-4 py-2.5">
+                        <p className="truncate text-sm font-medium text-texte-principal">
+                          {s.utilisateur.prenom} {s.utilisateur.nom}
+                        </p>
+                        <p className="truncate text-[11px] text-texte-secondaire">
+                          {s.utilisateur.role.salle?.nom ?? s.utilisateur.role.nom}
+                          {" · "}
+                          {t("admin.dashboard.connecteDepuis")}{" "}
+                          {fmtHeure(s.createdAt)}
+                        </p>
+                        {s.derniereAction ? (
+                          <p className="mt-0.5 truncate text-[11px] text-bleu-medical">
+                            {s.derniereAction}
+                          </p>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
+
+            <section className="overflow-hidden border border-gris-bordure bg-white">
+              <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-2.5">
+                <div>
+                  <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-texte-secondaire">
+                    {t("admin.dashboard.journalTitre")}
+                  </h2>
+                  <p className="mt-0.5 text-[11px] text-texte-secondaire">
+                    {t("admin.dashboard.majAuto")}{" "}
+                    {new Date(stats.genereLe).toLocaleTimeString()}
+                  </p>
+                </div>
+                <Link
+                  href="/sigh/admin/audit"
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-bleu-medical hover:underline"
+                >
+                  {t("admin.dashboard.journalComplet")}
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+              {stats.journal.length === 0 ? (
+                <p className="px-4 py-10 text-center text-sm text-texte-secondaire">
+                  {t("admin.dashboard.journalVide")}
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[720px] text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-gris-bordure text-[10px] font-semibold uppercase tracking-wider text-texte-secondaire">
+                        <th className="px-4 py-2 font-semibold">
+                          {t("admin.audit.colonnes.date")}
+                        </th>
+                        <th className="px-4 py-2 font-semibold">
+                          {t("admin.dashboard.colSalle")}
+                        </th>
+                        <th className="px-4 py-2 font-semibold">
+                          {t("admin.audit.colonnes.acteur")}
+                        </th>
+                        <th className="px-4 py-2 font-semibold">
+                          {t("admin.audit.colonnes.type")}
+                        </th>
+                        <th className="px-4 py-2 font-semibold">
+                          {t("admin.audit.colonnes.action")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.journal.map((e) => (
+                        <tr
+                          key={e.id}
+                          className="border-b border-gris-bordure last:border-0"
+                        >
+                          <td className="whitespace-nowrap px-4 py-2 font-mono text-[11px] text-texte-secondaire">
+                            {fmtHeure(e.createdAt)}
+                          </td>
+                          <td className="px-4 py-2 font-mono text-[11px] text-texte-secondaire">
+                            {e.module ?? "—"}
+                          </td>
+                          <td className="max-w-[160px] truncate px-4 py-2 text-texte-principal">
+                            {libelleActeur(e, t("admin.dashboard.public"))}
+                          </td>
+                          <td
+                            className={cn(
+                              "px-4 py-2 text-[11px] font-semibold uppercase tracking-wide",
+                              classeType(e.type)
+                            )}
+                          >
+                            {t(`admin.audit.types.${e.type}`, {
+                              defaultValue: e.type,
+                            })}
+                          </td>
+                          <td className="max-w-[420px] truncate px-4 py-2 text-texte-principal">
+                            {e.action}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           </>
-        ) : (
-          <p className="text-sm text-texte-secondaire">
-            {t("admin.common.chargement")}
-          </p>
         )}
-
-        <section className="grid gap-3 sm:grid-cols-2">
-          {raccourcis.map((r) => {
-            const Icone = r.icone;
-            return (
-              <Link
-                key={r.href}
-                href={r.href}
-                className="group rounded-xl border border-gris-bordure bg-white p-4 shadow-sm transition-colors hover:border-bleu-medical"
-              >
-                <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-bleu-medical-clair text-bleu-medical">
-                  <Icone className="h-4.5 w-4.5" />
-                </div>
-                <p className="font-semibold text-texte-principal group-hover:text-bleu-medical">
-                  {r.titre}
-                </p>
-                <p className="mt-1 text-sm text-texte-secondaire">{r.desc}</p>
-              </Link>
-            );
-          })}
-        </section>
       </div>
     </MiseEnPageAdmin>
   );

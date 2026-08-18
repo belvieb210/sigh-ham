@@ -33,6 +33,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const { enregistrerAudit } = await import("@/lib/admin/audit");
+    await enregistrerAudit({
+      type: "CREATION",
+      module: "CLIENT",
+      entite: "MessageContact",
+      action: `Contact public — ${nom} (${sujet})`,
+      details: { email },
+    });
+
     return NextResponse.json({ succes: true }, { status: 201 });
   } catch (error) {
     console.error("[POST /api/public/contact]", error);

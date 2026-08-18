@@ -135,6 +135,16 @@ export async function creerEstimationMedecinExterne(params: {
     },
   });
 
+  const { enregistrerAudit } = await import("@/lib/admin/audit");
+  await enregistrerAudit({
+    utilisateurId: params.agentId,
+    type: "CREATION",
+    module: "MEDECINS_EXTERNES",
+    entite: "Estimation",
+    entiteId: estimation.id,
+    action: `Estimation médecin externe pour ${estimation.dossier.patient.prenom} ${estimation.dossier.patient.nom}`.trim(),
+  });
+
   return mapperEstimation(estimation as EstimationMapperSource);
 }
 

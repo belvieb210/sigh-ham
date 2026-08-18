@@ -215,6 +215,20 @@ export async function creerOrdonnance(
     include: includeOrdonnance,
   });
 
+  const patient = await prisma.dossierPatient.findUnique({
+    where: { id: dossierId },
+    select: { numeroDossier: true, patient: { select: { prenom: true, nom: true } } },
+  });
+  const { enregistrerAudit } = await import("@/lib/admin/audit");
+  await enregistrerAudit({
+    utilisateurId: medecinId,
+    type: "CREATION",
+    module: "MEDECINS",
+    entite: "Ordonnance",
+    entiteId: o.id,
+    action: `Ordonnance pour ${patient?.patient.prenom ?? ""} ${patient?.patient.nom ?? ""} (${patient?.numeroDossier ?? dossierId})`.trim(),
+  });
+
   let transfertPharmacie: { ok: boolean; message?: string } | undefined;
   if (input.orienterVersPharmacie !== false && lignes.length > 0) {
     try {

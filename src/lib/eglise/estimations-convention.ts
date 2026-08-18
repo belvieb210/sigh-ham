@@ -196,6 +196,16 @@ export async function creerEstimationConvention(params: {
     },
   });
 
+  const { enregistrerAudit } = await import("@/lib/admin/audit");
+  await enregistrerAudit({
+    utilisateurId: params.agentId,
+    type: "CREATION",
+    module: "EGLISE",
+    entite: "Estimation",
+    entiteId: estimation.id,
+    action: `Estimation convention pour ${patientNom}`,
+  });
+
   return mapperEstimation(estimation as EstimationMapperSource);
 }
 

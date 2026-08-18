@@ -29,6 +29,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ erreur: MSG_INTROUVABLE }, { status: 404 });
     }
 
+    const identite = `${body.prenom?.trim() ?? ""} ${body.nom?.trim() ?? ""}`.trim();
+    const { enregistrerAudit } = await import("@/lib/admin/audit");
+    await enregistrerAudit({
+      type: "CONSULTATION",
+      module: "CLIENT",
+      entite: "ResultatPublic",
+      action:
+        reponse.type === "en_attente"
+          ? `Consultation résultats (en attente) — ${identite || "visiteur"}`
+          : `Consultation résultats — ${identite || "visiteur"}`,
+      details: {
+        numeroPatient: body.numeroPatient?.trim() || null,
+        numeroFacture: body.numeroFacture?.trim() || null,
+      },
+    });
+
     if (reponse.type === "en_attente") {
       return NextResponse.json(
         {

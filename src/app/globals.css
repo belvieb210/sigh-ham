@@ -16,6 +16,35 @@
   --radius-carte: 1rem;
 }
 
+/* Thème sombre — salle Administration uniquement */
+[data-admin-theme="dark"] {
+  color-scheme: dark;
+  --admin-fond: #071018;
+  --admin-surface: #0c1a2b;
+  --color-texte-principal: #e8eef5;
+  --color-texte-secondaire: #8fa3b8;
+  --color-gris-bordure: #1c3348;
+  --color-gris-tres-clair: #122033;
+  --color-bleu-medical-clair: #163048;
+  --color-bleu-medical: #7eb3e0;
+  --color-bleu-medical-fonce: #9ec5ea;
+  --color-vert-sante-clair: #0f2a1c;
+  background-color: var(--admin-fond);
+}
+
+[data-admin-theme="dark"] .bg-white {
+  background-color: var(--admin-surface);
+}
+
+[data-admin-theme="dark"] .bg-\[\#f1f5f9\] {
+  background-color: var(--admin-fond);
+}
+
+[data-admin-theme="light"] {
+  --admin-fond: #f1f5f9;
+  --admin-surface: #ffffff;
+}
+
 @layer base {
   * {
     @apply border-gris-bordure;

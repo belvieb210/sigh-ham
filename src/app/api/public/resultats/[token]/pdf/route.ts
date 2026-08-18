@@ -79,6 +79,15 @@ export async function GET(request: NextRequest, ctx: Ctx) {
       );
     }
 
+    const { enregistrerAudit } = await import("@/lib/admin/audit");
+    await enregistrerAudit({
+      type: "CONSULTATION",
+      module: "CLIENT",
+      entite: "ResultatPublicPdf",
+      entiteId: payload.dossierId,
+      action: `Téléchargement PDF résultats (facture ${payload.factureId})`,
+    });
+
     return new NextResponse(new Uint8Array(pdf.buffer), {
       headers: {
         "Content-Type": "application/pdf",

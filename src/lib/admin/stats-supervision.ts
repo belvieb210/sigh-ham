@@ -20,6 +20,8 @@ export async function obtenirStatsSupervision() {
     facturesJour,
     examensPrescrits,
     examensTermines,
+    journalBrut,
+    sessionsBrutes,
   ] = await Promise.all([
     prisma.utilisateur.count({ where: { statut: "ACTIF" } }),
     prisma.utilisateur.count(),
@@ -50,6 +52,36 @@ export async function obtenirStatsSupervision() {
     prisma.examenLaboratoire.count({
       where: { statut: "TERMINE", resultatLe: { gte: debutJour } },
     }),
+    prisma.journalAudit.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 80,
+      include: {
+        utilisateur: {
+          select: { id: true, prenom: true, nom: true, identifiant: true },
+        },
+      },
+    }),
+    prisma.session.findMany({
+      where: { expireLe: { gt: new Date() } },
+      orderBy: { createdAt: "desc" },
+      take: 24,
+      include: {
+        utilisateur: {
+          select: {
+            id: true,
+            prenom: true,
+            nom: true,
+            identifiant: true,
+            role: {
+              select: {
+                nom: true,
+                salle: { select: { code: true, nom: true } },
+              },
+            },
+          },
+        },
+      },
+    }),
   ]);
 
   const salles = await prisma.salle.findMany({
@@ -61,6 +93,13 @@ export async function obtenirStatsSupervision() {
   const fileMap = new Map(
     filesParSalle.map((f) => [f.salleId, f._count._all])
   );
+
+  const dernierParUtilisateur = new Map<string, string>();
+  for (const e of journalBrut) {
+    if (e.utilisateurId && !dernierParUtilisateur.has(e.utilisateurId)) {
+      dernierParUtilisateur.set(e.utilisateurId, e.action);
+    }
+  }
 
   return {
     kpis: {
@@ -81,6 +120,35 @@ export async function obtenirStatsSupervision() {
       code: s.code,
       nom: s.nom,
       enFile: fileMap.get(s.id) ?? 0,
+    })),
+    journal: journalBrut.map((e) => ({
+      id: e.id,
+      type: e.type,
+      module: e.module,
+      entite: e.entite,
+      action: e.action,
+      createdAt: e.createdAt.toISOString(),
+      utilisateur: e.utilisateur
+        ? {
+            prenom: e.utilisateur.prenom,
+            nom: e.utilisateur.nom,
+            identifiant: e.utilisateur.identifiant,
+          }
+        : null,
+    })),
+    sessions: sessionsBrutes.map((s) => ({
+      id: s.id,
+      createdAt: s.createdAt.toISOString(),
+      utilisateur: {
+        prenom: s.utilisateur.prenom,
+        nom: s.utilisateur.nom,
+        identifiant: s.utilisateur.identifiant,
+        role: {
+          nom: s.utilisateur.role.nom,
+          salle: s.utilisateur.role.salle,
+        },
+      },
+      derniereAction: dernierParUtilisateur.get(s.utilisateur.id) ?? null,
     })),
     genereLe: new Date().toISOString(),
   };

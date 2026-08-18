@@ -9,6 +9,7 @@ import { NavigationBasseAdmin } from "@/features/admin/navigation-basse-admin";
 import { ToastNotificationGlobale } from "@/features/notifications/composants/toast-notification-globale";
 import { GestionnaireAlertesNotifications } from "@/features/notifications/composants/gestionnaire-alertes-notifications";
 import { FournisseurNotifications } from "@/features/notifications/fournisseur-notifications";
+import { useThemeAdmin } from "@/hooks/use-theme-admin";
 import type { UtilisateurAdmin } from "@/lib/auth/props-utilisateur-admin";
 
 export type { UtilisateurAdmin };
@@ -27,10 +28,14 @@ export function MiseEnPageAdmin({
   children,
 }: PropsMiseEnPageAdmin) {
   const [menuOuvert, setMenuOuvert] = useState(false);
+  const { sombre, basculer } = useThemeAdmin();
 
   return (
     <FournisseurNotifications>
-      <div className="flex h-full min-h-0 w-full flex-1 min-w-0 overflow-x-clip overflow-y-hidden bg-[#f1f5f9]">
+      <div
+        data-admin-theme={sombre ? "dark" : "light"}
+        className="flex h-full min-h-0 w-full flex-1 min-w-0 overflow-x-clip overflow-y-hidden bg-[var(--admin-fond,#f1f5f9)]"
+      >
         <BarreLateraleAdmin
           utilisateur={utilisateur}
           ouvert={menuOuvert}
@@ -43,6 +48,8 @@ export function MiseEnPageAdmin({
             sousTitre={sousTitre}
             utilisateur={utilisateur}
             onMenu={() => setMenuOuvert(true)}
+            sombre={sombre}
+            onBasculerTheme={basculer}
           />
 
           <main className="min-h-0 flex-1 overflow-y-auto overflow-x-clip overscroll-contain px-3 py-3 pb-[calc(6.75rem+env(safe-area-inset-bottom))] sm:px-4 lg:px-6 lg:py-6 lg:pb-6">

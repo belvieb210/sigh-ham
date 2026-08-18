@@ -263,6 +263,10 @@ export const caisseEn = {
     transferePar: "Transferred by: {{nom}}",
     voirDossierMedical: "View medical file",
     examensPrescrits: "Prescribed exams for billing",
+    examensDejaFactures: "Exams already billed and paid",
+    facturationTermineeAide:
+      "These exams are already billed and paid. This patient no longer needs billing — orient them from",
+    lienOrienterPatient: "Patients / Transfers",
     ajouterExamen: "Add an exam",
     fermerRechercheExamen: "Close search",
     rechercheExamenPlaceholder:

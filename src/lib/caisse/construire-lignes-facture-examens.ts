@@ -1,4 +1,5 @@
 import type { LigneFactureExamensCaisse } from "@/lib/caisse/types";
+import { normaliserLibelleFacture } from "@/lib/resultats-public/normaliser-identite";
 
 function decimalVersNombre(
   v: { toNumber?: () => number; toString?: () => string } | number | null | undefined
@@ -53,6 +54,27 @@ export function construireLignesFactureExamens(
   return lignes;
 }
 
+function consommerLigneFacturee(
+  restants: Map<string, number>,
+  libelle: string
+): boolean {
+  const cle = normaliserLibelleFacture(libelle);
+  if (!cle) return false;
+  const n = restants.get(cle) ?? 0;
+  if (n > 0) {
+    restants.set(cle, n - 1);
+    return true;
+  }
+  for (const [autre, qte] of restants) {
+    if (qte <= 0) continue;
+    if (cle === autre || cle.includes(autre) || autre.includes(cle)) {
+      restants.set(autre, qte - 1);
+      return true;
+    }
+  }
+  return false;
+}
+
 /** Prestations prescrites absentes des factures examens non annulées. */
 export function extraireLignesExamensNonFacturees(
   lignesPrescrites: LigneFactureExamensCaisse[],
@@ -61,18 +83,15 @@ export function extraireLignesExamensNonFacturees(
   const restants = new Map<string, number>();
   for (const ligne of lignesDejaFacturees) {
     if (ligne.montant <= 0) continue;
-    const cle = ligne.libelle.trim().toLowerCase();
+    const cle = normaliserLibelleFacture(ligne.libelle);
+    if (!cle) continue;
     restants.set(cle, (restants.get(cle) ?? 0) + 1);
   }
 
   const nonFacturees: LigneFactureExamensCaisse[] = [];
   for (const ligne of lignesPrescrites) {
     if (ligne.montant <= 0) continue;
-    const cle = ligne.libelle.trim().toLowerCase();
-    const n = restants.get(cle) ?? 0;
-    if (n > 0) {
-      restants.set(cle, n - 1);
-    } else {
+    if (!consommerLigneFacturee(restants, ligne.libelle)) {
       nonFacturees.push(ligne);
     }
   }

@@ -33,6 +33,8 @@ export function ContenuPatientsAttenteCaisse({ utilisateur }: PropsContenuPatien
     };
   }, []);
 
+  const patientsAFacturer = patients.filter((p) => !p.facturationComplete);
+
   return (
     <MiseEnPageCaisse
       utilisateur={utilisateur}
@@ -49,13 +51,13 @@ export function ContenuPatientsAttenteCaisse({ utilisateur }: PropsContenuPatien
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-texte-secondaire">
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
-        ) : patients.length === 0 ? (
+        ) : patientsAFacturer.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gris-bordure bg-white px-6 py-14 text-center text-sm text-texte-secondaire">
             {t("caisse.patients.vide")}
           </div>
         ) : (
           <ul className="space-y-2">
-            {patients.map((p) => (
+            {patientsAFacturer.map((p) => (
               <li
                 key={p.fileAttenteId}
                 className="flex flex-col gap-3 rounded-xl border border-gris-bordure bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"

@@ -224,14 +224,6 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     setFactureId(factureInitial);
   }, [dossierInitial, factureInitial]);
 
-  useEffect(() => {
-    if (!dossierId && file.length > 0) {
-      const firstDossier = file[0].dossierId;
-      setDossierId(firstDossier);
-      router.replace(`/sigh/caisse/facturation?dossier=${firstDossier}`);
-    }
-  }, [dossierId, file, router]);
-
   const modePharmacie = typeFactureUi === "PHARMACIE";
 
   const basculerTypeFacture = (type: TypeFactureCaisseUi) => {
@@ -322,12 +314,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     [dossier]
   );
 
-  /** File caisse : patients avec facturation examens et/ou pharmacie incomplète */
+  /** File facturation : patients avec facturation examens et/ou pharmacie incomplète */
   const fileSansFacture = useMemo(
-    () =>
-      file.filter(
-        (p) => !p.facturationComplete && p.statutFacture !== "PAYEE"
-      ),
+    () => file.filter((p) => !p.facturationComplete),
     [file]
   );
 
@@ -376,6 +365,14 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   }, [fileSansFacture, filtresAppliques]);
 
   const nbFiltresActifs = compterFiltresActifs(filtresAppliques);
+
+  useEffect(() => {
+    if (!dossierId && fileSansFacture.length > 0) {
+      const firstDossier = fileSansFacture[0].dossierId;
+      setDossierId(firstDossier);
+      router.replace(`/sigh/caisse/facturation?dossier=${firstDossier}`);
+    }
+  }, [dossierId, fileSansFacture, router]);
 
   const appliquerFiltres = useCallback(async () => {
     setErreur(null);
@@ -1264,6 +1261,17 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                               : t("caisse.facturation.horsFile")}
                     </span>
                   </div>
+                  {dossier.facturationDual.facturationComplete && (
+                    <p className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+                      {t("caisse.facturation.facturationTermineeAide")}{" "}
+                      <Link
+                        href="/sigh/caisse/transferts"
+                        className="font-semibold underline"
+                      >
+                        {t("caisse.facturation.lienOrienterPatient")}
+                      </Link>
+                    </p>
+                  )}
                   <p className="mt-1 text-sm text-texte-secondaire">
                     {t("caisse.facturation.idDossier")} : {dossier.numeroDossier}
                     {" | "}
@@ -1333,7 +1341,9 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                     <h3 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
                       {modePharmacie
                         ? t("caisse.facturation.medicamentsPrescrits")
-                        : t("caisse.facturation.examensPrescrits")}
+                        : factureCloturee
+                          ? t("caisse.facturation.examensDejaFactures")
+                          : t("caisse.facturation.examensPrescrits")}
                     </h3>
                   </div>
                   {lignesVisibles.length === 0 ? (
@@ -1375,7 +1385,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                                   {formaterMontantCaisse(l.montant, devise)}
                                 </td>
                                 <td className="px-3 py-2.5 text-right">
-                                  {!modePharmacie && (
+                                  {!modePharmacie && !factureCloturee && (
                                     <button
                                       type="button"
                                       aria-label={t("caisse.facturation.supprimerLigne")}

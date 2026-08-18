@@ -263,6 +263,10 @@ export const caisseFr = {
     transferePar: "Transféré par : {{nom}}",
     voirDossierMedical: "Voir le dossier médical",
     examensPrescrits: "Examens prescrits pour facturation",
+    examensDejaFactures: "Examens déjà facturés et encaissés",
+    facturationTermineeAide:
+      "Ces examens sont déjà facturés et payés. Ce patient n'est plus à facturer : orientez-le depuis",
+    lienOrienterPatient: "Patients / Transferts",
     ajouterExamen: "Ajouter un examen",
     fermerRechercheExamen: "Fermer la recherche",
     rechercheExamenPlaceholder:

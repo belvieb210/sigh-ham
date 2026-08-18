@@ -5,6 +5,8 @@ import { listerPatientsFileAttenteSalle } from "@/lib/transferts/visibilite-sall
 import {
   estNumeroFacturePharmacie,
   evaluerEtatFacturationDual,
+  patientEncoreAFacturerCaisse,
+  statutExamensPourEtatDual,
 } from "@/lib/caisse/etat-facturation-dual";
 import { estClientWalkInPharmacie, numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 import type { PatientFileCaisse, StatsCaisseJour } from "@/lib/caisse/types";
@@ -41,6 +43,17 @@ interface ResumeFacture {
 interface FacturesDossier {
   examens: ResumeFacture | null;
   pharmacie: ResumeFacture | null;
+  examensPayee: boolean;
+  pharmaciePayee: boolean;
+}
+
+function facturesDossierVides(): FacturesDossier {
+  return {
+    examens: null,
+    pharmacie: null,
+    examensPayee: false,
+    pharmaciePayee: false,
+  };
 }
 
 function prioriteFactureATraiter(statut: StatutFacture): number {
@@ -62,7 +75,12 @@ function retenirMeilleureFacture(
 }
 
 function aFacturePayee(facs: FacturesDossier): boolean {
-  return facs.examens?.statut === "PAYEE" || facs.pharmacie?.statut === "PAYEE";
+  return (
+    facs.examensPayee ||
+    facs.pharmaciePayee ||
+    facs.examens?.statut === "PAYEE" ||
+    facs.pharmacie?.statut === "PAYEE"
+  );
 }
 
 function aFactureEtablie(facs: FacturesDossier): boolean {
@@ -158,10 +176,7 @@ async function synchroniserCandidatsTransfertsCaisse() {
   const dossiersAvecMedicaments = new Set(ordonnancesAvecMed.map((o) => o.dossierId));
   const facturesParDossier = new Map<string, FacturesDossier>();
   for (const f of factures) {
-    const courant = facturesParDossier.get(f.dossierId) ?? {
-      examens: null,
-      pharmacie: null,
-    };
+    const courant = facturesParDossier.get(f.dossierId) ?? facturesDossierVides();
     const estPh =
       Boolean(f.ventePharmacie) || estNumeroFacturePharmacie(f.numeroFacture);
     const resume = {
@@ -172,8 +187,10 @@ async function synchroniserCandidatsTransfertsCaisse() {
       nbLignes: 0,
     };
     if (estPh) {
+      if (f.statut === "PAYEE") courant.pharmaciePayee = true;
       courant.pharmacie = retenirMeilleureFacture(courant.pharmacie, resume);
     } else {
+      if (f.statut === "PAYEE") courant.examensPayee = true;
       courant.examens = retenirMeilleureFacture(courant.examens, resume);
     }
     facturesParDossier.set(f.dossierId, courant);
@@ -188,17 +205,20 @@ async function synchroniserCandidatsTransfertsCaisse() {
       const passage = dossier?.passages[0];
       if (!passage) continue;
 
-      const facs = facturesParDossier.get(dossierId) ?? {
-        examens: null,
-        pharmacie: null,
-      };
+      const facs = facturesParDossier.get(dossierId) ?? facturesDossierVides();
       const aDesMedicaments =
         dossiersAvecMedicaments.has(dossierId) || Boolean(facs.pharmacie);
       const etat = evaluerEtatFacturationDual({
         nombreExamens: dossier?.examensLaboratoire.length ?? 0,
         aDesMedicaments,
-        statutFactureExamens: facs.examens?.statut ?? null,
-        statutFacturePharmacie: facs.pharmacie?.statut ?? null,
+        statutFactureExamens: statutExamensPourEtatDual({
+          aDesExamensNonFactures: false,
+          statutFactureOuverte: facs.examens?.statut ?? null,
+          aUneFactureExamensPayee: facs.examensPayee,
+        }),
+        statutFacturePharmacie: facs.pharmaciePayee
+          ? "PAYEE"
+          : (facs.pharmacie?.statut ?? null),
         enFile: true,
       });
 
@@ -323,10 +343,7 @@ export async function listerPatientsEnAttenteCaisse(options?: {
   >();
   for (const f of factures) {
     if (f.statut === "PAYEE") dossiersAvecFacturePayee.add(f.dossierId);
-    const courant = facturesParDossier.get(f.dossierId) ?? {
-      examens: null,
-      pharmacie: null,
-    };
+    const courant = facturesParDossier.get(f.dossierId) ?? facturesDossierVides();
     const estPh =
       Boolean(f.ventePharmacie) || estNumeroFacturePharmacie(f.numeroFacture);
     const resume = {
@@ -337,8 +354,10 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       nbLignes: f.lignes.length,
     };
     if (estPh) {
+      if (f.statut === "PAYEE") courant.pharmaciePayee = true;
       courant.pharmacie = retenirMeilleureFacture(courant.pharmacie, resume);
     } else {
+      if (f.statut === "PAYEE") courant.examensPayee = true;
       courant.examens = retenirMeilleureFacture(courant.examens, resume);
       const lignes = lignesExamensFactureesParDossier.get(f.dossierId) ?? [];
       for (const l of f.lignes) {
@@ -378,10 +397,7 @@ export async function listerPatientsEnAttenteCaisse(options?: {
       transfert?.salleOrigine?.code ||
       "—";
 
-    const facs = facturesParDossier.get(dossier.id) ?? {
-      examens: null,
-      pharmacie: null,
-    };
+    const facs = facturesParDossier.get(dossier.id) ?? facturesDossierVides();
     const aDesMedicaments =
       dossiersAvecMedicaments.has(dossier.id) || Boolean(facs.pharmacie);
     const estClientWalkIn = estClientWalkInPharmacie(dossier.numeroDossier);
@@ -398,8 +414,14 @@ export async function listerPatientsEnAttenteCaisse(options?: {
     const etat = evaluerEtatFacturationDual({
       nombreExamens: examens.length,
       aDesMedicaments,
-      statutFactureExamens: facs.examens?.statut ?? null,
-      statutFacturePharmacie: facs.pharmacie?.statut ?? null,
+      statutFactureExamens: statutExamensPourEtatDual({
+        aDesExamensNonFactures,
+        statutFactureOuverte: facs.examens?.statut ?? null,
+        aUneFactureExamensPayee: facs.examensPayee,
+      }),
+      statutFacturePharmacie: facs.pharmaciePayee
+        ? "PAYEE"
+        : (facs.pharmacie?.statut ?? null),
       enFile: true,
       aDesExamensNonFactures,
     });
@@ -443,7 +465,7 @@ export async function listerPatientsEnAttenteCaisse(options?: {
           ? reste || montantFacture
           : montantEstime,
       factureOuverte: Boolean(facActive) || etat.facturationComplete || aFacturePayee(facs),
-      statutFacture: etat.facturationComplete || aFacturePayee(facs)
+      statutFacture: etat.facturationComplete
         ? "PAYEE"
         : (facActive?.statut ?? null),
       montantFacture,
@@ -470,23 +492,8 @@ export async function obtenirStatsCaisseJour(): Promise<StatsCaisseJour> {
   const finJour = new Date();
   finJour.setHours(23, 59, 59, 999);
 
-  const [patientsEnAttente, facturesDuJour, paiements] = await Promise.all([
-    prisma.fileAttente.count({
-      where: {
-        salle: { code: "CAISSE" },
-        serviLe: null,
-        NOT: {
-          passage: {
-            transferts: {
-              some: {
-                salleDestination: { code: "CAISSE" },
-                statut: "EN_ATTENTE",
-              },
-            },
-          },
-        },
-      },
-    }),
+  const [patientsFile, facturesDuJour, paiements] = await Promise.all([
+    listerPatientsEnAttenteCaisse(),
     prisma.facture.count({
       where: {
         createdAt: { gte: debutJour, lte: finJour },
@@ -499,6 +506,8 @@ export async function obtenirStatsCaisseJour(): Promise<StatsCaisseJour> {
       select: { montant: true },
     }),
   ]);
+
+  const patientsEnAttente = patientsFile.filter(patientEncoreAFacturerCaisse).length;
 
   const montantEncaisseDuJour = paiements.reduce(
     (acc, p) => acc + decimalVersNombre(p.montant),

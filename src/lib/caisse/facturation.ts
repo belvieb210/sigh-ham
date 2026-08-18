@@ -9,7 +9,7 @@ import {
 import { reorienterPatientDepuisCaisse } from "@/lib/caisse/reorienter-patient-caisse";
 import { estClientWalkInPharmacie, numeroIdentitePersonne } from "@/lib/pharmacie/client-walk-in";
 import { creerTokenRecuFacture } from "@/lib/caisse/token-recu-public";
-import { evaluerEtatFacturationDual } from "@/lib/caisse/etat-facturation-dual";
+import { evaluerEtatFacturationDual, statutExamensPourEtatDual } from "@/lib/caisse/etat-facturation-dual";
 import {
   construireLignesFactureExamens,
   extraireLignesExamensNonFacturees,
@@ -243,8 +243,8 @@ export async function obtenirDossierFacturation(
     : (factureParamExamens && factureParamExamens.statut !== "ANNULEE"
         ? factureParamExamens
         : null) ??
-      factureExamensOuverte ??
       factureExamensPayeeRecente ??
+      factureExamensOuverte ??
       facturesExamens[0] ??
       null;
 
@@ -310,9 +310,11 @@ export async function obtenirDossierFacturation(
   const facturationDual = evaluerEtatFacturationDual({
     nombreExamens: dossier.examensLaboratoire.length,
     aDesMedicaments: pharmacie.aDesMedicaments,
-    statutFactureExamens: aDesExamensNonFactures
-      ? (factureExamensOuverte?.statut ?? null)
-      : factureExamens.statut,
+    statutFactureExamens: statutExamensPourEtatDual({
+      aDesExamensNonFactures,
+      statutFactureOuverte: factureExamensOuverte?.statut ?? null,
+      aUneFactureExamensPayee: Boolean(factureExamensPayeeRecente),
+    }),
     statutFacturePharmacie: pharmacie.facture?.statut ?? null,
     enFile: Boolean(fileAttente),
     aDesExamensNonFactures,

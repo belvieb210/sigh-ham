@@ -9,6 +9,31 @@ export function factureEstPayee(statut: StatutFacture | null | undefined): boole
   return statut === "PAYEE";
 }
 
+/** File facturation / « en attente de facturation » : il reste quelque chose à encaisser. */
+export function patientEncoreAFacturerCaisse(p: {
+  facturationComplete: boolean;
+}): boolean {
+  return !p.facturationComplete;
+}
+
+/**
+ * Statut examens envoyé à l'état dual.
+ * Une facture PAYEE existante ne doit pas masquer des examens encore non facturés,
+ * et une facture ouverte périmée ne doit pas faire passer un dossier soldé pour impayé.
+ */
+export function statutExamensPourEtatDual(params: {
+  aDesExamensNonFactures: boolean;
+  statutFactureOuverte: StatutFacture | null;
+  aUneFactureExamensPayee: boolean;
+}): StatutFacture | null {
+  if (params.aDesExamensNonFactures) {
+    return params.statutFactureOuverte === "PAYEE"
+      ? null
+      : params.statutFactureOuverte;
+  }
+  return params.aUneFactureExamensPayee ? "PAYEE" : params.statutFactureOuverte;
+}
+
 export interface EtatFacturationDual {
   aDesExamens: boolean;
   aDesMedicaments: boolean;

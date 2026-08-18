@@ -2,6 +2,7 @@ import "server-only";
 import type { StatutFacture } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { listerPatientsEnAttenteCaisse } from "@/lib/caisse/lister-patients-caisse";
+import { patientEncoreAFacturerCaisse } from "@/lib/caisse/etat-facturation-dual";
 import type {
   FactureAccueilResume,
   PatientAttenteAccueil,
@@ -165,7 +166,9 @@ export async function obtenirTableauDeBordAccueilCaisse(): Promise<TableauDeBord
     };
   });
 
-  const patientsAttente: PatientAttenteAccueil[] = patientsFile.slice(0, 6).map((p) => {
+  const patientsAFacturer = patientsFile.filter(patientEncoreAFacturerCaisse);
+
+  const patientsAttente: PatientAttenteAccueil[] = patientsAFacturer.slice(0, 6).map((p) => {
     const minutes = Math.max(0, Math.floor((maintenant.getTime() - new Date(p.arriveeLe).getTime()) / 60000));
     return {
       dossierId: p.dossierId,
@@ -222,7 +225,7 @@ export async function obtenirTableauDeBordAccueilCaisse(): Promise<TableauDeBord
 
   return {
     dateReference: maintenant.toISOString(),
-    patientsEnAttente: patientsFile.length,
+    patientsEnAttente: patientsAFacturer.length,
     facturesDuJour: agregatsAuj.facturesCount,
     encaissementsDuJour: agregatsAuj.paiementsCount,
     montantEncaisseDuJour: agregatsAuj.paiementsMontant,
@@ -241,7 +244,7 @@ export async function obtenirTableauDeBordAccueilCaisse(): Promise<TableauDeBord
         montant: agregatsAuj.paiementsMontant,
         variationPct: variationPct(agregatsAuj.paiementsMontant, agregatsHier.paiementsMontant),
       },
-      patientsEnAttente: { count: patientsFile.length },
+      patientsEnAttente: { count: patientsAFacturer.length },
       facturesImpayees: {
         count: facturesImpayeesRows.length,
         montantTotal: montantImpaye,

@@ -64,9 +64,12 @@ tail -f /var/www/sigh-ham/logs/auto-deploy.log
 
 | Événement | Action |
 |-----------|--------|
-| `git push` sur GitHub `main` | Pull + migrate + build + restart |
-| Dump dans `prisma/backups/inbox/` | Import + build + restart |
+| `git push` sur GitHub `main` | Pull + migrate + build atomique + restart (`npm ci` seulement si `package-lock.json` a changé) |
+| Dump dans `prisma/backups/inbox/` | Import + restart (pas de rebuild) |
 | Rien de nouveau | Aucun build |
+| Déploiement déjà en cours | Le cron **saute** ; un `deploy-app.sh` manuel **attend** le même verrou |
+
+Un seul `npm ci` à la fois. Ne lancez pas `npm ci` à la main pendant un déploiement : utilisez `bash deploy/deploy-app.sh` ou `bash deploy/fix-node-modules.sh`.
 
 ### Importer une base depuis votre PC
 
@@ -79,25 +82,13 @@ Pas besoin de lancer d’autres commandes sur le VPS.
 
 ### Erreur `npm ci` / ENOTEMPTY (node_modules)
 
-Si `npm ci` échoue avec `ENOTEMPTY: directory not empty`, le dossier `node_modules` n’a pas été entièrement supprimé (souvent après un `rm -rf` interrompu).
-
-**Réparation rapide (SSH root) :**
-
-```bash
-systemctl stop sigh-web sigh-socket
-cd /var/www/sigh-ham
-chmod -R u+w node_modules 2>/dev/null || true
-mv node_modules node_modules.trash.$(date +%s) 2>/dev/null || true
-nohup rm -rf node_modules.trash.* node_modules >/dev/null 2>&1 &
-sudo -u sigh -H bash -lc 'cd /var/www/sigh-ham && npm ci'
-bash deploy/deploy-app.sh
-```
-
-Ou, après `git pull` (script à jour) :
+Le cron et `deploy-app.sh` partagent un verrou (`/tmp/sigh-ham-auto-deploy.lock`). Si `node_modules` est quand même corrompu :
 
 ```bash
 bash /var/www/sigh-ham/deploy/fix-node-modules.sh
 ```
+
+Ce script attend le verrou, nettoie, puis relance un seul déploiement. Ne pas lancer un second `npm ci` dans un autre terminal.
 
 ---
 

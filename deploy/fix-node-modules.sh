@@ -8,6 +8,10 @@ cd "${APP_DIR}"
 
 # shellcheck source=lib/npm-deps.sh
 source "${APP_DIR}/deploy/lib/npm-deps.sh"
+# shellcheck source=lib/deploy-lock.sh
+source "${APP_DIR}/deploy/lib/deploy-lock.sh"
+
+acquire_deploy_lock wait
 
 echo "==> Arrêt services"
 systemctl stop sigh-web sigh-socket 2>/dev/null || true
@@ -22,13 +26,7 @@ shopt -u nullglob
 
 chown -R sigh:sigh "${APP_DIR}" 2>/dev/null || true
 
-echo "==> npm ci (utilisateur sigh)"
-if ! sudo -u sigh -H bash -lc "cd '${APP_DIR}' && npm ci"; then
-  echo "⚠️  npm ci échoué — npm install"
-  sudo -u sigh -H bash -lc "cd '${APP_DIR}' && npm install"
-fi
-
-echo "==> Relance déploiement complet"
-bash "${APP_DIR}/deploy/deploy-app.sh"
+echo "==> Relance déploiement complet (npm ci + build)"
+SIGH_DEPLOY_LOCK_HELD=1 bash "${APP_DIR}/deploy/deploy-app.sh"
 
 echo "✅ Terminé"

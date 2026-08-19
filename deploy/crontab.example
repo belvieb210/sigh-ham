@@ -8,7 +8,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 MAILTO=""
 
 # ── Chaque minute — auto-deploy si git change OU dump dans inbox/ ─────────────
-# (ne rebuild PAS si rien n'a changé ; flock interne dans le script)
+# (ne rebuild PAS si rien n'a changé ; verrou partagé avec deploy-app.sh)
 * * * * * /var/www/sigh-ham/deploy/auto-deploy-cron.sh
 
 # ── Tous les jours à 03:15 — backup PostgreSQL uniquement ────────────────────

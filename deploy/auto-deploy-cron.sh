@@ -9,11 +9,10 @@
 #
 # Actions automatiques :
 #   1. git pull
-#   2. npm ci / install si besoin
-#   3. prisma generate + migrate deploy
-#   4. import dumps inbox (UTF-8) + correction encodage
-#   5. build Next.js
-#   6. restart sigh-web + sigh-socket
+#   2. deploy-app.sh (npm ci seulement si package-lock.json a changé)
+#   3. import dumps inbox (UTF-8) + correction encodage
+#   4. restart si dump importé
+# Verrou partagé avec deploy-app.sh : pas de 2 npm ci en parallèle.
 #
 # Usage manuel :
 #   bash /var/www/sigh-ham/deploy/auto-deploy-cron.sh
@@ -27,7 +26,6 @@ LOG_FILE="${LOG_DIR}/auto-deploy.log"
 STATE_FILE="${LOG_DIR}/.last-deployed-commit"
 INBOX_DIR="${APP_DIR}/prisma/backups/inbox"
 IMPORTED_DIR="${APP_DIR}/prisma/backups/imported"
-LOCK_FILE="/tmp/sigh-ham-auto-deploy.lock"
 FORCE=false
 
 for arg in "$@"; do
@@ -38,9 +36,11 @@ done
 
 mkdir -p "${LOG_DIR}" "${INBOX_DIR}" "${IMPORTED_DIR}"
 
-# Empêche deux exécutions simultanées
-exec 9>"${LOCK_FILE}"
-if ! flock -n 9; then
+# shellcheck source=lib/deploy-lock.sh
+source "${APP_DIR}/deploy/lib/deploy-lock.sh"
+
+# Empêche deux exécutions simultanées (même verrou que deploy-app.sh)
+if ! acquire_deploy_lock skip; then
   echo "$(date -Iseconds) — déjà en cours, skip" >> "${LOG_FILE}"
   exit 0
 fi
@@ -50,9 +50,6 @@ exec >> "${LOG_FILE}" 2>&1
 log() { echo "$(date -Iseconds) $*"; }
 
 cd "${APP_DIR}"
-
-# shellcheck source=lib/npm-deps.sh
-source "${APP_DIR}/deploy/lib/npm-deps.sh"
 
 if [[ ! -f .env || ! -f package.json ]]; then
   log "❌ Projet invalide dans ${APP_DIR}"
@@ -66,12 +63,7 @@ fi
 
 chown -R sigh:sigh "${LOG_DIR}" "${INBOX_DIR}" "${IMPORTED_DIR}" 2>/dev/null || true
 
-run_as_sigh() {
-  sudo -u sigh -H bash -lc "cd '${APP_DIR}' && $*"
-}
-
 # ── Détecter changements Git ────────────────────────────────────────────────
-log "==> fetch origin"
 sudo -u sigh git -C "${APP_DIR}" fetch origin main --quiet 2>/dev/null \
   || sudo -u sigh git -C "${APP_DIR}" fetch origin master --quiet 2>/dev/null \
   || true
@@ -118,14 +110,9 @@ if [[ "$GIT_CHANGED" == "true" || "$FORCE" == "true" ]]; then
     || sudo -u sigh git -C "${APP_DIR}" reset --hard origin/main \
     || true
   chmod +x "${APP_DIR}/deploy/"*.sh 2>/dev/null || true
+  log "==> deploy-app.sh (npm ci seulement si lockfile changé ; build atomique)"
+  SIGH_DEPLOY_LOCK_HELD=1 bash "${APP_DIR}/deploy/deploy-app.sh"
 fi
-
-# ── 2. Dépendances + migrations ─────────────────────────────────────────────
-log "==> npm + migrations"
-chown -R sigh:sigh "${APP_DIR}" 2>/dev/null || true
-npm_install_robust "${APP_DIR}" run_as_sigh
-run_as_sigh "npm run db:generate"
-run_as_sigh "npm run db:migrate:deploy"
 
 # ── 3. Import dumps inbox ───────────────────────────────────────────────────
 if [[ "$HAS_DUMP" == "true" ]]; then
@@ -146,16 +133,13 @@ if [[ "$HAS_DUMP" == "true" ]]; then
   fi
 fi
 
-# ── 4. Build + restart ──────────────────────────────────────────────────────
-log "==> build Next.js"
-systemctl stop sigh-web 2>/dev/null || true
-rm -rf "${APP_DIR}/.next"
-chown -R sigh:sigh "${APP_DIR}"
-run_as_sigh "npm run build"
+# ── 4. Restart si dump seul (le code n'a pas changé) ────────────────────────
+if [[ "$HAS_DUMP" == "true" ]]; then
+  log "==> restart après import dump"
+  systemctl restart sigh-web sigh-socket 2>/dev/null || true
+  sleep 2
+fi
 
-log "==> restart services"
-systemctl restart sigh-web sigh-socket
-sleep 2
 systemctl is-active sigh-web >/dev/null && log "   ✓ sigh-web" || log "   ✗ sigh-web"
 systemctl is-active sigh-socket >/dev/null && log "   ✓ sigh-socket" || log "   ✗ sigh-socket"
 

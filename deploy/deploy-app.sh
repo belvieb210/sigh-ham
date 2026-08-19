@@ -20,6 +20,10 @@ cd "${APP_DIR}"
 
 # shellcheck source=lib/npm-deps.sh
 source "${APP_DIR}/deploy/lib/npm-deps.sh"
+# shellcheck source=lib/deploy-lock.sh
+source "${APP_DIR}/deploy/lib/deploy-lock.sh"
+
+acquire_deploy_lock wait
 
 if [[ ! -f package.json ]]; then
   echo "❌ ${APP_DIR} ne contient pas le projet. Clonez d'abord le dépôt GitHub."

@@ -30,6 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# cache npm ci VPS (hash de package-lock.json)
+.npm-ci-stamp
+
 # env files
 .env
 .env*.local

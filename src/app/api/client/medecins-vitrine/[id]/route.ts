@@ -39,6 +39,9 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
         ...(body.email !== undefined
           ? { email: body.email ? String(body.email) : null }
           : {}),
+        ...(body.salleId !== undefined
+          ? { salleId: body.salleId ? String(body.salleId) : null }
+          : {}),
         ...(body.categorie != null
           ? {
               categorie: [
@@ -51,6 +54,27 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
                 ? String(body.categorie).toUpperCase()
                 : "MEDECIN",
             }
+          : {}),
+        ...(body.masquerContactsPublic !== undefined
+          ? { masquerContactsPublic: Boolean(body.masquerContactsPublic) }
+          : {}),
+        ...(body.badgeValeur1 !== undefined
+          ? { badgeValeur1: body.badgeValeur1 ? String(body.badgeValeur1) : null }
+          : {}),
+        ...(body.badgeLibelle1 !== undefined
+          ? { badgeLibelle1: body.badgeLibelle1 ? String(body.badgeLibelle1) : null }
+          : {}),
+        ...(body.badgeValeur2 !== undefined
+          ? { badgeValeur2: body.badgeValeur2 ? String(body.badgeValeur2) : null }
+          : {}),
+        ...(body.badgeLibelle2 !== undefined
+          ? { badgeLibelle2: body.badgeLibelle2 ? String(body.badgeLibelle2) : null }
+          : {}),
+        ...(body.badgeValeur3 !== undefined
+          ? { badgeValeur3: body.badgeValeur3 ? String(body.badgeValeur3) : null }
+          : {}),
+        ...(body.badgeLibelle3 !== undefined
+          ? { badgeLibelle3: body.badgeLibelle3 ? String(body.badgeLibelle3) : null }
           : {}),
         ...(body.ordre != null ? { ordre: Number(body.ordre) } : {}),
         ...(body.actif != null ? { actif: Boolean(body.actif) } : {}),

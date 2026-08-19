@@ -28,6 +28,7 @@ export const NAVIGATION_ADMIN = {
     { href: "/sigh/admin/statistiques", id: "statistiques", icone: BarChart3 },
   ],
   gouvernance: [
+    { href: "/sigh/admin/gouvernance", id: "gouvernance", icone: ShieldAlert },
     { href: "/sigh/admin/utilisateurs", id: "utilisateurs", icone: Users },
     { href: "/sigh/admin/patients", id: "patients", icone: ContactRound },
     { href: "/sigh/admin/roles", id: "roles", icone: Shield },

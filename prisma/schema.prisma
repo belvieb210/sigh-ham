@@ -296,6 +296,7 @@ model Salle {
   transfertsOrigine     Transfert[]   @relation("TransfertOrigine")
   transfertsDestination Transfert[]   @relation("TransfertDestination")
   filesAttente          FileAttente[]
+  membresVitrine        MedecinVitrine[]
 
   @@map("salles")
 }
@@ -1783,8 +1784,17 @@ model MedecinVitrine {
   horaires    String?
   telephone   String?
   email       String?
+  salleId     String?  @map("salle_id")
+  salle       Salle?   @relation(fields: [salleId], references: [id])
   /// MEDECIN | PERSONNEL | RESPONSABLE_LABO | MEDECIN_EXTERNE | SERVICE_EGLISE
   categorie   String   @default("MEDECIN")
+  masquerContactsPublic Boolean @default(false) @map("masquer_contacts_public")
+  badgeValeur1 String? @map("badge_valeur_1")
+  badgeLibelle1 String? @map("badge_libelle_1")
+  badgeValeur2 String? @map("badge_valeur_2")
+  badgeLibelle2 String? @map("badge_libelle_2")
+  badgeValeur3 String? @map("badge_valeur_3")
+  badgeLibelle3 String? @map("badge_libelle_3")
   ordre       Int      @default(0)
   actif       Boolean  @default(true)
   createdAt   DateTime @default(now()) @map("created_at")
@@ -1792,6 +1802,7 @@ model MedecinVitrine {
 
   @@index([actif, ordre])
   @@index([categorie, actif, ordre])
+  @@index([salleId, actif, ordre])
   @@map("medecins_vitrine")
 }
 

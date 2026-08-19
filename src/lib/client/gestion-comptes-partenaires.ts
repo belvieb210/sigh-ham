@@ -45,8 +45,10 @@ async function synchroniserVitrinePartenaire(options: {
   email?: string | null;
   telephone?: string | null;
   photoUrl?: string | null;
+  salleId?: string | null;
   categorie: "MEDECIN_EXTERNE" | "SERVICE_EGLISE";
   actif: boolean;
+  masquerContactsPublic?: boolean;
 }) {
   if (!options.actif) return null;
 
@@ -64,7 +66,9 @@ async function synchroniserVitrinePartenaire(options: {
     email,
     telephone: options.telephone?.trim() || null,
     photoUrl: options.photoUrl?.trim() || null,
+    salleId: options.salleId ?? null,
     categorie: options.categorie,
+    masquerContactsPublic: options.masquerContactsPublic ?? true,
     actif: true,
   };
 
@@ -179,8 +183,10 @@ export async function creerCompteMedecinExterneClient(data: {
         specialite,
         email,
         telephone: data.telephone,
+          salleId: role.salleId,
         categorie: "MEDECIN_EXTERNE",
         actif: true,
+          masquerContactsPublic: true,
       });
     }
     return utilisateur;
@@ -219,6 +225,7 @@ export async function mettreAJourCompteMedecinExterneClient(
     utilisateur.identifiant;
   const specialite =
     data.specialite?.trim() ?? utilisateur.medecinExterne.specialite ?? "";
+  const role = await roleParCode(ROLE_MEDECIN_EXTERNE);
 
   return prisma.$transaction(async (tx) => {
     await tx.medecinExterne.update({
@@ -258,8 +265,10 @@ export async function mettreAJourCompteMedecinExterneClient(
           specialite,
           email,
           telephone: data.telephone ?? utilisateur.telephone,
+          salleId: role.salleId,
           categorie: "MEDECIN_EXTERNE",
           actif: true,
+          masquerContactsPublic: true,
         });
       } else if (email) {
         await tx.medecinVitrine.updateMany({
@@ -279,12 +288,13 @@ export type CompteEgliseClient = {
   email: string | null;
   prenom: string;
   nom: string;
+  specialite: string | null;
   telephone: string | null;
   statut: string;
 };
 
 export async function listerComptesEgliseClient(): Promise<CompteEgliseClient[]> {
-  return prisma.utilisateur.findMany({
+  const comptes = await prisma.utilisateur.findMany({
     where: { role: { code: ROLE_AGENT_EGLISE } },
     select: {
       id: true,
@@ -297,6 +307,31 @@ export async function listerComptesEgliseClient(): Promise<CompteEgliseClient[]>
     },
     orderBy: [{ nom: "asc" }, { prenom: "asc" }],
   });
+
+  const emails = comptes
+    .map((compte) => compte.email?.trim().toLowerCase())
+    .filter((email): email is string => Boolean(email));
+  const vitrine = emails.length
+    ? await prisma.medecinVitrine.findMany({
+        where: {
+          categorie: "SERVICE_EGLISE",
+          email: { in: emails },
+        },
+        select: { email: true, specialite: true },
+      })
+    : [];
+  const specialites = new Map(
+    vitrine
+      .filter((ligne) => Boolean(ligne.email))
+      .map((ligne) => [ligne.email!.trim().toLowerCase(), ligne.specialite])
+  );
+
+  return comptes.map((compte) => ({
+    ...compte,
+    specialite:
+      (compte.email && specialites.get(compte.email.trim().toLowerCase())) ??
+      null,
+  }));
 }
 
 export async function creerCompteEgliseClient(data: {
@@ -304,6 +339,7 @@ export async function creerCompteEgliseClient(data: {
   motDePasse: string;
   prenom: string;
   nom: string;
+  specialite?: string;
   telephone?: string;
   email?: string;
   afficherVitrine?: boolean;
@@ -320,6 +356,7 @@ export async function creerCompteEgliseClient(data: {
   const role = await roleParCode(ROLE_AGENT_EGLISE);
   const hash = await hasherMotDePasse(data.motDePasse);
   const email = data.email?.trim().toLowerCase() || identifiant;
+  const specialite = data.specialite?.trim() || "Service conventionné — Église";
 
   const utilisateur = await prisma.utilisateur.create({
     data: {
@@ -338,11 +375,13 @@ export async function creerCompteEgliseClient(data: {
     await synchroniserVitrinePartenaire({
       prenom,
       nom,
-      specialite: "Service conventionné — Église",
+      specialite,
       email,
       telephone: data.telephone,
+      salleId: role.salleId,
       categorie: "SERVICE_EGLISE",
       actif: true,
+      masquerContactsPublic: true,
     });
   }
 
@@ -354,6 +393,7 @@ export async function mettreAJourCompteEgliseClient(
   data: {
     prenom?: string;
     nom?: string;
+    specialite?: string;
     telephone?: string;
     email?: string;
     statut?: "ACTIF" | "INACTIF";
@@ -374,6 +414,8 @@ export async function mettreAJourCompteEgliseClient(
     data.email?.trim().toLowerCase() ??
     utilisateur.email ??
     utilisateur.identifiant;
+  const role = await roleParCode(ROLE_AGENT_EGLISE);
+  const specialite = data.specialite?.trim() || "Service conventionné — Église";
 
   const maj = await prisma.utilisateur.update({
     where: { id: utilisateurId },
@@ -394,11 +436,13 @@ export async function mettreAJourCompteEgliseClient(
       await synchroniserVitrinePartenaire({
         prenom,
         nom,
-        specialite: "Service conventionné — Église",
+        specialite,
         email,
         telephone: data.telephone ?? utilisateur.telephone,
+        salleId: role.salleId,
         categorie: "SERVICE_EGLISE",
         actif: true,
+        masquerContactsPublic: true,
       });
     } else if (email) {
       await prisma.medecinVitrine.updateMany({

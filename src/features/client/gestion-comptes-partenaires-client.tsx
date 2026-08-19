@@ -238,6 +238,7 @@ type FormEglise = {
   motDePasse: string;
   prenom: string;
   nom: string;
+  specialite: string;
   telephone: string;
   email: string;
   statut: "ACTIF" | "INACTIF";
@@ -250,6 +251,7 @@ function formEgliseVide(): FormEglise {
     motDePasse: "",
     prenom: "",
     nom: "",
+    specialite: "Service conventionné — Église",
     telephone: "",
     email: "",
     statut: "ACTIF",
@@ -259,7 +261,7 @@ function formEgliseVide(): FormEglise {
 
 export function GestionComptesEgliseClient() {
   const [liste, setListe] = useState<
-    { id: string; identifiant: string; prenom: string; nom: string; telephone: string | null; email: string | null; statut: string }[]
+    { id: string; identifiant: string; prenom: string; nom: string; specialite: string | null; telephone: string | null; email: string | null; statut: string }[]
   >([]);
   const [form, setForm] = useState<FormEglise>(formEgliseVide());
   const [modeForm, setModeForm] = useState(false);
@@ -361,6 +363,10 @@ export function GestionComptesEgliseClient() {
               <input className={CLASSE_CHAMP_RECEPTION} value={form.telephone} onChange={(e) => maj("telephone", e.target.value)} />
             </div>
             <div>
+              <label className={CLASSE_LABEL_RECEPTION}>Spécialité / libellé public</label>
+              <input className={CLASSE_CHAMP_RECEPTION} value={form.specialite} onChange={(e) => maj("specialite", e.target.value)} />
+            </div>
+            <div>
               <label className={CLASSE_LABEL_RECEPTION}>E-mail</label>
               <input type="email" className={CLASSE_CHAMP_RECEPTION} value={form.email} onChange={(e) => maj("email", e.target.value)} />
             </div>
@@ -394,6 +400,7 @@ export function GestionComptesEgliseClient() {
         {liste.map((c) => (
           <div key={c.id} className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
             <p className="font-semibold">{c.prenom} {c.nom}</p>
+            <p className="text-sm text-texte-secondaire">{c.specialite ?? "—"}</p>
             <p className="mt-1 text-xs text-texte-secondaire">Connexion : {c.identifiant} · {c.statut}</p>
             <Bouton variante="contour" taille="petit" className="mt-2" onClick={() => {
               setForm({
@@ -402,6 +409,7 @@ export function GestionComptesEgliseClient() {
                 motDePasse: "",
                 prenom: c.prenom,
                 nom: c.nom,
+                specialite: c.specialite ?? "Service conventionné — Église",
                 telephone: c.telephone ?? "",
                 email: c.email ?? "",
                 statut: c.statut as "ACTIF" | "INACTIF",

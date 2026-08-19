@@ -24,6 +24,11 @@ export async function GET() {
 
   try {
     const medecins = await prisma.medecinVitrine.findMany({
+      include: {
+        salle: {
+          select: { id: true, code: true, nom: true },
+        },
+      },
       orderBy: [{ ordre: "asc" }, { nom: "asc" }],
     });
     return NextResponse.json({ medecins });
@@ -58,7 +63,15 @@ export async function POST(request: NextRequest) {
         horaires: body.horaires ? String(body.horaires) : null,
         telephone: body.telephone ? String(body.telephone) : null,
         email: body.email ? String(body.email) : null,
+        salleId: body.salleId ? String(body.salleId) : null,
         categorie: normaliserCategorie(body.categorie),
+        masquerContactsPublic: body.masquerContactsPublic === true,
+        badgeValeur1: body.badgeValeur1 ? String(body.badgeValeur1) : null,
+        badgeLibelle1: body.badgeLibelle1 ? String(body.badgeLibelle1) : null,
+        badgeValeur2: body.badgeValeur2 ? String(body.badgeValeur2) : null,
+        badgeLibelle2: body.badgeLibelle2 ? String(body.badgeLibelle2) : null,
+        badgeValeur3: body.badgeValeur3 ? String(body.badgeValeur3) : null,
+        badgeLibelle3: body.badgeLibelle3 ? String(body.badgeLibelle3) : null,
         ordre: Number(body.ordre ?? 0),
         actif: body.actif !== false,
       },

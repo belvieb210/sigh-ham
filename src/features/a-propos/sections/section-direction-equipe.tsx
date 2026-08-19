@@ -36,6 +36,12 @@ type Membre = {
   email?: string;
   horaires?: string;
   categorie?: string;
+  salle?: {
+    id: string;
+    code: string;
+    nom: string;
+  };
+  masquerContactsPublic?: boolean;
 };
 
 function CarteMembreEquipe({
@@ -99,13 +105,10 @@ function CarteMembreEquipe({
 function CarrouselAgentsService({
   titreService,
   membres,
-  categorie,
 }: {
   titreService: string;
   membres: Membre[];
-  categorie: string;
 }) {
-  const masquerCoordonnees = categorie === "MEDECIN_EXTERNE";
   const [index, setIndex] = useState(0);
   const pause = useRef(false);
 
@@ -123,7 +126,7 @@ function CarrouselAgentsService({
     if (membres.length < 2) return;
     const id = setInterval(() => {
       if (!pause.current) suivant();
-    }, 4800);
+    }, 3000);
     return () => clearInterval(id);
   }, [membres.length, suivant]);
 
@@ -133,6 +136,10 @@ function CarrouselAgentsService({
 
   if (membres.length === 0) return null;
   const membre = membres[index] ?? membres[0];
+  const masquerCoordonnees =
+    membre.masquerContactsPublic ||
+    membre.categorie === "MEDECIN_EXTERNE" ||
+    membre.categorie === "SERVICE_EGLISE";
 
   return (
     <article
@@ -257,16 +264,23 @@ export function SectionDirectionEquipe() {
   const groupes = useMemo(() => {
     const map = new Map<string, Membre[]>();
     for (const m of membres) {
-      const cle = m.categorie || "MEDECIN";
+      if (m.categorie === "RESPONSABLE_LABO") continue;
+      const cle =
+        m.salle?.id ??
+        `${m.categorie || "MEDECIN"}:${m.salle?.code ?? "aucune-salle"}`;
       const liste = map.get(cle) ?? [];
       liste.push(m);
       map.set(cle, liste);
     }
-    const ordre = ["MEDECIN", "MEDECIN_EXTERNE", "PERSONNEL"];
-    return [...map.entries()].sort(([a], [b]) => {
-      const ia = ordre.indexOf(a);
-      const ib = ordre.indexOf(b);
-      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    return [...map.entries()].sort(([, agentsA], [, agentsB]) => {
+      const a = agentsA[0];
+      const b = agentsB[0];
+      const ordreA = a?.ordre ?? 0;
+      const ordreB = b?.ordre ?? 0;
+      if (ordreA !== ordreB) return ordreA - ordreB;
+      const nomA = a?.salle?.nom ?? LIBELLES_CATEGORIE[a?.categorie ?? ""] ?? "";
+      const nomB = b?.salle?.nom ?? LIBELLES_CATEGORIE[b?.categorie ?? ""] ?? "";
+      return nomA.localeCompare(nomB, "fr");
     });
   }, [membres]);
 
@@ -322,17 +336,19 @@ export function SectionDirectionEquipe() {
                 </blockquote>
 
                 <div className="mt-8 grid grid-cols-3 gap-3">
-                  {[
-                    { val: obtenirInitiales(responsable.nom), lbl: "Direction" },
-                    { val: "ISO", lbl: "Qualité" },
-                    { val: "RDC", lbl: "Kinshasa" },
-                  ].map(({ val, lbl }) => (
+                  {(responsable.badges?.length
+                    ? responsable.badges
+                    : [
+                        { valeur: obtenirInitiales(responsable.nom), libelle: "Direction" },
+                        { valeur: "ISO", libelle: "Qualité" },
+                        { valeur: "RDC", libelle: "Kinshasa" },
+                      ]).map(({ valeur, libelle }) => (
                     <div
-                      key={lbl}
+                      key={`${libelle}-${valeur}`}
                       className="rounded-xl border border-white/10 bg-white/5 p-3 text-center"
                     >
-                      <p className="text-sm font-extrabold text-[#7dd3fc]">{val}</p>
-                      <p className="mt-0.5 text-[10px] text-white/50">{lbl}</p>
+                      <p className="text-sm font-extrabold text-[#7dd3fc]">{valeur}</p>
+                      <p className="mt-0.5 text-[10px] text-white/50">{libelle}</p>
                     </div>
                   ))}
                 </div>
@@ -357,8 +373,11 @@ export function SectionDirectionEquipe() {
             {groupes.map(([categorie, agents]) => (
               <CarrouselAgentsService
                 key={categorie}
-                categorie={categorie}
-                titreService={LIBELLES_CATEGORIE[categorie] ?? categorie}
+                titreService={
+                  agents[0]?.salle?.nom ??
+                  LIBELLES_CATEGORIE[agents[0]?.categorie ?? ""] ??
+                  categorie
+                }
                 membres={agents}
               />
             ))}

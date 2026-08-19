@@ -19,6 +19,7 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
     const compte = await mettreAJourCompteEgliseClient(id, {
       prenom: body.prenom != null ? String(body.prenom) : undefined,
       nom: body.nom != null ? String(body.nom) : undefined,
+      specialite: body.specialite != null ? String(body.specialite) : undefined,
       telephone: body.telephone != null ? String(body.telephone) : undefined,
       email: body.email != null ? String(body.email) : undefined,
       statut:

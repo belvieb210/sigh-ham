@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
       motDePasse: String(body.motDePasse ?? ""),
       prenom: String(body.prenom ?? ""),
       nom: String(body.nom ?? ""),
+      specialite: body.specialite ? String(body.specialite) : undefined,
       telephone: body.telephone ? String(body.telephone) : undefined,
       email: body.email ? String(body.email) : undefined,
       afficherVitrine: Boolean(body.afficherVitrine),

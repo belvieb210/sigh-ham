@@ -22,6 +22,7 @@ export const adminFr = {
     accueil: "Tableau de bord",
     supervision: "Supervision live",
     statistiques: "Statistiques",
+    gouvernance: "Gouvernance publique",
     utilisateurs: "Utilisateurs",
     patients: "Patients & clients",
     roles: "Rôles & permissions",

@@ -22,6 +22,7 @@ export const adminEn = {
     accueil: "Dashboard",
     supervision: "Live supervision",
     statistiques: "Statistics",
+    gouvernance: "Public governance",
     utilisateurs: "Users",
     patients: "Patients & clients",
     roles: "Roles & permissions",

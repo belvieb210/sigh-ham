@@ -201,6 +201,13 @@ export type MedecinVitrinePublic = {
   telephone?: string;
   email?: string;
   categorie: CategorieEquipeVitrine;
+  salle?: {
+    id: string;
+    code: string;
+    nom: string;
+  };
+  masquerContactsPublic: boolean;
+  badges?: { valeur: string; libelle: string }[];
   ordre: number;
 };
 
@@ -208,7 +215,7 @@ export type MedecinVitrinePublic = {
 export async function chargerMedecinsVitrine(options?: {
   inclureEglise?: boolean;
 }): Promise<MedecinVitrinePublic[]> {
-  const inclureEglise = options?.inclureEglise ?? false;
+  const inclureEglise = options?.inclureEglise ?? true;
   try {
     const rows = await prisma.medecinVitrine.findMany({
       where: {
@@ -216,6 +223,11 @@ export async function chargerMedecinsVitrine(options?: {
         ...(inclureEglise
           ? {}
           : { NOT: { categorie: "SERVICE_EGLISE" } }),
+      },
+      include: {
+        salle: {
+          select: { id: true, code: true, nom: true },
+        },
       },
       orderBy: [{ ordre: "asc" }, { nom: "asc" }],
     });
@@ -231,6 +243,17 @@ export async function chargerMedecinsVitrine(options?: {
         telephone: m.telephone ?? undefined,
         email: m.email ?? undefined,
         categorie: (m.categorie || "MEDECIN") as CategorieEquipeVitrine,
+        salle: m.salle
+          ? { id: m.salle.id, code: m.salle.code, nom: m.salle.nom }
+          : undefined,
+        masquerContactsPublic: m.masquerContactsPublic,
+        badges: [
+          [m.badgeValeur1, m.badgeLibelle1],
+          [m.badgeValeur2, m.badgeLibelle2],
+          [m.badgeValeur3, m.badgeLibelle3],
+        ]
+          .filter((badge): badge is [string, string] => Boolean(badge[0] && badge[1]))
+          .map(([valeur, libelle]) => ({ valeur, libelle })),
         ordre: m.ordre,
       }));
     }
@@ -246,6 +269,7 @@ export async function chargerMedecinsVitrine(options?: {
       specialite: m.fonction,
       photoUrl: m.photoUrl,
       categorie: "MEDECIN" as const,
+      masquerContactsPublic: false,
       ordre: i,
     };
   });

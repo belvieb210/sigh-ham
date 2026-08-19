@@ -533,6 +533,9 @@ export function useContenuAPropos() {
           email?: string;
           horaires?: string;
           categorie?: string;
+          salle?: { id: string; code: string; nom: string };
+          masquerContactsPublic?: boolean;
+          badges?: { valeur: string; libelle: string }[];
         }[];
       };
       return data.medecins ?? null;
@@ -600,6 +603,9 @@ export function useContenuAPropos() {
             email: m.email,
             horaires: m.horaires,
             categorie: m.categorie ?? "MEDECIN",
+            salle: m.salle,
+            masquerContactsPublic: m.masquerContactsPublic ?? false,
+            badges: m.badges ?? [],
           }))
         : CONTENU_A_PROPOS.equipe.membres.map((membre, index) => ({
             id: membre.id,
@@ -612,6 +618,9 @@ export function useContenuAPropos() {
             email: undefined as string | undefined,
             horaires: undefined as string | undefined,
             categorie: "MEDECIN",
+            salle: undefined,
+            masquerContactsPublic: false,
+            badges: [],
           }));
 
     const responsables = membresBruts.filter(
@@ -644,6 +653,14 @@ export function useContenuAPropos() {
           photoUrl:
             responsableCms?.photoUrl ??
             CONTENU_A_PROPOS.direction.responsable.photoUrl,
+          badges:
+            responsableCms?.badges && responsableCms.badges.length > 0
+              ? responsableCms.badges
+              : [
+                  { valeur: "OB", libelle: "Direction" },
+                  { valeur: "ISO", libelle: "Qualité" },
+                  { valeur: "RDC", libelle: "Kinshasa" },
+                ],
         },
       },
       equipe: {

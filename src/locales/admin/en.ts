@@ -763,8 +763,8 @@ export const adminEn = {
     firme: "Company",
     telephoneFirme: "Company phone",
     classeMedicamenteuse: "Drug class",
-    prixAchat: "Purchase price (FC)",
-    prixUnitaire: "Unit price (FC)",
+    prixAchat: "Purchase price (Fc)",
+    prixUnitaire: "Unit price (Fc)",
     stockMinimum: "Minimum stock",
     stockMaximum: "Maximum stock",
     emplacement: "Location",
@@ -800,6 +800,7 @@ export const adminEn = {
     colonnes: {
       statut: "Status",
       actions: "Actions",
+      stock: "Stock",
     },
     sections: {
       identite: "Identification",
@@ -829,6 +830,11 @@ export const adminEn = {
     aideCode: "Unique code used in sales, prescriptions and stock.",
     aideStatut:
       "An inactive medication is excluded from the catalogue: it is no longer offered in pharmacy or to doctors.",
+    alerteStockFaible: "Low stock",
+    alerteRupture: "Out of stock",
+    alertePerime: "Expired",
+    alerteExpireAujourdhui: "Expires today",
+    alerteExpireJours: "Expires in {{count}} d",
     enregistrerMedicament: "Save medication",
     annuler: "Cancel",
     champsRequis: "Please fill in the code and name.",

@@ -1,36 +1,63 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import { redirigerSiSessionInvalide } from "@/lib/auth/rediriger-session-invalide";
 import { EVENEMENTS_SOCKET } from "@/lib/realtime/evenements";
 
-const URL_SOCKET = process.env.NEXT_PUBLIC_SOCKET_URL;
+/** En production, /socket.io est proxifié sur le même domaine (Apache). */
+function urlSocket(): string | undefined {
+  if (typeof window === "undefined") return process.env.NEXT_PUBLIC_SOCKET_URL;
+  const env = process.env.NEXT_PUBLIC_SOCKET_URL?.trim();
+  const hote = window.location.hostname;
+  const enLocal = hote === "localhost" || hote === "127.0.0.1";
+  if (!enLocal && (!env || /localhost|127\.0\.0\.1/i.test(env))) {
+    return window.location.origin;
+  }
+  return env || window.location.origin;
+}
 
 export function useSocketSigh(options?: {
   onNouveauMessage?: (payload: unknown) => void;
   onMessageSupprime?: (payload: unknown) => void;
   onNotification?: (payload: unknown) => void;
   onPresence?: (payload: unknown) => void;
+  onConnexion?: () => void;
+  onDeconnexion?: () => void;
 }) {
   const socketRef = useRef<Socket | null>(null);
   const optsRef = useRef(options);
   optsRef.current = options;
+  const [connecte, setConnecte] = useState(false);
 
   useEffect(() => {
-    if (!URL_SOCKET) return;
+    const url = urlSocket();
+    if (!url) return;
 
-    const socket = io(URL_SOCKET, {
+    const socket = io(url, {
       path: "/socket.io",
       withCredentials: true,
-      // polling d'abord : plus fiable derrière Apache (upgrade WS ensuite)
       transports: ["polling", "websocket"],
-      reconnectionAttempts: 5,
-      reconnectionDelay: 3000,
-      timeout: 8000,
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 800,
+      reconnectionDelayMax: 8000,
+      timeout: 12000,
     });
 
     socketRef.current = socket;
+
+    socket.on("connect", () => {
+      setConnecte(true);
+      optsRef.current?.onConnexion?.();
+    });
+    socket.on("disconnect", () => {
+      setConnecte(false);
+      optsRef.current?.onDeconnexion?.();
+    });
+    socket.on("connect_error", () => {
+      setConnecte(false);
+    });
 
     socket.on(EVENEMENTS_SOCKET.NOUVEAU_MESSAGE, (p) => {
       optsRef.current?.onNouveauMessage?.(p);
@@ -64,6 +91,7 @@ export function useSocketSigh(options?: {
       clearInterval(interval);
       mettreAJourPresence("HORS_LIGNE");
       socket.disconnect();
+      socketRef.current = null;
     };
   }, []);
 
@@ -79,5 +107,10 @@ export function useSocketSigh(options?: {
     socketRef.current?.emit(EVENEMENTS_SOCKET.TYPING, { conversationId });
   };
 
-  return { rejoindreConversation, quitterConversation, envoyerTyping };
+  return {
+    connecte,
+    rejoindreConversation,
+    quitterConversation,
+    envoyerTyping,
+  };
 }

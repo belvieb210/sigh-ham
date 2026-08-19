@@ -24,6 +24,10 @@ export type PayloadMessageSupprime = {
 export type PayloadNotification = {
   utilisateurId: string;
   notificationId: string;
+  type?: string;
+  titre?: string;
+  message?: string;
+  lien?: string | null;
 };
 
 export type PayloadPresence = {

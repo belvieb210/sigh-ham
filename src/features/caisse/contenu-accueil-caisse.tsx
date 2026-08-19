@@ -177,7 +177,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                 </p>
                 <p className="mt-1 text-xs text-texte-secondaire">
                   {t("caisse.dashboard.total")} :{" "}
-                  {formaterMontantCaisse(stats?.kpis.facturesDuJour.montantTotal ?? 0, "CDF")}
+                  {formaterMontantCaisse(stats?.kpis.facturesDuJour.montantTotal ?? 0, "USD")}
                 </p>
                 <div className="mt-1">
                   <Variation
@@ -201,7 +201,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                 </p>
                 <p className="mt-1 text-xs text-texte-secondaire">
                   {t("caisse.dashboard.total")} :{" "}
-                  {formaterMontantCaisse(stats?.kpis.paiementsDuJour.montantTotal ?? 0, "CDF")}
+                  {formaterMontantCaisse(stats?.kpis.paiementsDuJour.montantTotal ?? 0, "USD")}
                 </p>
                 <div className="mt-1">
                   <Variation
@@ -221,7 +221,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                   </span>
                 </div>
                 <p className="mt-2 text-xl font-bold text-bleu-medical sm:text-2xl">
-                  {formaterMontantCaisse(stats?.kpis.montantEncaisse.montant ?? 0, "CDF")}
+                  {formaterMontantCaisse(stats?.kpis.montantEncaisse.montant ?? 0, "USD")}
                 </p>
                 <p className="mt-1 text-xs text-texte-secondaire">{t("caisse.dashboard.aujourdHui")}</p>
                 <div className="mt-1">
@@ -263,7 +263,7 @@ export function ContenuAccueilCaisse({ utilisateur }: PropsContenuAccueilCaisse)
                 </p>
                 <p className="mt-1 text-xs text-texte-secondaire">
                   {t("caisse.dashboard.total")} :{" "}
-                  {formaterMontantCaisse(stats?.kpis.facturesImpayees.montantTotal ?? 0, "CDF")}
+                  {formaterMontantCaisse(stats?.kpis.facturesImpayees.montantTotal ?? 0, "USD")}
                 </p>
                 <Link
                   href="/sigh/caisse/factures"

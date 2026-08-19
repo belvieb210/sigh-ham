@@ -21,6 +21,11 @@ async function main() {
   });
 
   const redisUrl = process.env.REDIS_URL;
+  if (!redisUrl) {
+    console.error(
+      "[sigh-socket] REDIS_URL manquant : le temps réel (notifications, sons, alertes) ne fonctionnera pas."
+    );
+  }
   if (redisUrl) {
     const pub = new Redis(redisUrl);
     const sub = pub.duplicate();
@@ -98,7 +103,7 @@ async function main() {
   });
 
   httpServer.listen(PORT, () => {
-    console.log(`🔌 Socket.IO SIGH — port ${PORT}`);
+    console.log(`🔌 Socket.IO SIGH — port ${PORT} (temps réel notifications)`);
   });
 }
 

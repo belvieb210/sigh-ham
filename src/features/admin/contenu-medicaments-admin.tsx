@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  AlertTriangle,
   Eye,
   Loader2,
   MoreVertical,
@@ -45,6 +46,7 @@ import {
   choixDepuisValeur,
   valeurDepuisChoix,
 } from "@/constants/catalogue-medicaments";
+import { formaterPrixFc } from "@/features/caisse/utils-format";
 import { cn } from "@/lib/utils";
 
 type MedicamentItem = {
@@ -68,6 +70,11 @@ type MedicamentItem = {
   recuPar: string | null;
   autresInformations: string | null;
   description: string | null;
+  stockActuel: number;
+  expirationProche: string | null;
+  alerteStock: boolean;
+  alerteExpiration: boolean;
+  joursAvantExpiration: number | null;
 };
 
 type ModePanneau = "creation" | "consultation" | "edition";
@@ -78,7 +85,7 @@ const CLASSE_BOUTON_ACTION =
   "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure text-slate-500 transition-colors hover:bg-gris-tres-clair hover:text-bleu-medical";
 
 function formaterPrix(n: number) {
-  return `${n.toLocaleString("fr-FR")} FC`;
+  return formaterPrixFc(n);
 }
 
 function itemVersForm(item: MedicamentItem): FormMedicamentAdmin {
@@ -517,6 +524,9 @@ export function ContenuMedicamentsAdmin({
                           {t("admin.medicaments.forme")}
                         </th>
                         <th className="hidden px-3 py-2 lg:table-cell">
+                          {t("admin.medicaments.colonnes.stock")}
+                        </th>
+                        <th className="hidden px-3 py-2 lg:table-cell">
                           {t("admin.medicaments.prixUnitaire")}
                         </th>
                         <th className="px-3 py-2">
@@ -563,6 +573,39 @@ export function ContenuMedicamentsAdmin({
                           </td>
                           <td className="hidden px-3 py-2.5 text-sm md:table-cell">
                             {item.forme ?? "—"}
+                          </td>
+                          <td className="hidden px-3 py-2.5 text-sm lg:table-cell">
+                            <div className="flex flex-col gap-1">
+                              <span
+                                className={cn(
+                                  "tabular-nums font-semibold",
+                                  item.alerteStock ? "text-red-700" : "text-texte-principal"
+                                )}
+                              >
+                                {item.stockActuel}
+                                {item.stockMaximum != null ? ` / ${item.stockMaximum}` : ""}
+                              </span>
+                              {item.alerteStock ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-red-700">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  {item.stockActuel <= 0
+                                    ? t("admin.medicaments.alerteRupture")
+                                    : t("admin.medicaments.alerteStockFaible")}
+                                </span>
+                              ) : null}
+                              {item.alerteExpiration ? (
+                                <span className="text-[10px] font-semibold text-rose-700">
+                                  {item.joursAvantExpiration != null &&
+                                  item.joursAvantExpiration < 0
+                                    ? t("admin.medicaments.alertePerime")
+                                    : item.joursAvantExpiration === 0
+                                      ? t("admin.medicaments.alerteExpireAujourdhui")
+                                      : t("admin.medicaments.alerteExpireJours", {
+                                          count: item.joursAvantExpiration ?? 0,
+                                        })}
+                                </span>
+                              ) : null}
+                            </div>
                           </td>
                           <td className="hidden px-3 py-2.5 text-sm tabular-nums lg:table-cell">
                             {formaterPrix(item.prixUnitaire)}

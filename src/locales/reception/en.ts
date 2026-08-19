@@ -782,7 +782,7 @@ export const receptionEn = {
     rechercher: "Search notifications…",
     chargement: "Loading notifications…",
     aucuneTitre: "You're all caught up",
-    aucune: "No notifications yet. Messages and transfers will appear here in real time.",
+    aucune: "No notifications yet. Messages, transfers and stock alerts will appear here in real time.",
     voir: "View",
     marquerLu: "Mark read",
     archiver: "Archive",
@@ -804,6 +804,9 @@ export const receptionEn = {
       RESULTATS_LABO: "Lab",
       PATIENT_A_FACTURER: "Billing",
       PAIEMENT_VALIDE: "Payment",
+      STOCK_FAIBLE: "Low stock",
+      STOCK_EPUISE: "Out of stock",
+      MEDICAMENT_EXPIRATION: "Expiry",
     },
     preferences: {
       titre: "Preferences",
@@ -811,6 +814,9 @@ export const receptionEn = {
       tableauBord: "Dashboard badge",
       push: "Browser push notifications",
       son: "Sound on arrival",
+      testerSon: "Test sound",
+      sonAide:
+        "Distinct sounds: message, patient transfer, stock / expiry alert.",
       email: "Email notifications (coming soon)",
       sms: "SMS notifications (coming soon)",
       silencieux: "Global silent mode",
@@ -841,6 +847,19 @@ export const receptionEn = {
       DIFFUSION: {
         titre: "Institutional announcement",
         message: "{{apercu}}",
+      },
+      STOCK_FAIBLE: {
+        titre: "Low stock",
+        message:
+          "{{nom}} ({{code}}): {{quantite}} unit(s) left (threshold {{seuil}}).",
+      },
+      STOCK_EPUISE: {
+        titre: "Out of stock",
+        message: "{{nom}} ({{code}}) has no units left.",
+      },
+      MEDICAMENT_EXPIRATION: {
+        titre: "Medication expiry",
+        message: "{{nom}} ({{code}}) — {{jours}} day(s) before expiry ({{date}}).",
       },
     },
   },

@@ -9,7 +9,10 @@ import {
 import { traduireNotification } from "@/features/notifications/traduire-notification";
 import type { NotificationItem } from "@/features/notifications/composants/carte-notification";
 import { EVENT_NOUVELLE_NOTIFICATION } from "@/features/notifications/utilitaires-notifications";
-import { jouerSonNotification } from "@/features/notifications/utilitaires-son-notification";
+import {
+  installerDeblocageAudio,
+  jouerSonNotification,
+} from "@/features/notifications/utilitaires-son-notification";
 
 interface PreferencesAlertes {
   push: boolean;
@@ -26,6 +29,8 @@ export function GestionnaireAlertesNotifications() {
     silencieux: false,
   });
 
+  useEffect(() => installerDeblocageAudio(), []);
+
   useEffect(() => {
     fetch("/api/notifications/preferences")
       .then((res) => (res.ok ? res.json() : null))
@@ -37,31 +42,48 @@ export function GestionnaireAlertesNotifications() {
 
   useNotificationsPush(prefs.push && !prefs.silencieux);
 
-  const onNouvelle = useCallback(async () => {
-    if (prefs.silencieux) return;
+  const onNouvelle = useCallback(
+    async (e: Event) => {
+      if (prefs.silencieux) return;
+      const detail = (e as CustomEvent<Record<string, unknown>>).detail;
+      const type = typeof detail?.type === "string" ? detail.type : undefined;
 
-    if (prefs.son) jouerSonNotification();
+      if (prefs.son) jouerSonNotification(type);
 
-    try {
-      const res = await fetch("/api/notifications?filtre=non_lus");
-      if (!res.ok) return;
-      const data = (await res.json()) as { notifications: NotificationItem[] };
-      const derniere = data.notifications[0];
-      if (!derniere) return;
-      const { titre, message } = traduireNotification(derniere, t);
-      afficherNotificationNavigateur({
-        titre,
-        message,
-        lien: derniere.lien,
-        tag: derniere.id,
-      });
-    } catch {
-      /* silencieux */
-    }
-  }, [prefs.silencieux, prefs.son, t]);
+      const titreSocket = typeof detail?.titre === "string" ? detail.titre : "";
+      const messageSocket = typeof detail?.message === "string" ? detail.message : "";
+      if (titreSocket) {
+        afficherNotificationNavigateur({
+          titre: titreSocket,
+          message: messageSocket,
+          lien: typeof detail?.lien === "string" ? detail.lien : null,
+          tag: typeof detail?.notificationId === "string" ? detail.notificationId : undefined,
+        });
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/notifications?filtre=non_lus");
+        if (!res.ok) return;
+        const data = (await res.json()) as { notifications: NotificationItem[] };
+        const derniere = data.notifications[0];
+        if (!derniere) return;
+        const { titre, message } = traduireNotification(derniere, t);
+        afficherNotificationNavigateur({
+          titre,
+          message,
+          lien: derniere.lien,
+          tag: derniere.id,
+        });
+      } catch {
+        /* silencieux */
+      }
+    },
+    [prefs.silencieux, prefs.son, t]
+  );
 
   useEffect(() => {
-    const handler = () => void onNouvelle();
+    const handler = (e: Event) => void onNouvelle(e);
     window.addEventListener(EVENT_NOUVELLE_NOTIFICATION, handler);
     return () => window.removeEventListener(EVENT_NOUVELLE_NOTIFICATION, handler);
   }, [onNouvelle]);

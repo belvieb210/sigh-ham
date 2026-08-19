@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2, Package, Plus, Search, X } from "lucide-react";
-import { formaterMontantCaisse } from "@/features/caisse/utils-format";
+import { formaterMontantPharmacie } from "@/features/caisse/utils-format";
 import type { MedicamentResume } from "@/lib/pharmacie/types";
 import { cn } from "@/lib/utils";
 
@@ -155,7 +155,7 @@ export function RechercheAjoutMedicamentPharmacie({
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-sm font-bold tabular-nums">
-                      {formaterMontantCaisse(m.prixUnitaire, "CDF")}
+                      {formaterMontantPharmacie(m.prixUnitaire)}
                     </p>
                     <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-bleu-medical">
                       <Plus className="h-3.5 w-3.5" />

@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
+import {
+  EVENT_COMPTEUR_NOTIFICATIONS,
+  EVENT_RAFRAICHIR_NOTIFICATIONS,
+} from "@/features/notifications/utilitaires-notifications";
 
 export function useNotificationsLive() {
   const [totalNonLues, setTotalNonLues] = useState(0);
@@ -24,12 +27,19 @@ export function useNotificationsLive() {
 
   useEffect(() => {
     void rafraichir();
-    const interval = setInterval(rafraichir, 30000);
     const handler = () => void rafraichir();
+    const compteur = (e: Event) => {
+      const total = (e as CustomEvent<{ total?: number }>).detail?.total;
+      if (typeof total === "number") {
+        setTotalNonLues(total);
+        setChargement(false);
+      }
+    };
     window.addEventListener(EVENT_RAFRAICHIR_NOTIFICATIONS, handler);
+    window.addEventListener(EVENT_COMPTEUR_NOTIFICATIONS, compteur);
     return () => {
-      clearInterval(interval);
       window.removeEventListener(EVENT_RAFRAICHIR_NOTIFICATIONS, handler);
+      window.removeEventListener(EVENT_COMPTEUR_NOTIFICATIONS, compteur);
     };
   }, [rafraichir]);
 

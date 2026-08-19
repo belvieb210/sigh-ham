@@ -17,6 +17,7 @@ import {
 } from "@/features/notifications/composants/carte-notification";
 import { useNotificationsLive } from "@/features/notifications/hooks/use-notifications-live";
 import { EVENT_RAFRAICHIR_NOTIFICATIONS } from "@/features/notifications/utilitaires-notifications";
+import { jouerSonNotification } from "@/features/notifications/utilitaires-son-notification";
 import type { TypeNotification } from "@/generated/prisma/enums";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,9 @@ const FILTRES_TYPE: (TypeNotification | "tous")[] = [
   "NOUVEAU_MESSAGE",
   "PATIENT_TRANSFERE",
   "NOUVEAU_PATIENT",
+  "STOCK_FAIBLE",
+  "STOCK_EPUISE",
+  "MEDICAMENT_EXPIRATION",
   "MENTION",
   "DIFFUSION",
 ];
@@ -201,6 +205,9 @@ export function InterfaceNotifications() {
               </label>
             ))}
           </div>
+          <p className="mt-2 text-[11px] text-texte-secondaire">
+            {t("reception.notificationsCentre.preferences.sonAide")}
+          </p>
           <div className="mt-3 flex items-center gap-3">
             <button
               type="button"
@@ -215,6 +222,13 @@ export function InterfaceNotifications() {
               )}
             </button>
             {messagePrefs && <span className="text-xs text-emerald-700">{messagePrefs}</span>}
+            <button
+              type="button"
+              onClick={() => jouerSonNotification("NOUVEAU_MESSAGE")}
+              className="text-xs font-semibold text-bleu-medical hover:underline"
+            >
+              {t("reception.notificationsCentre.preferences.testerSon")}
+            </button>
           </div>
         </div>
       )}

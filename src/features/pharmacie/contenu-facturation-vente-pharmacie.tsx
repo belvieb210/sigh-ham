@@ -26,7 +26,7 @@ import {
 } from "@/features/caisse/formulaire-filtres-facturation-caisse";
 import {
   arrondirMontantCaisse,
-  formaterMontantCaisse,
+  formaterMontantPharmacie,
   initiales,
 } from "@/features/caisse/utils-format";
 import {
@@ -322,7 +322,7 @@ export function ContenuFacturationVentePharmacie({
             {t("caisse.facturation.totalMedicaments")}
           </span>
           <span className="font-medium">
-            {formaterMontantCaisse(totalMedicaments, devise)}
+            {formaterMontantPharmacie(totalMedicaments, devise)}
           </span>
         </div>
         <div className="flex items-center justify-between gap-3">
@@ -348,7 +348,7 @@ export function ContenuFacturationVentePharmacie({
         </div>
         <div className="flex justify-between gap-3">
           <span className="text-texte-secondaire">{t("caisse.facturation.sousTotal")}</span>
-          <span className="font-medium">{formaterMontantCaisse(sousTotal, devise)}</span>
+          <span className="font-medium">{formaterMontantPharmacie(sousTotal, devise)}</span>
         </div>
         <div className="flex items-center justify-between gap-3">
           <label htmlFor="frais-ph" className="text-texte-secondaire">
@@ -371,13 +371,13 @@ export function ContenuFacturationVentePharmacie({
             {t("caisse.facturation.totalAPayer")}
           </p>
           <p className="mt-1 text-2xl font-bold text-bleu-medical">
-            {formaterMontantCaisse(montantDuJour, devise)}
+            {formaterMontantPharmacie(montantDuJour, devise)}
           </p>
         </div>
         <div className="flex justify-between gap-3 pt-1">
           <span className="text-texte-secondaire">{t("caisse.facturation.montantPaye")}</span>
           <span className="font-medium">
-            {formaterMontantCaisse(montantPayeUi, devise)}
+            {formaterMontantPharmacie(montantPayeUi, devise)}
           </span>
         </div>
         <div className="flex justify-between gap-3">
@@ -388,7 +388,7 @@ export function ContenuFacturationVentePharmacie({
               resteApres <= 0 ? "text-emerald-600" : "text-amber-700"
             )}
           >
-            {formaterMontantCaisse(resteApres, devise)}
+            {formaterMontantPharmacie(resteApres, devise)}
           </span>
         </div>
       </div>
@@ -577,7 +577,7 @@ export function ContenuFacturationVentePharmacie({
                               <td className="px-3 py-2.5">{i + 1}</td>
                               <td className="px-3 py-2.5 font-medium">{l.libelle}</td>
                               <td className="px-3 py-2.5 text-right">
-                                {formaterMontantCaisse(l.prixUnitaire, devise)}
+                                {formaterMontantPharmacie(l.prixUnitaire, devise)}
                               </td>
                               <td className="px-3 py-2.5 text-center">
                                 <input
@@ -596,7 +596,7 @@ export function ContenuFacturationVentePharmacie({
                                 />
                               </td>
                               <td className="px-3 py-2.5 text-right font-semibold">
-                                {formaterMontantCaisse(l.prixUnitaire * l.quantite, devise)}
+                                {formaterMontantPharmacie(l.prixUnitaire * l.quantite, devise)}
                               </td>
                               <td className="px-3 py-2.5 text-right">
                                 <button
@@ -627,7 +627,7 @@ export function ContenuFacturationVentePharmacie({
                       </button>
                       <p className="text-sm font-bold text-bleu-medical">
                         {t("caisse.facturation.totalMedicaments")}{" "}
-                        {formaterMontantCaisse(totalMedicaments, devise)}
+                        {formaterMontantPharmacie(totalMedicaments, devise)}
                       </p>
                     </div>
                     <RechercheAjoutMedicamentPharmacie
@@ -693,7 +693,7 @@ export function ContenuFacturationVentePharmacie({
                       </span>
                       <input
                         readOnly
-                        value={formaterMontantCaisse(montantDuJour, devise)}
+                        value={formaterMontantPharmacie(montantDuJour, devise)}
                         className="w-full rounded-lg border border-gris-bordure bg-gris-tres-clair/50 px-3 py-2.5 text-sm font-semibold"
                       />
                     </label>
@@ -918,7 +918,7 @@ export function ContenuFacturationVentePharmacie({
                         <td className="px-2 py-1.5 tabular-nums">{c.nbMedicaments || "—"}</td>
                         <td className="px-2 py-1.5 font-semibold">
                           {c.montantEstime > 0
-                            ? formaterMontantCaisse(c.montantEstime, "CDF")
+                            ? formaterMontantPharmacie(c.montantEstime, "CDF")
                             : "—"}
                         </td>
                         <td className="px-2 py-1.5 tabular-nums text-texte-secondaire">

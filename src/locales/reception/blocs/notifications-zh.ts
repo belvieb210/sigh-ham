@@ -29,6 +29,9 @@ export const notificationsCentreZh = {
     RESULTATS_LABO: "实验室",
     PATIENT_A_FACTURER: "收银",
     PAIEMENT_VALIDE: "付款",
+    STOCK_FAIBLE: "库存不足",
+    STOCK_EPUISE: "缺货",
+    MEDICAMENT_EXPIRATION: "效期",
   },
   preferences: {
     titre: "偏好设置",
@@ -36,6 +39,8 @@ export const notificationsCentreZh = {
     tableauBord: "仪表板徽章",
     push: "浏览器推送通知",
     son: "接收提示音",
+    testerSon: "试听提示音",
+    sonAide: "消息、转介、库存使用不同提示音。",
     email: "电子邮件通知（即将推出）",
     sms: "短信通知（即将推出）",
     silencieux: "全局静音模式",
@@ -66,6 +71,18 @@ export const notificationsCentreZh = {
     DIFFUSION: {
       titre: "机构公告",
       message: "{{apercu}}",
+    },
+    STOCK_FAIBLE: {
+      titre: "库存不足",
+      message: "{{nom}} ({{code}})：{{quantite}}（阈值 {{seuil}}）。",
+    },
+    STOCK_EPUISE: {
+      titre: "缺货",
+      message: "{{nom}} ({{code}}) 已无库存。",
+    },
+    MEDICAMENT_EXPIRATION: {
+      titre: "药品效期",
+      message: "{{nom}} ({{code}}) — {{jours}} 天（{{date}}）。",
     },
   },
 } as const;

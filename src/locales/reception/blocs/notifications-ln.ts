@@ -28,7 +28,10 @@ export const notificationsCentreLn = {
     DIFFUSION: "Lanso",
     RESULTATS_LABO: "Ndako ya ba kotala",
     PATIENT_A_FACTURER: "Kuta ya lifuti",
-    PAIEMENT_VALIDE: "Lifuti",
+      PAIEMENT_VALIDE: "Lifuti",
+      STOCK_FAIBLE: "Stock moke",
+      STOCK_EPUISE: "Stock esi",
+      MEDICAMENT_EXPIRATION: "Kokuta",
   },
   preferences: {
     titre: "Ba ndinga oyo olingi",
@@ -36,6 +39,8 @@ export const notificationsCentreLn = {
     tableauBord: "Elembo na ndako ya bokengi",
     push: "Bansangu ya kebula na programu ya mokili",
     son: "Luyalu ntango bazwi",
+    testerSon: "Meka luyalu",
+    sonAide: "Bansangu, kotinda, stock.",
     email: "Bansangu ya kebula na posita ya elektroniki (ekoya noki)",
     sms: "Bansangu ya kebula na nsangu ya mokili (ekoya noki)",
     silencieux: "Kimya na nyonso",
@@ -66,6 +71,18 @@ export const notificationsCentreLn = {
     DIFFUSION: {
       titre: "Lanso ya ndako",
       message: "{{apercu}}",
+    },
+    STOCK_FAIBLE: {
+      titre: "Stock moke",
+      message: "{{nom}} ({{code}}) : {{quantite}} ({{seuil}}).",
+    },
+    STOCK_EPUISE: {
+      titre: "Stock esi",
+      message: "{{nom}} ({{code}}).",
+    },
+    MEDICAMENT_EXPIRATION: {
+      titre: "Kokuta",
+      message: "{{nom}} ({{code}}) — {{jours}} ({{date}}).",
     },
   },
 } as const;

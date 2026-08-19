@@ -186,6 +186,11 @@ export type MedicamentDto = {
   recuPar: string | null;
   autresInformations: string | null;
   description: string | null;
+  stockActuel: number;
+  expirationProche: string | null;
+  alerteStock: boolean;
+  alerteExpiration: boolean;
+  joursAvantExpiration: number | null;
 };
 
 function dateVersChamp(d: Date | null | undefined): string | null {
@@ -201,6 +206,14 @@ function champVersDate(v: string | null | undefined): Date | null {
   if (!t) return null;
   const d = new Date(`${t}T00:00:00`);
   return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function joursCalendairesRestants(expiration: Date) {
+  const auj = new Date();
+  auj.setHours(0, 0, 0, 0);
+  const exp = new Date(expiration);
+  exp.setHours(0, 0, 0, 0);
+  return Math.round((exp.getTime() - auj.getTime()) / 86_400_000);
 }
 
 export function mapperMedicament(m: {
@@ -224,7 +237,23 @@ export function mapperMedicament(m: {
   recuPar?: string | null;
   autresInformations?: string | null;
   description?: string | null;
+  stocks?: { quantite: number }[];
+  lots?: { expirationLe: Date; quantite: number }[];
 }): MedicamentDto {
+  const stockActuel =
+    m.stocks?.[0]?.quantite ??
+    (m.lots ?? []).reduce((s, l) => s + (l.quantite ?? 0), 0);
+  const dates = [
+    ...(m.lots ?? [])
+      .filter((l) => (l.quantite ?? 0) > 0)
+      .map((l) => l.expirationLe),
+    ...(m.expirationLe ? [m.expirationLe] : []),
+  ];
+  let prochaine: Date | null = null;
+  for (const d of dates) {
+    if (!prochaine || d < prochaine) prochaine = d;
+  }
+  const joursAvantExpiration = prochaine ? joursCalendairesRestants(prochaine) : null;
   return {
     id: m.id,
     code: m.code,
@@ -246,6 +275,13 @@ export function mapperMedicament(m: {
     recuPar: m.recuPar ?? null,
     autresInformations: m.autresInformations ?? null,
     description: m.description ?? null,
+    stockActuel,
+    expirationProche: dateVersChamp(prochaine),
+    alerteStock:
+      (m.stocks != null || m.lots != null) && stockActuel <= m.stockMinimum,
+    alerteExpiration:
+      joursAvantExpiration != null && joursAvantExpiration <= 5,
+    joursAvantExpiration,
   };
 }
 
@@ -407,6 +443,14 @@ export async function listerMedicaments(opts?: {
   }
   const rows = await prisma.medicament.findMany({
     where,
+    include: {
+      stocks: { take: 1, select: { quantite: true } },
+      lots: {
+        where: { quantite: { gt: 0 } },
+        select: { expirationLe: true, quantite: true },
+        orderBy: { expirationLe: "asc" },
+      },
+    },
     orderBy: [{ actif: "desc" }, { nom: "asc" }],
   });
   return rows.map(mapperMedicament);

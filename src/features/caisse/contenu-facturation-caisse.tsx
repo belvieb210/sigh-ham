@@ -159,7 +159,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           typeInitial === "PHARMACIE" ? data.dossier.pharmacie : data.dossier.examens;
         const lignesCharge = ctx.facture?.lignes ?? ctx.lignes;
         setDevise(
-          (ctx.facture?.devise ?? data.dossier.facture.devise) === "CDF" ? "CDF" : "USD"
+          typeInitial === "PHARMACIE"
+            ? (ctx.facture?.devise ?? data.dossier.facture.devise) === "USD"
+              ? "USD"
+              : "CDF"
+            : "USD"
         );
         setNumeroRecu(
           (ctx.facture?.numeroFacture ?? data.dossier.facture.numeroFacture)?.replace(
@@ -225,6 +229,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
   }, [dossierInitial, factureInitial]);
 
   const modePharmacie = typeFactureUi === "PHARMACIE";
+  const deviseAffichee = modePharmacie ? devise : "USD";
 
   const basculerTypeFacture = (type: TypeFactureCaisseUi) => {
     if (type === "PHARMACIE" && dossier && !dossier.pharmacie.aDesMedicaments) {
@@ -247,9 +252,11 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
       setFraisDivers(0);
       setModeFacture("CASH");
       setTransfererApres(true);
+      setDevise(dossier?.pharmacie.facture?.devise === "USD" ? "USD" : "CDF");
     } else {
       const idEx = dossier?.examens.facture.id ?? null;
       setFactureId(idEx);
+      setDevise("USD");
     }
   };
 
@@ -702,6 +709,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
     const typeEffectif: TypeFactureCaisseUi = collecterPharmacie
       ? "PHARMACIE"
       : typeFactureUi;
+    const deviseEffective = typeEffectif === "PHARMACIE" ? devise : "USD";
     const lignesEffectives =
       typeEffectif === "PHARMACIE" ? lignesPharmaciePositives : lignesVisibles;
 
@@ -775,7 +783,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         body: JSON.stringify({
           dossierId,
           factureId: factureIdPrep,
-          devise,
+          devise: deviseEffective,
           typeFacture: typeEffectif,
         }),
       });
@@ -808,10 +816,10 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
           modeFacture: modeFacturePrep,
           remise: remisePrep,
           fraisDivers: fraisPrep,
-          devise,
+          devise: deviseEffective,
           reference: [
             `recu=${numeroRecu}`,
-            `devise=${devise}`,
+            `devise=${deviseEffective}`,
             fraisPrep > 0 ? `frais=${fraisPrep}` : null,
             modeFacturePrep === "AVANCE" ? `avance=${montantAvance}` : null,
             notes.trim() || null,
@@ -897,7 +905,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               ? t("caisse.facturation.totalMedicaments")
               : t("caisse.facturation.totalExamens")}
           </span>
-          <span className="font-medium">{formaterMontantCaisse(totalExamens, devise)}</span>
+          <span className="font-medium">{formaterMontantCaisse(totalExamens, deviseAffichee)}</span>
         </div>
         {modeFacture === "AVANCE" && (
           <div className="flex items-center justify-between gap-3">
@@ -946,7 +954,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
         </div>
         <div className="flex justify-between gap-3">
           <span className="text-texte-secondaire">{t("caisse.facturation.sousTotal")}</span>
-          <span className="font-medium">{formaterMontantCaisse(sousTotal, devise)}</span>
+          <span className="font-medium">{formaterMontantCaisse(sousTotal, deviseAffichee)}</span>
         </div>
         <div className="flex items-center justify-between gap-3">
           <label htmlFor="frais-divers-resume" className="text-texte-secondaire">
@@ -971,7 +979,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                 {t("caisse.facturation.totalFacture")}
               </span>
               <span className="font-medium tabular-nums">
-                {formaterMontantCaisse(totalAPayer, devise)}
+                {formaterMontantCaisse(totalAPayer, deviseAffichee)}
               </span>
             </div>
           )}
@@ -979,7 +987,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
             {t("caisse.facturation.totalAPayer")}
           </p>
           <p className="mt-1 text-2xl font-bold text-bleu-medical">
-            {formaterMontantCaisse(montantDuJour, devise)}
+            {formaterMontantCaisse(montantDuJour, deviseAffichee)}
           </p>
         </div>
         {dejaPaye > 0 && (
@@ -988,14 +996,14 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               {t("caisse.facturation.dejaEncaisse")}
             </span>
             <span className="font-medium tabular-nums">
-              {formaterMontantCaisse(dejaPaye, devise)}
+              {formaterMontantCaisse(dejaPaye, deviseAffichee)}
             </span>
           </div>
         )}
         <div className="flex justify-between gap-3 pt-1">
           <span className="text-texte-secondaire">{t("caisse.facturation.montantPaye")}</span>
           <span className="font-medium">
-            {formaterMontantCaisse(montantPayeAffiche, devise)}
+            {formaterMontantCaisse(montantPayeAffiche, deviseAffichee)}
           </span>
         </div>
         <div className="flex justify-between gap-3">
@@ -1006,7 +1014,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
               resteApresCePaiement <= 0 ? "text-emerald-600" : "text-amber-700"
             )}
           >
-            {formaterMontantCaisse(resteApresCePaiement, devise)}
+            {formaterMontantCaisse(resteApresCePaiement, deviseAffichee)}
           </span>
         </div>
       </div>
@@ -1379,10 +1387,10 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                                 <td className="px-3 py-2.5 text-texte-secondaire">{i + 1}</td>
                                 <td className="px-3 py-2.5 font-medium">{l.libelle}</td>
                                 <td className="px-3 py-2.5 text-right">
-                                  {formaterMontantCaisse(l.prixUnitaire, devise)}
+                                  {formaterMontantCaisse(l.prixUnitaire, deviseAffichee)}
                                 </td>
                                 <td className="px-3 py-2.5 text-right font-semibold">
-                                  {formaterMontantCaisse(l.montant, devise)}
+                                  {formaterMontantCaisse(l.montant, deviseAffichee)}
                                 </td>
                                 <td className="px-3 py-2.5 text-right">
                                   {!modePharmacie && !factureCloturee && (
@@ -1424,7 +1432,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                         </button>
                         <p className="text-sm font-bold text-bleu-medical">
                           {t("caisse.facturation.totalExamens")}{" "}
-                          {formaterMontantCaisse(totalExamens, devise)}
+                          {formaterMontantCaisse(totalExamens, deviseAffichee)}
                         </p>
                       </div>
                       <RechercheAjoutExamenCaisse
@@ -1443,7 +1451,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                     <div className="border-t border-gris-bordure px-2 py-1.5 text-right">
                       <p className="text-sm font-bold text-bleu-medical">
                         {t("caisse.facturation.totalMedicaments")}{" "}
-                        {formaterMontantCaisse(totalExamens, devise)}
+                        {formaterMontantCaisse(totalExamens, deviseAffichee)}
                       </p>
                     </div>
                   )}
@@ -1542,7 +1550,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                       </span>
                       <input
                         readOnly
-                        value={formaterMontantCaisse(montantDuJour, devise)}
+                        value={formaterMontantCaisse(montantDuJour, deviseAffichee)}
                         className="w-full rounded-lg border border-gris-bordure bg-gris-tres-clair/50 px-3 py-2.5 text-sm font-semibold"
                       />
                     </label>
@@ -1580,12 +1588,13 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                         {t("caisse.facturation.monnaie")}
                       </span>
                       <select
-                        value={devise}
+                        value={modePharmacie ? devise : "USD"}
                         onChange={(e) => setDevise(e.target.value)}
-                        className="w-full rounded-lg border border-gris-bordure bg-white px-3 py-2.5 text-sm"
+                        disabled={!modePharmacie}
+                        className="w-full rounded-lg border border-gris-bordure bg-white px-3 py-2.5 text-sm disabled:cursor-not-allowed disabled:bg-slate-50"
                       >
                         <option value="USD">USD</option>
-                        <option value="CDF">CDF</option>
+                        {modePharmacie ? <option value="CDF">Fc</option> : null}
                       </select>
                     </label>
                     <div className="text-sm sm:col-span-2 lg:col-span-3">
@@ -1811,7 +1820,7 @@ export function ContenuFacturationCaisse({ utilisateur }: PropsContenuFacturatio
                   {t("caisse.facturation.totalAPayer")}
                 </span>
                 <span className="font-bold text-bleu-medical">
-                  {formaterMontantCaisse(montantDuJour, devise)}
+                  {formaterMontantCaisse(montantDuJour, deviseAffichee)}
                 </span>
               </div>
               <div className="flex items-center gap-2">

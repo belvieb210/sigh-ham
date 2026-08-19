@@ -407,7 +407,7 @@ export async function preparerFactureDossier(
 
   if (factureExamensOuverte) {
     if (options?.devise) {
-      const devise = options.devise === "USD" ? "USD" : "CDF";
+      const devise = options.devise === "CDF" ? "CDF" : "USD";
       if (factureExamens.devise !== devise) {
         await prisma.facture.update({
           where: { id: factureExamens.id as string },
@@ -428,7 +428,7 @@ export async function preparerFactureDossier(
     throw new Error("Aucune prestation facturable pour ce dossier.");
   }
 
-  const devise = options?.devise === "USD" ? "USD" : "CDF";
+  const devise = options?.devise === "CDF" ? "CDF" : "USD";
   const montantTotal = lignesPositives.reduce((acc, l) => acc + l.montant, 0);
 
   const facture = await prisma.$transaction(async (tx) => {

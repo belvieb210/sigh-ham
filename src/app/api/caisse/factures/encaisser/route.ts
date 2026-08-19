@@ -88,7 +88,7 @@ export async function POST(request: Request) {
       modeFacture,
       remise: Number(corps.remise) || 0,
       fraisDivers: Number(corps.fraisDivers) || 0,
-      devise: corps.devise === "USD" ? "USD" : "CDF",
+      devise: corps.devise === "CDF" ? "CDF" : "USD",
       reference: corps.reference,
       destinationApres,
     });

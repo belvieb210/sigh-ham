@@ -16,10 +16,11 @@ import {
   type UtilisateurPharmacie,
 } from "@/features/pharmacie/mise-en-page-pharmacie";
 import type { RapportVentesPharmacie } from "@/lib/pharmacie/types";
+import { formaterPrixFc } from "@/features/caisse/utils-format";
 import { cn } from "@/lib/utils";
 
 function formaterMontant(v: number) {
-  return `${Math.round(v).toLocaleString("fr-FR")} FC`;
+  return formaterPrixFc(v);
 }
 
 function formaterDateIso(iso: string) {

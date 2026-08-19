@@ -169,6 +169,9 @@ enum TypeNotification {
   NOUVEAU_GROUPE
   MENTION
   DIFFUSION
+  STOCK_FAIBLE
+  STOCK_EPUISE
+  MEDICAMENT_EXPIRATION
 }
 
 enum CanalNotification {
@@ -763,7 +766,7 @@ model Facture {
   statut        StatutFacture  @default(BROUILLON)
   montantTotal  Decimal        @map("montant_total") @db.Decimal(12, 2)
   montantPaye   Decimal        @default(0) @map("montant_paye") @db.Decimal(12, 2)
-  devise        String         @default("CDF")
+  devise        String         @default("USD")
   emiseLe       DateTime?      @map("emise_le")
   /** Validation caisse — débloque l'impression des codes-barres tubes */
   approuveeLe    DateTime?    @map("approuvee_le")

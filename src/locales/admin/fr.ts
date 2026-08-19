@@ -763,8 +763,8 @@ export const adminFr = {
     firme: "Firme",
     telephoneFirme: "Téléphone firme",
     classeMedicamenteuse: "Classe médicamenteuse",
-    prixAchat: "Prix d'achat (FC)",
-    prixUnitaire: "Prix unitaire (FC)",
+    prixAchat: "Prix d'achat (Fc)",
+    prixUnitaire: "Prix unitaire (Fc)",
     stockMinimum: "Stock minimum",
     stockMaximum: "Stock maximum",
     emplacement: "Emplacement",
@@ -799,6 +799,7 @@ export const adminFr = {
     colonnes: {
       statut: "Statut",
       actions: "Actions",
+      stock: "Stock",
     },
     sections: {
       identite: "Identification",
@@ -828,6 +829,11 @@ export const adminFr = {
     aideCode: "Code unique utilisé dans les ventes, ordonnances et stocks.",
     aideStatut:
       "Un médicament inactif est exclu du catalogue : il n’est plus proposé à la pharmacie ni aux médecins.",
+    alerteStockFaible: "Stock faible",
+    alerteRupture: "Rupture",
+    alertePerime: "Périmé",
+    alerteExpireAujourdhui: "Expire aujourd’hui",
+    alerteExpireJours: "Expire dans {{count}} j",
     enregistrerMedicament: "Enregistrer le médicament",
     annuler: "Annuler",
     champsRequis: "Veuillez remplir le code et le nom.",

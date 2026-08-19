@@ -22,6 +22,7 @@ import {
   FILTRES_ESTIMATIONS_VIDES,
   FormulaireFiltresEstimations,
 } from "@/features/estimations/outils-liste-estimations";
+import { formaterPrixFc } from "@/features/caisse/utils-format";
 
 const PAR_PAGE = 15;
 
@@ -54,7 +55,7 @@ function formaterUsd(n: number) {
 }
 
 function formaterCdf(n: number) {
-  return `${n.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} FC`;
+  return formaterPrixFc(n);
 }
 
 function libelleType(type: EstimationCaisse["typeEstimation"]) {

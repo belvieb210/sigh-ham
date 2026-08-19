@@ -29,6 +29,9 @@ export const notificationsCentreSw = {
     RESULTATS_LABO: "Maabara",
     PATIENT_A_FACTURER: "Kasa",
     PAIEMENT_VALIDE: "Malipo",
+    STOCK_FAIBLE: "Hisa ndogo",
+    STOCK_EPUISE: "Hisa imeisha",
+    MEDICAMENT_EXPIRATION: "Muda wa matumizi",
   },
   preferences: {
     titre: "Mapendeleo",
@@ -36,6 +39,8 @@ export const notificationsCentreSw = {
     tableauBord: "Alama ya ubao wa udhibiti",
     push: "Arifa za kivinjari",
     son: "Sauti inapopokea",
+    testerSon: "Jaribu sauti",
+    sonAide: "Sauti tofauti: ujumbe, uhamisho, hisa.",
     email: "Arifa za barua pepe (inakuja hivi karibuni)",
     sms: "Arifa za SMS (inakuja hivi karibuni)",
     silencieux: "Hali ya kimya kwa ujumla",
@@ -66,6 +71,18 @@ export const notificationsCentreSw = {
     DIFFUSION: {
       titre: "Tangazo la taasisi",
       message: "{{apercu}}",
+    },
+    STOCK_FAIBLE: {
+      titre: "Hisa ndogo",
+      message: "{{nom}} ({{code}}): {{quantite}} ({{seuil}}).",
+    },
+    STOCK_EPUISE: {
+      titre: "Hisa imeisha",
+      message: "{{nom}} ({{code}}).",
+    },
+    MEDICAMENT_EXPIRATION: {
+      titre: "Muda wa dawa",
+      message: "{{nom}} ({{code}}) — {{jours}} ({{date}}).",
     },
   },
 } as const;

@@ -1,17 +1,23 @@
 import type { TFunction } from "i18next";
 import {
+  AlertTriangle,
   ArrowRightLeft,
   Bell,
   Megaphone,
   MessageSquare,
+  PackageX,
+  Timer,
   UserPlus,
   AtSign,
   type LucideIcon,
 } from "lucide-react";
 import type { TypeNotification } from "@/generated/prisma/enums";
 
+export { familleSonNotification } from "@/features/notifications/utilitaires-son-notification";
+
 export const EVENT_RAFRAICHIR_NOTIFICATIONS = "sigh:notifications-refresh";
 export const EVENT_NOUVELLE_NOTIFICATION = "sigh:notifications-nouvelle";
+export const EVENT_COMPTEUR_NOTIFICATIONS = "sigh:notifications-compteur";
 
 export interface StyleTypeNotification {
   Icon: LucideIcon;
@@ -58,6 +64,27 @@ export function styleTypeNotification(type: TypeNotification): StyleTypeNotifica
         fond: "bg-amber-100",
         texte: "text-amber-700",
         bordure: "border-amber-200",
+      };
+    case "STOCK_EPUISE":
+      return {
+        Icon: PackageX,
+        fond: "bg-red-100",
+        texte: "text-red-700",
+        bordure: "border-red-200",
+      };
+    case "STOCK_FAIBLE":
+      return {
+        Icon: AlertTriangle,
+        fond: "bg-orange-100",
+        texte: "text-orange-800",
+        bordure: "border-orange-200",
+      };
+    case "MEDICAMENT_EXPIRATION":
+      return {
+        Icon: Timer,
+        fond: "bg-rose-100",
+        texte: "text-rose-700",
+        bordure: "border-rose-200",
       };
     default:
       return {

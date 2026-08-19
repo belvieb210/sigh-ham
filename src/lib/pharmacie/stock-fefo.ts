@@ -86,6 +86,9 @@ export async function debiterLotsFefo(opts: {
     });
   }
   await synchroniserStockAgrege(opts.medicamentId);
+  void import("@/lib/notifications/alertes-stock").then(({ evaluerAlertesMedicament }) =>
+    evaluerAlertesMedicament(opts.medicamentId).catch(console.error)
+  );
   return allocations;
 }
 
@@ -112,5 +115,8 @@ export async function crediterLot(opts: {
     },
   });
   await synchroniserStockAgrege(lot.medicamentId);
+  void import("@/lib/notifications/alertes-stock").then(({ evaluerAlertesMedicament }) =>
+    evaluerAlertesMedicament(lot.medicamentId).catch(console.error)
+  );
   return lot;
 }

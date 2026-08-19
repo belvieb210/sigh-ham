@@ -13,6 +13,21 @@ export function formaterMontantCaisse(montant: number, devise = "USD", locale = 
   return `${corps} $`;
 }
 
+export function formaterPrixFc(montant: number, locale = "fr-FR") {
+  const n = Number.isFinite(montant) ? Math.round(montant) : 0;
+  return `${n.toLocaleString(locale)} Fc`;
+}
+
+/** Prix médicaments : Fc (pas FCFA). USD uniquement si la vente est en dollars. */
+export function formaterMontantPharmacie(
+  montant: number,
+  devise = "CDF",
+  locale = "fr-FR"
+) {
+  if (devise === "USD") return formaterMontantCaisse(montant, "USD", locale);
+  return formaterPrixFc(montant, locale);
+}
+
 export function formaterHeure(iso: string, locale = "fr-FR") {
   try {
     return new Date(iso).toLocaleTimeString(locale, {

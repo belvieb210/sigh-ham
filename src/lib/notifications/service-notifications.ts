@@ -47,6 +47,10 @@ export async function creerNotification(donnees: DonneesNotification) {
     event: EVENEMENTS_SOCKET.NOUVELLE_NOTIFICATION,
     utilisateurId: donnees.utilisateurId,
     notificationId: notification.id,
+    type: notification.type,
+    titre: notification.titre,
+    message: notification.message,
+    lien: notification.lien,
   });
 
   void import("@/lib/notifications/push-navigateur").then(({ envoyerPushNavigateur }) =>
@@ -106,6 +110,24 @@ export async function compterNotificationsNonLues(utilisateurId: string) {
   return prisma.notification.count({
     where: { utilisateurId, lu: false, archivee: false },
   });
+}
+
+export async function apercuNotificationsNonLues(utilisateurId: string) {
+  const [total, derniere] = await Promise.all([
+    compterNotificationsNonLues(utilisateurId),
+    prisma.notification.findFirst({
+      where: { utilisateurId, lu: false, archivee: false },
+      orderBy: { creeLe: "desc" },
+      select: {
+        id: true,
+        type: true,
+        titre: true,
+        message: true,
+        lien: true,
+      },
+    }),
+  ]);
+  return { total, derniere };
 }
 
 export async function listerNotifications(

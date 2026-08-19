@@ -805,6 +805,9 @@ export const receptionDe = {
       RESULTATS_LABO: "Laboratoire",
       PATIENT_A_FACTURER: "Caisse",
       PAIEMENT_VALIDE: "Paiement",
+      STOCK_FAIBLE: "Stock faible",
+      STOCK_EPUISE: "Rupture de stock",
+      MEDICAMENT_EXPIRATION: "Péremption",
     },
     preferences: {
       titre: "Préférences",
@@ -812,6 +815,9 @@ export const receptionDe = {
       tableauBord: "Badge tableau de bord",
       push: "Notifications push navigateur",
       son: "Son à la réception",
+      testerSon: "Tester le son",
+      sonAide:
+        "Sons distincts : message, transfert patient, alerte stock / péremption.",
       email: "Notifications e-mail (bientôt)",
       sms: "Notifications SMS (bientôt)",
       silencieux: "Mode silencieux global",
@@ -842,6 +848,19 @@ export const receptionDe = {
       DIFFUSION: {
         titre: "Annonce institutionnelle",
         message: "{{apercu}}",
+      },
+      STOCK_FAIBLE: {
+        titre: "Stock faible",
+        message:
+          "{{nom}} ({{code}}) : {{quantite}} unité(s) restante(s) (seuil {{seuil}}).",
+      },
+      STOCK_EPUISE: {
+        titre: "Rupture de stock",
+        message: "{{nom}} ({{code}}) n’a plus d’unités disponibles.",
+      },
+      MEDICAMENT_EXPIRATION: {
+        titre: "Péremption médicament",
+        message: "{{nom}} ({{code}}) — {{jours}} jour(s) avant expiration ({{date}}).",
       },
     },
   },

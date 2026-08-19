@@ -26,6 +26,9 @@ export async function publierRedis(canal: string, payload: unknown) {
   const redis = obtenirRedis();
   if (!redis) return false;
   try {
+    if (redis.status === "wait") {
+      await redis.connect();
+    }
     await redis.publish(canal, JSON.stringify(payload));
     return true;
   } catch {

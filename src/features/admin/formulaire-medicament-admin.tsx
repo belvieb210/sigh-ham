@@ -376,7 +376,7 @@ export function FormulaireMedicamentAdmin({
               </LabelChamp>
               <div className="relative">
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-texte-secondaire">
-                  FC
+                  Fc
                 </span>
                 <input
                   id="admin-med-prix-achat"
@@ -397,7 +397,7 @@ export function FormulaireMedicamentAdmin({
               </LabelChamp>
               <div className="relative">
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-texte-secondaire">
-                  FC
+                  Fc
                 </span>
                 <input
                   id="admin-med-prix-vente"

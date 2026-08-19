@@ -14,6 +14,8 @@ export interface FormParametreExamenAdmin {
   unite: string;
   rangeUsuelle: string;
   obligatoire: boolean;
+  /** Position d'affichage (1 = premier paramètre). */
+  ordre: number;
 }
 
 export interface FormExamenAdmin {
@@ -33,7 +35,7 @@ export interface FormExamenAdmin {
   parametres: FormParametreExamenAdmin[];
 }
 
-export function nouveauParametreExamen(): FormParametreExamenAdmin {
+export function nouveauParametreExamen(ordre = 1): FormParametreExamenAdmin {
   return {
     cle:
       typeof crypto !== "undefined" && crypto.randomUUID
@@ -43,7 +45,12 @@ export function nouveauParametreExamen(): FormParametreExamenAdmin {
     unite: "",
     rangeUsuelle: "",
     obligatoire: true,
+    ordre,
   };
+}
+
+function trierParametresFormulaire(parametres: FormParametreExamenAdmin[]) {
+  return [...parametres].sort((a, b) => a.ordre - b.ordre);
 }
 
 export const FORM_EXAMEN_ADMIN_VIDE: FormExamenAdmin = {
@@ -377,9 +384,15 @@ export function FormulaireExamenAdmin({
             {!lectureSeule ? (
               <button
                 type="button"
-                onClick={() =>
-                  maj("parametres", [...form.parametres, nouveauParametreExamen()])
-                }
+                onClick={() => {
+                  const prochainOrdre = form.parametres.length
+                    ? Math.max(...form.parametres.map((p) => p.ordre)) + 1
+                    : 1;
+                  maj("parametres", [
+                    ...form.parametres,
+                    nouveauParametreExamen(prochainOrdre),
+                  ]);
+                }}
                 className="inline-flex items-center gap-1 text-xs font-semibold text-bleu-medical hover:underline"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -396,7 +409,7 @@ export function FormulaireExamenAdmin({
             </p>
           ) : (
             <ul className="space-y-3">
-              {form.parametres.map((p, index) => (
+              {trierParametresFormulaire(form.parametres).map((p, index) => (
                 <li
                   key={p.cle}
                   className="rounded-lg border border-gris-bordure bg-slate-50/70 p-3"
@@ -465,18 +478,41 @@ export function FormulaireExamenAdmin({
                       />
                     </div>
                   </div>
-                  <label className="mt-2 inline-flex items-center gap-2 text-xs text-texte-principal">
-                    <input
-                      type="checkbox"
-                      className="accent-bleu-medical"
-                      checked={p.obligatoire}
-                      disabled={lectureSeule}
-                      onChange={(e) =>
-                        majParametre(p.cle, { obligatoire: e.target.checked })
-                      }
-                    />
-                    {t("admin.examens.parametreObligatoire")}
-                  </label>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                    <label className="inline-flex items-center gap-2 text-xs text-texte-principal">
+                      <input
+                        type="checkbox"
+                        className="accent-bleu-medical"
+                        checked={p.obligatoire}
+                        disabled={lectureSeule}
+                        onChange={(e) =>
+                          majParametre(p.cle, { obligatoire: e.target.checked })
+                        }
+                      />
+                      {t("admin.examens.parametreObligatoire")}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor={`param-ordre-${p.cle}`}
+                        className="text-xs font-medium text-texte-secondaire"
+                      >
+                        {t("admin.examens.parametreOrdre")}
+                      </label>
+                      <input
+                        id={`param-ordre-${p.cle}`}
+                        type="number"
+                        min={1}
+                        className={cn(classeChamp, "h-8 w-16 text-center")}
+                        value={p.ordre}
+                        disabled={lectureSeule}
+                        onChange={(e) =>
+                          majParametre(p.cle, {
+                            ordre: Math.max(1, Number(e.target.value) || 1),
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
                 </li>
               ))}
             </ul>

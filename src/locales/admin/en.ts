@@ -678,6 +678,7 @@ export const adminEn = {
     parametreUnite: "Unit",
     parametreRange: "Usual range",
     parametreObligatoire: "Required when entering results",
+    parametreOrdre: "Position",
     nbParametres: "{{count}} parameter(s)",
     aidePrix: "Catalogue price in US dollars (USD).",
     aideParametres:

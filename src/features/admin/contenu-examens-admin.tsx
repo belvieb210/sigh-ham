@@ -96,14 +96,18 @@ function itemVersForm(item: ExamenItem): FormExamenAdmin {
     formulaire: item.formulaire ?? "",
     uniteDefaut: item.uniteDefaut ?? "",
     rangeUsuelle: item.rangeUsuelle ?? "",
-    parametres: (item.parametres ?? []).map((p) => ({
-      ...nouveauParametreExamen(),
-      id: p.id,
-      nom: p.nom,
-      unite: p.unite ?? "",
-      rangeUsuelle: p.rangeUsuelle ?? "",
-      obligatoire: p.obligatoire,
-    })),
+    parametres: (item.parametres ?? [])
+      .slice()
+      .sort((a, b) => a.ordre - b.ordre)
+      .map((p, index) => ({
+        ...nouveauParametreExamen(index + 1),
+        id: p.id,
+        nom: p.nom,
+        unite: p.unite ?? "",
+        rangeUsuelle: p.rangeUsuelle ?? "",
+        obligatoire: p.obligatoire,
+        ordre: p.ordre + 1,
+      })),
   };
 }
 
@@ -331,13 +335,15 @@ export function ContenuExamensAdmin({
         formulaire: form.formulaire,
         uniteDefaut: form.uniteDefaut,
         rangeUsuelle: form.rangeUsuelle,
-        parametres: form.parametres.map((p) => ({
-          id: p.id ?? null,
-          nom: p.nom,
-          unite: p.unite,
-          rangeUsuelle: p.rangeUsuelle,
-          obligatoire: p.obligatoire,
-        })),
+        parametres: [...form.parametres]
+          .sort((a, b) => a.ordre - b.ordre)
+          .map((p) => ({
+            id: p.id ?? null,
+            nom: p.nom,
+            unite: p.unite,
+            rangeUsuelle: p.rangeUsuelle,
+            obligatoire: p.obligatoire,
+          })),
       };
       const creation = modePanneau === "creation";
       const res = await fetch(

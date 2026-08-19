@@ -42,6 +42,7 @@ type Membre = {
     nom: string;
   };
   masquerContactsPublic?: boolean;
+  ordre?: number;
 };
 
 function CarteMembreEquipe({

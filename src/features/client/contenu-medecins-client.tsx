@@ -35,7 +35,7 @@ export function ContenuMedecinsClient({
         <EnTetePageReception
           icone={Stethoscope}
           titre="Comptes partenaires"
-          description="Ajoutez les comptes médecins externes et conventionnés. Le contenu public À propos est maintenant géré dans la gouvernance admin."
+          description="Ajoutez les comptes médecins externes et conventionnés avec une interface proche de la gestion admin."
           fil={[
             { label: "Service client", href: "/sigh/client" },
             { label: "Comptes partenaires" },
@@ -44,7 +44,7 @@ export function ContenuMedecinsClient({
 
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Les comptes créés ici se connectent dans leur salle dédiée. Les profils publics
-          du site sont gérés séparément dans <strong>Admin &gt; Gouvernance</strong>.
+          internes du site sont gérés séparément dans <strong>Admin &gt; Gouvernance</strong>.
         </div>
 
         <div className="flex flex-wrap gap-2 rounded-xl border border-gris-bordure bg-white p-2 shadow-sm">

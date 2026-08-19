@@ -3,50 +3,26 @@ import {
   obtenirSessionApiAdmin,
   reponseNonAutoriseAdmin,
 } from "@/lib/auth/garde-api-admin";
-import { prisma } from "@/lib/prisma";
-
-const CATEGORIES = [
-  "MEDECIN",
-  "PERSONNEL",
-  "RESPONSABLE_LABO",
-  "MEDECIN_EXTERNE",
-  "SERVICE_EGLISE",
-] as const;
-
-function normaliserCategorie(valeur: unknown) {
-  const categorie = String(valeur ?? "MEDECIN").trim().toUpperCase();
-  return (CATEGORIES as readonly string[]).includes(categorie)
-    ? categorie
-    : "MEDECIN";
-}
-
-function texteOptionnel(valeur: unknown) {
-  const texte = String(valeur ?? "").trim();
-  return texte || null;
-}
+import {
+  enregistrerConfigGouvernancePublique,
+  lireConfigGouvernancePublique,
+  listerResponsablesSuperAdmin,
+  listerSallesPubliques,
+} from "@/lib/admin/gouvernance-publique";
+import type { CodeSalle } from "@/generated/prisma/client";
 
 export async function GET() {
   const session = await obtenirSessionApiAdmin();
   if (!session) return reponseNonAutoriseAdmin();
 
   try {
-    const [entrees, salles] = await Promise.all([
-      prisma.medecinVitrine.findMany({
-        include: {
-          salle: {
-            select: { id: true, code: true, nom: true },
-          },
-        },
-        orderBy: [{ categorie: "asc" }, { ordre: "asc" }, { nom: "asc" }],
-      }),
-      prisma.salle.findMany({
-        where: { actif: true },
-        select: { id: true, code: true, nom: true, ordre: true },
-        orderBy: [{ ordre: "asc" }, { nom: "asc" }],
-      }),
+    const [config, salles, responsables] = await Promise.all([
+      lireConfigGouvernancePublique(),
+      listerSallesPubliques(),
+      listerResponsablesSuperAdmin(),
     ]);
 
-    return NextResponse.json({ entrees, salles });
+    return NextResponse.json({ config, salles, responsables });
   } catch (error) {
     console.error("[GET /api/admin/gouvernance]", error);
     return NextResponse.json(
@@ -62,51 +38,62 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = (await request.json()) as Record<string, unknown>;
-    const nom = String(body.nom ?? "").trim();
-    const prenom = String(body.prenom ?? "").trim();
-    const specialite = String(body.specialite ?? "").trim();
+    const salles = await listerSallesPubliques();
+    const salleCodes = new Set(salles.map((salle) => salle.code));
+    const services = Array.isArray(body.services)
+      ? body.services
+          .map((service, index) => {
+            const item = service as Record<string, unknown>;
+            const salleCode = String(item.salleCode ?? "").trim().toUpperCase() as CodeSalle;
+            if (!salleCodes.has(salleCode)) return null;
+            return {
+              salleCode,
+              visible: item.visible !== false,
+              ordre:
+                typeof item.ordre === "number" && Number.isFinite(item.ordre)
+                  ? item.ordre
+                  : index,
+            };
+          })
+          .filter((service): service is NonNullable<typeof service> => service != null)
+      : [];
 
-    if (!nom || !prenom || !specialite) {
+    if (!services.length) {
       return NextResponse.json(
-        { message: "Prénom, nom et fonction sont requis." },
+        { message: "Au moins un service public doit être configuré." },
         { status: 400 }
       );
     }
 
-    const entree = await prisma.medecinVitrine.create({
-      data: {
-        nom,
-        prenom,
-        specialite,
-        bio: texteOptionnel(body.bio),
-        photoUrl: texteOptionnel(body.photoUrl),
-        horaires: texteOptionnel(body.horaires),
-        telephone: texteOptionnel(body.telephone),
-        email: texteOptionnel(body.email),
-        salleId: texteOptionnel(body.salleId),
-        categorie: normaliserCategorie(body.categorie),
-        masquerContactsPublic: Boolean(body.masquerContactsPublic),
-        badgeValeur1: texteOptionnel(body.badgeValeur1),
-        badgeLibelle1: texteOptionnel(body.badgeLibelle1),
-        badgeValeur2: texteOptionnel(body.badgeValeur2),
-        badgeLibelle2: texteOptionnel(body.badgeLibelle2),
-        badgeValeur3: texteOptionnel(body.badgeValeur3),
-        badgeLibelle3: texteOptionnel(body.badgeLibelle3),
-        ordre: Number(body.ordre ?? 0),
-        actif: body.actif !== false,
+    const config = await enregistrerConfigGouvernancePublique({
+      responsableUtilisateurId: String(body.responsableUtilisateurId ?? "").trim() || null,
+      titreResponsable: String(body.titreResponsable ?? "").trim() || "Directeur général",
+      bioResponsable:
+        String(body.bioResponsable ?? "").trim() ||
+        "Le responsable du centre pilote la qualité, l'intégrité et l'accessibilité des soins au quotidien.",
+      badgeDirection1: {
+        valeur: String(body.badgeDirection1Valeur ?? "").trim() || "HAM",
+        libelle: String(body.badgeDirection1Libelle ?? "").trim() || "Direction",
       },
-      include: {
-        salle: {
-          select: { id: true, code: true, nom: true },
-        },
+      badgeDirection2: {
+        valeur: String(body.badgeDirection2Valeur ?? "").trim() || "ISO",
+        libelle: String(body.badgeDirection2Libelle ?? "").trim() || "Qualité",
       },
-    });
+      badgeDirection3: {
+        valeur: String(body.badgeDirection3Valeur ?? "").trim() || "RDC",
+        libelle: String(body.badgeDirection3Libelle ?? "").trim() || "Kinshasa",
+      },
+      services,
+    }, session.utilisateur.id);
 
-    return NextResponse.json({ entree }, { status: 201 });
+    return NextResponse.json({
+      message: "Gouvernance publique mise à jour.",
+      config,
+    });
   } catch (error) {
     console.error("[POST /api/admin/gouvernance]", error);
     return NextResponse.json(
-      { message: "Impossible d'ajouter cette entrée." },
+      { message: "Impossible d'enregistrer la gouvernance publique." },
       { status: 500 }
     );
   }

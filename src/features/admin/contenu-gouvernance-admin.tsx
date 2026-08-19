@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Building2, ImagePlus, Loader2, Save, Shield, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Save, Shield, ShieldCheck } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
 import { ImageVitrine } from "@/components/ui/image-vitrine";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
@@ -16,116 +16,85 @@ type SalleOption = {
   id: string;
   code: string;
   nom: string;
-  ordre?: number;
+  ordre: number;
+  actif: boolean;
 };
 
-type EntreeGouvernance = {
+type ResponsableOption = {
   id: string;
   prenom: string;
   nom: string;
-  specialite: string;
-  bio: string | null;
-  photoUrl: string | null;
-  horaires: string | null;
-  telephone: string | null;
   email: string | null;
-  salleId: string | null;
-  categorie: string;
-  masquerContactsPublic: boolean;
-  badgeValeur1: string | null;
-  badgeLibelle1: string | null;
-  badgeValeur2: string | null;
-  badgeLibelle2: string | null;
-  badgeValeur3: string | null;
-  badgeLibelle3: string | null;
+  telephone: string | null;
+  photoUrl: string | null;
+  role: {
+    code: string;
+    nom: string;
+    salle: { code: string; nom: string } | null;
+  };
+};
+
+type ServiceConfig = {
+  salleCode: string;
+  visible: boolean;
   ordre: number;
-  actif: boolean;
-  salle: SalleOption | null;
 };
 
 type FormGouvernance = {
-  id?: string;
-  prenom: string;
-  nom: string;
-  specialite: string;
-  bio: string;
-  photoUrl: string;
-  horaires: string;
-  telephone: string;
-  email: string;
-  salleId: string;
-  categorie: string;
-  masquerContactsPublic: boolean;
-  badgeValeur1: string;
-  badgeLibelle1: string;
-  badgeValeur2: string;
-  badgeLibelle2: string;
-  badgeValeur3: string;
-  badgeLibelle3: string;
-  ordre: number;
-  actif: boolean;
+  responsableUtilisateurId: string;
+  titreResponsable: string;
+  bioResponsable: string;
+  badgeDirection1Valeur: string;
+  badgeDirection1Libelle: string;
+  badgeDirection2Valeur: string;
+  badgeDirection2Libelle: string;
+  badgeDirection3Valeur: string;
+  badgeDirection3Libelle: string;
+  services: ServiceConfig[];
 };
 
-const CATEGORIES = [
-  { value: "RESPONSABLE_LABO", label: "Responsable" },
-  { value: "MEDECIN", label: "Médecins" },
-  { value: "PERSONNEL", label: "Personnel" },
-  { value: "MEDECIN_EXTERNE", label: "Médecins externes" },
-  { value: "SERVICE_EGLISE", label: "Service Église" },
-] as const;
-
 const BADGES = [
-  { valeur: "badgeValeur1", libelle: "badgeLibelle1", index: 1 },
-  { valeur: "badgeValeur2", libelle: "badgeLibelle2", index: 2 },
-  { valeur: "badgeValeur3", libelle: "badgeLibelle3", index: 3 },
+  { valeur: "badgeDirection1Valeur", libelle: "badgeDirection1Libelle", index: 1 },
+  { valeur: "badgeDirection2Valeur", libelle: "badgeDirection2Libelle", index: 2 },
+  { valeur: "badgeDirection3Valeur", libelle: "badgeDirection3Libelle", index: 3 },
 ] as const;
 
 function formVide(): FormGouvernance {
   return {
-    prenom: "",
-    nom: "",
-    specialite: "",
-    bio: "",
-    photoUrl: "",
-    horaires: "",
-    telephone: "",
-    email: "",
-    salleId: "",
-    categorie: "MEDECIN",
-    masquerContactsPublic: false,
-    badgeValeur1: "",
-    badgeLibelle1: "",
-    badgeValeur2: "",
-    badgeLibelle2: "",
-    badgeValeur3: "",
-    badgeLibelle3: "",
-    ordre: 0,
-    actif: true,
+    responsableUtilisateurId: "",
+    titreResponsable: "Directeur général",
+    bioResponsable:
+      "Le responsable du centre pilote la qualité, l'integrite et l'accessibilite des soins au quotidien.",
+    badgeDirection1Valeur: "HAM",
+    badgeDirection1Libelle: "Direction",
+    badgeDirection2Valeur: "ISO",
+    badgeDirection2Libelle: "Qualite",
+    badgeDirection3Valeur: "RDC",
+    badgeDirection3Libelle: "Kinshasa",
+    services: [],
   };
 }
 
-function versFormulaire(entree: EntreeGouvernance): FormGouvernance {
+function versFormulaire(config: {
+  responsableUtilisateurId: string | null;
+  titreResponsable: string;
+  bioResponsable: string;
+  badgeDirection1: { valeur: string; libelle: string };
+  badgeDirection2: { valeur: string; libelle: string };
+  badgeDirection3: { valeur: string; libelle: string };
+  services: ServiceConfig[];
+}): FormGouvernance {
   return {
-    id: entree.id,
-    prenom: entree.prenom,
-    nom: entree.nom,
-    specialite: entree.specialite,
-    bio: entree.bio ?? "",
-    photoUrl: entree.photoUrl ?? "",
-    horaires: entree.horaires ?? "",
-    telephone: entree.telephone ?? "",
-    email: entree.email ?? "",
-    salleId: entree.salleId ?? "",
-    categorie: entree.categorie,
-    masquerContactsPublic: entree.masquerContactsPublic,
-    badgeValeur1: entree.badgeValeur1 ?? "",
-    badgeLibelle1: entree.badgeLibelle1 ?? "",
-    badgeValeur2: entree.badgeValeur2 ?? "",
-    badgeLibelle2: entree.badgeLibelle2 ?? "",
-    badgeValeur3: entree.badgeValeur3 ?? "",
-    badgeLibelle3: entree.badgeLibelle3 ?? "",
-    ordre: entree.ordre,
-    actif: entree.actif,
+    responsableUtilisateurId: config.responsableUtilisateurId ?? "",
+    titreResponsable: config.titreResponsable,
+    bioResponsable: config.bioResponsable,
+    badgeDirection1Valeur: config.badgeDirection1.valeur,
+    badgeDirection1Libelle: config.badgeDirection1.libelle,
+    badgeDirection2Valeur: config.badgeDirection2.valeur,
+    badgeDirection2Libelle: config.badgeDirection2.libelle,
+    badgeDirection3Valeur: config.badgeDirection3.valeur,
+    badgeDirection3Libelle: config.badgeDirection3.libelle,
+    services: config.services,
   };
 }
 
@@ -134,15 +103,13 @@ export function ContenuGouvernanceAdmin({
 }: {
   utilisateur: UtilisateurAdmin;
 }) {
-  const [entrees, setEntrees] = useState<EntreeGouvernance[]>([]);
   const [salles, setSalles] = useState<SalleOption[]>([]);
-  const [filtre, setFiltre] = useState<string>("TOUS");
+  const [responsables, setResponsables] = useState<ResponsableOption[]>([]);
   const [form, setForm] = useState<FormGouvernance>(formVide());
   const [erreur, setErreur] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [chargement, setChargement] = useState(true);
   const [enCours, setEnCours] = useState(false);
-  const [uploadEnCours, setUploadEnCours] = useState(false);
 
   const charger = useCallback(async () => {
     setChargement(true);
@@ -150,13 +117,41 @@ export function ContenuGouvernanceAdmin({
     try {
       const res = await fetch("/api/admin/gouvernance");
       const data = (await res.json()) as {
-        entrees?: EntreeGouvernance[];
+        config?: {
+          responsableUtilisateurId: string | null;
+          titreResponsable: string;
+          bioResponsable: string;
+          badgeDirection1: { valeur: string; libelle: string };
+          badgeDirection2: { valeur: string; libelle: string };
+          badgeDirection3: { valeur: string; libelle: string };
+          services: ServiceConfig[];
+        };
         salles?: SalleOption[];
+        responsables?: ResponsableOption[];
         message?: string;
       };
       if (!res.ok) throw new Error(data.message ?? "Chargement impossible.");
-      setEntrees(data.entrees ?? []);
-      setSalles(data.salles ?? []);
+      const sallesRecues = data.salles ?? [];
+      const services = data.config?.services?.length
+        ? data.config.services
+        : sallesRecues.map((salle, index) => ({
+            salleCode: salle.code,
+            visible: salle.code !== "ADMIN" && salle.code !== "CLIENT" && salle.code !== "MESSAGERIE",
+            ordre: salle.ordre ?? index,
+          }));
+      setSalles(sallesRecues);
+      setResponsables(data.responsables ?? []);
+      setForm(
+        versFormulaire(
+          data.config ?? {
+            ...formVide(),
+            badgeDirection1: { valeur: "HAM", libelle: "Direction" },
+            badgeDirection2: { valeur: "ISO", libelle: "Qualite" },
+            badgeDirection3: { valeur: "RDC", libelle: "Kinshasa" },
+            services,
+          }
+        )
+      );
     } catch (e: unknown) {
       setErreur(e instanceof Error ? e.message : "Chargement impossible.");
     } finally {
@@ -168,41 +163,8 @@ export function ContenuGouvernanceAdmin({
     void charger();
   }, [charger]);
 
-  const listeFiltree = useMemo(() => {
-    if (filtre === "TOUS") return entrees;
-    return entrees.filter((entree) => entree.categorie === filtre);
-  }, [entrees, filtre]);
-
   const maj = <K extends keyof FormGouvernance>(cle: K, valeur: FormGouvernance[K]) =>
     setForm((prev) => ({ ...prev, [cle]: valeur }));
-
-  const nouvelleEntree = () => {
-    setForm(formVide());
-    setErreur(null);
-    setMessage(null);
-  };
-
-  const televerserPhoto = async (fichier: File) => {
-    setUploadEnCours(true);
-    setErreur(null);
-    try {
-      const fd = new FormData();
-      fd.append("photo", fichier);
-      const res = await fetch("/api/admin/gouvernance/upload", {
-        method: "POST",
-        body: fd,
-      });
-      const data = (await res.json()) as { photoUrl?: string; message?: string };
-      if (!res.ok || !data.photoUrl) {
-        throw new Error(data.message ?? "Upload impossible.");
-      }
-      maj("photoUrl", data.photoUrl);
-    } catch (e: unknown) {
-      setErreur(e instanceof Error ? e.message : "Upload impossible.");
-    } finally {
-      setUploadEnCours(false);
-    }
-  };
 
   const enregistrer = async () => {
     setEnCours(true);
@@ -210,31 +172,16 @@ export function ContenuGouvernanceAdmin({
     setMessage(null);
     try {
       const res = await fetch(
-        form.id ? `/api/admin/gouvernance/${form.id}` : "/api/admin/gouvernance",
+        "/api/admin/gouvernance",
         {
-          method: form.id ? "PUT" : "POST",
+          method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...form,
-            bio: form.bio || null,
-            photoUrl: form.photoUrl || null,
-            horaires: form.horaires || null,
-            telephone: form.telephone || null,
-            email: form.email || null,
-            salleId: form.salleId || null,
-            badgeValeur1: form.badgeValeur1 || null,
-            badgeLibelle1: form.badgeLibelle1 || null,
-            badgeValeur2: form.badgeValeur2 || null,
-            badgeLibelle2: form.badgeLibelle2 || null,
-            badgeValeur3: form.badgeValeur3 || null,
-            badgeLibelle3: form.badgeLibelle3 || null,
-          }),
+          body: JSON.stringify(form),
         }
       );
       const data = (await res.json()) as { message?: string };
       if (!res.ok) throw new Error(data.message ?? "Enregistrement impossible.");
-      setMessage(form.id ? "Entrée mise à jour." : "Entrée ajoutée.");
-      setForm(formVide());
+      setMessage(data.message ?? "Gouvernance publique mise a jour.");
       await charger();
     } catch (e: unknown) {
       setErreur(e instanceof Error ? e.message : "Enregistrement impossible.");
@@ -243,31 +190,19 @@ export function ContenuGouvernanceAdmin({
     }
   };
 
-  const supprimer = async (id: string) => {
-    if (!window.confirm("Supprimer cette entrée de gouvernance ?")) return;
-    setEnCours(true);
-    setErreur(null);
-    setMessage(null);
-    try {
-      const res = await fetch(`/api/admin/gouvernance/${id}`, { method: "DELETE" });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) throw new Error(data.message ?? "Suppression impossible.");
-      if (form.id === id) setForm(formVide());
-      setMessage("Entrée supprimée.");
-      await charger();
-    } catch (e: unknown) {
-      setErreur(e instanceof Error ? e.message : "Suppression impossible.");
-    } finally {
-      setEnCours(false);
-    }
-  };
+  const responsableActif = useMemo(
+    () => responsables.find((item) => item.id === form.responsableUtilisateurId) ?? null,
+    [responsables, form.responsableUtilisateurId]
+  );
 
-  const salleLabel = (entree: EntreeGouvernance) =>
-    entree.salle?.nom ??
-    CATEGORIES.find((item) => item.value === entree.categorie)?.label ??
-    entree.categorie;
-
-  const estResponsable = form.categorie === "RESPONSABLE_LABO";
+  const servicesTries = useMemo(
+    () =>
+      [...form.services].sort((a, b) => a.ordre - b.ordre).map((service) => ({
+        ...service,
+        salle: salles.find((salle) => salle.code === service.salleCode) ?? null,
+      })),
+    [form.services, salles]
+  );
 
   return (
     <MiseEnPageAdmin
@@ -286,34 +221,11 @@ export function ContenuGouvernanceAdmin({
           ]}
         />
 
-        <div className="mt-4 flex flex-wrap gap-2 rounded-xl border border-gris-bordure bg-white p-2 shadow-sm">
-          <button
-            type="button"
-            onClick={() => setFiltre("TOUS")}
-            className={cn(
-              "rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:text-sm",
-              filtre === "TOUS"
-                ? "bg-[#2d2a6e] text-white"
-                : "text-texte-secondaire hover:bg-gris-tres-clair"
-            )}
-          >
-            Tous
-          </button>
-          {CATEGORIES.map((categorie) => (
-            <button
-              key={categorie.value}
-              type="button"
-              onClick={() => setFiltre(categorie.value)}
-              className={cn(
-                "rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:text-sm",
-                filtre === categorie.value
-                  ? "bg-bleu-medical text-white"
-                  : "text-texte-secondaire hover:bg-gris-tres-clair"
-              )}
-            >
-              {categorie.label}
-            </button>
-          ))}
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Les cartes publiques de l&apos;equipe interne suivent automatiquement les comptes crees
+          dans leurs salles. Cette page sert a choisir le <strong>SUPER_ADMIN</strong>{" "}
+          responsable et a decider quels services apparaissent sur la page{" "}
+          <strong>A propos</strong>.
         </div>
 
         {message ? (
@@ -332,92 +244,114 @@ export function ContenuGouvernanceAdmin({
             <div className="flex items-center justify-between border-b border-gris-bordure px-4 py-3">
               <div>
                 <h2 className="text-sm font-bold text-[#2d2a6e]">
-                  Entrées publiées
+                  Apercu public
                 </h2>
                 <p className="text-xs text-texte-secondaire">
-                  Responsable unique, médecins, personnel, externes et service Église.
+                  Responsable unique et services affiches dans la page A propos.
                 </p>
               </div>
-              <Bouton taille="petit" onClick={nouvelleEntree}>
-                Nouvelle entrée
-              </Bouton>
+              <span className="rounded-full bg-bleu-medical/10 px-2.5 py-1 text-xs font-semibold text-bleu-medical">
+                {servicesTries.filter((service) => service.visible).length} service(s) visible(s)
+              </span>
             </div>
 
-            <div className="p-4">
+            <div className="space-y-4 p-4">
               {chargement ? (
                 <p className="flex items-center gap-2 text-sm text-texte-secondaire">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Chargement...
                 </p>
-              ) : listeFiltree.length === 0 ? (
-                <p className="text-sm text-texte-secondaire">
-                  Aucune entrée pour ce filtre.
-                </p>
               ) : (
-                <div className="space-y-3">
-                  {listeFiltree.map((entree) => (
-                    <div
-                      key={entree.id}
-                      className="flex gap-3 rounded-xl border border-gris-bordure p-3"
-                    >
-                      <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gris-tres-clair">
-                        {entree.photoUrl ? (
+                <>
+                  <div className="rounded-2xl border border-gris-bordure bg-gris-tres-clair/50 p-4">
+                    <p className="text-xs font-bold uppercase tracking-wide text-bleu-medical">
+                      Notre direction
+                    </p>
+                    <div className="mt-3 flex gap-3">
+                      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white">
+                        {responsableActif?.photoUrl ? (
                           <ImageVitrine
-                            src={entree.photoUrl}
+                            src={responsableActif.photoUrl}
                             alt=""
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <Building2 className="h-6 w-6 text-texte-secondaire" />
+                          <ShieldCheck className="h-8 w-8 text-bleu-medical" />
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <div>
-                            <p className="font-semibold text-texte-principal">
-                              {entree.prenom} {entree.nom}
+                        <p className="font-semibold text-texte-principal">
+                          {responsableActif
+                            ? `${responsableActif.prenom} ${responsableActif.nom}`
+                            : "Aucun responsable selectionne"}
+                        </p>
+                        <p className="text-sm text-bleu-medical">
+                          {form.titreResponsable || "Directeur general"}
+                        </p>
+                        <p className="mt-2 line-clamp-4 text-xs text-texte-secondaire">
+                          {form.bioResponsable}
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {[
+                            [form.badgeDirection1Valeur, form.badgeDirection1Libelle],
+                            [form.badgeDirection2Valeur, form.badgeDirection2Libelle],
+                            [form.badgeDirection3Valeur, form.badgeDirection3Libelle],
+                          ].map(([valeur, libelle]) => (
+                            <span
+                              key={`${valeur}-${libelle}`}
+                              className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-bleu-medical shadow-sm"
+                            >
+                              {valeur} · {libelle}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-gris-bordure p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold text-[#2d2a6e]">Notre equipe</h3>
+                        <p className="text-xs text-texte-secondaire">
+                          Les agents internes proviennent automatiquement des comptes utilises dans chaque salle.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {servicesTries.map((service) => (
+                        <div
+                          key={service.salleCode}
+                          className="flex items-center justify-between rounded-xl border border-gris-bordure px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="font-medium text-texte-principal">
+                              {service.salle?.nom ?? service.salleCode}
                             </p>
-                            <p className="text-sm text-bleu-medical">{entree.specialite}</p>
                             <p className="text-xs text-texte-secondaire">
-                              {salleLabel(entree)}
+                              Code {service.salleCode} · ordre {service.ordre}
                             </p>
                           </div>
                           <span
                             className={cn(
-                              "rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                              entree.actif
+                              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                              service.visible
                                 ? "bg-emerald-50 text-emerald-700"
                                 : "bg-slate-100 text-slate-700"
                             )}
                           >
-                            {entree.actif ? "Actif" : "Inactif"}
+                            {service.visible ? (
+                              <Eye className="h-3.5 w-3.5" />
+                            ) : (
+                              <EyeOff className="h-3.5 w-3.5" />
+                            )}
+                            {service.visible ? "Visible" : "Masque"}
                           </span>
                         </div>
-                        <div className="mt-3 flex gap-2">
-                          <Bouton
-                            variante="contour"
-                            taille="petit"
-                            onClick={() => {
-                              setForm(versFormulaire(entree));
-                              setMessage(null);
-                              setErreur(null);
-                            }}
-                          >
-                            Modifier
-                          </Bouton>
-                          <Bouton
-                            variante="danger"
-                            taille="petit"
-                            onClick={() => void supprimer(entree.id)}
-                            disabled={enCours}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Bouton>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -425,190 +359,69 @@ export function ContenuGouvernanceAdmin({
           <div className="rounded-xl border border-gris-bordure bg-white shadow-sm">
             <div className="border-b border-gris-bordure px-4 py-3">
               <h2 className="text-sm font-bold text-[#2d2a6e]">
-                {form.id ? "Modifier l’entrée" : "Nouvelle entrée"}
+                Parametres de gouvernance
               </h2>
               <p className="text-xs text-texte-secondaire">
-                Associez chaque agent à sa salle pour l’affichage public par service.
+                Selection du responsable public et des services affiches.
               </p>
             </div>
 
             <div className="space-y-4 p-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>Prénom</label>
-                  <input
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.prenom}
-                    onChange={(e) => maj("prenom", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>Nom</label>
-                  <input
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.nom}
-                    onChange={(e) => maj("nom", e.target.value)}
-                  />
-                </div>
+              <div>
+                <label className={CLASSE_LABEL_RECEPTION}>Responsable principal</label>
+                <select
+                  className={CLASSE_CHAMP_RECEPTION}
+                  value={form.responsableUtilisateurId}
+                  onChange={(e) => maj("responsableUtilisateurId", e.target.value)}
+                >
+                  <option value="">Choisir un SUPER_ADMIN</option>
+                  {responsables.map((responsable) => (
+                    <option key={responsable.id} value={responsable.id}>
+                      {responsable.prenom} {responsable.nom}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>Fonction / spécialité</label>
-                  <input
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.specialite}
-                    onChange={(e) => maj("specialite", e.target.value)}
-                  />
+              {responsableActif ? (
+                <div className="rounded-xl border border-gris-bordure bg-gris-tres-clair/70 p-3 text-sm text-texte-secondaire">
+                  <p className="font-semibold text-texte-principal">
+                    {responsableActif.prenom} {responsableActif.nom}
+                  </p>
+                  <p>{responsableActif.email ?? "Aucun e-mail"}</p>
+                  <p>{responsableActif.telephone ?? "Aucun telephone"}</p>
                 </div>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>Catégorie</label>
-                  <select
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.categorie}
-                    onChange={(e) => maj("categorie", e.target.value)}
-                  >
-                    {CATEGORIES.map((categorie) => (
-                      <option key={categorie.value} value={categorie.value}>
-                        {categorie.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>Salle / service</label>
-                  <select
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.salleId}
-                    onChange={(e) => maj("salleId", e.target.value)}
-                  >
-                    <option value="">Choisir une salle</option>
-                    {salles.map((salle) => (
-                      <option key={salle.id} value={salle.id}>
-                        {salle.nom}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>Ordre</label>
-                  <input
-                    type="number"
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.ordre}
-                    onChange={(e) => maj("ordre", Number(e.target.value))}
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>Téléphone</label>
-                  <input
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.telephone}
-                    onChange={(e) => maj("telephone", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className={CLASSE_LABEL_RECEPTION}>E-mail</label>
-                  <input
-                    type="email"
-                    className={CLASSE_CHAMP_RECEPTION}
-                    value={form.email}
-                    onChange={(e) => maj("email", e.target.value)}
-                  />
-                </div>
-              </div>
+              ) : null}
 
               <div>
-                <label className={CLASSE_LABEL_RECEPTION}>Horaires / texte court</label>
+                <label className={CLASSE_LABEL_RECEPTION}>Titre public du responsable</label>
                 <input
                   className={CLASSE_CHAMP_RECEPTION}
-                  value={form.horaires}
-                  onChange={(e) => maj("horaires", e.target.value)}
+                  value={form.titreResponsable}
+                  onChange={(e) => maj("titreResponsable", e.target.value)}
                 />
               </div>
 
               <div>
-                <label className={CLASSE_LABEL_RECEPTION}>Biographie</label>
+                <label className={CLASSE_LABEL_RECEPTION}>Biographie publique</label>
                 <textarea
                   className={CLASSE_CHAMP_RECEPTION}
                   rows={4}
-                  value={form.bio}
-                  onChange={(e) => maj("bio", e.target.value)}
+                  value={form.bioResponsable}
+                  onChange={(e) => maj("bioResponsable", e.target.value)}
                 />
-              </div>
-
-              <div>
-                <label className={CLASSE_LABEL_RECEPTION}>Photo</label>
-                <div className="mt-1 flex flex-col gap-3 sm:flex-row">
-                  <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-xl border border-dashed border-gris-bordure bg-gris-tres-clair">
-                    {form.photoUrl ? (
-                      <ImageVitrine
-                        src={form.photoUrl}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="px-2 text-center text-xs text-texte-secondaire">
-                        Aucune photo
-                      </span>
-                    )}
-                    {uploadEnCours ? (
-                      <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-                        <Loader2 className="h-6 w-6 animate-spin text-bleu-medical" />
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="space-y-2">
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-bleu-medical px-3 py-2 text-sm font-semibold text-white hover:bg-bleu-medical-fonce">
-                      <ImagePlus className="h-4 w-4" />
-                      Choisir une photo
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        className="sr-only"
-                        disabled={uploadEnCours}
-                        onChange={(e) => {
-                          const fichier = e.target.files?.[0];
-                          e.target.value = "";
-                          if (fichier) void televerserPhoto(fichier);
-                        }}
-                      />
-                    </label>
-                    {form.photoUrl ? (
-                      <Bouton
-                        type="button"
-                        variante="contour"
-                        taille="petit"
-                        onClick={() => maj("photoUrl", "")}
-                      >
-                        Retirer la photo
-                      </Bouton>
-                    ) : null}
-                  </div>
-                </div>
               </div>
 
               <div className="space-y-3 rounded-xl border border-gris-bordure bg-gris-tres-clair/70 p-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-bold text-[#2d2a6e]">
-                      Badges du responsable
+                      Badges de la carte direction
                     </h3>
                     <p className="text-xs text-texte-secondaire">
                       Utilises dans la carte &quot;Notre direction&quot;.
                     </p>
                   </div>
-                  {estResponsable ? (
-                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-800">
-                      Responsable
-                    </span>
-                  ) : null}
                 </div>
 
                 {BADGES.map((badge) => (
@@ -633,33 +446,75 @@ export function ContenuGouvernanceAdmin({
                 ))}
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-2">
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={form.actif}
-                    onChange={(e) => maj("actif", e.target.checked)}
-                  />
-                  Visible
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={form.masquerContactsPublic}
-                    onChange={(e) => maj("masquerContactsPublic", e.target.checked)}
-                  />
-                  Masquer téléphone et e-mail sur le site
-                </label>
+              <div className="space-y-3 rounded-xl border border-gris-bordure bg-white p-3">
+                <div>
+                  <h3 className="text-sm font-bold text-[#2d2a6e]">
+                    Services visibles dans &quot;Notre equipe&quot;
+                  </h3>
+                  <p className="text-xs text-texte-secondaire">
+                    Le service ADMIN n&apos;est pas expose publiquement. Les comptes externes et Eglise
+                    restent limites a prenom, nom et specialite.
+                  </p>
+                </div>
+                {servicesTries.map((service) => (
+                  <div
+                    key={service.salleCode}
+                    className="grid gap-3 rounded-xl border border-gris-bordure p-3 sm:grid-cols-[1fr_100px]"
+                  >
+                    <label className="flex items-start gap-3 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={service.visible}
+                        onChange={(e) =>
+                          maj(
+                            "services",
+                            form.services.map((item) =>
+                              item.salleCode === service.salleCode
+                                ? { ...item, visible: e.target.checked }
+                                : item
+                            )
+                          )
+                        }
+                      />
+                      <span>
+                        <span className="block font-medium text-texte-principal">
+                          {service.salle?.nom ?? service.salleCode}
+                        </span>
+                        <span className="block text-xs text-texte-secondaire">
+                          {service.salleCode}
+                        </span>
+                      </span>
+                    </label>
+                    <div>
+                      <label className={CLASSE_LABEL_RECEPTION}>Ordre</label>
+                      <input
+                        type="number"
+                        className={CLASSE_CHAMP_RECEPTION}
+                        value={service.ordre}
+                        onChange={(e) =>
+                          maj(
+                            "services",
+                            form.services.map((item) =>
+                              item.salleCode === service.salleCode
+                                ? { ...item, ordre: Number(e.target.value) || 0 }
+                                : item
+                            )
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="flex flex-wrap justify-end gap-2 border-t border-gris-bordure pt-3">
                 <Bouton
                   type="button"
                   variante="contour"
-                  onClick={nouvelleEntree}
+                  onClick={() => setForm(formVide())}
                   disabled={enCours}
                 >
-                  Réinitialiser
+                  Reinitialiser
                 </Bouton>
                 <Bouton type="button" onClick={() => void enregistrer()} disabled={enCours}>
                   {enCours ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}

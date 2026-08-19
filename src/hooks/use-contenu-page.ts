@@ -516,29 +516,37 @@ export function useContenuAPropos() {
   const pages = usePages();
   const aPropos = pages.aPropos;
   const { data: stats } = useStatistiquesVitrine();
-  const { data: medecinsDb } = useQuery({
-    queryKey: ["public", "medecins-vitrine"],
+  const { data: gouvernanceDb } = useQuery({
+    queryKey: ["public", "gouvernance"],
     queryFn: async () => {
-      const res = await fetch("/api/public/medecins-vitrine");
+      const res = await fetch("/api/public/gouvernance");
       if (!res.ok) return null;
       const data = (await res.json()) as {
-        medecins?: {
+        responsable?: {
           id: string;
           nom: string;
-          prenom: string;
-          specialite: string;
-          bio?: string;
+          fonction: string;
           photoUrl?: string;
-          telephone?: string;
-          email?: string;
-          horaires?: string;
-          categorie?: string;
-          salle?: { id: string; code: string; nom: string };
-          masquerContactsPublic?: boolean;
+          biographie?: string;
           badges?: { valeur: string; libelle: string }[];
+        } | null;
+        services?: {
+          salle: { id: string; code: string; nom: string; ordre: number };
+          membres: {
+            id: string;
+            nom: string;
+            fonction: string;
+            photoUrl: string;
+            telephone?: string;
+            email?: string;
+            bio?: string;
+            categorie: string;
+            masquerContactsPublic: boolean;
+            ordre: number;
+          }[];
         }[];
       };
-      return data.medecins ?? null;
+      return data;
     },
     staleTime: 60_000,
   });
@@ -592,21 +600,24 @@ export function useContenuAPropos() {
     const cms = normaliserContenuAPropos(pageDb, fallbackCms);
 
     const membresBruts =
-      medecinsDb && medecinsDb.length > 0
-        ? medecinsDb.map((m) => ({
-            id: m.id,
-            nom: `${m.prenom} ${m.nom}`.trim(),
-            fonction: m.specialite,
-            photoUrl: m.photoUrl ?? "/images/equipe/personnel-1.png",
-            bio: m.bio,
-            telephone: m.telephone,
-            email: m.email,
-            horaires: m.horaires,
-            categorie: m.categorie ?? "MEDECIN",
-            salle: m.salle,
-            masquerContactsPublic: m.masquerContactsPublic ?? false,
-            badges: m.badges ?? [],
-          }))
+      gouvernanceDb?.services && gouvernanceDb.services.length > 0
+        ? gouvernanceDb.services.flatMap((service) =>
+            service.membres.map((membre) => ({
+              id: membre.id,
+              nom: membre.nom,
+              fonction: membre.fonction,
+              photoUrl: membre.photoUrl ?? "/images/equipe/personnel-1.png",
+              bio: membre.bio,
+              telephone: membre.telephone,
+              email: membre.email,
+              horaires: undefined as string | undefined,
+              categorie: membre.categorie ?? "MEDECIN",
+              salle: service.salle,
+              masquerContactsPublic: membre.masquerContactsPublic ?? false,
+              badges: [],
+              ordre: membre.ordre ?? service.salle.ordre ?? 0,
+            }))
+          )
         : CONTENU_A_PROPOS.equipe.membres.map((membre, index) => ({
             id: membre.id,
             nom: aPropos.equipe.membres[index]?.nom ?? membre.nom,
@@ -621,16 +632,11 @@ export function useContenuAPropos() {
             salle: undefined,
             masquerContactsPublic: false,
             badges: [],
+            ordre: index,
           }));
 
-    const responsables = membresBruts.filter(
-      (m) => m.categorie === "RESPONSABLE_LABO"
-    );
-    const equipeSansDirection = membresBruts.filter(
-      (m) => m.categorie !== "RESPONSABLE_LABO"
-    );
-
-    const responsableCms = responsables[0];
+    const equipeSansDirection = membresBruts.filter((m) => m.categorie !== "ADMIN");
+    const responsableCms = gouvernanceDb?.responsable ?? null;
 
     return {
       hero: cms.hero,
@@ -642,17 +648,12 @@ export function useContenuAPropos() {
         titre: aPropos.direction.titre,
         sousTitre: aPropos.direction.sousTitre,
         responsable: {
-          nom:
-            responsableCms?.nom ?? aPropos.direction.responsable.nom,
-          fonction:
-            responsableCms?.fonction ??
-            aPropos.direction.responsable.fonction,
+          nom: responsableCms?.nom ?? aPropos.direction.responsable.nom,
+          fonction: responsableCms?.fonction ?? aPropos.direction.responsable.fonction,
           biographie:
-            responsableCms?.bio ??
-            aPropos.direction.responsable.biographie,
+            responsableCms?.biographie ?? aPropos.direction.responsable.biographie,
           photoUrl:
-            responsableCms?.photoUrl ??
-            CONTENU_A_PROPOS.direction.responsable.photoUrl,
+            responsableCms?.photoUrl ?? CONTENU_A_PROPOS.direction.responsable.photoUrl,
           badges:
             responsableCms?.badges && responsableCms.badges.length > 0
               ? responsableCms.badges
@@ -714,7 +715,7 @@ export function useContenuAPropos() {
         telephone: CONTENU_A_PROPOS.cta.telephone,
       },
     };
-  }, [aPropos, medecinsDb, pageDb, stats]);
+  }, [aPropos, gouvernanceDb, pageDb, stats]);
 }
 
 export function useContenuServicesLaboratoire() {

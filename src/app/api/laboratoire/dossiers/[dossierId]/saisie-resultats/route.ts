@@ -3,7 +3,7 @@ import { obtenirSessionApiLaboratoire } from "@/lib/auth/garde-api-laboratoire";
 import { chargerSaisieResultats } from "@/lib/laboratoire/saisie-resultats";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ dossierId: string }> }
 ) {
   const session = await obtenirSessionApiLaboratoire();
@@ -16,8 +16,11 @@ export async function GET(
     return NextResponse.json({ erreur: "dossierId requis." }, { status: 400 });
   }
 
+  const url = new URL(request.url);
+  const inclureRejetes = url.searchParams.get("inclureRejetes") === "1";
+
   try {
-    const saisie = await chargerSaisieResultats(dossierId.trim());
+    const saisie = await chargerSaisieResultats(dossierId.trim(), { inclureRejetes });
     if (!saisie) {
       return NextResponse.json({ erreur: "Dossier introuvable." }, { status: 404 });
     }

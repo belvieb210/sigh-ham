@@ -83,14 +83,15 @@ function mapperParametres(
 }
 
 export async function chargerSaisieResultats(
-  dossierId: string
+  dossierId: string,
+  options?: { inclureRejetes?: boolean }
 ): Promise<SaisieResultatsDto | null> {
   const dossier = await prisma.dossierPatient.findUnique({
     where: { id: dossierId },
     include: {
       patient: true,
       examensLaboratoire: {
-        where: { statut: { not: "ANNULE" } },
+        where: options?.inclureRejetes ? undefined : { statut: { not: "ANNULE" } },
         orderBy: { createdAt: "asc" },
         include: {
           typeExamen: {
@@ -169,6 +170,24 @@ export async function enregistrerResultatsExamen(
   });
 
   if (!examen) throw new Error("Examen introuvable.");
+
+  if (action === "restaurer") {
+    if (examen.statut !== "ANNULE") {
+      throw new Error("Seul un examen rejeté peut être restauré.");
+    }
+    await restaurerExamenRejete(examenId, technicienId, examen.notes);
+    await evaluerClotureApresAction(examen.dossierId);
+    return;
+  }
+
+  if (action === "supprimer") {
+    if (examen.statut !== "ANNULE") {
+      throw new Error("Seul un examen rejeté peut être supprimé.");
+    }
+    await supprimerExamenRejete(examenId);
+    await evaluerClotureApresAction(examen.dossierId);
+    return;
+  }
 
   const idsValides = new Set(examen.typeExamen.parametres.map((p) => p.id));
   const catalogue = new Map(examen.typeExamen.parametres.map((p) => [p.id, p]));
@@ -297,11 +316,39 @@ export async function enregistrerResultatsExamen(
   });
 
   if (action === "verifier" || action === "approuver" || action === "rejeter") {
-    const { evaluerEtCloturerVisite } = await import(
-      "@/lib/visites/evaluer-cloture-visite"
-    );
-    await evaluerEtCloturerVisite(examen.dossierId);
+    await evaluerClotureApresAction(examen.dossierId);
   }
+}
+
+async function evaluerClotureApresAction(dossierId: string) {
+  const { evaluerEtCloturerVisite } = await import(
+    "@/lib/visites/evaluer-cloture-visite"
+  );
+  await evaluerEtCloturerVisite(dossierId);
+}
+
+async function restaurerExamenRejete(
+  examenId: string,
+  technicienId: string,
+  notesActuelles: string | null
+) {
+  const remarqueBase = extraireRemarqueSansOrientation(notesActuelles) || null;
+  const pieces = lirePiecesJointesDepuisNotes(notesActuelles);
+  const notesAvecPj = ecrirePiecesJointesDansNotes(remarqueBase, pieces);
+  const notes = ecrireOrientationAnalyseDansNotes(notesAvecPj, "VERIFIES");
+
+  await prisma.examenLaboratoire.update({
+    where: { id: examenId },
+    data: {
+      statut: "TERMINE",
+      notes,
+      technicienId,
+    },
+  });
+}
+
+async function supprimerExamenRejete(examenId: string) {
+  await prisma.examenLaboratoire.delete({ where: { id: examenId } });
 }
 
 function statutEtOrientationPourAction(

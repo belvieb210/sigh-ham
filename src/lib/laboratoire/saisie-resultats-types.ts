@@ -7,7 +7,9 @@ export type ActionEnregistrementResultat =
   | "brouillon"
   | "verifier"
   | "rejeter"
-  | "approuver";
+  | "approuver"
+  | "restaurer"
+  | "supprimer";
 
 export interface ParametreSaisieDto {
   id: string;

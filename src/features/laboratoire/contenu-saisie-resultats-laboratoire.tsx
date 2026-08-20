@@ -123,8 +123,9 @@ export function ContenuSaisieResultatsLaboratoire({
       }
       setErreur(null);
       try {
+        const inclureRejetes = statutFiltreUrl === "REJETES" ? "1" : "0";
         const res = await fetch(
-          `/api/laboratoire/dossiers/${encodeURIComponent(dossierId)}/saisie-resultats`
+          `/api/laboratoire/dossiers/${encodeURIComponent(dossierId)}/saisie-resultats?inclureRejetes=${inclureRejetes}`
         );
         const data = (await res.json()) as {
           saisie?: SaisieResultatsDto;
@@ -169,7 +170,7 @@ export function ContenuSaisieResultatsLaboratoire({
         }
       }
     },
-    [dossierId, t]
+    [dossierId, t, statutFiltreUrl]
   );
 
   const charger = useCallback(async () => {
@@ -538,6 +539,19 @@ export function ContenuSaisieResultatsLaboratoire({
                       onApprouver={() =>
                         void envoyer({ action: "approuver", passerSuivant: true })
                       }
+                      onRestaurer={() =>
+                        void envoyer({ action: "restaurer", passerSuivant: true })
+                      }
+                      onSupprimer={() => {
+                        if (
+                          !window.confirm(
+                            t("laboratoire.saisieResultats.confirmerSuppressionExamen")
+                          )
+                        ) {
+                          return;
+                        }
+                        void envoyer({ action: "supprimer", passerSuivant: true });
+                      }}
                       lienHistorique={construireLienHistorique(ex.id)}
                     />
                   )}

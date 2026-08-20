@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { lireParametre, upsertParametres } from "@/lib/admin/parametres";
+import { nomAffichageGouvernance } from "@/lib/admin/nom-affichage-gouvernance";
 import type { CodeSalle } from "@/generated/prisma/client";
 
 const CLE_GOUVERNANCE_PUBLIQUE = "site.gouvernancePublique";
@@ -327,7 +328,7 @@ export async function chargerGouvernancePubliquePourSite() {
     responsable: responsable
       ? {
           id: responsable.id,
-          nom: `${responsable.prenom} ${responsable.nom}`.trim(),
+          nom: nomAffichageGouvernance(responsable.prenom, responsable.nom),
           fonction: config.titreResponsable || "Directeur général",
           photoUrl: responsable.photoUrl ?? photoParDefaut(),
           telephone: responsable.telephone ?? undefined,

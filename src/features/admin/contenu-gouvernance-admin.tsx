@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Eye, EyeOff, Loader2, Save, Shield, ShieldCheck } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
-import { ImageVitrine } from "@/components/ui/image-vitrine";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import {
   MiseEnPageAdmin,
   type UtilisateurAdmin,
 } from "@/features/admin/mise-en-page-admin";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
+import { ZonePhotoPatient } from "@/features/reception/zone-photo-patient";
+import { nomAffichageGouvernance } from "@/lib/admin/nom-affichage-gouvernance";
 import { cn } from "@/lib/utils";
 
 type SalleOption = {
@@ -110,6 +111,9 @@ export function ContenuGouvernanceAdmin({
   const [message, setMessage] = useState<string | null>(null);
   const [chargement, setChargement] = useState(true);
   const [enCours, setEnCours] = useState(false);
+  const [photoResponsable, setPhotoResponsable] = useState<File | null>(null);
+  const [erreurPhoto, setErreurPhoto] = useState<string | null>(null);
+  const [uploadPhotoEnCours, setUploadPhotoEnCours] = useState(false);
 
   const charger = useCallback(async () => {
     setChargement(true);
@@ -195,6 +199,28 @@ export function ContenuGouvernanceAdmin({
     [responsables, form.responsableUtilisateurId]
   );
 
+  const televerserPhotoResponsable = async (fichier: File) => {
+    if (!responsableActif) return;
+    setUploadPhotoEnCours(true);
+    setErreurPhoto(null);
+    try {
+      const fd = new FormData();
+      fd.append("photo", fichier);
+      const res = await fetch(
+        `/api/admin/utilisateurs/${encodeURIComponent(responsableActif.id)}/photo`,
+        { method: "POST", body: fd }
+      );
+      const data = (await res.json()) as { message?: string };
+      if (!res.ok) throw new Error(data.message ?? "Televersement impossible.");
+      setPhotoResponsable(null);
+      await charger();
+    } catch (e: unknown) {
+      setErreurPhoto(e instanceof Error ? e.message : "Televersement impossible.");
+    } finally {
+      setUploadPhotoEnCours(false);
+    }
+  };
+
   const servicesTries = useMemo(
     () =>
       [...form.services].sort((a, b) => a.ordre - b.ordre).map((service) => ({
@@ -268,21 +294,40 @@ export function ContenuGouvernanceAdmin({
                       Notre direction
                     </p>
                     <div className="mt-3 flex gap-3">
-                      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white">
-                        {responsableActif?.photoUrl ? (
-                          <ImageVitrine
-                            src={responsableActif.photoUrl}
-                            alt=""
-                            className="h-full w-full object-cover"
+                      <div className="w-24 shrink-0">
+                        {responsableActif ? (
+                          <ZonePhotoPatient
+                            className="[&_button]:h-24 [&_button]:text-[10px] [&_button]:leading-tight [&_div.relative]:h-24"
+                            value={photoResponsable}
+                            urlExistante={responsableActif.photoUrl}
+                            onErreur={setErreurPhoto}
+                            onChange={(fichier) => {
+                              setPhotoResponsable(fichier);
+                              if (fichier) void televerserPhotoResponsable(fichier);
+                            }}
                           />
                         ) : (
-                          <ShieldCheck className="h-8 w-8 text-bleu-medical" />
+                          <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white">
+                            <ShieldCheck className="h-8 w-8 text-bleu-medical" />
+                          </div>
                         )}
+                        {uploadPhotoEnCours ? (
+                          <p className="mt-1 flex items-center gap-1 text-[10px] text-texte-secondaire">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Envoi...
+                          </p>
+                        ) : null}
+                        {erreurPhoto ? (
+                          <p className="mt-1 text-[10px] text-red-600">{erreurPhoto}</p>
+                        ) : null}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-texte-principal">
                           {responsableActif
-                            ? `${responsableActif.prenom} ${responsableActif.nom}`
+                            ? nomAffichageGouvernance(
+                                responsableActif.prenom,
+                                responsableActif.nom
+                              )
                             : "Aucun responsable selectionne"}
                         </p>
                         <p className="text-sm text-bleu-medical">
@@ -377,7 +422,7 @@ export function ContenuGouvernanceAdmin({
                   <option value="">Choisir un SUPER_ADMIN</option>
                   {responsables.map((responsable) => (
                     <option key={responsable.id} value={responsable.id}>
-                      {responsable.prenom} {responsable.nom}
+                      {nomAffichageGouvernance(responsable.prenom, responsable.nom)}
                     </option>
                   ))}
                 </select>
@@ -386,7 +431,10 @@ export function ContenuGouvernanceAdmin({
               {responsableActif ? (
                 <div className="rounded-xl border border-gris-bordure bg-gris-tres-clair/70 p-3 text-sm text-texte-secondaire">
                   <p className="font-semibold text-texte-principal">
-                    {responsableActif.prenom} {responsableActif.nom}
+                    {nomAffichageGouvernance(
+                      responsableActif.prenom,
+                      responsableActif.nom
+                    )}
                   </p>
                   <p>{responsableActif.email ?? "Aucun e-mail"}</p>
                   <p>{responsableActif.telephone ?? "Aucun telephone"}</p>

@@ -265,6 +265,8 @@ const STATUT_APRES_ACTION: Record<
   verifier: "VERIFIES",
   rejeter: "REJETES",
   approuver: "DR_APPROUVE",
+  restaurer: "VERIFIES",
+  supprimer: "REJETES",
 };
 
 function resterSurExamen(
@@ -312,7 +314,31 @@ export function determinerNavigationApresSauvegardeResultat(input: {
     verifier: CHEMINS_STATUT_ANALYSE_LABO.VERIFIES,
     rejeter: CHEMINS_STATUT_ANALYSE_LABO.REJETES,
     approuver: CHEMINS_STATUT_ANALYSE_LABO.DR_APPROUVE,
+    restaurer: CHEMINS_STATUT_ANALYSE_LABO.VERIFIES,
+    supprimer: CHEMINS_STATUT_ANALYSE_LABO.REJETES,
   };
+
+  if (input.action === "restaurer") {
+    const restantsRejetes = filtrerExamensSaisieParStatut(input.examens, "REJETES");
+    if (restantsRejetes.length > 0) {
+      return resterSurExamen(restantsRejetes, input, "REJETES");
+    }
+    return {
+      type: "naviguer",
+      chemin: `${CHEMINS_STATUT_ANALYSE_LABO.VERIFIES}?dossier=${encodeURIComponent(input.dossierId)}`,
+    };
+  }
+
+  if (input.action === "supprimer") {
+    const restantsRejetes = filtrerExamensSaisieParStatut(input.examens, "REJETES");
+    if (restantsRejetes.length > 0) {
+      return resterSurExamen(restantsRejetes, input, "REJETES");
+    }
+    return {
+      type: "naviguer",
+      chemin: `${CHEMINS_STATUT_ANALYSE_LABO.REJETES}?dossier=${encodeURIComponent(input.dossierId)}`,
+    };
+  }
 
   if (input.statutOrigine) {
     const restantsOrigine = filtrerExamensSaisieParStatut(

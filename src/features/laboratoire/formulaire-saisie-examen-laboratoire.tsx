@@ -97,6 +97,8 @@ interface PropsFormulaireSaisieExamenLaboratoire {
   onValider: () => void;
   onRejeter?: () => void;
   onApprouver?: () => void;
+  onRestaurer?: () => void;
+  onSupprimer?: () => void;
   /** Lien vers la page d'historique des résultats antérieurs (même type d'examen). */
   lienHistorique?: string;
 }
@@ -241,6 +243,8 @@ export function FormulaireSaisieExamenLaboratoire({
   onValider,
   onRejeter,
   onApprouver,
+  onRestaurer,
+  onSupprimer,
   lienHistorique,
 }: PropsFormulaireSaisieExamenLaboratoire) {
   const { t } = useTranslation();
@@ -256,10 +260,11 @@ export function FormulaireSaisieExamenLaboratoire({
 
   const estVerifieEnAttente =
     examen.statut === "TERMINE" && examen.orientationAnalyse !== "DR_APPROUVE";
+  const estRejete = examen.statut === "ANNULE";
   const estConsultationSeule =
     estVerifieEnAttente ||
     examen.orientationAnalyse === "DR_APPROUVE" ||
-    examen.statut === "ANNULE";
+    estRejete;
   const champsDesactives = estConsultationSeule || sauvegardeEnCours;
 
   useEffect(() => {
@@ -647,7 +652,26 @@ export function FormulaireSaisieExamenLaboratoire({
           >
             {t("laboratoire.saisieResultats.annuler")}
           </button>
-          {estVerifieEnAttente ? (
+          {estRejete ? (
+            <>
+              <button
+                type="button"
+                disabled={sauvegardeEnCours}
+                onClick={onSupprimer}
+                className="inline-flex items-center gap-2 rounded-xl border border-rose-300 px-5 py-2.5 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+              >
+                {t("laboratoire.saisieResultats.supprimerExamen")}
+              </button>
+              <button
+                type="button"
+                disabled={sauvegardeEnCours}
+                onClick={onRestaurer}
+                className="inline-flex items-center gap-2 rounded-xl border border-emerald-300 px-5 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+              >
+                {t("laboratoire.saisieResultats.restaurerExamen")}
+              </button>
+            </>
+          ) : estVerifieEnAttente ? (
             <>
               <button
                 type="button"

@@ -32,19 +32,20 @@ export async function POST(
         mimeType: string;
         taille?: number;
       }[];
-      action?: "brouillon" | "verifier" | "rejeter" | "approuver";
+      action?: "brouillon" | "verifier" | "rejeter" | "approuver" | "restaurer" | "supprimer";
       verifier?: boolean;
     };
-
-    if (!Array.isArray(corps.lignes)) {
-      return NextResponse.json({ erreur: "lignes requises." }, { status: 400 });
-    }
 
     const action =
       corps.action ?? (corps.verifier === true ? "verifier" : "brouillon");
 
+    const actionsSansLignes = action === "restaurer" || action === "supprimer";
+    if (!actionsSansLignes && !Array.isArray(corps.lignes)) {
+      return NextResponse.json({ erreur: "lignes requises." }, { status: 400 });
+    }
+
     await enregistrerResultatsExamen(examenId.trim(), session.utilisateur.id, {
-      lignes: corps.lignes,
+      lignes: corps.lignes ?? [],
       remarque: corps.remarque,
       piecesJointes: corps.piecesJointes,
       action,
@@ -55,6 +56,8 @@ export async function POST(
       verifier: "Résultats vérifiés et enregistrés.",
       rejeter: "Examen rejeté.",
       approuver: "Examen approuvé par le biologiste.",
+      restaurer: "Examen restauré dans la file de vérification.",
+      supprimer: "Examen supprimé.",
     };
 
     return NextResponse.json({

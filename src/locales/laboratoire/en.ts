@@ -409,6 +409,10 @@ export const laboratoireEn: LaboratoireFr = {
     validerResultats: "Validate results",
     rejeter: "Reject",
     approuver: "Approve",
+    restaurerExamen: "Restore",
+    supprimerExamen: "Delete",
+    confirmerSuppressionExamen:
+      "Permanently delete this rejected exam from this visit?",
     consultationSeule: "Verified results — read-only.",
     infosPatient: "Patient information",
     nomComplet: "Full name",

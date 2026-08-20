@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   AlertTriangle,
@@ -8,14 +8,15 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Eye,
   FileText,
   Flag,
   Loader2,
+  MessageSquare,
   RefreshCw,
   RotateCcw,
   Search,
   ShieldAlert,
+  Sparkles,
   SlidersHorizontal,
   Trash2,
   UserMinus,
@@ -97,13 +98,24 @@ function badgeType(kind: ElementFeedModeration["kind"], t: (k: string) => string
     fichier: t("admin.moderation.typeFichier"),
     suspension: t("admin.moderation.typeSuspension"),
   };
+  const Icone =
+    kind === "message"
+      ? MessageSquare
+      : kind === "groupe"
+        ? Users
+        : kind === "fichier"
+          ? FileText
+          : kind === "suspension"
+            ? UserMinus
+            : MessageSquare;
   return (
     <span
       className={cn(
-        "inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+        "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
         styles[kind]
       )}
     >
+      <Icone className="h-3 w-3" />
       {labels[kind]}
     </span>
   );
@@ -129,10 +141,11 @@ function badgeStatut(statut: StatutElementModeration, t: (k: string) => string) 
   return (
     <span
       className={cn(
-        "inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+        "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
         map[statut]
       )}
     >
+      {statut === "nouveau" ? <Sparkles className="h-3 w-3" /> : null}
       {labels[statut]}
     </span>
   );
@@ -398,13 +411,6 @@ export function ContenuModerationAdmin({
     });
   };
 
-  const actionsRapides = useMemo(
-    () => ({
-      voir: (item: ElementFeedModeration) => setSelection(item),
-    }),
-    []
-  );
-
   return (
     <MiseEnPageAdmin
       utilisateur={utilisateur}
@@ -665,59 +671,23 @@ export function ContenuModerationAdmin({
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex justify-end gap-1">
+                          <div className="flex justify-end gap-1.5">
                             <button
                               type="button"
                               title={t("admin.moderation.voirDetail")}
-                              onClick={() => actionsRapides.voir(item)}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:bg-white hover:text-bleu-medical"
+                              onClick={() => setSelection(item)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure bg-white text-emerald-600 hover:bg-emerald-50"
                             >
-                              <Eye className="h-4 w-4" />
+                              <Check className="h-4 w-4" strokeWidth={2.5} />
                             </button>
-                            {item.kind === "message" && item.signale && (
-                              <button
-                                type="button"
-                                disabled={enCours}
-                                title={t("admin.moderation.approuverMessage")}
-                                onClick={() =>
-                                  void action({
-                                    action: "approuver-message",
-                                    messageId: item.messageId!,
-                                  })
-                                }
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50"
-                              >
-                                <Check className="h-4 w-4" />
-                              </button>
-                            )}
-                            {item.kind === "message" && item.supprime && (
-                              <button
-                                type="button"
-                                disabled={enCours}
-                                title={t("admin.moderation.restaurerMessage")}
-                                onClick={() =>
-                                  void action({
-                                    action: "restaurer-message",
-                                    messageId: item.messageId!,
-                                  })
-                                }
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sky-200 text-sky-700 hover:bg-sky-50"
-                              >
-                                <RotateCcw className="h-4 w-4" />
-                              </button>
-                            )}
-                            {(item.kind === "message" || item.kind === "fichier") &&
-                              !item.supprime && (
-                              <button
-                                type="button"
-                                disabled={enCours}
-                                title={t("admin.moderation.supprimerPourTous")}
-                                onClick={() => confirmerSuppression(item)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              title={t("admin.moderation.voirDetail")}
+                              onClick={() => setSelection(item)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure bg-white text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -771,7 +741,7 @@ export function ContenuModerationAdmin({
               )}
             </div>
 
-            <aside className="border-t border-gris-bordure bg-slate-50/60 p-4 xl:border-l xl:border-t-0">
+            <aside className="border-t border-gris-bordure bg-white p-4 xl:border-l xl:border-t-0">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-sm font-bold text-texte-principal">
                   {t("admin.moderation.detailTitre")}
@@ -780,7 +750,8 @@ export function ContenuModerationAdmin({
                   <button
                     type="button"
                     onClick={() => setSelection(null)}
-                    className="rounded-lg p-1 text-texte-secondaire hover:bg-white"
+                    className="rounded-lg p-1 text-texte-secondaire hover:bg-gris-tres-clair"
+                    aria-label={t("admin.moderation.fermerDetail")}
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -793,261 +764,300 @@ export function ContenuModerationAdmin({
                 </p>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap items-center gap-3 text-xs">
+                    <span className="text-texte-secondaire">
+                      {t("admin.moderation.labelType")}
+                    </span>
                     {badgeType(selection.kind, t)}
+                    <span className="text-texte-secondaire">
+                      {t("admin.moderation.labelStatut")}
+                    </span>
                     {badgeStatut(selection.statut, t)}
                   </div>
 
-                  <div className="flex items-center gap-3 rounded-xl border border-gris-bordure bg-white p-3">
-                    <span
-                      className={cn(
-                        "flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold",
-                        couleurAvatar(selection.kind)
-                      )}
-                    >
-                      {selection.initiales}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-texte-principal">
-                        {afficherNomComplet(selection.titre)}
-                      </p>
-                      {selection.auteurIdentifiant ? (
-                        <p className="text-xs text-texte-secondaire">
-                          @{selection.auteurIdentifiant}
+                  <div>
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-texte-secondaire">
+                      {t("admin.moderation.labelAuteur")}
+                    </p>
+                    <div className="flex items-center gap-3 rounded-xl border border-gris-bordure bg-white p-3">
+                      <span
+                        className={cn(
+                          "flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold",
+                          couleurAvatar(selection.kind)
+                        )}
+                      >
+                        {selection.initiales}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-texte-principal">
+                          {afficherNomComplet(selection.titre)}
                         </p>
-                      ) : null}
-                      <p className="mt-0.5 text-xs text-texte-secondaire">
-                        {t("admin.moderation.envoyeLe", {
-                          date: new Date(selection.dateIso).toLocaleString("fr-FR"),
-                        })}
-                      </p>
+                        {selection.auteurIdentifiant ? (
+                          <p className="text-xs text-texte-secondaire">
+                            @{selection.auteurIdentifiant}
+                          </p>
+                        ) : null}
+                        <p className="mt-0.5 text-[11px] text-texte-secondaire">
+                          {t("admin.moderation.envoyeLe", {
+                            date: new Date(selection.dateIso).toLocaleString("fr-FR"),
+                          })}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
-                  {selection.conversationSujet ? (
-                    <p className="text-xs text-bleu-medical">
-                      {t("admin.moderation.contexteConversation")}{" "}
-                      <span className="font-medium">{selection.conversationSujet}</span>
-                    </p>
-                  ) : null}
-
-                  {selection.estImage && selection.fichierUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={selection.fichierUrl}
-                      alt={selection.titre}
-                      className="max-h-40 w-full rounded-xl border object-cover"
-                    />
-                  ) : (
-                    <div className="rounded-xl border border-gris-bordure bg-white p-3 text-sm text-texte-principal">
-                      {selection.contenu}
-                    </div>
+                  {(selection.conversationSujet || selection.conversationId) && (
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-2 text-left text-sm text-bleu-medical hover:underline"
+                    >
+                      <span>
+                        <span className="text-texte-secondaire">
+                          {t("admin.moderation.labelConversation")}
+                        </span>{" "}
+                        <span className="font-medium">
+                          {selection.conversationSujet ||
+                            t("admin.moderation.conversationPrivee")}
+                        </span>
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    </button>
                   )}
 
+                  <div>
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-texte-secondaire">
+                      {selection.kind === "fichier"
+                        ? t("admin.moderation.contenuFichier")
+                        : t("admin.moderation.contenuMessage")}
+                    </p>
+                    {selection.estImage && selection.fichierUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={selection.fichierUrl}
+                        alt={selection.titre}
+                        className="max-h-40 w-full rounded-xl border object-cover"
+                      />
+                    ) : (
+                      <div className="rounded-xl border border-gris-bordure bg-slate-50 px-3 py-3 text-sm leading-relaxed text-texte-principal">
+                        {selection.contenu}
+                      </div>
+                    )}
+                  </div>
+
                   {selection.raison ? (
-                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm">
-                      <p className="text-xs font-semibold uppercase text-amber-800">
-                        {t("admin.moderation.signalement")}
+                    <div>
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-texte-secondaire">
+                        {t("admin.moderation.raisonSignalement")}
                       </p>
-                      <p className="mt-1 text-amber-900">{selection.raison}</p>
+                      <span className="inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-200">
+                        <Flag className="h-3.5 w-3.5" />
+                        {selection.raison}
+                      </span>
                     </div>
                   ) : null}
 
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {selection.kind === "message" && selection.signale && (
-                      <button
-                        type="button"
-                        disabled={enCours}
-                        onClick={() =>
-                          void action({
-                            action: "approuver-message",
-                            messageId: selection.messageId!,
-                          })
-                        }
-                        className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 text-left text-sm font-medium text-emerald-800 hover:bg-emerald-100"
-                      >
-                        <Check className="mb-1 h-4 w-4" />
-                        {t("admin.moderation.approuverMessage")}
-                      </button>
-                    )}
-                    {selection.kind === "fichier" && selection.signale && (
-                      <button
-                        type="button"
-                        disabled={enCours}
-                        onClick={() =>
-                          void action({
-                            action: "approuver-fichier",
-                            fichierId: extraireIdElement(selection),
-                          })
-                        }
-                        className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 text-left text-sm font-medium text-emerald-800 hover:bg-emerald-100"
-                      >
-                        <Check className="mb-1 h-4 w-4" />
-                        {t("admin.moderation.approuverFichier")}
-                      </button>
-                    )}
-                    {(selection.kind === "message" || selection.kind === "fichier") &&
-                      !selection.supprime && (
-                      <button
-                        type="button"
-                        disabled={enCours}
-                        onClick={() => confirmerSuppression(selection)}
-                        className="rounded-xl bg-red-600 px-3 py-2.5 text-left text-sm font-medium text-white hover:bg-red-700"
-                      >
-                        <Trash2 className="mb-1 h-4 w-4" />
-                        {t("admin.moderation.supprimerPourTous")}
-                      </button>
-                    )}
-                    {selection.kind === "message" && selection.supprime && (
-                      <button
-                        type="button"
-                        disabled={enCours}
-                        onClick={() =>
-                          void action({
-                            action: "restaurer-message",
-                            messageId: selection.messageId!,
-                          })
-                        }
-                        className="rounded-xl border border-sky-300 bg-sky-50 px-3 py-2.5 text-left text-sm font-medium text-sky-800 hover:bg-sky-100"
-                      >
-                        <RotateCcw className="mb-1 h-4 w-4" />
-                        {t("admin.moderation.restaurerMessage")}
-                      </button>
-                    )}
+                  <div>
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-texte-secondaire">
+                      {t("admin.moderation.actionsModeration")}
+                    </p>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {selection.kind === "message" && selection.signale && (
+                        <button
+                          type="button"
+                          disabled={enCours}
+                          onClick={() =>
+                            void action({
+                              action: "approuver-message",
+                              messageId: selection.messageId!,
+                            })
+                          }
+                          className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-left text-sm font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                        >
+                          <Check className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span>{t("admin.moderation.approuverMessage")}</span>
+                        </button>
+                      )}
+                      {selection.kind === "fichier" && selection.signale && (
+                        <button
+                          type="button"
+                          disabled={enCours}
+                          onClick={() =>
+                            void action({
+                              action: "approuver-fichier",
+                              fichierId: extraireIdElement(selection),
+                            })
+                          }
+                          className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-left text-sm font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                        >
+                          <Check className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span>{t("admin.moderation.approuverFichier")}</span>
+                        </button>
+                      )}
+                      {(selection.kind === "message" || selection.kind === "fichier") &&
+                        !selection.supprime && (
+                          <button
+                            type="button"
+                            disabled={enCours}
+                            onClick={() => confirmerSuppression(selection)}
+                            className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-left text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                          >
+                            <Trash2 className="mt-0.5 h-4 w-4 shrink-0" />
+                            <span>{t("admin.moderation.supprimerPourTous")}</span>
+                          </button>
+                        )}
+                      {selection.kind === "message" && selection.supprime && (
+                        <button
+                          type="button"
+                          disabled={enCours}
+                          onClick={() =>
+                            void action({
+                              action: "restaurer-message",
+                              messageId: selection.messageId!,
+                            })
+                          }
+                          className="flex items-start gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-3 text-left text-sm font-medium text-sky-800 hover:bg-sky-100 disabled:opacity-50"
+                        >
+                          <RotateCcw className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span>{t("admin.moderation.restaurerMessage")}</span>
+                        </button>
+                      )}
+                      {selection.auteurId && selection.kind !== "suspension" && (
+                        <button
+                          type="button"
+                          disabled={enCours}
+                          onClick={() => {
+                            if (!texteAvert.trim()) {
+                              setErreur(t("admin.moderation.avertissementRequis"));
+                              return;
+                            }
+                            void action({
+                              action: "avertissement",
+                              destinataireId: selection.auteurId!,
+                              messageId: selection.messageId ?? "",
+                              conversationId: selection.conversationId ?? "",
+                              contenu: texteAvert,
+                            });
+                          }}
+                          className="flex items-start gap-2 rounded-xl border border-gris-bordure bg-white px-3 py-3 text-left text-sm font-medium text-texte-principal hover:bg-gris-tres-clair disabled:opacity-50"
+                        >
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                          <span>{t("admin.moderation.avertirUtilisateur")}</span>
+                        </button>
+                      )}
+                      {selection.auteurId && (
+                        <button
+                          type="button"
+                          disabled={enCours}
+                          onClick={() =>
+                            void action(
+                              selection.kind === "suspension"
+                                ? {
+                                    action: "debloquer-messagerie-utilisateur",
+                                    utilisateurId: selection.auteurId!,
+                                  }
+                                : {
+                                    action: "bloquer-messagerie-utilisateur",
+                                    utilisateurId: selection.auteurId!,
+                                    notes: notesModeration || undefined,
+                                  }
+                            )
+                          }
+                          className="flex items-start gap-2 rounded-xl border border-gris-bordure bg-white px-3 py-3 text-left text-sm font-medium text-texte-principal hover:bg-gris-tres-clair disabled:opacity-50"
+                        >
+                          <Ban className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                          <span>
+                            {selection.kind === "suspension"
+                              ? t("admin.moderation.retablirMessagerie")
+                              : t("admin.moderation.bloquerMessagerieUser")}
+                          </span>
+                        </button>
+                      )}
+                      {(selection.kind === "conversation" ||
+                        selection.kind === "groupe") && (
+                        <button
+                          type="button"
+                          disabled={enCours}
+                          onClick={() =>
+                            void action(
+                              selection.bloque
+                                ? {
+                                    action: "debloquer-conversation",
+                                    conversationId: selection.conversationId!,
+                                  }
+                                : {
+                                    action: "bloquer-conversation",
+                                    conversationId: selection.conversationId!,
+                                    raison: "Modération admin",
+                                  }
+                            )
+                          }
+                          className="flex items-start gap-2 rounded-xl border border-red-200 bg-white px-3 py-3 text-left text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 sm:col-span-2"
+                        >
+                          <Ban className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span>
+                            {selection.bloque
+                              ? t("admin.moderation.reactiverConversation")
+                              : t("admin.moderation.bloquerConversation")}
+                          </span>
+                        </button>
+                      )}
+                      {selection.kind === "groupe" && (
+                        <button
+                          type="button"
+                          disabled={enCours}
+                          onClick={() =>
+                            void action(
+                              selection.supprime
+                                ? {
+                                    action: "restaurer-groupe",
+                                    conversationId: selection.conversationId!,
+                                  }
+                                : {
+                                    action: "supprimer-groupe",
+                                    conversationId: selection.conversationId!,
+                                  }
+                            )
+                          }
+                          className="flex items-start gap-2 rounded-xl border border-gris-bordure bg-white px-3 py-3 text-left text-sm font-medium text-texte-principal hover:bg-gris-tres-clair disabled:opacity-50 sm:col-span-2"
+                        >
+                          <Trash2 className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span>
+                            {selection.supprime
+                              ? t("admin.moderation.restaurerGroupe")
+                              : t("admin.moderation.supprimerGroupe")}
+                          </span>
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {selection.auteurId && selection.kind !== "suspension" ? (
-                    <>
+                    <div>
+                      <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-texte-secondaire">
+                        {t("admin.moderation.avertissementLabel")}
+                      </label>
                       <textarea
                         value={texteAvert}
                         onChange={(e) => setTexteAvert(e.target.value)}
-                        rows={3}
+                        rows={2}
                         placeholder={t("admin.moderation.placeholderAvertissement")}
                         className="w-full rounded-xl border border-gris-bordure bg-white px-3 py-2 text-sm"
                       />
-                      <button
-                        type="button"
-                        disabled={enCours || !texteAvert.trim()}
-                        onClick={() =>
-                          void action({
-                            action: "avertissement",
-                            destinataireId: selection.auteurId!,
-                            messageId: selection.messageId ?? "",
-                            conversationId: selection.conversationId ?? "",
-                            contenu: texteAvert,
-                          })
-                        }
-                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50"
-                      >
-                        <AlertTriangle className="h-4 w-4" />
-                        {t("admin.moderation.avertirUtilisateur")}
-                      </button>
-                    </>
+                    </div>
                   ) : null}
 
-                  {selection.kind === "message" && !selection.bloque && (
-                    <button
-                      type="button"
-                      disabled={enCours}
-                      onClick={() =>
-                        void action({
-                          action: "bloquer-message",
-                          messageId: selection.messageId!,
-                          raison: selection.raison ?? "Contenu inapproprié",
-                        })
-                      }
-                      className="w-full rounded-xl border border-gris-bordure bg-white px-3 py-2.5 text-sm font-medium hover:bg-gris-tres-clair"
-                    >
-                      {t("admin.moderation.bloquerMessage")}
-                    </button>
-                  )}
-
-                  {(selection.kind === "conversation" || selection.kind === "groupe") && (
-                    <button
-                      type="button"
-                      disabled={enCours}
-                      onClick={() =>
-                        void action(
-                          selection.bloque
-                            ? {
-                                action: "debloquer-conversation",
-                                conversationId: selection.conversationId!,
-                              }
-                            : {
-                                action: "bloquer-conversation",
-                                conversationId: selection.conversationId!,
-                                raison: "Modération admin",
-                              }
-                        )
-                      }
-                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50"
-                    >
-                      <Ban className="h-4 w-4" />
-                      {selection.bloque
-                        ? t("admin.moderation.reactiverConversation")
-                        : t("admin.moderation.bloquerConversation")}
-                    </button>
-                  )}
-
-                  {selection.kind === "groupe" && (
-                    <button
-                      type="button"
-                      disabled={enCours}
-                      onClick={() =>
-                        void action(
-                          selection.supprime
-                            ? {
-                                action: "restaurer-groupe",
-                                conversationId: selection.conversationId!,
-                              }
-                            : {
-                                action: "supprimer-groupe",
-                                conversationId: selection.conversationId!,
-                              }
-                        )
-                      }
-                      className="w-full rounded-xl border border-gris-bordure bg-white px-3 py-2.5 text-sm font-medium hover:bg-gris-tres-clair"
-                    >
-                      {selection.supprime
-                        ? t("admin.moderation.restaurerGroupe")
-                        : t("admin.moderation.supprimerGroupe")}
-                    </button>
-                  )}
-
-                  {selection.auteurId && (
-                    <button
-                      type="button"
-                      disabled={enCours}
-                      onClick={() =>
-                        void action(
-                          selection.kind === "suspension"
-                            ? {
-                                action: "debloquer-messagerie-utilisateur",
-                                utilisateurId: selection.auteurId!,
-                              }
-                            : {
-                                action: "bloquer-messagerie-utilisateur",
-                                utilisateurId: selection.auteurId!,
-                                notes: notesModeration || undefined,
-                              }
-                        )
-                      }
-                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-purple-200 bg-purple-50 px-3 py-2.5 text-sm font-medium text-purple-800 hover:bg-purple-100"
-                    >
-                      <Users className="h-4 w-4" />
-                      {selection.kind === "suspension"
-                        ? t("admin.moderation.retablirMessagerie")
-                        : t("admin.moderation.bloquerMessagerieUser")}
-                    </button>
-                  )}
-
-                  <textarea
-                    value={notesModeration}
-                    onChange={(e) => setNotesModeration(e.target.value)}
-                    rows={2}
-                    placeholder={t("admin.moderation.notesOptionnelles")}
-                    className="w-full rounded-xl border border-gris-bordure bg-white px-3 py-2 text-sm"
-                  />
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-texte-secondaire">
+                      {t("admin.moderation.notesOptionnelles")}
+                    </label>
+                    <textarea
+                      value={notesModeration}
+                      onChange={(e) => setNotesModeration(e.target.value)}
+                      rows={3}
+                      placeholder={t("admin.moderation.notesPlaceholder")}
+                      className="w-full rounded-xl border border-gris-bordure bg-white px-3 py-2 text-sm"
+                    />
+                  </div>
                 </div>
               )}
             </aside>

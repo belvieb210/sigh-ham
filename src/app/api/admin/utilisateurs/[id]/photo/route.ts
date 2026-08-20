@@ -3,7 +3,10 @@ import {
   obtenirSessionApiAdmin,
   reponseNonAutoriseAdmin,
 } from "@/lib/auth/garde-api-admin";
-import { mettreAJourPhotoUtilisateurAdmin } from "@/lib/admin/utilisateurs";
+import {
+  mettreAJourPhotoUtilisateurAdmin,
+  supprimerPhotoUtilisateurAdmin,
+} from "@/lib/admin/utilisateurs";
 
 export async function POST(
   request: NextRequest,
@@ -38,6 +41,36 @@ export async function POST(
       {
         message:
           error instanceof Error ? error.message : "Upload de la photo impossible.",
+      },
+      { status: 400 }
+    );
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const session = await obtenirSessionApiAdmin();
+  if (!session) return reponseNonAutoriseAdmin();
+
+  const { id } = await context.params;
+
+  try {
+    const utilisateur = await supprimerPhotoUtilisateurAdmin(
+      { id: session.utilisateur.id },
+      id
+    );
+    return NextResponse.json({
+      message: "Photo supprimée.",
+      utilisateur,
+    });
+  } catch (error) {
+    console.error("[DELETE /api/admin/utilisateurs/:id/photo]", error);
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error ? error.message : "Suppression de la photo impossible.",
       },
       { status: 400 }
     );

@@ -291,3 +291,29 @@ export async function mettreAJourPhotoUtilisateurAdmin(
   });
   return maj;
 }
+
+export async function supprimerPhotoUtilisateurAdmin(
+  acteur: { id: string },
+  id: string
+) {
+  const actuel = await prisma.utilisateur.findUnique({
+    where: { id },
+    select: { identifiant: true, photoUrl: true },
+  });
+  if (!actuel) throw new Error("Utilisateur introuvable.");
+
+  const maj = await prisma.utilisateur.update({
+    where: { id },
+    data: { photoUrl: null },
+    select: selectPublic,
+  });
+  await supprimerPhotoUtilisateurLocale(actuel.photoUrl);
+  await enregistrerAudit({
+    utilisateurId: acteur.id,
+    type: "MODIFICATION",
+    entite: "Utilisateur",
+    entiteId: id,
+    action: `Suppression photo utilisateur ${actuel.identifiant}`,
+  });
+  return maj;
+}

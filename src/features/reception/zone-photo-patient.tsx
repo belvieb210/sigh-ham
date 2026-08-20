@@ -17,6 +17,8 @@ interface PropsZonePhotoPatient {
   urlExistante?: string | null;
   /** Zone compacte (aperçu gouvernance, avatar) */
   compact?: boolean;
+  /** Appelé après retrait local (ex. DELETE API) */
+  onRetirer?: () => void | Promise<void>;
 }
 
 export function ZonePhotoPatient({
@@ -26,17 +28,23 @@ export function ZonePhotoPatient({
   className,
   urlExistante = null,
   compact = false,
+  onRetirer,
 }: PropsZonePhotoPatient) {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [apercuLocal, setApercuLocal] = useState<string | null>(null);
+  const [ignorerUrlExistante, setIgnorerUrlExistante] = useState(false);
   const [glisser, setGlisser] = useState(false);
 
-  const apercu = apercuLocal ?? urlExistante;
+  const apercu = apercuLocal ?? (ignorerUrlExistante ? null : urlExistante);
 
   useEffect(() => {
     if (!value) setApercuLocal(null);
-  }, [value, urlExistante]);
+  }, [value]);
+
+  useEffect(() => {
+    setIgnorerUrlExistante(false);
+  }, [urlExistante]);
 
   const traiterFichier = useCallback(
     (fichier: File | null) => {
@@ -57,6 +65,7 @@ export function ZonePhotoPatient({
       }
 
       onErreur?.(null);
+      setIgnorerUrlExistante(false);
       onChange(fichier);
       const url = URL.createObjectURL(fichier);
       setApercuLocal((prev) => {
@@ -67,9 +76,11 @@ export function ZonePhotoPatient({
     [onChange, onErreur, t]
   );
 
-  const retirer = () => {
+  const retirer = async () => {
     traiterFichier(null);
+    setIgnorerUrlExistante(true);
     if (inputRef.current) inputRef.current.value = "";
+    if (onRetirer) await onRetirer();
   };
 
   return (
@@ -89,19 +100,30 @@ export function ZonePhotoPatient({
             compact ? "h-24 w-24" : "h-36"
           )}
         >
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="absolute inset-0 z-0"
+            aria-label={t("reception.photo.depot")}
+            title={t("reception.photo.depot")}
+          />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={apercu}
             alt={t("reception.photo.apercu")}
             className={cn(
-              "max-h-full max-w-full",
+              "pointer-events-none relative z-[1] max-h-full max-w-full",
               compact ? "h-full w-full object-cover" : "object-contain"
             )}
           />
           <button
             type="button"
-            onClick={retirer}
-            className="absolute right-1.5 top-1.5 rounded-full bg-white/90 p-1 text-texte-secondaire shadow hover:bg-white hover:text-red-600"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void retirer();
+            }}
+            className="absolute right-1.5 top-1.5 z-10 rounded-full bg-white/95 p-1 text-texte-secondaire shadow hover:bg-white hover:text-red-600"
             aria-label={t("reception.photo.retirer")}
           >
             <X className="h-3.5 w-3.5" />

@@ -10,12 +10,13 @@ import {
   ChevronRight,
   Eye,
   FileText,
-  Filter,
   Flag,
   Loader2,
   RefreshCw,
+  RotateCcw,
   Search,
   ShieldAlert,
+  SlidersHorizontal,
   Trash2,
   UserMinus,
   Users,
@@ -26,6 +27,17 @@ import {
   type UtilisateurAdmin,
 } from "@/features/admin/mise-en-page-admin";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
+import { useDemanderConfirmation } from "@/components/ui/fournisseur-modale-confirmation";
+import {
+  BoutonsOutilsListe,
+  telechargerCsv,
+} from "@/components/ui/boutons-outils-liste";
+import {
+  compterFiltresModerationAdmin,
+  FILTRES_MODERATION_ADMIN_VIDES,
+  FormulaireFiltresModerationAdmin,
+  type FiltresModerationAdmin,
+} from "@/features/admin/formulaire-filtres-moderation-admin";
 import { nomAffichageGouvernance } from "@/lib/admin/nom-affichage-gouvernance";
 import type {
   CategorieFeedModeration,
@@ -160,6 +172,7 @@ export function ContenuModerationAdmin({
   utilisateur: UtilisateurAdmin;
 }) {
   const { t } = useTranslation();
+  const demanderConfirmation = useDemanderConfirmation();
   const [stats, setStats] = useState<StatsModeration | null>(null);
   const [onglet, setOnglet] = useState<OngletModeration>("tous");
   const [elements, setElements] = useState<ElementFeedModeration[]>([]);
@@ -168,7 +181,14 @@ export function ContenuModerationAdmin({
   const [pageSize, setPageSize] = useState(10);
   const [recherche, setRecherche] = useState("");
   const [rechercheAppliquee, setRechercheAppliquee] = useState("");
-  const [filtreStatut, setFiltreStatut] = useState("tous");
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
+  const [brouillonFiltres, setBrouillonFiltres] = useState<FiltresModerationAdmin>(
+    FILTRES_MODERATION_ADMIN_VIDES
+  );
+  const [filtresAppliques, setFiltresAppliques] = useState<FiltresModerationAdmin>(
+    FILTRES_MODERATION_ADMIN_VIDES
+  );
+  const [idsSelectionnes, setIdsSelectionnes] = useState<Set<string>>(new Set());
   const [chargement, setChargement] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -181,14 +201,16 @@ export function ContenuModerationAdmin({
     setChargement(true);
     setErreur(null);
     try {
+      const categorieEffective =
+        (filtresAppliques.categorie || onglet) as CategorieFeedModeration;
       const params = new URLSearchParams({
         vue: "feed",
-        categorie: onglet,
+        categorie: categorieEffective,
         page: String(page),
         pageSize: String(pageSize),
       });
       if (rechercheAppliquee) params.set("q", rechercheAppliquee);
-      if (filtreStatut !== "tous") params.set("statut", filtreStatut);
+      if (filtresAppliques.statut) params.set("statut", filtresAppliques.statut);
 
       const [sRes, fRes] = await Promise.all([
         fetch("/api/admin/moderation?vue=stats"),
@@ -211,7 +233,7 @@ export function ContenuModerationAdmin({
     } finally {
       setChargement(false);
     }
-  }, [filtreStatut, onglet, page, pageSize, rechercheAppliquee, t]);
+  }, [filtresAppliques, onglet, page, pageSize, rechercheAppliquee, t]);
 
   useEffect(() => {
     void charger();
@@ -220,7 +242,8 @@ export function ContenuModerationAdmin({
   useEffect(() => {
     setPage(1);
     setSelection(null);
-  }, [onglet, rechercheAppliquee, filtreStatut, pageSize]);
+    setIdsSelectionnes(new Set());
+  }, [onglet, rechercheAppliquee, filtresAppliques, pageSize]);
 
   const action = async (payload: Record<string, string | undefined>) => {
     setEnCours(true);
@@ -243,7 +266,9 @@ export function ContenuModerationAdmin({
       setNotesModeration("");
       await charger();
     } catch (e) {
-      setErreur(e instanceof Error ? e.message : t("admin.common.erreur"));
+      const msg = e instanceof Error ? e.message : t("admin.common.erreur");
+      setErreur(msg);
+      throw e instanceof Error ? e : new Error(msg);
     } finally {
       setEnCours(false);
     }
@@ -320,6 +345,58 @@ export function ContenuModerationAdmin({
     : [];
 
   const appliquerRecherche = () => setRechercheAppliquee(recherche.trim());
+  const nbFiltres = compterFiltresModerationAdmin(filtresAppliques);
+  const toutSelectionne =
+    elements.length > 0 && elements.every((e) => idsSelectionnes.has(e.id));
+
+  const basculerSelectionTout = () => {
+    if (toutSelectionne) {
+      setIdsSelectionnes(new Set());
+      return;
+    }
+    setIdsSelectionnes(new Set(elements.map((e) => e.id)));
+  };
+
+  const exporterSelection = () => {
+    const lignes = elements
+      .filter((e) => idsSelectionnes.has(e.id) || idsSelectionnes.size === 0)
+      .map((e) => [
+        e.kind,
+        afficherNomComplet(e.titre),
+        afficherNomComplet(e.auteur),
+        e.contenu,
+        e.raison ?? "",
+        e.statut,
+        e.dateIso,
+      ]);
+    telechargerCsv(
+      `moderation-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["type", "element", "auteur", "contenu", "raison", "statut", "date"],
+      lignes
+    );
+  };
+
+  const confirmerSuppression = (item: ElementFeedModeration) => {
+    demanderConfirmation({
+      titre: t("admin.moderation.titreConfirmationSuppression"),
+      description: t("admin.moderation.confirmerSuppression"),
+      libelleConfirmer: t("admin.moderation.supprimerPourTous"),
+      variante: "danger",
+      onConfirmer: async () => {
+        await action(
+          item.kind === "message"
+            ? {
+                action: "supprimer-message-pour-tous",
+                messageId: item.messageId!,
+              }
+            : {
+                action: "supprimer-fichier",
+                fichierId: extraireIdElement(item),
+              }
+        );
+      },
+    });
+  };
 
   const actionsRapides = useMemo(
     () => ({
@@ -408,50 +485,82 @@ export function ContenuModerationAdmin({
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 border-b border-gris-bordure px-4 py-3">
-            <div className="relative min-w-[220px] flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
-              <input
-                value={recherche}
-                onChange={(e) => setRecherche(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && appliquerRecherche()}
-                placeholder={t("admin.moderation.recherchePlaceholder")}
-                className="h-10 w-full rounded-lg border border-gris-bordure pl-9 pr-3 text-sm"
-              />
+          <div className="space-y-3 border-b border-gris-bordure px-4 py-3">
+            <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+              <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-lg border-2 border-slate-400 bg-white px-3 text-sm shadow-sm focus-within:border-bleu-medical focus-within:ring-2 focus-within:ring-bleu-medical/25">
+                <Search className="h-4 w-4 shrink-0 text-slate-600" />
+                <input
+                  value={recherche}
+                  onChange={(e) => setRecherche(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && appliquerRecherche()}
+                  placeholder={t("admin.moderation.recherchePlaceholder")}
+                  className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-slate-600"
+                />
+                {recherche ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRecherche("");
+                      setRechercheAppliquee("");
+                    }}
+                    className="shrink-0 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                    aria-label={t("admin.examens.effacerRecherche")}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                ) : null}
+              </label>
+
+              <div className="flex shrink-0 items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFiltresOuverts((o) => !o)}
+                  aria-expanded={filtresOuverts}
+                  className={cn(
+                    "relative inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors",
+                    filtresOuverts
+                      ? "border-bleu-medical bg-bleu-medical-clair text-bleu-medical"
+                      : "border-gris-bordure bg-white text-texte-principal hover:bg-gris-tres-clair"
+                  )}
+                >
+                  <SlidersHorizontal className="h-5 w-5" strokeWidth={2} />
+                  <span
+                    className={cn(
+                      "absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm",
+                      nbFiltres > 0 ? "bg-red-500" : "bg-slate-400"
+                    )}
+                  >
+                    {nbFiltres}
+                  </span>
+                </button>
+                <BoutonsOutilsListe
+                  toutSelectionne={toutSelectionne}
+                  onSelectionnerTout={basculerSelectionTout}
+                  onExporter={exporterSelection}
+                  labelSelectionnerTout={t("reception.liste.selectionnerTout")}
+                  labelExporter={t("reception.liste.exporterSelection")}
+                />
+              </div>
             </div>
-            <select
-              value={filtreStatut}
-              onChange={(e) => setFiltreStatut(e.target.value)}
-              className="h-10 rounded-lg border border-gris-bordure px-3 text-sm"
-            >
-              <option value="tous">{t("admin.moderation.filtreTousStatuts")}</option>
-              <option value="nouveau">{t("admin.moderation.statutNouveau")}</option>
-              <option value="en_cours">{t("admin.moderation.statutEnCours")}</option>
-              <option value="resolu">{t("admin.moderation.statutResolu")}</option>
-              <option value="bloque">{t("admin.moderation.statutBloque")}</option>
-              <option value="supprime">{t("admin.moderation.statutSupprime")}</option>
-              <option value="suspendu">{t("admin.moderation.statutSuspendu")}</option>
-            </select>
-            <select
-              value={onglet}
-              onChange={(e) => setOnglet(e.target.value as OngletModeration)}
-              className="h-10 rounded-lg border border-gris-bordure px-3 text-sm"
-            >
-              <option value="tous">{t("admin.moderation.categorieTous")}</option>
-              <option value="messages">{t("admin.moderation.typeMessage")}</option>
-              <option value="conversations">{t("admin.moderation.typeConversation")}</option>
-              <option value="groupes">{t("admin.moderation.typeGroupe")}</option>
-              <option value="fichiers">{t("admin.moderation.typeFichier")}</option>
-              <option value="suspensions">{t("admin.moderation.typeSuspension")}</option>
-            </select>
-            <button
-              type="button"
-              onClick={appliquerRecherche}
-              className="inline-flex h-10 items-center gap-2 rounded-lg border border-gris-bordure px-3 text-sm hover:bg-gris-tres-clair"
-            >
-              <Filter className="h-4 w-4" />
-              {t("admin.moderation.filtres")}
-            </button>
+
+            {filtresOuverts ? (
+              <FormulaireFiltresModerationAdmin
+                valeurs={brouillonFiltres}
+                onChange={setBrouillonFiltres}
+                onRechercher={() => {
+                  setFiltresAppliques(brouillonFiltres);
+                  if (brouillonFiltres.categorie) {
+                    setOnglet(brouillonFiltres.categorie);
+                  }
+                  setPage(1);
+                }}
+                onReinitialiser={() => {
+                  setBrouillonFiltres(FILTRES_MODERATION_ADMIN_VIDES);
+                  setFiltresAppliques(FILTRES_MODERATION_ADMIN_VIDES);
+                  setPage(1);
+                }}
+              />
+            ) : null}
           </div>
 
           {message && (
@@ -500,6 +609,20 @@ export function ContenuModerationAdmin({
                       >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              className="accent-bleu-medical"
+                              checked={idsSelectionnes.has(item.id)}
+                              onChange={(e) => {
+                                setIdsSelectionnes((prev) => {
+                                  const next = new Set(prev);
+                                  if (e.target.checked) next.add(item.id);
+                                  else next.delete(item.id);
+                                  return next;
+                                });
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            />
                             <span
                               className={cn(
                                 "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold",
@@ -508,9 +631,16 @@ export function ContenuModerationAdmin({
                             >
                               {item.initiales}
                             </span>
-                            <span className="font-medium text-texte-principal">
-                              {afficherNomComplet(item.titre)}
-                            </span>
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-texte-principal">
+                                {afficherNomComplet(item.titre)}
+                              </p>
+                              {item.auteurIdentifiant ? (
+                                <p className="truncate text-[11px] text-texte-secondaire">
+                                  @{item.auteurIdentifiant}
+                                </p>
+                              ) : null}
+                            </div>
                           </div>
                         </td>
                         <td className="px-3 py-3">{badgeType(item.kind, t)}</td>
@@ -560,28 +690,29 @@ export function ContenuModerationAdmin({
                                 <Check className="h-4 w-4" />
                               </button>
                             )}
-                            {(item.kind === "message" || item.kind === "fichier") && (
+                            {item.kind === "message" && item.supprime && (
+                              <button
+                                type="button"
+                                disabled={enCours}
+                                title={t("admin.moderation.restaurerMessage")}
+                                onClick={() =>
+                                  void action({
+                                    action: "restaurer-message",
+                                    messageId: item.messageId!,
+                                  })
+                                }
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sky-200 text-sky-700 hover:bg-sky-50"
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                              </button>
+                            )}
+                            {(item.kind === "message" || item.kind === "fichier") &&
+                              !item.supprime && (
                               <button
                                 type="button"
                                 disabled={enCours}
                                 title={t("admin.moderation.supprimerPourTous")}
-                                onClick={() => {
-                                  if (
-                                    !window.confirm(t("admin.moderation.confirmerSuppression"))
-                                  )
-                                    return;
-                                  void action(
-                                    item.kind === "message"
-                                      ? {
-                                          action: "supprimer-message-pour-tous",
-                                          messageId: item.messageId!,
-                                        }
-                                      : {
-                                          action: "supprimer-fichier",
-                                          fichierId: extraireIdElement(item),
-                                        }
-                                  );
-                                }}
+                                onClick={() => confirmerSuppression(item)}
                                 className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -755,29 +886,32 @@ export function ContenuModerationAdmin({
                         {t("admin.moderation.approuverFichier")}
                       </button>
                     )}
-                    {(selection.kind === "message" || selection.kind === "fichier") && (
+                    {(selection.kind === "message" || selection.kind === "fichier") &&
+                      !selection.supprime && (
                       <button
                         type="button"
                         disabled={enCours}
-                        onClick={() => {
-                          if (!window.confirm(t("admin.moderation.confirmerSuppression")))
-                            return;
-                          void action(
-                            selection.kind === "message"
-                              ? {
-                                  action: "supprimer-message-pour-tous",
-                                  messageId: selection.messageId!,
-                                }
-                              : {
-                                  action: "supprimer-fichier",
-                                  fichierId: extraireIdElement(selection),
-                                }
-                          );
-                        }}
+                        onClick={() => confirmerSuppression(selection)}
                         className="rounded-xl bg-red-600 px-3 py-2.5 text-left text-sm font-medium text-white hover:bg-red-700"
                       >
                         <Trash2 className="mb-1 h-4 w-4" />
                         {t("admin.moderation.supprimerPourTous")}
+                      </button>
+                    )}
+                    {selection.kind === "message" && selection.supprime && (
+                      <button
+                        type="button"
+                        disabled={enCours}
+                        onClick={() =>
+                          void action({
+                            action: "restaurer-message",
+                            messageId: selection.messageId!,
+                          })
+                        }
+                        className="rounded-xl border border-sky-300 bg-sky-50 px-3 py-2.5 text-left text-sm font-medium text-sky-800 hover:bg-sky-100"
+                      >
+                        <RotateCcw className="mb-1 h-4 w-4" />
+                        {t("admin.moderation.restaurerMessage")}
                       </button>
                     )}
                   </div>

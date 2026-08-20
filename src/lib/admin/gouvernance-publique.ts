@@ -174,7 +174,14 @@ function photoParDefaut() {
   return "/images/equipe/personnel-1.png";
 }
 
-function fonctionInterne(roleNom: string, salleNom: string) {
+function fonctionInterne(roleCode: string, roleNom: string, salleNom: string) {
+  if (roleCode === "SUPER_ADMIN" || roleCode === "ADMIN") {
+    return salleNom.trim() || "Direction";
+  }
+  const nom = roleNom.trim().toLowerCase();
+  if (nom.includes("super admin") || nom === "administrateur") {
+    return salleNom.trim() || "Direction";
+  }
   return roleNom.trim() || salleNom.trim();
 }
 
@@ -263,11 +270,23 @@ export async function chargerGouvernancePubliquePourSite() {
         ? utilisateur.medecinExterne?.specialite?.trim() || "Médecin externe"
         : utilisateur.role.code === "AGENT_EGLISE"
           ? "Service conventionné — Église"
-          : fonctionInterne(utilisateur.role.nom, salle.nom);
+          : fonctionInterne(utilisateur.role.code, utilisateur.role.nom, salle.nom);
+
+    // Le responsable public n'apparaît pas aussi dans « Notre équipe »
+    if (
+      config.responsableUtilisateurId &&
+      utilisateur.id === config.responsableUtilisateurId
+    ) {
+      continue;
+    }
+    // Ne pas exposer le compte SUPER_ADMIN dans l'équipe publique
+    if (utilisateur.role.code === "SUPER_ADMIN") {
+      continue;
+    }
 
     groupe.membres.push({
       id: utilisateur.id,
-      nom: `${utilisateur.prenom} ${utilisateur.nom}`.trim(),
+      nom: nomAffichageGouvernance(utilisateur.prenom, utilisateur.nom),
       fonction,
       photoUrl: utilisateur.photoUrl ?? photoParDefaut(),
       telephone: estPartenaire ? undefined : utilisateur.telephone ?? undefined,

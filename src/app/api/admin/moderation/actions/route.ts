@@ -18,6 +18,7 @@ import {
   supprimerFichierAdmin,
   supprimerGroupeAdmin,
   supprimerMessagePourTousAdmin,
+  restaurerMessageAdmin,
 } from "@/lib/admin/moderation-messagerie";
 import { mettreAJourUtilisateurAdmin } from "@/lib/admin/utilisateurs";
 import type { StatutUtilisateur } from "@/generated/prisma/client";
@@ -71,6 +72,12 @@ export async function POST(request: NextRequest) {
       case "supprimer-message-pour-tous":
         await supprimerMessagePourTousAdmin(acteurId, String(body.messageId ?? ""));
         return NextResponse.json({ message: "Message supprimé pour tous." });
+
+      case "restaurer-message":
+        await restaurerMessageAdmin(acteurId, String(body.messageId ?? ""));
+        return NextResponse.json({
+          message: "Message restauré — il réapparaît dans la conversation.",
+        });
 
       case "approuver-fichier":
         await approuverSignalementFichierAdmin(acteurId, String(body.fichierId ?? ""));

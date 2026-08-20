@@ -221,6 +221,26 @@ export function ContenuGouvernanceAdmin({
     }
   };
 
+  const supprimerPhotoResponsable = async () => {
+    if (!responsableActif) return;
+    setUploadPhotoEnCours(true);
+    setErreurPhoto(null);
+    try {
+      const res = await fetch(
+        `/api/admin/utilisateurs/${encodeURIComponent(responsableActif.id)}/photo`,
+        { method: "DELETE" }
+      );
+      const data = (await res.json()) as { message?: string };
+      if (!res.ok) throw new Error(data.message ?? "Suppression impossible.");
+      setPhotoResponsable(null);
+      await charger();
+    } catch (e: unknown) {
+      setErreurPhoto(e instanceof Error ? e.message : "Suppression impossible.");
+    } finally {
+      setUploadPhotoEnCours(false);
+    }
+  };
+
   const servicesTries = useMemo(
     () =>
       [...form.services].sort((a, b) => a.ordre - b.ordre).map((service) => ({
@@ -301,6 +321,7 @@ export function ContenuGouvernanceAdmin({
                             value={photoResponsable}
                             urlExistante={responsableActif.photoUrl}
                             onErreur={setErreurPhoto}
+                            onRetirer={() => void supprimerPhotoResponsable()}
                             onChange={(fichier) => {
                               setPhotoResponsable(fichier);
                               if (fichier) void televerserPhotoResponsable(fichier);
@@ -419,7 +440,7 @@ export function ContenuGouvernanceAdmin({
                   value={form.responsableUtilisateurId}
                   onChange={(e) => maj("responsableUtilisateurId", e.target.value)}
                 >
-                  <option value="">Choisir un SUPER_ADMIN</option>
+                  <option value="">Choisir un responsable (Super admin)</option>
                   {responsables.map((responsable) => (
                     <option key={responsable.id} value={responsable.id}>
                       {nomAffichageGouvernance(responsable.prenom, responsable.nom)}

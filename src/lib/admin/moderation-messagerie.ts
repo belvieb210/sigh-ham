@@ -150,28 +150,39 @@ export async function listerMessagesModeration(opts?: {
     take: limite,
   });
 
-  return rows.map((m) => ({
-    id: m.id,
-    conversationId: m.conversationId,
-    conversationType: m.conversation.type,
-    conversationSujet: m.conversation.sujet,
-    contenu: m.supprime ? m.contenuArchive ?? "[supprimé]" : m.contenu,
-    contenuArchive: m.contenuArchive,
-    supprime: m.supprime,
-    supprimeLe: m.supprimeLe?.toISOString() ?? null,
-    bloque: m.bloque,
-    bloqueRaison: m.bloqueRaison,
-    signale: m.signale,
-    signaleRaison: m.signaleRaison,
-    avertissementEnvoye: m.avertissementEnvoye,
-    envoyeLe: m.envoyeLe.toISOString(),
-    expediteur: {
-      id: m.expediteur.id,
-      nomComplet: `${m.expediteur.prenom} ${m.expediteur.nom}`.trim(),
-      identifiant: m.expediteur.identifiant,
-    },
-    piecesJointes: m.piecesJointes,
-  }));
+  return rows.map((m) => {
+    const archive = m.contenuArchive?.trim() || null;
+    const contenuAffiche = m.supprime
+      ? archive ||
+        (m.contenu.startsWith("[Message") || m.contenu === "[supprimé]"
+          ? "[Contenu archivé indisponible]"
+          : m.contenu) ||
+        "[supprimé]"
+      : m.contenu;
+    return {
+      id: m.id,
+      conversationId: m.conversationId,
+      conversationType: m.conversation.type,
+      conversationSujet: m.conversation.sujet,
+      contenu: contenuAffiche,
+      contenuArchive: archive,
+      contenuOriginal: archive ?? (m.supprime ? null : m.contenu),
+      supprime: m.supprime,
+      supprimeLe: m.supprimeLe?.toISOString() ?? null,
+      bloque: m.bloque,
+      bloqueRaison: m.bloqueRaison,
+      signale: m.signale,
+      signaleRaison: m.signaleRaison,
+      avertissementEnvoye: m.avertissementEnvoye,
+      envoyeLe: m.envoyeLe.toISOString(),
+      expediteur: {
+        id: m.expediteur.id,
+        nomComplet: `${m.expediteur.prenom} ${m.expediteur.nom}`.trim(),
+        identifiant: m.expediteur.identifiant,
+      },
+      piecesJointes: m.piecesJointes,
+    };
+  });
 }
 
 export async function listerFichiersModeration(opts?: {
@@ -491,9 +502,18 @@ export async function listerFeedModeration(opts: {
   if (inclureMessages) {
     const messages = await listerMessagesModeration({
       signales: categorie === "messages" ? true : undefined,
+      supprimes: categorie === "messages" ? undefined : undefined,
       limite: categorie === "messages" ? 200 : 80,
     });
-    for (const m of messages) {
+    // Pour l'onglet messages : signalés + déjà traités/supprimés récents
+    const messagesExtra =
+      categorie === "messages"
+        ? await listerMessagesModeration({ supprimes: true, limite: 100 })
+        : [];
+    const vus = new Set<string>();
+    for (const m of [...messages, ...messagesExtra]) {
+      if (vus.has(m.id)) continue;
+      vus.add(m.id);
       if (categorie === "tous" && !m.signale && !m.bloque && !m.supprime) continue;
       items.push({
         id: `msg-${m.id}`,
@@ -717,18 +737,47 @@ export async function supprimerMessagePourTousAdmin(
 ) {
   const msg = await prisma.message.findUnique({ where: { id: messageId } });
   if (!msg) throw new Error("INTROUVABLE");
+  const archive =
+    msg.contenuArchive?.trim() ||
+    (msg.contenu.startsWith("[Message") ? null : msg.contenu.trim()) ||
+    null;
   const maj = await prisma.message.update({
     where: { id: messageId },
     data: {
       supprime: true,
       supprimeLe: new Date(),
-      contenuArchive: msg.contenuArchive ?? msg.contenu,
+      contenuArchive: archive ?? msg.contenuArchive ?? msg.contenu,
       contenu: "[Message supprimé par l'administration]",
       signale: false,
       signaleRaison: null,
     },
   });
   await actionAudit(acteurId, "Suppression message (admin)", "Message", messageId);
+  return maj;
+}
+
+export async function restaurerMessageAdmin(acteurId: string, messageId: string) {
+  const msg = await prisma.message.findUnique({ where: { id: messageId } });
+  if (!msg) throw new Error("INTROUVABLE");
+  if (!msg.supprime) throw new Error("INTROUVABLE");
+
+  const contenuRestaure =
+    msg.contenuArchive?.trim() ||
+    (msg.contenu.startsWith("[Message") ? "" : msg.contenu);
+
+  const maj = await prisma.message.update({
+    where: { id: messageId },
+    data: {
+      supprime: false,
+      supprimeLe: null,
+      contenu: contenuRestaure || msg.contenuArchive || "—",
+      bloque: false,
+      bloqueLe: null,
+      bloqueParId: null,
+      bloqueRaison: null,
+    },
+  });
+  await actionAudit(acteurId, "Restauration message (admin)", "Message", messageId);
   return maj;
 }
 

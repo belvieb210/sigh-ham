@@ -319,7 +319,13 @@ export async function modifierPhotoGroupe(
 export async function supprimerMessage(messageId: string, utilisateurId: string) {
   const message = await prisma.message.findUnique({
     where: { id: messageId },
-    select: { id: true, expediteurId: true, conversationId: true },
+    select: {
+      id: true,
+      expediteurId: true,
+      conversationId: true,
+      contenu: true,
+      contenuArchive: true,
+    },
   });
   if (!message || message.expediteurId !== utilisateurId) {
     throw new Error("NON_AUTORISE");
@@ -330,7 +336,13 @@ export async function supprimerMessage(messageId: string, utilisateurId: string)
     prisma.reactionMessage.deleteMany({ where: { messageId } }),
     prisma.message.update({
       where: { id: messageId },
-      data: { supprime: true, contenu: "", modifieLe: null, supprimeLe: new Date() },
+      data: {
+        supprime: true,
+        contenuArchive: message.contenuArchive ?? message.contenu,
+        contenu: "",
+        modifieLe: null,
+        supprimeLe: new Date(),
+      },
     }),
   ]);
 

@@ -137,7 +137,14 @@ export function BoutonNotificationsEnTete() {
       </button>
 
       {ouvert && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[min(100vw-1.5rem,22rem)] overflow-hidden rounded-2xl border border-gris-bordure bg-white shadow-2xl sm:w-96">
+        <div
+          className={cn(
+            "z-50 overflow-hidden rounded-2xl border border-gris-bordure bg-white shadow-2xl",
+            "fixed left-1/2 top-[4.75rem] w-[calc(100vw-1.25rem)] max-w-sm -translate-x-1/2",
+            "max-h-[min(70vh,calc(100dvh-9rem-env(safe-area-inset-bottom)))]",
+            "sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 sm:max-w-none sm:translate-x-0 sm:max-h-none"
+          )}
+        >
           <div className="flex items-center justify-between border-b border-gris-bordure bg-gradient-to-r from-bleu-medical-clair/80 to-white px-4 py-3">
             <div>
               <p className="text-sm font-bold text-texte-principal">
@@ -159,7 +166,7 @@ export function BoutonNotificationsEnTete() {
             )}
           </div>
 
-          <div className="max-h-[min(60vh,420px)] overflow-y-auto">
+          <div className="max-h-[min(50vh,calc(100dvh-14rem-env(safe-area-inset-bottom)))] overflow-y-auto sm:max-h-[min(60vh,420px)]">
             {chargementListe ? (
               <div className="flex justify-center py-10">
                 <Loader2 className="h-5 w-5 animate-spin text-bleu-medical" />

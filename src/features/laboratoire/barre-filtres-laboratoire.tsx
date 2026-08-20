@@ -60,12 +60,10 @@ export function BarreFiltresLaboratoire({
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-center">
-          {rechercheNumeros}
-        </div>
+      <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+        <div className="min-w-0 w-full flex-1 sm:w-auto">{rechercheNumeros}</div>
 
-        <div className="flex shrink-0 items-center justify-end gap-2">
+        <div className="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto">
           <button
             type="button"
             onClick={onToggle}

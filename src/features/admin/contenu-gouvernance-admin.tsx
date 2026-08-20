@@ -293,11 +293,11 @@ export function ContenuGouvernanceAdmin({
                     <p className="text-xs font-bold uppercase tracking-wide text-bleu-medical">
                       Notre direction
                     </p>
-                    <div className="mt-3 flex gap-3">
-                      <div className="w-24 shrink-0">
+                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start">
+                      <div className="shrink-0">
                         {responsableActif ? (
                           <ZonePhotoPatient
-                            className="[&_button]:h-24 [&_button]:text-[10px] [&_button]:leading-tight [&_div.relative]:h-24"
+                            compact
                             value={photoResponsable}
                             urlExistante={responsableActif.photoUrl}
                             onErreur={setErreurPhoto}
@@ -307,7 +307,7 @@ export function ContenuGouvernanceAdmin({
                             }}
                           />
                         ) : (
-                          <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white">
+                          <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-dashed border-gris-bordure bg-white">
                             <ShieldCheck className="h-8 w-8 text-bleu-medical" />
                           </div>
                         )}
@@ -318,7 +318,7 @@ export function ContenuGouvernanceAdmin({
                           </p>
                         ) : null}
                         {erreurPhoto ? (
-                          <p className="mt-1 text-[10px] text-red-600">{erreurPhoto}</p>
+                          <p className="mt-1 max-w-[6rem] text-[10px] text-red-600">{erreurPhoto}</p>
                         ) : null}
                       </div>
                       <div className="min-w-0 flex-1">

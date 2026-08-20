@@ -400,13 +400,13 @@ export function ContenuPatientsLaboratoire({
                         <th className="hidden px-2 py-1.5 font-semibold lg:table-cell">
                           {t("laboratoire.patients.colonnes.service")}
                         </th>
-                        <th className="px-2 py-1.5 font-semibold">
+                        <th className="hidden px-2 py-1.5 font-semibold sm:table-cell">
                           {t("laboratoire.patients.colonnes.examensDemandes")}
                         </th>
-                        <th className="w-[72px] px-2 py-1.5 font-semibold">
+                        <th className="sticky right-[52px] z-[1] w-[72px] bg-slate-50 px-2 py-1.5 font-semibold sm:static sm:bg-transparent">
                           {t("laboratoire.patients.colonnes.statut")}
                         </th>
-                        <th className="w-[72px] px-1.5 py-1.5 font-semibold">
+                        <th className="sticky right-0 z-[1] w-[52px] bg-slate-50 px-1.5 py-1.5 font-semibold sm:static sm:w-[72px] sm:bg-transparent">
                           {t("laboratoire.patients.colonnes.actions")}
                         </th>
                       </tr>
@@ -463,13 +463,16 @@ export function ContenuPatientsLaboratoire({
                             <td className="hidden px-2 py-1.5 text-[11px] text-texte-secondaire lg:table-cell">
                               {p.provenance || "—"}
                             </td>
-                            <td className="px-2 py-1.5">
+                            <td className="hidden px-2 py-1.5 sm:table-cell">
                               <CelluleListeExamens examens={p.examens} />
                             </td>
-                            <td className="px-2 py-1.5">
+                            <td className="sticky right-[52px] z-[1] bg-white px-2 py-1.5 sm:static sm:bg-transparent">
                               <CelluleBadgesStatutExamens examens={p.examens} />
                             </td>
-                            <td className="px-1.5 py-1.5" onClick={(e) => e.stopPropagation()}>
+                            <td
+                              className="sticky right-0 z-[1] bg-white px-1.5 py-1.5 sm:static sm:bg-transparent"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <div className="flex items-center gap-1">
                                 <MenuActionsTransfertLaboratoire
                                   patient={p}

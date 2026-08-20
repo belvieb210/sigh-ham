@@ -444,8 +444,10 @@ export function PanneauDetailsConversation({
           onClick={onFermer}
           aria-label={t("reception.messagerie.annuler")}
         />
-        <aside className="absolute bottom-0 right-0 top-0 flex w-[300px] max-w-[90vw] flex-col bg-white shadow-xl">
-          {contenu}
+        <aside className="absolute bottom-[calc(4.25rem+env(safe-area-inset-bottom))] right-0 top-0 flex w-[min(300px,92vw)] flex-col overflow-hidden bg-white shadow-xl">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+            {contenu}
+          </div>
         </aside>
       </div>
     );

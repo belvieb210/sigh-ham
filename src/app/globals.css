@@ -207,12 +207,13 @@
 
   /* Tableaux dashboard : scroll horizontal sur mobile */
   .conteneur-tableau-sigh {
-    @apply w-full max-w-full overflow-x-auto;
+    @apply w-full max-w-full overflow-x-auto overscroll-x-contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .conteneur-tableau-sigh .tableau-sigh,
   .conteneur-tableau-sigh .tableau-liste-labo {
-    @apply min-w-[640px] md:min-w-0;
+    @apply min-w-0 sm:min-w-[560px] md:min-w-0;
   }
 
   /* Libellés navigation basse mobile */

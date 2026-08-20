@@ -867,7 +867,7 @@ export function InterfaceMessagerie({ utilisateurId, prenom, nom, estAdmin = fal
   const libelleActif = conversationAffichee ? libelleConv(conversationAffichee) : null;
 
   return (
-    <div className="flex h-[calc(100dvh-8.5rem)] min-h-[480px] flex-col overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm lg:h-[calc(100dvh-7rem)]">
+    <div className="flex h-[calc(100dvh-12.5rem-env(safe-area-inset-bottom))] min-h-0 flex-col overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm sm:h-[calc(100dvh-11rem-env(safe-area-inset-bottom))] lg:h-[calc(100dvh-7rem)]">
       <div className="flex shrink-0 items-center justify-between border-b border-gris-bordure bg-gradient-to-r from-bleu-medical-clair to-white px-4 py-3">
         <div>
           <h2 className="text-base font-bold text-texte-principal">

@@ -128,12 +128,12 @@ export const NAVIGATION_LABORATOIRE = {
 
 export const NAVIGATION_BASSE_LABORATOIRE = [
   { href: "/sigh/laboratoire", id: "accueil", icone: Home },
-  { href: "/sigh/laboratoire/patients", id: "patients", icone: Users, fab: true },
   {
     href: "/sigh/laboratoire/examens-en-cours",
     id: "examens",
     icone: FlaskConical,
   },
+  { href: "/sigh/laboratoire/patients", id: "patients", icone: Users, fab: true },
   {
     href: "/sigh/laboratoire/verifies",
     id: "verifies",

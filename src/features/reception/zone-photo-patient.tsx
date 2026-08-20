@@ -15,6 +15,8 @@ interface PropsZonePhotoPatient {
   className?: string;
   /** Photo déjà enregistrée (URL publique) */
   urlExistante?: string | null;
+  /** Zone compacte (aperçu gouvernance, avatar) */
+  compact?: boolean;
 }
 
 export function ZonePhotoPatient({
@@ -23,6 +25,7 @@ export function ZonePhotoPatient({
   onErreur,
   className,
   urlExistante = null,
+  compact = false,
 }: PropsZonePhotoPatient) {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -70,7 +73,7 @@ export function ZonePhotoPatient({
   };
 
   return (
-    <div className={className}>
+    <div className={cn(compact && "w-24", className)}>
       <input
         ref={inputRef}
         type="file"
@@ -80,20 +83,28 @@ export function ZonePhotoPatient({
       />
 
       {apercu ? (
-        <div className="relative flex h-36 items-center justify-center overflow-hidden rounded-xl border border-gris-bordure bg-gris-tres-clair/60 p-1">
+        <div
+          className={cn(
+            "relative flex items-center justify-center overflow-hidden rounded-xl border border-gris-bordure bg-gris-tres-clair/60 p-1",
+            compact ? "h-24 w-24" : "h-36"
+          )}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={apercu}
             alt={t("reception.photo.apercu")}
-            className="max-h-full max-w-full object-contain"
+            className={cn(
+              "max-h-full max-w-full",
+              compact ? "h-full w-full object-cover" : "object-contain"
+            )}
           />
           <button
             type="button"
             onClick={retirer}
-            className="absolute right-2 top-2 rounded-full bg-white/90 p-1.5 text-texte-secondaire shadow hover:bg-white hover:text-red-600"
+            className="absolute right-1.5 top-1.5 rounded-full bg-white/90 p-1 text-texte-secondaire shadow hover:bg-white hover:text-red-600"
             aria-label={t("reception.photo.retirer")}
           >
-            <X className="h-4 w-4" />
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
       ) : (
@@ -111,23 +122,38 @@ export function ZonePhotoPatient({
             traiterFichier(e.dataTransfer.files?.[0] ?? null);
           }}
           className={cn(
-            "flex h-36 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed bg-gris-tres-clair/40 p-4 text-center transition-colors",
+            "flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed bg-gris-tres-clair/40 text-center transition-colors",
+            compact ? "h-24 w-24 gap-0.5 p-1.5" : "h-36 p-4",
             glisser
               ? "border-bleu-medical bg-bleu-medical-clair/30"
               : "border-gris-bordure hover:border-bleu-medical hover:bg-bleu-medical-clair/30"
           )}
         >
-          <Upload className="mb-2 h-8 w-8 text-bleu-medical" strokeWidth={1.5} />
-          <span className="block text-sm font-semibold text-texte-principal">
-            {t("reception.photo.depot")}
-          </span>
-          <span className="mt-1 block text-xs text-texte-secondaire">
-            {t("reception.photo.format")}
-          </span>
+          <Upload
+            className={cn(
+              "text-bleu-medical",
+              compact ? "mb-0.5 h-5 w-5" : "mb-2 h-8 w-8"
+            )}
+            strokeWidth={1.5}
+          />
+          {!compact ? (
+            <>
+              <span className="block text-sm font-semibold text-texte-principal">
+                {t("reception.photo.depot")}
+              </span>
+              <span className="mt-1 block text-xs text-texte-secondaire">
+                {t("reception.photo.format")}
+              </span>
+            </>
+          ) : (
+            <span className="px-0.5 text-[9px] font-medium leading-tight text-texte-secondaire">
+              PNG / JPG
+            </span>
+          )}
         </button>
       )}
 
-      {value && !apercuLocal && (
+      {value && !apercuLocal && !compact && (
         <p className="mt-2 truncate text-xs text-texte-secondaire">{value.name}</p>
       )}
     </div>

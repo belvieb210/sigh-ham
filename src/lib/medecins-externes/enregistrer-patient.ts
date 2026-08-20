@@ -1,8 +1,8 @@
 import "server-only";
-import { Sexe } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { genererNumerosPatient } from "@/lib/reception/numeros";
 import {
+  champsIdentitePatientPrisma,
   construireObservations,
   validerDonneesEnregistrement,
 } from "@/lib/reception/enregistrer-patient";
@@ -33,27 +33,7 @@ export async function enregistrerPatientMedecinExterne(
     const patient = await tx.patient.create({
       data: {
         numeroPatient,
-        nom: donnees.nom.trim().toUpperCase(),
-        prenom: donnees.prenom.trim(),
-        sexe: donnees.sexe as Sexe,
-        dateNaissance: new Date(donnees.dateNaissance),
-        telephone: donnees.telephone?.trim(),
-        email: donnees.email?.trim() || null,
-        adresse: donnees.adresse?.trim(),
-        ville: donnees.ville?.trim() || null,
-        province: donnees.commune?.trim() || null,
-        pays:
-          !donnees.pays || donnees.pays === "RDC"
-            ? "RD Congo"
-            : donnees.pays.trim(),
-        groupeSanguin:
-          donnees.groupeSanguin?.trim() &&
-          donnees.groupeSanguin !== "Inconnu" &&
-          donnees.groupeSanguin !== ""
-            ? donnees.groupeSanguin
-            : null,
-        contactUrgence: donnees.contactUrgence?.trim() || null,
-        telephoneUrgence: donnees.telephoneUrgence?.trim() || null,
+        ...champsIdentitePatientPrisma(donnees),
         medecinExterneId,
       },
     });

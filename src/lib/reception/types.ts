@@ -27,6 +27,8 @@ export interface DonneesFormulairePatient {
   postNom: string;
   sexe: "MASCULIN" | "FEMININ";
   dateNaissance: string;
+  /** Âge déclaré en années (chaîne formulaire, optionnel). */
+  age: string;
   telephone: string;
   telephoneSecondaire: string;
   email: string;
@@ -65,7 +67,9 @@ export interface DonneesEnregistrementPatient {
   prenom: string;
   postNom?: string;
   sexe: "MASCULIN" | "FEMININ";
-  dateNaissance: string;
+  dateNaissance?: string;
+  /** Âge déclaré (années), optionnel — utilisé si pas de date de naissance. */
+  age?: number | null;
   telephone?: string;
   telephoneSecondaire?: string;
   email?: string;

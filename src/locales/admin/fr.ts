@@ -293,6 +293,7 @@ export const adminFr = {
       nom: "Nom",
       sexe: "Sexe",
       dateNaissance: "Date de naissance",
+      age: "Âge (années)",
       email: "E-mail",
       telephone: "Téléphone",
       photo: "Photo (optionnel)",

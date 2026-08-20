@@ -425,6 +425,8 @@ model Patient {
   prenom           String
   nom              String
   dateNaissance    DateTime?       @map("date_naissance")
+  /** Âge déclaré (années) — utilisé si date de naissance absente. */
+  age              Int?
   sexe             Sexe?
   telephone        String?
   email            String?

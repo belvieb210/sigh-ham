@@ -60,6 +60,18 @@ export async function PATCH(
           : body.dateNaissance
             ? String(body.dateNaissance)
             : null,
+      age:
+        body.age === undefined
+          ? undefined
+          : body.age === null || body.age === ""
+            ? null
+            : (() => {
+                const n = Number(body.age);
+                if (!Number.isInteger(n) || n < 0 || n > 150) {
+                  throw new Error("L'âge doit être un nombre entier entre 0 et 150.");
+                }
+                return n;
+              })(),
       sexe: sexeDepuisBody(body.sexe),
       telephone: texteOptionnel(body.telephone),
       email: texteOptionnel(body.email),

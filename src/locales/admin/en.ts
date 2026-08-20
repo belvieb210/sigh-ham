@@ -293,6 +293,7 @@ export const adminEn = {
       nom: "Last name",
       sexe: "Sex",
       dateNaissance: "Date of birth",
+      age: "Age (years)",
       email: "Email",
       telephone: "Phone",
       photo: "Photo (optional)",

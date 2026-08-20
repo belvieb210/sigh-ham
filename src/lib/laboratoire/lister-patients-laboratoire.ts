@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { listerPatientsFileAttenteSalle, filtreTransfertVisibleSalle, STATUTS_TRANSFERT_VISIBLES_SALLE } from "@/lib/transferts/visibilite-salle";
-import { calculerAge } from "@/features/caisse/utils-format";
+import { resoudreAgePatient } from "@/features/caisse/utils-format";
 import { patientCorrespondPageStatut } from "@/features/laboratoire/utils-affichage";
 import { deriverStatutAnalyse } from "@/lib/laboratoire/orienter-statut-analyse";
 import { classerExamensFacture } from "@/lib/laboratoire/classer-examens-facture";
@@ -201,7 +201,10 @@ export async function listerPatientsLaboratoire(opts?: {
       telephone: patient.telephone,
       sexe: patient.sexe ?? null,
       dateNaissance: patient.dateNaissance?.toISOString() ?? null,
-      age: calculerAge(patient.dateNaissance?.toISOString() ?? null),
+      age: resoudreAgePatient({
+        dateNaissance: patient.dateNaissance,
+        age: patient.age,
+      }),
       arriveeLe: file.arriveLe.toISOString(),
       numeroOrdre: file.numeroOrdre,
       provenance:
@@ -435,7 +438,10 @@ async function chargerPatientsLaboratoireParDossiers(
       telephone: patient.telephone,
       sexe: patient.sexe ?? null,
       dateNaissance: patient.dateNaissance?.toISOString() ?? null,
-      age: calculerAge(patient.dateNaissance?.toISOString() ?? null),
+      age: resoudreAgePatient({
+        dateNaissance: patient.dateNaissance,
+        age: patient.age,
+      }),
       arriveeLe: arrivee.toISOString(),
       numeroOrdre: file?.numeroOrdre ?? 0,
       provenance:

@@ -1,5 +1,5 @@
 import "server-only";
-import type { CodeSalle, Prisma, Sexe, StatutTransfert } from "@/generated/prisma/client";
+import type { CodeSalle, Prisma, StatutTransfert } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   genererNumeroEnregistrementVisite,
@@ -7,6 +7,7 @@ import {
   numeroPatDuParcours,
 } from "@/lib/reception/numeros";
 import {
+  champsIdentitePatientPrisma,
   parserDonneesEnregistrement,
   validerDonneesEnregistrement,
 } from "@/lib/reception/enregistrer-patient";
@@ -49,26 +50,7 @@ function libelleMotifVisite(
 }
 
 function donneesPatientDepuisFormulaire(donnees: DonneesEnregistrementPatient) {
-  return {
-    nom: donnees.nom.trim().toUpperCase(),
-    prenom: donnees.prenom.trim(),
-    sexe: donnees.sexe as Sexe,
-    dateNaissance: new Date(donnees.dateNaissance),
-    telephone: donnees.telephone?.trim(),
-    email: donnees.email?.trim() || null,
-    adresse: donnees.adresse?.trim(),
-    ville: donnees.ville?.trim() || null,
-    province: donnees.commune?.trim() || null,
-    pays: normaliserPays(donnees.pays),
-    groupeSanguin:
-      donnees.groupeSanguin?.trim() &&
-      donnees.groupeSanguin !== "Inconnu" &&
-      donnees.groupeSanguin !== ""
-        ? donnees.groupeSanguin
-        : null,
-    contactUrgence: donnees.contactUrgence?.trim() || null,
-    telephoneUrgence: donnees.telephoneUrgence?.trim() || null,
-  };
+  return champsIdentitePatientPrisma(donnees);
 }
 
 function construireObservationsEnregistrement(
@@ -200,7 +182,8 @@ async function chargerDonneesPatientPourTransfertManuel(
     sexe: patient.sexe === "MASCULIN" || patient.sexe === "FEMININ" ? patient.sexe : "FEMININ",
     dateNaissance: patient.dateNaissance
       ? patient.dateNaissance.toISOString().slice(0, 10)
-      : "2000-01-01",
+      : undefined,
+    age: patient.age ?? null,
     telephone: patient.telephone ?? "—",
     adresse: patient.adresse ?? "—",
     ville: patient.ville ?? "Kinshasa",

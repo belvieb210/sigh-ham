@@ -60,7 +60,35 @@ export function calculerAge(dateNaissanceIso: string | null): number | null {
   let age = aujourdHui.getFullYear() - naissance.getFullYear();
   const m = aujourdHui.getMonth() - naissance.getMonth();
   if (m < 0 || (m === 0 && aujourdHui.getDate() < naissance.getDate())) age -= 1;
-  return age;
+  return age >= 0 ? age : null;
+}
+
+/** Âge affiché : calculé depuis la date de naissance, sinon âge déclaré en base. */
+export function resoudreAgePatient(opts: {
+  dateNaissance?: string | Date | null;
+  age?: number | null;
+}): number | null {
+  const brut = opts.dateNaissance;
+  const iso =
+    brut instanceof Date
+      ? Number.isNaN(brut.getTime())
+        ? null
+        : brut.toISOString()
+      : brut?.trim()
+        ? brut
+        : null;
+  return calculerAge(iso) ?? (typeof opts.age === "number" ? opts.age : null);
+}
+
+/** Parse un âge déclaré (0–150). Chaîne vide → null. */
+export function parserAgeDeclare(brut: unknown): number | null {
+  if (brut === null || brut === undefined) return null;
+  const texte = String(brut).trim();
+  if (!texte) return null;
+  const n = Number(texte);
+  if (!Number.isFinite(n) || !Number.isInteger(n)) return null;
+  if (n < 0 || n > 150) return null;
+  return n;
 }
 
 export function initiales(prenom: string, nom: string) {

@@ -97,6 +97,7 @@ export async function obtenirPatientPourFormulaire(
     postNom: depuisObservations.postNom ?? "",
     sexe: patient.sexe === "MASCULIN" || patient.sexe === "FEMININ" ? patient.sexe : "FEMININ",
     dateNaissance: formaterDateNaissance(patient.dateNaissance),
+    age: patient.age != null ? String(patient.age) : "",
     telephone: patient.telephone ?? "",
     telephoneSecondaire: depuisObservations.telephoneSecondaire ?? "",
     email: patient.email ?? "",

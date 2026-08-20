@@ -19,6 +19,7 @@ export interface FormPatientAdmin {
   prenom: string;
   nom: string;
   dateNaissance: string;
+  age: string;
   sexe: "" | "MASCULIN" | "FEMININ" | "AUTRE";
   telephone: string;
   email: string;
@@ -36,6 +37,7 @@ export const FORM_PATIENT_ADMIN_VIDE: FormPatientAdmin = {
   prenom: "",
   nom: "",
   dateNaissance: "",
+  age: "",
   sexe: "",
   telephone: "",
   email: "",
@@ -267,6 +269,23 @@ export function FormulairePatientAdmin({
                 value={form.dateNaissance}
                 disabled={lectureSeule}
                 onChange={(e) => maj("dateNaissance", e.target.value)}
+              />
+            </div>
+            <div>
+              <LabelChamp htmlFor="admin-pat-age">
+                {t("admin.patients.champs.age")}
+              </LabelChamp>
+              <input
+                id="admin-pat-age"
+                type="number"
+                min={0}
+                max={150}
+                inputMode="numeric"
+                className={classeChamp}
+                value={form.age}
+                disabled={lectureSeule}
+                placeholder="Ex. 32"
+                onChange={(e) => maj("age", e.target.value)}
               />
             </div>
           </div>

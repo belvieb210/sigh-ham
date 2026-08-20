@@ -50,6 +50,7 @@ interface EtatFormulairePatient {
   prenom: string;
   postNom: string;
   dateNaissance: string;
+  age: string;
   telephone: string;
   telephoneSecondaire: string;
   email: string;
@@ -75,6 +76,7 @@ const ETAT_INITIAL_FORMULAIRE: EtatFormulairePatient = {
   prenom: "",
   postNom: "",
   dateNaissance: "",
+  age: "",
   telephone: "",
   telephoneSecondaire: "",
   email: "",
@@ -114,6 +116,7 @@ function mapperPrefillVersEtat(donnees: DonneesFormulairePatient): EtatFormulair
     prenom: donnees.prenom,
     postNom: donnees.postNom,
     dateNaissance: donnees.dateNaissance,
+    age: donnees.age ?? "",
     telephone: donnees.telephone,
     telephoneSecondaire: donnees.telephoneSecondaire,
     email: donnees.email,
@@ -401,6 +404,7 @@ export const FormulaireEnregistrement = forwardRef<
       prenom: formulaire.prenom,
       typeVisite: formulaire.typeVisite,
       dateNaissance: formulaire.dateNaissance,
+      age: formulaire.age,
       telephone: formulaire.telephone,
       adresse: formulaire.adresse,
       commune: formulaire.commune,
@@ -928,13 +932,26 @@ export const FormulaireEnregistrement = forwardRef<
                 <div>
                   <label className={CLASSE_LABEL_RECEPTION} htmlFor="date-naissance-jour">
                     {t("reception.formulaire.champs.dateNaissance")}
-                    <span className="text-red-500">*</span>
                   </label>
                   <ChampDateNaissance
                     id="date-naissance"
                     value={formulaire.dateNaissance}
                     onChange={(valeur) => majFormulaire("dateNaissance", valeur)}
-                    required
+                  />
+                </div>
+                <div>
+                  <label className={CLASSE_LABEL_RECEPTION} htmlFor="age-patient">
+                    {t("reception.formulaire.champs.age")}
+                  </label>
+                  <input
+                    id="age-patient"
+                    type="number"
+                    min={0}
+                    max={150}
+                    inputMode="numeric"
+                    placeholder={t("reception.formulaire.placeholders.age")}
+                    className={CLASSE_CHAMP_RECEPTION}
+                    {...propsChamp("age")}
                   />
                 </div>
                 <div>

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
-import { calculerAge } from "@/features/caisse/utils-format";
+import { resoudreAgePatient } from "@/features/caisse/utils-format";
 import {
   extraireRemarqueSansOrientation,
 } from "@/constants/laboratoire-orientations";
@@ -179,7 +179,10 @@ export async function chargerDonneesResultatExamenPdf(
       nom: patient.nom,
       prenom: patient.prenom,
       sexe: patient.sexe,
-      age: calculerAge(patient.dateNaissance?.toISOString() ?? null),
+      age: resoudreAgePatient({
+        dateNaissance: patient.dateNaissance,
+        age: patient.age,
+      }),
       telephone: patient.telephone,
       adresse: formaterAdressePatientPdf({
         adresse: patient.adresse,

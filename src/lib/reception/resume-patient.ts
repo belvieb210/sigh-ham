@@ -74,6 +74,7 @@ export function construireResumeDepuisFormulaire(input: {
   prenom?: string;
   typeVisite?: string;
   dateNaissance?: string;
+  age?: string;
   telephone?: string;
   adresse?: string;
   commune?: string;
@@ -92,6 +93,15 @@ export function construireResumeDepuisFormulaire(input: {
     return RESUME_PATIENT_VIDE;
   }
 
+  const ageDepuisDate = calculerAgeAffiche(input.dateNaissance ?? "");
+  const ageDeclare = input.age?.trim() ?? "";
+  const age =
+    ageDepuisDate !== "—"
+      ? ageDepuisDate
+      : ageDeclare
+        ? ageDeclare
+        : "—";
+
   return {
     initiales: initialesPatient(prenom, nom),
     nomComplet: nomComplet || "Patient sans nom",
@@ -100,7 +110,7 @@ export function construireResumeDepuisFormulaire(input: {
     dossierId: input.dossierId ?? null,
     typeVisite: input.typeVisite ?? "nouveau",
     libelleTypeVisite: libelleTypeVisite(input.typeVisite ?? "nouveau"),
-    age: calculerAgeAffiche(input.dateNaissance ?? ""),
+    age,
     telephone: input.telephone?.trim() || "—",
     adresse: formaterAdresse(input),
     assurance: input.assurance?.trim() || "—",
@@ -117,6 +127,7 @@ export function construireResumeDepuisDonneesFormulaire(
     prenom: donnees.prenom,
     typeVisite: donnees.typeVisite,
     dateNaissance: donnees.dateNaissance,
+    age: donnees.age,
     telephone: donnees.telephone,
     adresse: donnees.adresse,
     commune: donnees.commune,

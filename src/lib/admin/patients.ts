@@ -22,6 +22,7 @@ export type PersonneAdmin = {
   prenom: string;
   nom: string;
   dateNaissance: string | null;
+  age: number | null;
   sexe: Sexe | null;
   telephone: string | null;
   email: string | null;
@@ -46,6 +47,7 @@ const selectPatient = {
   prenom: true,
   nom: true,
   dateNaissance: true,
+  age: true,
   sexe: true,
   telephone: true,
   email: true,
@@ -93,6 +95,7 @@ function mapperPersonne(
     prenom: p.prenom,
     nom: p.nom,
     dateNaissance: p.dateNaissance?.toISOString() ?? null,
+    age: p.age ?? null,
     sexe: p.sexe,
     telephone: p.telephone,
     email: p.email,
@@ -152,6 +155,7 @@ export async function mettreAJourPersonneAdmin(
     prenom?: string;
     nom?: string;
     dateNaissance?: string | null;
+    age?: number | null;
     sexe?: Sexe | null;
     telephone?: string | null;
     email?: string | null;
@@ -192,6 +196,7 @@ export async function mettreAJourPersonneAdmin(
               : null,
           }
         : {}),
+      ...(input.age !== undefined ? { age: input.age } : {}),
       ...(input.sexe !== undefined ? { sexe: input.sexe } : {}),
       ...(input.telephone !== undefined
         ? { telephone: input.telephone?.trim() || null }

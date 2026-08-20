@@ -1,7 +1,7 @@
 import "server-only";
-import { Sexe } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
+  champsIdentitePatientPrisma,
   construireObservations,
   validerDonneesEnregistrement,
 } from "@/lib/reception/enregistrer-patient";
@@ -9,11 +9,6 @@ import type {
   DonneesEnregistrementPatient,
   ResultatEnregistrementPatient,
 } from "@/lib/reception/types";
-
-function normaliserPays(pays?: string): string {
-  if (!pays || pays === "RDC") return "RD Congo";
-  return pays;
-}
 
 export async function mettreAJourPatient(
   numeroPatient: string,
@@ -57,26 +52,7 @@ export async function mettreAJourPatient(
   await prisma.$transaction(async (tx) => {
     await tx.patient.update({
       where: { id: patientExistant.id },
-      data: {
-        nom: donnees.nom.trim().toUpperCase(),
-        prenom: donnees.prenom.trim(),
-        sexe: donnees.sexe as Sexe,
-        dateNaissance: new Date(donnees.dateNaissance),
-        telephone: donnees.telephone?.trim(),
-        email: donnees.email?.trim() || null,
-        adresse: donnees.adresse?.trim(),
-        ville: donnees.ville?.trim() || null,
-        province: donnees.commune?.trim() || null,
-        pays: normaliserPays(donnees.pays),
-        groupeSanguin:
-          donnees.groupeSanguin?.trim() &&
-          donnees.groupeSanguin !== "Inconnu" &&
-          donnees.groupeSanguin !== ""
-            ? donnees.groupeSanguin
-            : null,
-        contactUrgence: donnees.contactUrgence?.trim() || null,
-        telephoneUrgence: donnees.telephoneUrgence?.trim() || null,
-      },
+      data: champsIdentitePatientPrisma(donnees),
     });
 
     const enregistrementId = dossier.enregistrementsReception[0]?.id;

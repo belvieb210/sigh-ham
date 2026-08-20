@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import { calculerAge } from "@/features/caisse/utils-format";
+import { resoudreAgePatient } from "@/features/caisse/utils-format";
 import {
   ecrireOrientationAnalyseDansNotes,
   extraireRemarqueSansOrientation,
@@ -152,7 +152,10 @@ export async function chargerSaisieResultats(
     prenom: patient.prenom,
     nom: patient.nom,
     sexe: patient.sexe,
-    age: calculerAge(patient.dateNaissance?.toISOString() ?? null),
+    age: resoudreAgePatient({
+      dateNaissance: patient.dateNaissance,
+      age: patient.age,
+    }),
     telephone: patient.telephone,
     examens: dossier.examensLaboratoire.map((ex) => ({
       id: ex.id,
@@ -360,7 +363,10 @@ export async function enregistrerResultatsExamen(
       const idsPersoGardes = new Set(
         lignesPerso
           .map((l) => l.resultatId?.trim())
-          .filter((id): id is string => Boolean(id) && !id.startsWith("perso-"))
+          .filter(
+            (id): id is string =>
+              typeof id === "string" && id.length > 0 && !id.startsWith("perso-")
+          )
       );
 
       const idsASupprimer = customsExistants

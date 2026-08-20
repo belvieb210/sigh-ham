@@ -45,6 +45,7 @@ type PersonneItem = {
   prenom: string;
   nom: string;
   dateNaissance: string | null;
+  age: number | null;
   sexe: "MASCULIN" | "FEMININ" | "AUTRE" | null;
   telephone: string | null;
   email: string | null;
@@ -134,6 +135,7 @@ function formVersPersonne(p: PersonneItem): FormPatientAdmin {
     prenom: p.prenom,
     nom: p.nom,
     dateNaissance: dateIsoVersChamp(p.dateNaissance),
+    age: p.age != null ? String(p.age) : "",
     sexe: p.sexe ?? "",
     telephone: p.telephone ?? "",
     email: p.email ?? "",
@@ -387,6 +389,7 @@ export function ContenuPatientsAdmin({
           prenom: form.prenom,
           nom: form.nom,
           dateNaissance: form.dateNaissance || null,
+          age: form.age.trim() === "" ? null : Number(form.age),
           sexe: form.sexe || null,
           telephone: form.telephone || null,
           email: form.email || null,

@@ -2396,7 +2396,9 @@ export function optionsSaisieDepuisModaux(
 ): EntreeOptionsSaisie | null {
   if (!formulaire) return null;
 
-  const f = formulaire.trim();
+  const fRaw = formulaire.trim();
+  const f =
+    fRaw === "serologie" || fRaw === "seriologie" ? "serology" : fRaw;
   const upper = nomParametre.trim().toUpperCase();
 
   if (f === "ziehl_nelsen") {

@@ -28,7 +28,7 @@ export function MalariaResultatPdf({ lignes }: { lignes: LigneParametrePdf[] }) 
           options={{
             showFlag: false,
             showRange: false,
-            showValues: true,
+            showValues: false,
             showUnit: true,
           }}
         />

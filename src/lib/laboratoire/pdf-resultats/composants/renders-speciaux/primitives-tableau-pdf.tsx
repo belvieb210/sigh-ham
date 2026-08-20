@@ -137,8 +137,8 @@ export function TableauColonnesPdf({
               key={ci}
               width={widths[ci] ?? "auto"}
               last={ci === row.length - 1}
-              left={ci === 0 || alignRow === "left"}
-              center={ci > 0 && alignRow === "center"}
+              left={alignRow === "left"}
+              center={alignRow === "center"}
             >
               {cell}
             </Cell>

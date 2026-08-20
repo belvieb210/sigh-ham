@@ -13,6 +13,20 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COULEURS_RESULTAT_PDF.bordureTableau,
   },
+  body: {
+    flexDirection: "row",
+  },
+  colGauche: {
+    width: "75%",
+  },
+  colHomo: {
+    width: "25%",
+    borderLeftWidth: 1,
+    borderLeftColor: COULEURS_RESULTAT_PDF.bordureTableau,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 3,
+  },
   row: {
     flexDirection: "row",
     borderBottomWidth: 1,
@@ -35,21 +49,17 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: COULEURS_RESULTAT_PDF.bordureTableau,
   },
-  cellHomo: {
-    paddingVertical: 3,
-    paddingHorizontal: 3,
+  cellLastColGauche: { borderRightWidth: 0 },
+  cellLast: { borderRightWidth: 0 },
+  homoText: {
     fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
-    borderRightWidth: 1,
-    borderRightColor: COULEURS_RESULTAT_PDF.bordureTableau,
-    justifyContent: "center",
   },
-  cellLast: { borderRightWidth: 0 },
 });
 
 function parserElectrophorese(lignes: LigneParametrePdf[]) {
-  let header4 = "Variante homozygote";
+  let header4 = "Variante HOMOZYGOTE";
   let homoValue = "";
   const rows: LigneParametrePdf[] = [];
 
@@ -99,7 +109,6 @@ export function ElectrophoreseResultatPdf({
 }) {
   const { header4, homoValue, rows } = parserElectrophorese(lignes);
   const count = rows.length;
-  const rowMinH = 18;
 
   return (
     <View style={styles.table}>
@@ -114,41 +123,38 @@ export function ElectrophoreseResultatPdf({
         </Text>
       </View>
 
-      {rows.map((l, index) => (
-        <View
-          key={`${l.name}-${index}`}
-          style={[styles.row, ...(index === count - 1 ? [styles.rowLast] : [])]}
-        >
-          <Text style={[styles.cell, { width: "35%" }]}>{afficherVariante(l)}</Text>
-          <Text style={[styles.cell, { width: "20%", textAlign: "center" }]}>
-            {afficherValeur(l)}
-          </Text>
-          <Text style={[styles.cell, { width: "20%", textAlign: "center" }]}>
-            {(l.range ?? "").trim()}
-          </Text>
-          {index === 0 && homoValue ? (
+      <View style={styles.body}>
+        <View style={styles.colGauche}>
+          {rows.map((l, index) => (
             <View
+              key={`${l.name}-${index}`}
               style={[
-                styles.cellHomo,
-                styles.cellLast,
-                {
-                  width: "25%",
-                  minHeight: rowMinH * count,
-                  borderBottomWidth: 0,
-                },
+                styles.row,
+                ...(index === count - 1 ? [styles.rowLast] : []),
               ]}
             >
-              <Text>{homoValue}</Text>
+              <Text style={[styles.cell, { width: "46.666%" }]}>
+                {afficherVariante(l)}
+              </Text>
+              <Text style={[styles.cell, { width: "26.667%", textAlign: "center" }]}>
+                {afficherValeur(l)}
+              </Text>
+              <Text
+                style={[
+                  styles.cell,
+                  styles.cellLastColGauche,
+                  { width: "26.667%", textAlign: "center" },
+                ]}
+              >
+                {(l.range ?? "").trim()}
+              </Text>
             </View>
-          ) : homoValue ? (
-            <View style={[styles.cell, styles.cellLast, { width: "25%", minHeight: rowMinH, borderRightWidth: 0 }]} />
-          ) : (
-            <Text style={[styles.cell, styles.cellLast, { width: "25%", textAlign: "center" }]}>
-              {/^VARIANTE VALEUR$/i.test(l.name.trim()) ? afficherValeur(l) : ""}
-            </Text>
-          )}
+          ))}
         </View>
-      ))}
+        <View style={styles.colHomo}>
+          {homoValue ? <Text style={styles.homoText}>{homoValue}</Text> : null}
+        </View>
+      </View>
     </View>
   );
 }

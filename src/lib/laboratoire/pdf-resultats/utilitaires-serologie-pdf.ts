@@ -87,6 +87,29 @@ export function normaliserNomParametreWidal(rawName: string): string {
     .trim();
 }
 
+function afficherResultatPrincipal(l: LigneParametrePdf): string {
+  const val = (l.value ?? "").trim();
+  const other = (l.other ?? "").trim();
+  if (val && val.toUpperCase() !== "AUTRES") return val.toUpperCase();
+  if (val.toUpperCase() === "AUTRES" && other) return other.toUpperCase();
+  if (other) return other.toUpperCase();
+  return val.toUpperCase();
+}
+
+function afficherTitreOuValeurSecondaire(l: LigneParametrePdf): string {
+  const other = (l.other ?? "").trim();
+  if (other) return other.toUpperCase();
+  return "";
+}
+
+function estNomResultatsSeul(name: string): boolean {
+  return /^R[EÉ]SULTAT:?$/i.test(name.trim());
+}
+
+function estNomValeurSeul(name: string): boolean {
+  return /^VALEURS?$/i.test(name.trim());
+}
+
 /** Regroupe paires RESULTAT + VALEUR (port renderMalaria / renderSerologie PHP). */
 export function grouperParametresSerologie(
   lignes: LigneParametrePdf[],
@@ -97,24 +120,35 @@ export function grouperParametresSerologie(
   const normaliser = options?.normaliserPrefixe
     ? normaliserNomParametreWidal
     : (s: string) => s.trim();
+  const ordrePrefixes: string[] = [];
+
+  const assurerPrefix = (prefix: string) => {
+    if (!groups[prefix]) {
+      groups[prefix] = {};
+      ordrePrefixes.push(prefix);
+    }
+  };
 
   for (let i = 0; i < lignes.length; i++) {
     const r = lignes[i]!;
     const name = r.name.trim();
-    const display = afficherValeur(r);
 
     if (/\s+VALEURS?$/i.test(name)) {
       const prefix = normaliser(name.replace(/\s+VALEURS?$/i, ""));
-      if (!groups[prefix]) groups[prefix] = {};
-      groups[prefix].valeur = display;
+      assurerPrefix(prefix);
+      groups[prefix].valeur = afficherValeur(r);
       used.add(i);
       continue;
     }
 
-    if (/\s+RESULTAT$/i.test(name)) {
-      const prefix = normaliser(name.replace(/\s+RESULTAT$/i, ""));
-      if (!groups[prefix]) groups[prefix] = {};
-      groups[prefix].resultat = display;
+    if (/\s+R[EÉ]SULTAT:?$/i.test(name)) {
+      const prefix = normaliser(name.replace(/\s+R[EÉ]SULTAT:?$/i, ""));
+      assurerPrefix(prefix);
+      groups[prefix].resultat = afficherResultatPrincipal(r);
+      if (!(groups[prefix].valeur ?? "").trim()) {
+        const titre = afficherTitreOuValeurSecondaire(r);
+        if (titre) groups[prefix].valeur = titre;
+      }
       used.add(i);
       continue;
     }
@@ -122,20 +156,69 @@ export function grouperParametresSerologie(
     if (options?.prefixesMalaria) {
       if (/^(FALCIPARUM\s*\(Pf\)|MALAIAE\s+ET\s+AUTRES\s*\(PAN\))$/i.test(name)) {
         const prefix = name.trim();
-        if (!groups[prefix]) groups[prefix] = {};
-        groups[prefix].resultat = display;
+        assurerPrefix(prefix);
+        groups[prefix].resultat = afficherResultatPrincipal(r);
         used.add(i);
       }
     }
   }
 
-  const groupes: GroupeSerologiePdf[] = Object.entries(groups).map(
-    ([prefix, vals]) => ({
-      prefix,
-      resultat: vals.resultat ?? "",
-      valeur: vals.valeur ?? "",
-    })
-  );
+  // Format moderne : une ligne par antigène (valeur = résultat, other = titre).
+  let resultatGlobal = "";
+  let valeurGlobale = "";
+  let aResultatsGlobal = false;
+  let aValeurGlobale = false;
+
+  for (let i = 0; i < lignes.length; i++) {
+    if (used.has(i)) continue;
+    const r = lignes[i]!;
+    const name = r.name.trim();
+
+    if (estNomResultatsSeul(name)) {
+      resultatGlobal = afficherResultatPrincipal(r);
+      const titre = afficherTitreOuValeurSecondaire(r);
+      if (titre) valeurGlobale = titre;
+      aResultatsGlobal = true;
+      used.add(i);
+      continue;
+    }
+
+    if (estNomValeurSeul(name)) {
+      valeurGlobale = afficherValeur(r);
+      aValeurGlobale = true;
+      used.add(i);
+      continue;
+    }
+  }
+
+  if (aResultatsGlobal || aValeurGlobale) {
+    const prefix = "SÉROLOGIE";
+    assurerPrefix(prefix);
+    if (resultatGlobal) groups[prefix].resultat = resultatGlobal;
+    if (valeurGlobale) groups[prefix].valeur = valeurGlobale;
+  }
+
+  for (let i = 0; i < lignes.length; i++) {
+    if (used.has(i)) continue;
+    const r = lignes[i]!;
+    const name = r.name.trim();
+    const resultat = afficherResultatPrincipal(r);
+    const valeur = afficherTitreOuValeurSecondaire(r);
+    if (!resultat && !valeur) continue;
+
+    const prefix = normaliser(name.replace(/:$/, ""));
+    if (!prefix) continue;
+    assurerPrefix(prefix);
+    if (resultat) groups[prefix].resultat = resultat;
+    if (valeur) groups[prefix].valeur = valeur;
+    used.add(i);
+  }
+
+  const groupes: GroupeSerologiePdf[] = ordrePrefixes.map((prefix) => ({
+    prefix,
+    resultat: groups[prefix]?.resultat ?? "",
+    valeur: groups[prefix]?.valeur ?? "",
+  }));
 
   const restants = lignes
     .filter((_, i) => !used.has(i))

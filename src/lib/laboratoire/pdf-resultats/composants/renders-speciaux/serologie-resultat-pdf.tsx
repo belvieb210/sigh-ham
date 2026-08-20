@@ -18,7 +18,20 @@ export function SerologieResultatPdf({
     normaliserPrefixe,
   });
 
-  if (groupes.length === 0 && restants.length <= 2) {
+  const rows = groupes.map((g) => {
+    const prefix =
+      g.prefix.toUpperCase() === "SÉROLOGIE" && titreSerologie?.trim()
+        ? titreSerologie.trim()
+        : g.prefix;
+    return [prefix, g.resultat, g.valeur];
+  });
+
+  if (rows.length === 0 && restants.length === 0) {
+    return null;
+  }
+
+  // Ancien fallback 1 ligne (RESULTAT/VALEUR seuls) — évité dès qu'on a des groupes.
+  if (rows.length === 0 && restants.length <= 2) {
     return (
       <TableauParametresResultatPdf
         lignes={lignes}
@@ -28,8 +41,6 @@ export function SerologieResultatPdf({
     );
   }
 
-  const rows = groupes.map((g) => [g.prefix, g.resultat, g.valeur]);
-
   return (
     <View>
       {rows.length > 0 ? (
@@ -37,7 +48,7 @@ export function SerologieResultatPdf({
           headers={["PARAMÈTRES", "RÉSULTAT", "VALEUR"]}
           widths={["35%", "32.5%", "32.5%"]}
           rows={rows}
-          alignRow="left"
+          alignRow="center"
         />
       ) : null}
       {restants.length > 0 ? (
@@ -46,7 +57,7 @@ export function SerologieResultatPdf({
           options={{
             showFlag: false,
             showRange: false,
-            showValues: true,
+            showValues: false,
             showUnit: true,
           }}
         />

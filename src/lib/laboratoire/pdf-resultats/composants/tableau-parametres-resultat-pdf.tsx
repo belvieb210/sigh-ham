@@ -104,9 +104,22 @@ export function TableauParametresResultatPdf({
     let resultat = "";
     let valeurs = "";
     for (const l of lignes) {
-      const n = l.name.toUpperCase();
-      if (n === "RESULTAT" || n === "RÉSULTAT") resultat = valeurAffichageParametre(l);
-      if (n === "VALEURS" || n === "VALEUR") valeurs = valeurAffichageParametre(l);
+      const n = l.name.trim().toUpperCase().replace(/:$/, "");
+      if (n === "RESULTAT" || n === "RÉSULTAT") {
+        resultat = (l.value ?? "").trim().toUpperCase() || valeurAffichageParametre(l);
+        if (!valeurs && (l.other ?? "").trim()) {
+          valeurs = (l.other ?? "").trim().toUpperCase();
+        }
+      }
+      if (n === "VALEURS" || n === "VALEUR") {
+        valeurs = valeurAffichageParametre(l);
+      }
+    }
+    // Une seule ligne dual (resultat_valeur) sans noms RESULTAT/VALEUR.
+    if (!resultat && !valeurs && lignes.length === 1) {
+      const l = lignes[0]!;
+      resultat = (l.value ?? "").trim().toUpperCase();
+      valeurs = (l.other ?? "").trim().toUpperCase();
     }
     return (
       <View style={stylesResultatPdf.table}>
@@ -118,7 +131,9 @@ export function TableauParametresResultatPdf({
           ))}
         </View>
         <View style={stylesResultatPdf.tableRow}>
-          <Cell width={cols[0]!.width}>{titreSerologie ?? "SÉROLOGIE"}</Cell>
+          <Cell width={cols[0]!.width}>
+            {titreSerologie ?? lignes[0]?.name ?? "SÉROLOGIE"}
+          </Cell>
           <Cell width={cols[1]!.width} center last={cols.length === 2}>
             {resultat}
           </Cell>

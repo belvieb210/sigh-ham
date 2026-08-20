@@ -55,6 +55,7 @@ export const ALIASES_TYPE_EXAMEN_PDF: Record<string, string> = {
   urines_routines: "urinesRoutines",
   serologie: "serologie",
   seriologie: "serologie",
+  serology: "serologie",
   salmonella: "salmonella",
   widal: "widal",
   malaria: "malaria",

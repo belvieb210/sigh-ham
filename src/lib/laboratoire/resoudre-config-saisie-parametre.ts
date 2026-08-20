@@ -7,6 +7,7 @@ import { optionsSaisieDepuisModaux } from "@/lib/laboratoire/options-saisie-moda
 
 const FORMULAIRES_RESULTAT_VALEUR = new Set([
   "serology",
+  "serologie",
   "widal",
   "salmonella",
   "malaria",

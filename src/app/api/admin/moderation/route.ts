@@ -4,8 +4,10 @@ import {
   obtenirSessionApiAdmin,
   reponseNonAutoriseAdmin,
 } from "@/lib/auth/garde-api-admin";
+import type { CategorieFeedModeration } from "@/lib/admin/moderation-messagerie-types";
 import {
   listerConversationsModeration,
+  listerFeedModeration,
   listerFichiersModeration,
   listerMessagesModeration,
   obtenirStatsModeration,
@@ -57,6 +59,17 @@ export async function GET(request: NextRequest) {
         supprimees: sp.get("supprimes") === "true",
       });
       return NextResponse.json({ groupes });
+    }
+
+    if (vue === "feed") {
+      const feed = await listerFeedModeration({
+        categorie: (sp.get("categorie") as CategorieFeedModeration | null) ?? "tous",
+        q: sp.get("q") ?? undefined,
+        statut: sp.get("statut") ?? undefined,
+        page: Number(sp.get("page") ?? "1"),
+        pageSize: Number(sp.get("pageSize") ?? "10"),
+      });
+      return NextResponse.json(feed);
     }
 
     return NextResponse.json({ message: "Vue inconnue." }, { status: 400 });

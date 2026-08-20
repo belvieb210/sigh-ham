@@ -2,20 +2,19 @@ import "server-only";
 import type { Prisma, TypeConversation } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { enregistrerAudit } from "@/lib/admin/audit";
+import type {
+  CategorieFeedModeration,
+  ElementFeedModeration,
+  StatutElementModeration,
+  StatsModeration,
+} from "@/lib/admin/moderation-messagerie-types";
 
-export type VueModeration = "conversations" | "messages" | "supprimes" | "groupes" | "fichiers" | "signales";
-
-export type StatsModeration = {
-  conversationsTotal: number;
-  conversationsBloquees: number;
-  groupesSupprimes: number;
-  messagesSupprimes: number;
-  messagesSignales: number;
-  messagesBloques: number;
-  fichiersSignales: number;
-  fichiersSupprimes: number;
-  utilisateursMessagerieBloquee: number;
-};
+export type {
+  CategorieFeedModeration,
+  ElementFeedModeration,
+  StatutElementModeration,
+  StatsModeration,
+} from "@/lib/admin/moderation-messagerie-types";
 
 export async function obtenirStatsModeration(): Promise<StatsModeration> {
   const [
@@ -419,4 +418,342 @@ export function messageErreurModeration(code: string): string | null {
     default:
       return null;
   }
+}
+
+function initialesDepuisNom(nom: string) {
+  const parts = nom.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
+}
+
+function statutMessage(m: {
+  signale: boolean;
+  bloque: boolean;
+  supprime: boolean;
+  avertissementEnvoye: boolean;
+}): StatutElementModeration {
+  if (m.supprime) return "supprime";
+  if (m.bloque) return "bloque";
+  if (m.signale && !m.avertissementEnvoye) return "nouveau";
+  if (m.signale || m.avertissementEnvoye) return "en_cours";
+  return "resolu";
+}
+
+function statutConversation(c: {
+  bloquee: boolean;
+  supprimee: boolean;
+}): StatutElementModeration {
+  if (c.supprimee) return "supprime";
+  if (c.bloquee) return "bloque";
+  return "en_cours";
+}
+
+function filtrerParRecherche(items: ElementFeedModeration[], q?: string) {
+  const terme = q?.trim().toLowerCase();
+  if (!terme) return items;
+  return items.filter(
+    (item) =>
+      item.titre.toLowerCase().includes(terme) ||
+      item.auteur.toLowerCase().includes(terme) ||
+      item.contenu.toLowerCase().includes(terme) ||
+      (item.raison?.toLowerCase().includes(terme) ?? false) ||
+      (item.conversationSujet?.toLowerCase().includes(terme) ?? false)
+  );
+}
+
+function filtrerParStatut(items: ElementFeedModeration[], statut?: string) {
+  if (!statut || statut === "tous") return items;
+  return items.filter((item) => item.statut === statut);
+}
+
+export async function listerFeedModeration(opts: {
+  categorie?: CategorieFeedModeration;
+  q?: string;
+  statut?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const categorie = opts.categorie ?? "tous";
+  const page = Math.max(1, opts.page ?? 1);
+  const pageSize = Math.min(Math.max(opts.pageSize ?? 10, 5), 50);
+  const items: ElementFeedModeration[] = [];
+
+  const inclureMessages =
+    categorie === "tous" || categorie === "messages";
+  const inclureConversations =
+    categorie === "tous" || categorie === "conversations";
+  const inclureGroupes = categorie === "tous" || categorie === "groupes";
+  const inclureFichiers = categorie === "tous" || categorie === "fichiers";
+  const inclureSuspensions =
+    categorie === "tous" || categorie === "suspensions";
+
+  if (inclureMessages) {
+    const messages = await listerMessagesModeration({
+      signales: categorie === "messages" ? true : undefined,
+      limite: categorie === "messages" ? 200 : 80,
+    });
+    for (const m of messages) {
+      if (categorie === "tous" && !m.signale && !m.bloque && !m.supprime) continue;
+      items.push({
+        id: `msg-${m.id}`,
+        kind: "message",
+        titre: m.expediteur.nomComplet,
+        initiales: initialesDepuisNom(m.expediteur.nomComplet),
+        auteur: m.expediteur.nomComplet,
+        auteurId: m.expediteur.id,
+        auteurIdentifiant: m.expediteur.identifiant,
+        contenu: m.contenu,
+        raison: m.signaleRaison ?? m.bloqueRaison,
+        statut: statutMessage(m),
+        dateIso: m.envoyeLe,
+        conversationId: m.conversationId,
+        conversationSujet: m.conversationSujet,
+        messageId: m.id,
+        fichierUrl: null,
+        fichierMime: null,
+        estImage: false,
+        bloque: m.bloque,
+        supprime: m.supprime,
+        signale: m.signale,
+        avertissementEnvoye: m.avertissementEnvoye,
+      });
+    }
+  }
+
+  if (inclureConversations) {
+    const conversations = await listerConversationsModeration({
+      bloquees: categorie === "conversations" ? true : undefined,
+      limite: 80,
+    });
+    for (const c of conversations) {
+      if (c.type === "GROUPE") continue;
+      if (categorie === "tous" && !c.bloquee) continue;
+      items.push({
+        id: `conv-${c.id}`,
+        kind: "conversation",
+        titre: c.sujet || "Conversation privée",
+        initiales: initialesDepuisNom(c.sujet || "CV"),
+        auteur: c.createur ?? "—",
+        auteurId: null,
+        auteurIdentifiant: null,
+        contenu: c.dernierMessage ?? "—",
+        raison: c.bloqueeRaison,
+        statut: statutConversation(c),
+        dateIso: c.dernierMessageLe ?? c.updatedAt,
+        conversationId: c.id,
+        conversationSujet: c.sujet,
+        messageId: null,
+        fichierUrl: null,
+        fichierMime: null,
+        estImage: false,
+        bloque: c.bloquee,
+        supprime: c.supprimee,
+        signale: false,
+        avertissementEnvoye: false,
+      });
+    }
+  }
+
+  if (inclureGroupes) {
+    const groupes = await listerConversationsModeration({
+      type: "GROUPE",
+      limite: 80,
+    });
+    for (const g of groupes) {
+      if (categorie === "tous" && !g.supprimee && !g.bloquee) continue;
+      items.push({
+        id: `grp-${g.id}`,
+        kind: "groupe",
+        titre: g.sujet || "Groupe",
+        initiales: initialesDepuisNom(g.sujet || "GR"),
+        auteur: g.createur ?? "—",
+        auteurId: null,
+        auteurIdentifiant: null,
+        contenu: g.dernierMessage ?? `${g.nbParticipants} participants`,
+        raison: g.bloqueeRaison,
+        statut: statutConversation(g),
+        dateIso: g.dernierMessageLe ?? g.updatedAt,
+        conversationId: g.id,
+        conversationSujet: g.sujet,
+        messageId: null,
+        fichierUrl: null,
+        fichierMime: null,
+        estImage: false,
+        bloque: g.bloquee,
+        supprime: g.supprimee,
+        signale: false,
+        avertissementEnvoye: false,
+      });
+    }
+  }
+
+  if (inclureFichiers) {
+    const fichiers = await listerFichiersModeration({ limite: 80 });
+    for (const f of fichiers) {
+      items.push({
+        id: `file-${f.id}`,
+        kind: "fichier",
+        titre: f.nom,
+        initiales: "PJ",
+        auteur: f.expediteur ?? "—",
+        auteurId: null,
+        auteurIdentifiant: null,
+        contenu: f.conversationSujet ?? f.nom,
+        raison: f.signaleRaison,
+        statut: f.supprimee ? "supprime" : f.signalee ? "nouveau" : "en_cours",
+        dateIso: f.envoyeLe,
+        conversationId: f.conversationId,
+        conversationSujet: f.conversationSujet,
+        messageId: f.messageId,
+        fichierUrl: f.url,
+        fichierMime: f.mimeType,
+        estImage: f.estImage,
+        bloque: false,
+        supprime: f.supprimee,
+        signale: f.signalee,
+        avertissementEnvoye: false,
+      });
+    }
+  }
+
+  if (inclureSuspensions) {
+    const suspensions = await listerSuspensionsModeration({ limite: 80 });
+    for (const u of suspensions) {
+      items.push({
+        id: `usr-${u.id}`,
+        kind: "suspension",
+        titre: u.nomComplet,
+        initiales: initialesDepuisNom(u.nomComplet),
+        auteur: u.nomComplet,
+        auteurId: u.id,
+        auteurIdentifiant: u.identifiant,
+        contenu: u.notesAdmin ?? "Accès messagerie suspendu par l'administration.",
+        raison: "Suspension messagerie",
+        statut: "suspendu",
+        dateIso: u.updatedAt,
+        conversationId: null,
+        conversationSujet: null,
+        messageId: null,
+        fichierUrl: null,
+        fichierMime: null,
+        estImage: false,
+        bloque: true,
+        supprime: false,
+        signale: false,
+        avertissementEnvoye: false,
+      });
+    }
+  }
+
+  const filtres = filtrerParStatut(filtrerParRecherche(items, opts.q), opts.statut);
+  filtres.sort(
+    (a, b) => new Date(b.dateIso).getTime() - new Date(a.dateIso).getTime()
+  );
+
+  const total = filtres.length;
+  const debut = (page - 1) * pageSize;
+  const elements = filtres.slice(debut, debut + pageSize);
+
+  return { elements, total, page, pageSize };
+}
+
+export async function listerSuspensionsModeration(opts?: {
+  q?: string;
+  limite?: number;
+}) {
+  const limite = Math.min(opts?.limite ?? 50, 100);
+  const where: Prisma.UtilisateurWhereInput = { messagerieBloquee: true };
+  if (opts?.q?.trim()) {
+    const q = opts.q.trim();
+    where.OR = [
+      { identifiant: { contains: q, mode: "insensitive" } },
+      { prenom: { contains: q, mode: "insensitive" } },
+      { nom: { contains: q, mode: "insensitive" } },
+      { email: { contains: q, mode: "insensitive" } },
+    ];
+  }
+
+  const rows = await prisma.utilisateur.findMany({
+    where,
+    select: {
+      id: true,
+      prenom: true,
+      nom: true,
+      identifiant: true,
+      notesAdmin: true,
+      updatedAt: true,
+      role: { select: { nom: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+    take: limite,
+  });
+
+  return rows.map((u) => ({
+    id: u.id,
+    nomComplet: `${u.prenom} ${u.nom}`.trim(),
+    identifiant: u.identifiant,
+    role: u.role.nom,
+    notesAdmin: u.notesAdmin,
+    updatedAt: u.updatedAt.toISOString(),
+  }));
+}
+
+export async function approuverSignalementMessageAdmin(
+  acteurId: string,
+  messageId: string
+) {
+  const msg = await prisma.message.update({
+    where: { id: messageId },
+    data: { signale: false, signaleRaison: null },
+  });
+  await actionAudit(acteurId, "Approbation signalement message", "Message", messageId);
+  return msg;
+}
+
+export async function supprimerMessagePourTousAdmin(
+  acteurId: string,
+  messageId: string
+) {
+  const msg = await prisma.message.findUnique({ where: { id: messageId } });
+  if (!msg) throw new Error("INTROUVABLE");
+  const maj = await prisma.message.update({
+    where: { id: messageId },
+    data: {
+      supprime: true,
+      supprimeLe: new Date(),
+      contenuArchive: msg.contenuArchive ?? msg.contenu,
+      contenu: "[Message supprimé par l'administration]",
+      signale: false,
+      signaleRaison: null,
+    },
+  });
+  await actionAudit(acteurId, "Suppression message (admin)", "Message", messageId);
+  return maj;
+}
+
+export async function approuverSignalementFichierAdmin(
+  acteurId: string,
+  fichierId: string
+) {
+  const f = await prisma.pieceJointe.update({
+    where: { id: fichierId },
+    data: { signalee: false, signaleRaison: null },
+  });
+  await actionAudit(acteurId, "Approbation signalement fichier", "PieceJointe", fichierId);
+  return f;
+}
+
+export async function supprimerFichierAdmin(acteurId: string, fichierId: string) {
+  const f = await prisma.pieceJointe.update({
+    where: { id: fichierId },
+    data: {
+      supprimee: true,
+      supprimeeLe: new Date(),
+      signalee: false,
+      signaleRaison: null,
+    },
+  });
+  await actionAudit(acteurId, "Suppression fichier (admin)", "PieceJointe", fichierId);
+  return f;
 }

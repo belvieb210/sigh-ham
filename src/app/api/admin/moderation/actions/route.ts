@@ -4,6 +4,8 @@ import {
   reponseNonAutoriseAdmin,
 } from "@/lib/auth/garde-api-admin";
 import {
+  approuverSignalementFichierAdmin,
+  approuverSignalementMessageAdmin,
   bloquerConversationAdmin,
   bloquerMessageAdmin,
   bloquerMessagerieUtilisateur,
@@ -13,7 +15,9 @@ import {
   envoyerAvertissementAdmin,
   messageErreurModeration,
   restaurerGroupeAdmin,
+  supprimerFichierAdmin,
   supprimerGroupeAdmin,
+  supprimerMessagePourTousAdmin,
 } from "@/lib/admin/moderation-messagerie";
 import { mettreAJourUtilisateurAdmin } from "@/lib/admin/utilisateurs";
 import type { StatutUtilisateur } from "@/generated/prisma/client";
@@ -59,6 +63,22 @@ export async function POST(request: NextRequest) {
       case "debloquer-message":
         await debloquerMessageAdmin(acteurId, String(body.messageId ?? ""));
         return NextResponse.json({ message: "Message débloqué." });
+
+      case "approuver-message":
+        await approuverSignalementMessageAdmin(acteurId, String(body.messageId ?? ""));
+        return NextResponse.json({ message: "Signalement classé — message légitime." });
+
+      case "supprimer-message-pour-tous":
+        await supprimerMessagePourTousAdmin(acteurId, String(body.messageId ?? ""));
+        return NextResponse.json({ message: "Message supprimé pour tous." });
+
+      case "approuver-fichier":
+        await approuverSignalementFichierAdmin(acteurId, String(body.fichierId ?? ""));
+        return NextResponse.json({ message: "Fichier approuvé." });
+
+      case "supprimer-fichier":
+        await supprimerFichierAdmin(acteurId, String(body.fichierId ?? ""));
+        return NextResponse.json({ message: "Fichier supprimé." });
 
       case "avertissement":
         await envoyerAvertissementAdmin(acteurId, {

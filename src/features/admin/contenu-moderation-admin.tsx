@@ -1,74 +1,158 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   AlertTriangle,
   Ban,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  FileText,
+  Filter,
+  Flag,
   Loader2,
-  MessageSquare,
   RefreshCw,
-  RotateCcw,
+  Search,
   ShieldAlert,
+  Trash2,
+  UserMinus,
   Users,
+  X,
 } from "lucide-react";
 import {
   MiseEnPageAdmin,
   type UtilisateurAdmin,
 } from "@/features/admin/mise-en-page-admin";
 import { EnTetePageReception } from "@/features/reception/en-tete-page-reception";
-import { Bouton } from "@/components/ui/bouton";
+import { nomAffichageGouvernance } from "@/lib/admin/nom-affichage-gouvernance";
+import type {
+  CategorieFeedModeration,
+  ElementFeedModeration,
+  StatutElementModeration,
+  StatsModeration,
+} from "@/lib/admin/moderation-messagerie-types";
 import { cn } from "@/lib/utils";
 
-type StatsMod = {
-  conversationsTotal: number;
-  conversationsBloquees: number;
-  groupesSupprimes: number;
-  messagesSupprimes: number;
-  messagesSignales: number;
-  messagesBloques: number;
-  fichiersSignales: number;
-  fichiersSupprimes: number;
-  utilisateursMessagerieBloquee: number;
-};
+type OngletModeration = CategorieFeedModeration;
 
-type ConvMod = {
-  id: string;
-  type: string;
-  sujet: string | null;
-  bloquee: boolean;
-  supprimee: boolean;
-  nbMessages: number;
-  nbParticipants: number;
-  dernierMessage: string | null;
-  createur: string | null;
-};
+function afficherNomComplet(nomComplet: string) {
+  const idx = nomComplet.lastIndexOf(" ");
+  if (idx <= 0) return nomComplet;
+  return nomAffichageGouvernance(
+    nomComplet.slice(0, idx),
+    nomComplet.slice(idx + 1)
+  );
+}
 
-type MsgMod = {
-  id: string;
-  conversationId: string;
-  contenu: string;
-  supprime: boolean;
-  bloque: boolean;
-  signale: boolean;
-  signaleRaison: string | null;
-  avertissementEnvoye: boolean;
-  envoyeLe: string;
-  expediteur: { id: string; nomComplet: string; identifiant: string };
-};
+function extraireIdElement(item: ElementFeedModeration) {
+  if (item.kind === "message") return item.messageId!;
+  if (item.kind === "fichier") return item.id.replace(/^file-/, "");
+  if (item.kind === "suspension") return item.auteurId!;
+  return item.conversationId!;
+}
 
-type FichierMod = {
-  id: string;
-  nom: string;
-  mimeType: string;
-  url: string;
-  signalee: boolean;
-  supprimee: boolean;
-  estImage: boolean;
-  expediteur: string | null;
-};
+function couleurAvatar(kind: ElementFeedModeration["kind"]) {
+  switch (kind) {
+    case "message":
+      return "bg-sky-100 text-sky-700";
+    case "conversation":
+      return "bg-emerald-100 text-emerald-700";
+    case "groupe":
+      return "bg-violet-100 text-violet-700";
+    case "fichier":
+      return "bg-amber-100 text-amber-800";
+    case "suspension":
+      return "bg-rose-100 text-rose-700";
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+}
 
-type Onglet = "signales" | "supprimes" | "groupes" | "fichiers" | "conversations";
+function badgeType(kind: ElementFeedModeration["kind"], t: (k: string) => string) {
+  const styles: Record<ElementFeedModeration["kind"], string> = {
+    message: "bg-sky-50 text-sky-700 ring-sky-200",
+    conversation: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    groupe: "bg-violet-50 text-violet-700 ring-violet-200",
+    fichier: "bg-amber-50 text-amber-800 ring-amber-200",
+    suspension: "bg-rose-50 text-rose-700 ring-rose-200",
+  };
+  const labels: Record<ElementFeedModeration["kind"], string> = {
+    message: t("admin.moderation.typeMessage"),
+    conversation: t("admin.moderation.typeConversation"),
+    groupe: t("admin.moderation.typeGroupe"),
+    fichier: t("admin.moderation.typeFichier"),
+    suspension: t("admin.moderation.typeSuspension"),
+  };
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+        styles[kind]
+      )}
+    >
+      {labels[kind]}
+    </span>
+  );
+}
+
+function badgeStatut(statut: StatutElementModeration, t: (k: string) => string) {
+  const map: Record<StatutElementModeration, string> = {
+    nouveau: "bg-orange-50 text-orange-700 ring-orange-200",
+    en_cours: "bg-blue-50 text-blue-700 ring-blue-200",
+    resolu: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    bloque: "bg-red-50 text-red-700 ring-red-200",
+    supprime: "bg-slate-100 text-slate-600 ring-slate-200",
+    suspendu: "bg-purple-50 text-purple-700 ring-purple-200",
+  };
+  const labels: Record<StatutElementModeration, string> = {
+    nouveau: t("admin.moderation.statutNouveau"),
+    en_cours: t("admin.moderation.statutEnCours"),
+    resolu: t("admin.moderation.statutResolu"),
+    bloque: t("admin.moderation.statutBloque"),
+    supprime: t("admin.moderation.statutSupprime"),
+    suspendu: t("admin.moderation.statutSuspendu"),
+  };
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+        map[statut]
+      )}
+    >
+      {labels[statut]}
+    </span>
+  );
+}
+
+function badgeRaison(raison: string | null) {
+  if (!raison) {
+    return (
+      <span className="inline-flex rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">
+        Aucun
+      </span>
+    );
+  }
+  const lower = raison.toLowerCase();
+  const danger =
+    lower.includes("harc") ||
+    lower.includes("inappropri") ||
+    lower.includes("spam");
+  return (
+    <span
+      className={cn(
+        "inline-flex max-w-[140px] truncate rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset",
+        danger
+          ? "bg-red-50 text-red-700 ring-red-200"
+          : "bg-amber-50 text-amber-800 ring-amber-200"
+      )}
+      title={raison}
+    >
+      {raison}
+    </span>
+  );
+}
 
 export function ContenuModerationAdmin({
   utilisateur,
@@ -76,76 +160,87 @@ export function ContenuModerationAdmin({
   utilisateur: UtilisateurAdmin;
 }) {
   const { t } = useTranslation();
-  const [stats, setStats] = useState<StatsMod | null>(null);
-  const [onglet, setOnglet] = useState<Onglet>("signales");
-  const [conversations, setConversations] = useState<ConvMod[]>([]);
-  const [messages, setMessages] = useState<MsgMod[]>([]);
-  const [fichiers, setFichiers] = useState<FichierMod[]>([]);
+  const [stats, setStats] = useState<StatsModeration | null>(null);
+  const [onglet, setOnglet] = useState<OngletModeration>("tous");
+  const [elements, setElements] = useState<ElementFeedModeration[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [recherche, setRecherche] = useState("");
+  const [rechercheAppliquee, setRechercheAppliquee] = useState("");
+  const [filtreStatut, setFiltreStatut] = useState("tous");
   const [chargement, setChargement] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [selectionMsg, setSelectionMsg] = useState<MsgMod | null>(null);
+  const [selection, setSelection] = useState<ElementFeedModeration | null>(null);
   const [texteAvert, setTexteAvert] = useState("");
+  const [notesModeration, setNotesModeration] = useState("");
   const [enCours, setEnCours] = useState(false);
 
   const charger = useCallback(async () => {
     setChargement(true);
     setErreur(null);
     try {
-      const [sRes, ...rest] = await Promise.all([
+      const params = new URLSearchParams({
+        vue: "feed",
+        categorie: onglet,
+        page: String(page),
+        pageSize: String(pageSize),
+      });
+      if (rechercheAppliquee) params.set("q", rechercheAppliquee);
+      if (filtreStatut !== "tous") params.set("statut", filtreStatut);
+
+      const [sRes, fRes] = await Promise.all([
         fetch("/api/admin/moderation?vue=stats"),
-        onglet === "conversations"
-          ? fetch("/api/admin/moderation?vue=conversations")
-          : onglet === "groupes"
-            ? fetch("/api/admin/moderation?vue=groupes")
-            : onglet === "fichiers"
-              ? fetch("/api/admin/moderation?vue=fichiers")
-              : fetch(
-                  `/api/admin/moderation?vue=messages${
-                    onglet === "signales"
-                      ? "&signales=true"
-                      : onglet === "supprimes"
-                        ? "&supprimes=true"
-                        : ""
-                  }`
-                ),
+        fetch(`/api/admin/moderation?${params.toString()}`),
       ]);
-      const sData = (await sRes.json()) as { stats?: StatsMod };
+      const sData = (await sRes.json()) as { stats?: StatsModeration };
+      const fData = (await fRes.json()) as {
+        elements?: ElementFeedModeration[];
+        total?: number;
+        message?: string;
+      };
+
       if (sRes.ok) setStats(sData.stats ?? null);
+      if (!fRes.ok) throw new Error(fData.message ?? t("admin.common.erreur"));
 
-      const data = await rest[0].json();
-      if (!rest[0].ok) throw new Error(data.message ?? t("admin.common.erreur"));
-
-      if (onglet === "conversations") setConversations(data.conversations ?? []);
-      else if (onglet === "groupes") setConversations(data.groupes ?? []);
-      else if (onglet === "fichiers") setFichiers(data.fichiers ?? []);
-      else setMessages(data.messages ?? []);
+      setElements(fData.elements ?? []);
+      setTotal(fData.total ?? 0);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : t("admin.common.erreur"));
     } finally {
       setChargement(false);
     }
-  }, [onglet, t]);
+  }, [filtreStatut, onglet, page, pageSize, rechercheAppliquee, t]);
 
   useEffect(() => {
     void charger();
   }, [charger]);
 
-  const action = async (payload: Record<string, string>) => {
+  useEffect(() => {
+    setPage(1);
+    setSelection(null);
+  }, [onglet, rechercheAppliquee, filtreStatut, pageSize]);
+
+  const action = async (payload: Record<string, string | undefined>) => {
     setEnCours(true);
     setMessage(null);
     setErreur(null);
     try {
+      const corps = Object.fromEntries(
+        Object.entries(payload).filter(([, v]) => v != null && v !== "")
+      ) as Record<string, string>;
       const res = await fetch("/api/admin/moderation/actions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(corps),
       });
       const data = (await res.json()) as { message?: string };
       if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
       setMessage(data.message ?? "OK");
-      setSelectionMsg(null);
+      setSelection(null);
       setTexteAvert("");
+      setNotesModeration("");
       await charger();
     } catch (e) {
       setErreur(e instanceof Error ? e.message : t("admin.common.erreur"));
@@ -154,22 +249,84 @@ export function ContenuModerationAdmin({
     }
   };
 
-  const onglets: { id: Onglet; label: string; count?: number }[] = [
-    { id: "signales", label: t("admin.moderation.ongletSignales"), count: stats?.messagesSignales },
-    { id: "supprimes", label: t("admin.moderation.ongletSupprimes"), count: stats?.messagesSupprimes },
-    { id: "groupes", label: t("admin.moderation.ongletGroupes"), count: stats?.groupesSupprimes },
-    { id: "fichiers", label: t("admin.moderation.ongletFichiers"), count: stats?.fichiersSignales },
-    { id: "conversations", label: t("admin.moderation.ongletConversations") },
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const debut = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const fin = Math.min(page * pageSize, total);
+
+  const onglets: { id: OngletModeration; label: string; count?: number }[] = [
+    {
+      id: "tous",
+      label: t("admin.moderation.ongletTous"),
+      count:
+        (stats?.messagesSignales ?? 0) +
+        (stats?.conversationsBloquees ?? 0) +
+        (stats?.fichiersSignales ?? 0) +
+        (stats?.utilisateursMessagerieBloquee ?? 0),
+    },
+    {
+      id: "messages",
+      label: t("admin.moderation.ongletMessagesSignales"),
+      count: stats?.messagesSignales,
+    },
+    {
+      id: "conversations",
+      label: t("admin.moderation.ongletConversations"),
+      count: stats?.conversationsBloquees,
+    },
+    {
+      id: "groupes",
+      label: t("admin.moderation.ongletGroupes"),
+      count: stats?.groupesSupprimes,
+    },
+    {
+      id: "fichiers",
+      label: t("admin.moderation.ongletFichiers"),
+      count: stats?.fichiersSignales,
+    },
+    {
+      id: "suspensions",
+      label: t("admin.moderation.ongletSuspensions"),
+      count: stats?.utilisateursMessagerieBloquee,
+    },
   ];
 
   const kpis = stats
     ? [
-        { label: t("admin.moderation.kpiSignales"), val: stats.messagesSignales, icone: AlertTriangle },
-        { label: t("admin.moderation.kpiBloques"), val: stats.conversationsBloquees, icone: Ban },
-        { label: t("admin.moderation.kpiUtilisateurs"), val: stats.utilisateursMessagerieBloquee, icone: Users },
-        { label: t("admin.moderation.kpiFichiers"), val: stats.fichiersSignales, icone: ShieldAlert },
+        {
+          label: t("admin.moderation.kpiSignales"),
+          val: stats.messagesSignales,
+          icone: Flag,
+          couleur: "text-red-500 bg-red-50",
+        },
+        {
+          label: t("admin.moderation.kpiBloques"),
+          val: stats.conversationsBloquees,
+          icone: Ban,
+          couleur: "text-rose-500 bg-rose-50",
+        },
+        {
+          label: t("admin.moderation.kpiUtilisateurs"),
+          val: stats.utilisateursMessagerieBloquee,
+          icone: UserMinus,
+          couleur: "text-violet-500 bg-violet-50",
+        },
+        {
+          label: t("admin.moderation.kpiFichiers"),
+          val: stats.fichiersSignales,
+          icone: FileText,
+          couleur: "text-blue-500 bg-blue-50",
+        },
       ]
     : [];
+
+  const appliquerRecherche = () => setRechercheAppliquee(recherche.trim());
+
+  const actionsRapides = useMemo(
+    () => ({
+      voir: (item: ElementFeedModeration) => setSelection(item),
+    }),
+    []
+  );
 
   return (
     <MiseEnPageAdmin
@@ -177,7 +334,7 @@ export function ContenuModerationAdmin({
       titre={t("admin.moderation.titre")}
       sousTitre={t("admin.moderation.description")}
     >
-      <div className="mx-auto max-w-7xl space-y-4 pb-8">
+      <div className="mx-auto max-w-[1600px] space-y-5 pb-10">
         <EnTetePageReception
           icone={ShieldAlert}
           titre={t("admin.moderation.titre")}
@@ -192,346 +349,575 @@ export function ContenuModerationAdmin({
           <button
             type="button"
             onClick={() => void charger()}
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-gris-bordure px-3 text-sm hover:bg-gris-tres-clair"
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-gris-bordure bg-white px-4 text-sm font-medium shadow-sm hover:bg-gris-tres-clair"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className={cn("h-4 w-4", chargement && "animate-spin")} />
             {t("admin.moderation.actualiser")}
           </button>
         </div>
 
         {kpis.length > 0 && (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {kpis.map((k) => (
               <div
                 key={k.label}
-                className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm"
+                className="rounded-xl border border-gris-bordure bg-white p-5 shadow-sm"
               >
-                <div className="flex items-center gap-2 text-texte-secondaire">
-                  <k.icone className="h-4 w-4" />
-                  <p className="text-xs font-semibold uppercase tracking-wide">{k.label}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-texte-secondaire">
+                      {k.label}
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-texte-principal">{k.val}</p>
+                  </div>
+                  <span
+                    className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-xl",
+                      k.couleur
+                    )}
+                  >
+                    <k.icone className="h-5 w-5" />
+                  </span>
                 </div>
-                <p className="mt-2 text-2xl font-bold text-texte-principal">{k.val}</p>
               </div>
             ))}
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2 border-b border-gris-bordure pb-1">
-          {onglets.map((o) => (
-            <button
-              key={o.id}
-              type="button"
-              onClick={() => setOnglet(o.id)}
-              className={cn(
-                "rounded-t-lg px-4 py-2 text-sm font-medium transition-colors",
-                onglet === o.id
-                  ? "border border-b-white border-gris-bordure bg-white text-bleu-medical"
-                  : "text-texte-secondaire hover:text-texte-principal"
-              )}
+        <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
+          <div className="flex flex-wrap gap-1 border-b border-gris-bordure bg-gris-tres-clair/40 px-2 pt-2">
+            {onglets.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => setOnglet(o.id)}
+                className={cn(
+                  "rounded-t-lg px-4 py-2.5 text-sm font-medium transition-colors",
+                  onglet === o.id
+                    ? "border border-b-white border-gris-bordure bg-white text-bleu-medical shadow-sm"
+                    : "text-texte-secondaire hover:text-texte-principal"
+                )}
+              >
+                {o.label}
+                {o.count != null && o.count > 0 ? (
+                  <span className="ml-1.5 rounded-full bg-slate-200/80 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">
+                    {o.count}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 border-b border-gris-bordure px-4 py-3">
+            <div className="relative min-w-[220px] flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-texte-secondaire" />
+              <input
+                value={recherche}
+                onChange={(e) => setRecherche(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && appliquerRecherche()}
+                placeholder={t("admin.moderation.recherchePlaceholder")}
+                className="h-10 w-full rounded-lg border border-gris-bordure pl-9 pr-3 text-sm"
+              />
+            </div>
+            <select
+              value={filtreStatut}
+              onChange={(e) => setFiltreStatut(e.target.value)}
+              className="h-10 rounded-lg border border-gris-bordure px-3 text-sm"
             >
-              {o.label}
-              {o.count != null && o.count > 0 ? (
-                <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700">
-                  {o.count}
-                </span>
-              ) : null}
+              <option value="tous">{t("admin.moderation.filtreTousStatuts")}</option>
+              <option value="nouveau">{t("admin.moderation.statutNouveau")}</option>
+              <option value="en_cours">{t("admin.moderation.statutEnCours")}</option>
+              <option value="resolu">{t("admin.moderation.statutResolu")}</option>
+              <option value="bloque">{t("admin.moderation.statutBloque")}</option>
+              <option value="supprime">{t("admin.moderation.statutSupprime")}</option>
+              <option value="suspendu">{t("admin.moderation.statutSuspendu")}</option>
+            </select>
+            <select
+              value={onglet}
+              onChange={(e) => setOnglet(e.target.value as OngletModeration)}
+              className="h-10 rounded-lg border border-gris-bordure px-3 text-sm"
+            >
+              <option value="tous">{t("admin.moderation.categorieTous")}</option>
+              <option value="messages">{t("admin.moderation.typeMessage")}</option>
+              <option value="conversations">{t("admin.moderation.typeConversation")}</option>
+              <option value="groupes">{t("admin.moderation.typeGroupe")}</option>
+              <option value="fichiers">{t("admin.moderation.typeFichier")}</option>
+              <option value="suspensions">{t("admin.moderation.typeSuspension")}</option>
+            </select>
+            <button
+              type="button"
+              onClick={appliquerRecherche}
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-gris-bordure px-3 text-sm hover:bg-gris-tres-clair"
+            >
+              <Filter className="h-4 w-4" />
+              {t("admin.moderation.filtres")}
             </button>
-          ))}
-        </div>
+          </div>
 
-        {message && (
-          <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
-            {message}
-          </p>
-        )}
-        {erreur && (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-            {erreur}
-          </p>
-        )}
+          {message && (
+            <p className="mx-4 mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
+              {message}
+            </p>
+          )}
+          {erreur && (
+            <p className="mx-4 mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+              {erreur}
+            </p>
+          )}
 
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-          <section className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
-            {chargement ? (
-              <div className="flex items-center justify-center gap-2 py-16 text-sm text-texte-secondaire">
-                <Loader2 className="h-5 w-5 animate-spin" />
-                {t("admin.common.chargement")}
-              </div>
-            ) : onglet === "fichiers" ? (
-              <ul className="divide-y divide-gris-bordure">
-                {fichiers.length === 0 ? (
-                  <li className="px-4 py-12 text-center text-sm text-texte-secondaire">
-                    {t("admin.moderation.vide")}
-                  </li>
-                ) : (
-                  fichiers.map((f) => (
-                    <li key={f.id} className="flex flex-wrap items-start gap-4 px-4 py-3">
-                      {f.estImage ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={f.url}
-                          alt={f.nom}
-                          className="h-16 w-16 rounded-lg border object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gris-tres-clair text-xs">
-                          FILE
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-texte-principal">{f.nom}</p>
-                        <p className="text-xs text-texte-secondaire">
-                          {f.mimeType} · {f.expediteur ?? "—"}
-                        </p>
-                        {f.signalee && (
-                          <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                            {t("admin.moderation.signale")}
-                          </span>
+          <div className="grid xl:grid-cols-[minmax(0,1fr)_380px]">
+            <div className="min-w-0 overflow-x-auto">
+              {chargement ? (
+                <div className="flex items-center justify-center gap-2 py-20 text-sm text-texte-secondaire">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  {t("admin.common.chargement")}
+                </div>
+              ) : elements.length === 0 ? (
+                <div className="px-6 py-20 text-center text-sm text-texte-secondaire">
+                  {t("admin.moderation.vide")}
+                </div>
+              ) : (
+                <table className="w-full min-w-[900px] text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gris-bordure bg-gris-tres-clair/50 text-[11px] font-semibold uppercase tracking-wide text-texte-secondaire">
+                      <th className="px-4 py-3">{t("admin.moderation.colElement")}</th>
+                      <th className="px-3 py-3">{t("admin.moderation.colType")}</th>
+                      <th className="px-3 py-3">{t("admin.moderation.colAuteur")}</th>
+                      <th className="px-3 py-3">{t("admin.moderation.colContenu")}</th>
+                      <th className="px-3 py-3">{t("admin.moderation.colRaison")}</th>
+                      <th className="px-3 py-3">{t("admin.moderation.colStatut")}</th>
+                      <th className="px-4 py-3 text-right">{t("admin.moderation.colActions")}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gris-bordure">
+                    {elements.map((item) => (
+                      <tr
+                        key={item.id}
+                        className={cn(
+                          "transition-colors hover:bg-gris-tres-clair/40",
+                          selection?.id === item.id && "bg-bleu-medical-clair/20"
                         )}
-                      </div>
-                    </li>
-                  ))
-                )}
-              </ul>
-            ) : onglet === "conversations" || onglet === "groupes" ? (
-              <ul className="divide-y divide-gris-bordure">
-                {conversations.length === 0 ? (
-                  <li className="px-4 py-12 text-center text-sm text-texte-secondaire">
-                    {t("admin.moderation.vide")}
-                  </li>
-                ) : (
-                  conversations.map((c) => (
-                    <li key={c.id} className="px-4 py-3">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div>
-                          <p className="font-semibold text-texte-principal">
-                            {c.sujet || c.type}
-                            <span className="ml-2 text-xs font-normal text-texte-secondaire">
-                              {c.type} · {c.nbParticipants} part. · {c.nbMessages} msg
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={cn(
+                                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                                couleurAvatar(item.kind)
+                              )}
+                            >
+                              {item.initiales}
                             </span>
-                          </p>
-                          {c.dernierMessage && (
-                            <p className="mt-1 truncate text-xs text-texte-secondaire">
-                              {c.dernierMessage}
+                            <span className="font-medium text-texte-principal">
+                              {afficherNomComplet(item.titre)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3">{badgeType(item.kind, t)}</td>
+                        <td className="px-3 py-3 text-texte-secondaire">
+                          {afficherNomComplet(item.auteur)}
+                        </td>
+                        <td className="max-w-[200px] truncate px-3 py-3 text-texte-principal">
+                          {item.contenu}
+                        </td>
+                        <td className="px-3 py-3">{badgeRaison(item.raison)}</td>
+                        <td className="px-3 py-3">
+                          <div className="space-y-1">
+                            {badgeStatut(item.statut, t)}
+                            <p className="text-[10px] text-texte-secondaire">
+                              {new Date(item.dateIso).toLocaleString("fr-FR", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                             </p>
-                          )}
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {c.bloquee && (
-                              <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-800">
-                                {t("admin.moderation.bloque")}
-                              </span>
-                            )}
-                            {c.supprimee && (
-                              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
-                                {t("admin.moderation.supprime")}
-                              </span>
-                            )}
                           </div>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {c.bloquee ? (
-                            <Bouton
-                              taille="petit"
-                              variante="contour"
-                              disabled={enCours}
-                              onClick={() =>
-                                void action({
-                                  action: "debloquer-conversation",
-                                  conversationId: c.id,
-                                })
-                              }
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-end gap-1">
+                            <button
+                              type="button"
+                              title={t("admin.moderation.voirDetail")}
+                              onClick={() => actionsRapides.voir(item)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gris-bordure text-texte-secondaire hover:bg-white hover:text-bleu-medical"
                             >
-                              <RotateCcw className="mr-1 h-3 w-3" />
-                              {t("admin.moderation.reactiver")}
-                            </Bouton>
-                          ) : (
-                            <Bouton
-                              taille="petit"
-                              variante="contour"
-                              disabled={enCours}
-                              onClick={() =>
-                                void action({
-                                  action: "bloquer-conversation",
-                                  conversationId: c.id,
-                                  raison: "Modération admin",
-                                })
-                              }
-                            >
-                              <Ban className="mr-1 h-3 w-3" />
-                              {t("admin.moderation.bloquer")}
-                            </Bouton>
-                          )}
-                          {onglet === "groupes" && (
-                            c.supprimee ? (
-                              <Bouton
-                                taille="petit"
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            {item.kind === "message" && item.signale && (
+                              <button
+                                type="button"
                                 disabled={enCours}
+                                title={t("admin.moderation.approuverMessage")}
                                 onClick={() =>
                                   void action({
-                                    action: "restaurer-groupe",
-                                    conversationId: c.id,
+                                    action: "approuver-message",
+                                    messageId: item.messageId!,
                                   })
                                 }
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50"
                               >
-                                {t("admin.moderation.restaurer")}
-                              </Bouton>
-                            ) : (
-                              <Bouton
-                                taille="petit"
-                                variante="contour"
+                                <Check className="h-4 w-4" />
+                              </button>
+                            )}
+                            {(item.kind === "message" || item.kind === "fichier") && (
+                              <button
+                                type="button"
                                 disabled={enCours}
-                                onClick={() =>
-                                  void action({
-                                    action: "supprimer-groupe",
-                                    conversationId: c.id,
-                                  })
-                                }
+                                title={t("admin.moderation.supprimerPourTous")}
+                                onClick={() => {
+                                  if (
+                                    !window.confirm(t("admin.moderation.confirmerSuppression"))
+                                  )
+                                    return;
+                                  void action(
+                                    item.kind === "message"
+                                      ? {
+                                          action: "supprimer-message-pour-tous",
+                                          messageId: item.messageId!,
+                                        }
+                                      : {
+                                          action: "supprimer-fichier",
+                                          fichierId: extraireIdElement(item),
+                                        }
+                                  );
+                                }}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
                               >
-                                {t("admin.moderation.supprimerGroupe")}
-                              </Bouton>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    </li>
-                  ))
-                )}
-              </ul>
-            ) : (
-              <ul className="divide-y divide-gris-bordure">
-                {messages.length === 0 ? (
-                  <li className="px-4 py-12 text-center text-sm text-texte-secondaire">
-                    {t("admin.moderation.vide")}
-                  </li>
-                ) : (
-                  messages.map((m) => (
-                    <li
-                      key={m.id}
-                      className={cn(
-                        "cursor-pointer px-4 py-3 transition-colors hover:bg-gris-tres-clair/60",
-                        selectionMsg?.id === m.id && "bg-bleu-medical-clair/30"
-                      )}
-                      onClick={() => setSelectionMsg(m)}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-texte-principal">
-                            {m.expediteur.nomComplet}
-                            <span className="ml-2 font-normal text-texte-secondaire">
-                              @{m.expediteur.identifiant}
-                            </span>
-                          </p>
-                          <p className="mt-1 text-sm text-texte-principal">{m.contenu}</p>
-                          <p className="mt-1 text-[11px] text-texte-secondaire">
-                            {new Date(m.envoyeLe).toLocaleString("fr-FR")}
-                          </p>
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {m.signale && (
-                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                                {t("admin.moderation.signale")}
-                              </span>
-                            )}
-                            {m.bloque && (
-                              <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-800">
-                                {t("admin.moderation.bloque")}
-                              </span>
-                            )}
-                            {m.avertissementEnvoye && (
-                              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-800">
-                                {t("admin.moderation.averti")}
-                              </span>
+                                <Trash2 className="h-4 w-4" />
+                              </button>
                             )}
                           </div>
-                        </div>
-                        <MessageSquare className="h-4 w-4 shrink-0 text-texte-secondaire" />
-                      </div>
-                    </li>
-                  ))
-                )}
-              </ul>
-            )}
-          </section>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
 
-          <aside className="rounded-xl border border-gris-bordure bg-white p-4 shadow-sm">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-texte-secondaire">
-              {t("admin.moderation.panneauTitre")}
-            </h3>
-            {!selectionMsg ? (
-              <p className="mt-4 text-sm text-texte-secondaire">
-                {t("admin.moderation.selectionnerMessage")}
-              </p>
-            ) : (
-              <div className="mt-4 space-y-3">
-                <p className="text-sm font-medium">{selectionMsg.expediteur.nomComplet}</p>
-                <p className="rounded-lg bg-gris-tres-clair p-3 text-sm">{selectionMsg.contenu}</p>
-                <textarea
-                  value={texteAvert}
-                  onChange={(e) => setTexteAvert(e.target.value)}
-                  rows={4}
-                  placeholder={t("admin.moderation.placeholderAvertissement")}
-                  className="w-full rounded-lg border border-gris-bordure px-3 py-2 text-sm"
-                />
-                <Bouton
-                  className="w-full"
-                  disabled={enCours || !texteAvert.trim()}
-                  onClick={() =>
-                    void action({
-                      action: "avertissement",
-                      destinataireId: selectionMsg.expediteur.id,
-                      messageId: selectionMsg.id,
-                      conversationId: selectionMsg.conversationId,
-                      contenu: texteAvert,
-                    })
-                  }
-                >
-                  {t("admin.moderation.envoyerAvertissement")}
-                </Bouton>
-                {selectionMsg.bloque ? (
-                  <Bouton
-                    variante="contour"
-                    className="w-full"
-                    disabled={enCours}
-                    onClick={() =>
-                      void action({
-                        action: "debloquer-message",
-                        messageId: selectionMsg.id,
-                      })
-                    }
+              {!chargement && total > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gris-bordure px-4 py-3 text-sm text-texte-secondaire">
+                  <p>
+                    {t("admin.moderation.paginationAffichage", {
+                      debut,
+                      fin,
+                      total,
+                    })}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={pageSize}
+                      onChange={(e) => setPageSize(Number(e.target.value))}
+                      className="h-9 rounded-lg border border-gris-bordure px-2 text-sm"
+                    >
+                      {[10, 20, 50].map((n) => (
+                        <option key={n} value={n}>
+                          {n} / page
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure disabled:opacity-40"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="min-w-[2rem] text-center font-medium text-texte-principal">
+                      {page}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure disabled:opacity-40"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <aside className="border-t border-gris-bordure bg-slate-50/60 p-4 xl:border-l xl:border-t-0">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-sm font-bold text-texte-principal">
+                  {t("admin.moderation.detailTitre")}
+                </h3>
+                {selection ? (
+                  <button
+                    type="button"
+                    onClick={() => setSelection(null)}
+                    className="rounded-lg p-1 text-texte-secondaire hover:bg-white"
                   >
-                    {t("admin.moderation.debloquerMessage")}
-                  </Bouton>
-                ) : (
-                  <Bouton
-                    variante="contour"
-                    className="w-full"
-                    disabled={enCours}
-                    onClick={() =>
-                      void action({
-                        action: "bloquer-message",
-                        messageId: selectionMsg.id,
-                        raison: "Contenu inapproprié",
-                      })
-                    }
-                  >
-                    {t("admin.moderation.bloquerMessage")}
-                  </Bouton>
-                )}
-                <Bouton
-                  variante="contour"
-                  className="w-full text-red-700"
-                  disabled={enCours}
-                  onClick={() =>
-                    void action({
-                      action: "bloquer-messagerie-utilisateur",
-                      utilisateurId: selectionMsg.expediteur.id,
-                    })
-                  }
-                >
-                  {t("admin.moderation.bloquerMessagerieUser")}
-                </Bouton>
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
               </div>
-            )}
-          </aside>
+
+              {!selection ? (
+                <p className="text-sm text-texte-secondaire">
+                  {t("admin.moderation.selectionnerElement")}
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    {badgeType(selection.kind, t)}
+                    {badgeStatut(selection.statut, t)}
+                  </div>
+
+                  <div className="flex items-center gap-3 rounded-xl border border-gris-bordure bg-white p-3">
+                    <span
+                      className={cn(
+                        "flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold",
+                        couleurAvatar(selection.kind)
+                      )}
+                    >
+                      {selection.initiales}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-texte-principal">
+                        {afficherNomComplet(selection.titre)}
+                      </p>
+                      {selection.auteurIdentifiant ? (
+                        <p className="text-xs text-texte-secondaire">
+                          @{selection.auteurIdentifiant}
+                        </p>
+                      ) : null}
+                      <p className="mt-0.5 text-xs text-texte-secondaire">
+                        {t("admin.moderation.envoyeLe", {
+                          date: new Date(selection.dateIso).toLocaleString("fr-FR"),
+                        })}
+                      </p>
+                    </div>
+                  </div>
+
+                  {selection.conversationSujet ? (
+                    <p className="text-xs text-bleu-medical">
+                      {t("admin.moderation.contexteConversation")}{" "}
+                      <span className="font-medium">{selection.conversationSujet}</span>
+                    </p>
+                  ) : null}
+
+                  {selection.estImage && selection.fichierUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={selection.fichierUrl}
+                      alt={selection.titre}
+                      className="max-h-40 w-full rounded-xl border object-cover"
+                    />
+                  ) : (
+                    <div className="rounded-xl border border-gris-bordure bg-white p-3 text-sm text-texte-principal">
+                      {selection.contenu}
+                    </div>
+                  )}
+
+                  {selection.raison ? (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm">
+                      <p className="text-xs font-semibold uppercase text-amber-800">
+                        {t("admin.moderation.signalement")}
+                      </p>
+                      <p className="mt-1 text-amber-900">{selection.raison}</p>
+                    </div>
+                  ) : null}
+
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {selection.kind === "message" && selection.signale && (
+                      <button
+                        type="button"
+                        disabled={enCours}
+                        onClick={() =>
+                          void action({
+                            action: "approuver-message",
+                            messageId: selection.messageId!,
+                          })
+                        }
+                        className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 text-left text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+                      >
+                        <Check className="mb-1 h-4 w-4" />
+                        {t("admin.moderation.approuverMessage")}
+                      </button>
+                    )}
+                    {selection.kind === "fichier" && selection.signale && (
+                      <button
+                        type="button"
+                        disabled={enCours}
+                        onClick={() =>
+                          void action({
+                            action: "approuver-fichier",
+                            fichierId: extraireIdElement(selection),
+                          })
+                        }
+                        className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 text-left text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+                      >
+                        <Check className="mb-1 h-4 w-4" />
+                        {t("admin.moderation.approuverFichier")}
+                      </button>
+                    )}
+                    {(selection.kind === "message" || selection.kind === "fichier") && (
+                      <button
+                        type="button"
+                        disabled={enCours}
+                        onClick={() => {
+                          if (!window.confirm(t("admin.moderation.confirmerSuppression")))
+                            return;
+                          void action(
+                            selection.kind === "message"
+                              ? {
+                                  action: "supprimer-message-pour-tous",
+                                  messageId: selection.messageId!,
+                                }
+                              : {
+                                  action: "supprimer-fichier",
+                                  fichierId: extraireIdElement(selection),
+                                }
+                          );
+                        }}
+                        className="rounded-xl bg-red-600 px-3 py-2.5 text-left text-sm font-medium text-white hover:bg-red-700"
+                      >
+                        <Trash2 className="mb-1 h-4 w-4" />
+                        {t("admin.moderation.supprimerPourTous")}
+                      </button>
+                    )}
+                  </div>
+
+                  {selection.auteurId && selection.kind !== "suspension" ? (
+                    <>
+                      <textarea
+                        value={texteAvert}
+                        onChange={(e) => setTexteAvert(e.target.value)}
+                        rows={3}
+                        placeholder={t("admin.moderation.placeholderAvertissement")}
+                        className="w-full rounded-xl border border-gris-bordure bg-white px-3 py-2 text-sm"
+                      />
+                      <button
+                        type="button"
+                        disabled={enCours || !texteAvert.trim()}
+                        onClick={() =>
+                          void action({
+                            action: "avertissement",
+                            destinataireId: selection.auteurId!,
+                            messageId: selection.messageId ?? "",
+                            conversationId: selection.conversationId ?? "",
+                            contenu: texteAvert,
+                          })
+                        }
+                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+                      >
+                        <AlertTriangle className="h-4 w-4" />
+                        {t("admin.moderation.avertirUtilisateur")}
+                      </button>
+                    </>
+                  ) : null}
+
+                  {selection.kind === "message" && !selection.bloque && (
+                    <button
+                      type="button"
+                      disabled={enCours}
+                      onClick={() =>
+                        void action({
+                          action: "bloquer-message",
+                          messageId: selection.messageId!,
+                          raison: selection.raison ?? "Contenu inapproprié",
+                        })
+                      }
+                      className="w-full rounded-xl border border-gris-bordure bg-white px-3 py-2.5 text-sm font-medium hover:bg-gris-tres-clair"
+                    >
+                      {t("admin.moderation.bloquerMessage")}
+                    </button>
+                  )}
+
+                  {(selection.kind === "conversation" || selection.kind === "groupe") && (
+                    <button
+                      type="button"
+                      disabled={enCours}
+                      onClick={() =>
+                        void action(
+                          selection.bloque
+                            ? {
+                                action: "debloquer-conversation",
+                                conversationId: selection.conversationId!,
+                              }
+                            : {
+                                action: "bloquer-conversation",
+                                conversationId: selection.conversationId!,
+                                raison: "Modération admin",
+                              }
+                        )
+                      }
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50"
+                    >
+                      <Ban className="h-4 w-4" />
+                      {selection.bloque
+                        ? t("admin.moderation.reactiverConversation")
+                        : t("admin.moderation.bloquerConversation")}
+                    </button>
+                  )}
+
+                  {selection.kind === "groupe" && (
+                    <button
+                      type="button"
+                      disabled={enCours}
+                      onClick={() =>
+                        void action(
+                          selection.supprime
+                            ? {
+                                action: "restaurer-groupe",
+                                conversationId: selection.conversationId!,
+                              }
+                            : {
+                                action: "supprimer-groupe",
+                                conversationId: selection.conversationId!,
+                              }
+                        )
+                      }
+                      className="w-full rounded-xl border border-gris-bordure bg-white px-3 py-2.5 text-sm font-medium hover:bg-gris-tres-clair"
+                    >
+                      {selection.supprime
+                        ? t("admin.moderation.restaurerGroupe")
+                        : t("admin.moderation.supprimerGroupe")}
+                    </button>
+                  )}
+
+                  {selection.auteurId && (
+                    <button
+                      type="button"
+                      disabled={enCours}
+                      onClick={() =>
+                        void action(
+                          selection.kind === "suspension"
+                            ? {
+                                action: "debloquer-messagerie-utilisateur",
+                                utilisateurId: selection.auteurId!,
+                              }
+                            : {
+                                action: "bloquer-messagerie-utilisateur",
+                                utilisateurId: selection.auteurId!,
+                                notes: notesModeration || undefined,
+                              }
+                        )
+                      }
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-purple-200 bg-purple-50 px-3 py-2.5 text-sm font-medium text-purple-800 hover:bg-purple-100"
+                    >
+                      <Users className="h-4 w-4" />
+                      {selection.kind === "suspension"
+                        ? t("admin.moderation.retablirMessagerie")
+                        : t("admin.moderation.bloquerMessagerieUser")}
+                    </button>
+                  )}
+
+                  <textarea
+                    value={notesModeration}
+                    onChange={(e) => setNotesModeration(e.target.value)}
+                    rows={2}
+                    placeholder={t("admin.moderation.notesOptionnelles")}
+                    className="w-full rounded-xl border border-gris-bordure bg-white px-3 py-2 text-sm"
+                  />
+                </div>
+              )}
+            </aside>
+          </div>
         </div>
       </div>
     </MiseEnPageAdmin>

@@ -19,7 +19,10 @@ export async function POST(
   try {
     const corps = (await request.json()) as {
       lignes?: {
-        parametreTypeExamenId: string;
+        parametreTypeExamenId?: string | null;
+        nom?: string | null;
+        personnalise?: boolean;
+        resultatId?: string | null;
         valeur: string;
         valeurSecondaire?: string | null;
         nonRequis?: boolean;

@@ -42,18 +42,23 @@ function mapperParametres(
     configSaisie?: unknown;
   }[],
   resultatsExistants: {
+    id: string;
     parametreTypeExamenId: string | null;
+    parametre: string;
     valeur: string;
     flag: string | null;
     valeurSecondaire: string | null;
     nonRequis: boolean;
     commentaire: string | null;
+    unite: string | null;
+    normeMax: string | null;
   }[],
   formulaire: string | null
 ): ParametreSaisieDto[] {
+  const idsCatalogue = new Set(parametresCatalogue.map((p) => p.id));
   const parId = new Map(
     resultatsExistants
-      .filter((r) => r.parametreTypeExamenId)
+      .filter((r) => r.parametreTypeExamenId && idsCatalogue.has(r.parametreTypeExamenId))
       .map((r) => [r.parametreTypeExamenId!, r])
   );
 
@@ -79,7 +84,31 @@ function mapperParametres(
       };
     });
 
-  return trierParametresParFormulaire(formulaire, mappees);
+  const personnalises: ParametreSaisieDto[] = resultatsExistants
+    .filter(
+      (r) =>
+        !r.parametreTypeExamenId || !idsCatalogue.has(r.parametreTypeExamenId)
+    )
+    .map((r, index) => ({
+      id: r.id,
+      nom: r.parametre,
+      unite: r.unite,
+      rangeUsuelle: r.normeMax,
+      obligatoire: false,
+      ordre: 10_000 + index,
+      valeur: r.valeur ?? "",
+      flag: r.flag,
+      valeurSecondaire: r.valeurSecondaire,
+      nonRequis: r.nonRequis,
+      commentaire: r.commentaire ?? "",
+      configSaisie: { typeSaisie: "texte" as const },
+      personnalise: true,
+    }));
+
+  return [
+    ...trierParametresParFormulaire(formulaire, mappees),
+    ...personnalises,
+  ];
 }
 
 export async function chargerSaisieResultats(
@@ -191,14 +220,25 @@ export async function enregistrerResultatsExamen(
 
   const idsValides = new Set(examen.typeExamen.parametres.map((p) => p.id));
   const catalogue = new Map(examen.typeExamen.parametres.map((p) => [p.id, p]));
+  const nomsCatalogue = new Set(
+    examen.typeExamen.parametres.map((p) => p.nom.trim().toUpperCase())
+  );
+
+  const lignesCatalogue = input.lignes.filter(
+    (l) => !l.personnalise && Boolean(l.parametreTypeExamenId)
+  );
+  const lignesPerso = input.lignes.filter(
+    (l) => l.personnalise === true || (!l.parametreTypeExamenId && Boolean(l.nom?.trim()))
+  );
 
   const exigerParametres = action === "verifier";
 
-  for (const ligne of input.lignes) {
-    if (!idsValides.has(ligne.parametreTypeExamenId)) {
+  for (const ligne of lignesCatalogue) {
+    const idCat = ligne.parametreTypeExamenId!;
+    if (!idsValides.has(idCat)) {
       throw new Error("Paramètre invalide pour cet examen.");
     }
-    const cat = catalogue.get(ligne.parametreTypeExamenId)!;
+    const cat = catalogue.get(idCat)!;
     const nonRequis = ligne.nonRequis === true;
     const config = resoudreConfigSaisieParametre({
       configSaisie: cat.configSaisie,
@@ -218,14 +258,38 @@ export async function enregistrerResultatsExamen(
     }
   }
 
+  for (const ligne of lignesPerso) {
+    const nom = ligne.nom?.trim() ?? "";
+    if (!nom) {
+      throw new Error("Un paramètre personnalisé doit avoir un nom.");
+    }
+    if (nomsCatalogue.has(nom.toUpperCase())) {
+      throw new Error(
+        `Le paramètre « ${nom} » existe déjà dans le catalogue de cet examen.`
+      );
+    }
+  }
+
+  const nomsPersoVus = new Set<string>();
+  for (const ligne of lignesPerso) {
+    const cle = ligne.nom!.trim().toUpperCase();
+    if (nomsPersoVus.has(cle)) {
+      throw new Error(`Paramètre personnalisé en double : « ${ligne.nom!.trim()} ».`);
+    }
+    nomsPersoVus.add(cle);
+  }
+
   if (exigerParametres) {
-    const parametresPourCalcul = input.lignes.map((ligne) => {
-      const cat = catalogue.get(ligne.parametreTypeExamenId)!;
-      return {
-        nom: cat.nom,
+    const parametresPourCalcul = [
+      ...lignesCatalogue.map((ligne) => {
+        const cat = catalogue.get(ligne.parametreTypeExamenId!)!;
+        return { nom: cat.nom, valeur: ligne.valeur };
+      }),
+      ...lignesPerso.map((ligne) => ({
+        nom: ligne.nom!.trim(),
         valeur: ligne.valeur,
-      };
-    });
+      })),
+    ];
     const erreurCalcul = validerCalculsPourVerification(
       examen.typeExamen.formulaire,
       parametresPourCalcul
@@ -239,8 +303,8 @@ export async function enregistrerResultatsExamen(
 
   await prisma.$transaction(async (tx) => {
     if (action !== "rejeter") {
-      for (const ligne of input.lignes) {
-        const cat = catalogue.get(ligne.parametreTypeExamenId)!;
+      for (const ligne of lignesCatalogue) {
+        const cat = catalogue.get(ligne.parametreTypeExamenId!)!;
         const configSaisie = resoudreConfigSaisieParametre({
           configSaisie: cat.configSaisie,
           nom: cat.nom,
@@ -258,12 +322,12 @@ export async function enregistrerResultatsExamen(
           where: {
             examenId_parametreTypeExamenId: {
               examenId,
-              parametreTypeExamenId: ligne.parametreTypeExamenId,
+              parametreTypeExamenId: ligne.parametreTypeExamenId!,
             },
           },
           create: {
             examenId,
-            parametreTypeExamenId: ligne.parametreTypeExamenId,
+            parametreTypeExamenId: ligne.parametreTypeExamenId!,
             parametre: cat.nom,
             valeur: ligne.valeur.trim(),
             unite: cat.unite,
@@ -287,6 +351,76 @@ export async function enregistrerResultatsExamen(
             commentaire: ligne.commentaire?.trim() || null,
           },
         });
+      }
+
+      const customsExistants = await tx.resultatExamen.findMany({
+        where: { examenId, parametreTypeExamenId: null },
+        select: { id: true },
+      });
+      const idsPersoGardes = new Set(
+        lignesPerso
+          .map((l) => l.resultatId?.trim())
+          .filter((id): id is string => Boolean(id) && !id.startsWith("perso-"))
+      );
+
+      const idsASupprimer = customsExistants
+        .map((r) => r.id)
+        .filter((id) => !idsPersoGardes.has(id));
+      if (idsASupprimer.length > 0) {
+        await tx.resultatExamen.deleteMany({
+          where: { id: { in: idsASupprimer } },
+        });
+      }
+
+      for (const ligne of lignesPerso) {
+        const nom = ligne.nom!.trim();
+        const flag = calculerFlagDepuisParametre({
+          valeur: ligne.valeur.trim(),
+          valeurSecondaire: ligne.valeurSecondaire,
+          rangeUsuelle: null,
+          nonRequis: ligne.nonRequis === true,
+          typeSaisie: "texte",
+        });
+        const anormal = flag === "B" || flag === "E";
+        const dataCommun = {
+          parametre: nom,
+          valeur: ligne.valeur.trim(),
+          unite: null as string | null,
+          normeMin: null as string | null,
+          normeMax: null as string | null,
+          nonRequis: ligne.nonRequis === true,
+          anormal,
+          flag,
+          valeurSecondaire: ligne.valeurSecondaire?.trim() || null,
+          commentaire: ligne.commentaire?.trim() || null,
+          parametreTypeExamenId: null as string | null,
+        };
+        const resultatId = ligne.resultatId?.trim();
+        if (resultatId && !resultatId.startsWith("perso-") && idsPersoGardes.has(resultatId)) {
+          const maj = await tx.resultatExamen.updateMany({
+            where: {
+              id: resultatId,
+              examenId,
+              parametreTypeExamenId: null,
+            },
+            data: dataCommun,
+          });
+          if (maj.count === 0) {
+            await tx.resultatExamen.create({
+              data: {
+                examenId,
+                ...dataCommun,
+              },
+            });
+          }
+        } else {
+          await tx.resultatExamen.create({
+            data: {
+              examenId,
+              ...dataCommun,
+            },
+          });
+        }
       }
     }
 

@@ -74,6 +74,7 @@ function clonerEtat(saisie: SaisieResultatsDto): EtatExamenForm[] {
         valeurSecondaire: p.valeurSecondaire,
         nonRequis: p.nonRequis,
         commentaire: p.commentaire ?? "",
+        personnalise: p.personnalise === true,
       })),
     })
   );
@@ -265,6 +266,15 @@ export function ContenuSaisieResultatsLaboratoire({
   const ajouterParametrePerso = (examenId: string, nom: string) => {
     const nomTrim = nom.trim();
     if (!nomTrim) return;
+    const dejaPresent = examens
+      .find((ex) => ex.id === examenId)
+      ?.parametres.some(
+        (p) => p.nom.trim().toUpperCase() === nomTrim.toUpperCase()
+      );
+    if (dejaPresent) {
+      setErreur(`Le paramètre « ${nomTrim} » existe déjà.`);
+      return;
+    }
     const nouveau: ParametreEtat = {
       id: genererIdParametrePerso(),
       nom: nomTrim,
@@ -278,7 +288,9 @@ export function ContenuSaisieResultatsLaboratoire({
       nonRequis: false,
       commentaire: "",
       personnalise: true,
+      configSaisie: { typeSaisie: "texte" },
     };
+    setErreur(null);
     setExamens((prev) =>
       prev.map((ex) =>
         ex.id !== examenId
@@ -322,8 +334,6 @@ export function ContenuSaisieResultatsLaboratoire({
     setMessage(null);
     setErreur(null);
 
-    const lignesCatalogue = examenOuvert.parametres.filter((p) => !p.personnalise);
-
     try {
       const fichiers = fichiersParExamen[examenOuvert.id] ?? [];
       const piecesJointes: {
@@ -349,19 +359,32 @@ export function ContenuSaisieResultatsLaboratoire({
         }
       }
 
+      const lignes = examenOuvert.parametres;
       const res = await fetch(
         `/api/laboratoire/examens/${encodeURIComponent(examenOuvert.id)}/resultats`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            lignes: lignesCatalogue.map((p) => ({
-              parametreTypeExamenId: p.id,
-              valeur: p.valeur,
-              valeurSecondaire: p.valeurSecondaire,
-              nonRequis: p.nonRequis,
-              commentaire: p.commentaire?.trim() || null,
-            })),
+            lignes: lignes.map((p) =>
+              p.personnalise
+                ? {
+                    personnalise: true,
+                    nom: p.nom,
+                    resultatId: p.id,
+                    valeur: p.valeur,
+                    valeurSecondaire: p.valeurSecondaire,
+                    nonRequis: p.nonRequis,
+                    commentaire: p.commentaire?.trim() || null,
+                  }
+                : {
+                    parametreTypeExamenId: p.id,
+                    valeur: p.valeur,
+                    valeurSecondaire: p.valeurSecondaire,
+                    nonRequis: p.nonRequis,
+                    commentaire: p.commentaire?.trim() || null,
+                  }
+            ),
             remarque: examenOuvert.remarque,
             piecesJointes,
             action: options.action,

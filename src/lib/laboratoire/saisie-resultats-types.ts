@@ -24,6 +24,8 @@ export interface ParametreSaisieDto {
   nonRequis: boolean;
   commentaire: string;
   configSaisie?: ConfigSaisieParametre;
+  /** Paramètre ajouté à la volée (hors catalogue type examen). */
+  personnalise?: boolean;
 }
 
 export interface ExamenSaisieDto {
@@ -54,7 +56,17 @@ export interface SaisieResultatsDto {
 }
 
 export interface LigneResultatSaisie {
-  parametreTypeExamenId: string;
+  /** Id catalogue ; null / omis pour un paramètre personnalisé. */
+  parametreTypeExamenId?: string | null;
+  /** Nom affiché — requis si personnalise. */
+  nom?: string | null;
+  /** true = hors catalogue (persisté avec parametreTypeExamenId null). */
+  personnalise?: boolean;
+  /**
+   * Id ResultatExamen existant (rechargement).
+   * Les ids client `perso-…` indiquent une nouvelle ligne.
+   */
+  resultatId?: string | null;
   valeur: string;
   valeurSecondaire?: string | null;
   nonRequis?: boolean;

@@ -310,9 +310,10 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
       ]
     },
     "AUTRES": {
-      "typeSaisie": "select",
+      "typeSaisie": "select_autres",
       "options": [
-        "Absent"
+        "Absent",
+        "Autres"
       ]
     }
   },
@@ -706,9 +707,10 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
       ]
     },
     "AUTRES": {
-      "typeSaisie": "select",
+      "typeSaisie": "select_autres",
       "options": [
-        "Non observé"
+        "Non observé",
+        "Autres"
       ]
     }
   },

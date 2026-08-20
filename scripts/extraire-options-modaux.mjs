@@ -75,15 +75,24 @@ function decodeHtml(v) {
 
 function extraireOptionsSelect(html) {
   const opts = [];
+  let aPreciser = false;
   const re = /<option[^>]*value="([^"]*)"[^>]*>/gi;
   let m;
   while ((m = re.exec(html))) {
     let v = decodeHtml(m[1].trim());
     if (!v || v === "---" || v === "-- Sélectionner --" || v === "-- Résultats --")
       continue;
-    if (v.toLowerCase().includes("préciser") || v === "À préciser") continue;
-    opts.push(v === "AUTRES" ? "Autres" : v);
+    if (
+      v.toLowerCase().includes("préciser") ||
+      v === "À préciser" ||
+      v.toLowerCase() === "autres"
+    ) {
+      aPreciser = true;
+      continue;
+    }
+    opts.push(v);
   }
+  if (aPreciser) opts.push("Autres");
   return [...new Set(opts)];
 }
 
@@ -195,10 +204,16 @@ for (const [modalId, formulaire] of Object.entries(MODAL_VERS_FORMULAIRE)) {
     const selectMatch = block.match(/<select[\s\S]*?<\/select>/i);
     if (selectMatch) {
       const options = extraireOptionsSelect(selectMatch[0]);
-      const avecAutres = options.some((o) => o === "Autres");
+      const avecAutres =
+        options.some((o) => o === "Autres") ||
+        /data-other-field/i.test(selectMatch[0]) ||
+        /À préciser|préciser/i.test(selectMatch[0]);
+      const optsFinaux = avecAutres
+        ? [...new Set([...options.filter((o) => o !== "Autres"), "Autres"])]
+        : options;
       catalog[formulaire][nom] = {
         typeSaisie: avecAutres ? "select_autres" : "select",
-        options,
+        options: optsFinaux,
       };
       continue;
     }

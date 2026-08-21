@@ -32,6 +32,7 @@ import {
   appliquerCalculsAutomatiques,
   validerCalculsPourVerification,
 } from "@/lib/laboratoire/calculs-automatiques";
+import { useDemanderConfirmation } from "@/components/ui/fournisseur-modale-confirmation";
 
 interface PropsContenuSaisieResultatsLaboratoire {
   utilisateur: UtilisateurLaboratoire;
@@ -89,6 +90,7 @@ export function ContenuSaisieResultatsLaboratoire({
   dossierId,
 }: PropsContenuSaisieResultatsLaboratoire) {
   const { t } = useTranslation();
+  const demanderConfirmation = useDemanderConfirmation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const statutFiltreUrl = searchParams.get("statut") as IdOrientationStatutAnalyse | null;
@@ -566,14 +568,22 @@ export function ContenuSaisieResultatsLaboratoire({
                         void envoyer({ action: "restaurer", passerSuivant: true })
                       }
                       onSupprimer={() => {
-                        if (
-                          !window.confirm(
-                            t("laboratoire.saisieResultats.confirmerSuppressionExamen")
-                          )
-                        ) {
-                          return;
-                        }
-                        void envoyer({ action: "supprimer", passerSuivant: true });
+                        demanderConfirmation({
+                          titre: t("laboratoire.saisieResultats.supprimerExamen"),
+                          description: t(
+                            "laboratoire.saisieResultats.confirmerSuppressionExamen"
+                          ),
+                          libelleConfirmer: t(
+                            "laboratoire.saisieResultats.supprimerExamen"
+                          ),
+                          variante: "danger",
+                          onConfirmer: async () => {
+                            await envoyer({
+                              action: "supprimer",
+                              passerSuivant: true,
+                            });
+                          },
+                        });
                       }}
                       lienHistorique={construireLienHistorique(ex.id)}
                     />

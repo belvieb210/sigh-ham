@@ -36,6 +36,7 @@ import {
   type FiltresPatientsAdmin,
 } from "@/features/admin/formulaire-filtres-patients-admin";
 import { MenuDeroulantPortail } from "@/features/admin/menu-deroulant-portail";
+import { useDemanderConfirmation } from "@/components/ui/fournisseur-modale-confirmation";
 import { cn } from "@/lib/utils";
 
 type PersonneItem = {
@@ -156,6 +157,7 @@ export function ContenuPatientsAdmin({
   utilisateur: UtilisateurAdmin;
 }) {
   const { t, i18n } = useTranslation();
+  const demanderConfirmation = useDemanderConfirmation();
   const router = useRouter();
   const [patients, setPatients] = useState<PersonneItem[]>([]);
   const [clients, setClients] = useState<PersonneItem[]>([]);
@@ -338,27 +340,40 @@ export function ContenuPatientsAdmin({
     );
   };
 
-  const supprimer = async (p: PersonneItem) => {
-    if (!window.confirm(t("admin.patients.confirmerSuppression", { nom: `${p.prenom} ${p.nom}` }))) {
-      return;
-    }
-    setEnCours(true);
-    setErreur(null);
-    setMessage(null);
+  const supprimer = (p: PersonneItem) => {
     setMenuOuvertId(null);
     setMenuAncre(null);
-    try {
-      const res = await fetch(`/api/admin/patients/${p.id}`, { method: "DELETE" });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
-      setMessage(data.message ?? t("admin.patients.supprime"));
-      if (selectionId === p.id) fermerPanneau();
-      await charger();
-    } catch (e: unknown) {
-      setErreur(e instanceof Error ? e.message : t("admin.common.erreur"));
-    } finally {
-      setEnCours(false);
-    }
+    demanderConfirmation({
+      titre: t("admin.patients.supprimer"),
+      description: t("admin.patients.confirmerSuppression", {
+        nom: `${p.prenom} ${p.nom}`,
+      }),
+      libelleConfirmer: t("admin.patients.supprimer"),
+      libelleAnnuler: t("admin.patients.annuler"),
+      variante: "danger",
+      onConfirmer: async () => {
+        setEnCours(true);
+        setErreur(null);
+        setMessage(null);
+        try {
+          const res = await fetch(`/api/admin/patients/${p.id}`, {
+            method: "DELETE",
+          });
+          const data = (await res.json()) as { message?: string };
+          if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
+          setMessage(data.message ?? t("admin.patients.supprime"));
+          if (selectionId === p.id) fermerPanneau();
+          await charger();
+        } catch (e: unknown) {
+          const msg =
+            e instanceof Error ? e.message : t("admin.common.erreur");
+          setErreur(msg);
+          throw e instanceof Error ? e : new Error(msg);
+        } finally {
+          setEnCours(false);
+        }
+      },
+    });
   };
 
   const actionMenu = (p: PersonneItem, action: ActionMenuPatient) => {

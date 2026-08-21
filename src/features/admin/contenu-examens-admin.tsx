@@ -42,6 +42,7 @@ import {
   nouveauParametreExamen,
   type FormExamenAdmin,
 } from "@/features/admin/formulaire-examen-admin";
+import { useDemanderConfirmation } from "@/components/ui/fournisseur-modale-confirmation";
 import { cn } from "@/lib/utils";
 
 type ExamenItem = {
@@ -120,6 +121,7 @@ export function ContenuExamensAdmin({
   utilisateur: UtilisateurAdmin;
 }) {
   const { t } = useTranslation();
+  const demanderConfirmation = useDemanderConfirmation();
   const [liste, setListe] = useState<ExamenItem[]>([]);
   const [rechercheRapide, setRechercheRapide] = useState("");
   const [filtresOuverts, setFiltresOuverts] = useState(false);
@@ -304,38 +306,45 @@ export function ContenuExamensAdmin({
     }
   };
 
-  const supprimerDefinitivement = async (item: ExamenItem) => {
-    const ok = window.confirm(
-      t("admin.examens.confirmerSuppressionDefinitive", {
+  const supprimerDefinitivement = (item: ExamenItem) => {
+    setMenuOuvertId(null);
+    demanderConfirmation({
+      titre: t("admin.examens.supprimerDefinitivement"),
+      description: t("admin.examens.confirmerSuppressionDefinitive", {
         libelle: item.libelle,
         code: item.code,
-      })
-    );
-    if (!ok) return;
-
-    setEnCours(true);
-    setErreur(null);
-    setMessage(null);
-    setMenuOuvertId(null);
-    try {
-      const res = await fetch(`/api/admin/examens/${item.id}`, {
-        method: "DELETE",
-      });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
-      setMessage(t("admin.examens.supprimeOk"));
-      if (selectionId === item.id) {
-        setSelectionId(null);
-        setModePanneau("creation");
-        setForm({ ...FORM_EXAMEN_ADMIN_VIDE });
-      }
-      setIdsCoches((ids) => ids.filter((id) => id !== item.id));
-      await charger();
-    } catch (e: unknown) {
-      setErreur(e instanceof Error ? e.message : t("admin.common.erreur"));
-    } finally {
-      setEnCours(false);
-    }
+      }),
+      libelleConfirmer: t("admin.examens.supprimerDefinitivement"),
+      libelleAnnuler: t("admin.examens.annuler"),
+      variante: "danger",
+      onConfirmer: async () => {
+        setEnCours(true);
+        setErreur(null);
+        setMessage(null);
+        try {
+          const res = await fetch(`/api/admin/examens/${item.id}`, {
+            method: "DELETE",
+          });
+          const data = (await res.json()) as { message?: string };
+          if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
+          setMessage(t("admin.examens.supprimeOk"));
+          if (selectionId === item.id) {
+            setSelectionId(null);
+            setModePanneau("creation");
+            setForm({ ...FORM_EXAMEN_ADMIN_VIDE });
+          }
+          setIdsCoches((ids) => ids.filter((id) => id !== item.id));
+          await charger();
+        } catch (e: unknown) {
+          const msg =
+            e instanceof Error ? e.message : t("admin.common.erreur");
+          setErreur(msg);
+          throw e instanceof Error ? e : new Error(msg);
+        } finally {
+          setEnCours(false);
+        }
+      },
+    });
   };
 
   const soumettre = async () => {

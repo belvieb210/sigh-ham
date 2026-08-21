@@ -699,6 +699,11 @@ export const adminEn = {
     plusActions: "More actions",
     inclureCatalogue: "Include in catalogue",
     exclureCatalogue: "Exclude from catalogue",
+    supprimer: "Delete permanently",
+    supprimerDefinitivement: "Delete permanently",
+    confirmerSuppressionDefinitive:
+      "Permanently delete “{{libelle}}” ({{code}})? This cannot be undone.",
+    supprimeOk: "Exam permanently deleted.",
     active: "Exam included. It can be prescribed again.",
     desactive: "Exam excluded. It no longer appears in prescriptions.",
     effacerRecherche: "Clear search",

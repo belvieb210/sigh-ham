@@ -424,6 +424,28 @@ export async function mettreAJourTypeExamen(
   }
 }
 
+/** Suppression définitive — refusée si des prescriptions / bilans y font référence. */
+export async function supprimerTypeExamen(id: string) {
+  const existant = await prisma.typeExamen.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      _count: {
+        select: {
+          examens: true,
+          paquetsBilan: true,
+        },
+      },
+    },
+  });
+  if (!existant) throw new Error("INTROUVABLE");
+  if (existant._count.examens > 0 || existant._count.paquetsBilan > 0) {
+    throw new Error("EXAMEN_EN_USAGE");
+  }
+
+  await prisma.typeExamen.delete({ where: { id } });
+}
+
 export async function listerMedicaments(opts?: {
   q?: string;
   actif?: boolean;
@@ -646,6 +668,8 @@ function messageErreurCatalogue(code: string): string | null {
       return "Deux paramètres portent le même nom.";
     case "INTROUVABLE":
       return "Élément introuvable.";
+    case "EXAMEN_EN_USAGE":
+      return "Impossible de supprimer : cet examen est déjà prescrit ou présent dans un bilan. Excluez-le du catalogue à la place.";
     default:
       return null;
   }

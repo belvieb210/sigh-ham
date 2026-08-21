@@ -1,4 +1,4 @@
-/** 跨页面翻译 — 验证、消息、SEO、实用页面 */
+﻿/** 跨页面翻译 — 验证、消息、SEO、实用页面 */
 
 export const communZh = {
   validation: {
@@ -112,8 +112,13 @@ export const communZh = {
       "如有匹配的账户，您将收到一封包含安全链接的电子邮件，用于设置新密码。",
     emailEnvoye: "如账户存在，说明已发送至 {{email}}。",
     simulerLien: "继续 — 设置新密码",
+    compteIntrouvable: "Aucun compte trouvé pour cet email ou identifiant.",
+    erreurReseau: "Impossible de contacter le serveur. Réessayez.",
+    erreurEnregistrement: "Impossible d'enregistrer le mot de passe.",
+    lienInvalide: "Lien de réinitialisation invalide ou expiré.",
     nouveauTitre: "新密码",
     nouveauDescription: "请选择一个安全且未在其他地方使用的密码。",
+    nouveauDescriptionCompte: "Définissez un nouveau mot de passe pour le compte {{compte}}.",
     nouveauMotDePasse: "新密码",
     confirmerMotDePasse: "确认密码",
     reglesMotDePasse:

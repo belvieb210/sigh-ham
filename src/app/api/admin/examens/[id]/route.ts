@@ -6,6 +6,7 @@ import {
 import {
   messageErreurCatalogue,
   mettreAJourTypeExamen,
+  supprimerTypeExamen,
 } from "@/lib/admin/catalogues";
 import { lireParametresBody } from "@/lib/admin/lire-parametres-examen";
 
@@ -82,6 +83,41 @@ export async function PATCH(
     console.error("[PATCH /api/admin/examens/[id]]", error);
     return NextResponse.json(
       { message: "Impossible de mettre à jour l'examen." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const session = await obtenirSessionApiAdmin();
+  if (!session) return reponseNonAutoriseAdmin();
+
+  try {
+    const { id } = await context.params;
+    await supprimerTypeExamen(id);
+    return NextResponse.json({ message: "Examen supprimé définitivement." });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    const msg = messageErreurCatalogue(code);
+    if (msg) {
+      return NextResponse.json(
+        { message: msg },
+        {
+          status:
+            code === "INTROUVABLE"
+              ? 404
+              : code === "EXAMEN_EN_USAGE"
+                ? 409
+                : 400,
+        }
+      );
+    }
+    console.error("[DELETE /api/admin/examens/[id]]", error);
+    return NextResponse.json(
+      { message: "Impossible de supprimer l'examen." },
       { status: 500 }
     );
   }

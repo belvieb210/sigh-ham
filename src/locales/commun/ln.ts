@@ -1,4 +1,4 @@
-/** Ba traductions transversales — validation, messages, SEO, ba pages utilitaires */
+﻿/** Ba traductions transversales — validation, messages, SEO, ba pages utilitaires */
 
 export const communLn = {
   validation: {
@@ -113,8 +113,13 @@ export const communLn = {
       "Soki compte ezali, bokozwa email na lien ya sécurité mpo na mot de passe ya sika.",
     emailEnvoye: "Ba instructions etindami na {{email}} soki compte ezali.",
     simulerLien: "Kokoba — tya mot de passe ya sika",
+    compteIntrouvable: "Aucun compte trouvé pour cet email ou identifiant.",
+    erreurReseau: "Impossible de contacter le serveur. Réessayez.",
+    erreurEnregistrement: "Impossible d'enregistrer le mot de passe.",
+    lienInvalide: "Lien de réinitialisation invalide ou expiré.",
     nouveauTitre: "Mot de passe ya sika",
     nouveauDescription: "Pona mot de passe ya makasi oyo ozali kosalela esika mosusu te.",
+    nouveauDescriptionCompte: "Définissez un nouveau mot de passe pour le compte {{compte}}.",
     nouveauMotDePasse: "Mot de passe ya sika",
     confirmerMotDePasse: "Confirmer mot de passe",
     reglesMotDePasse:

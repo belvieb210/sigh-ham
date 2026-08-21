@@ -108,15 +108,21 @@ export const communFr = {
     envoyer: "Envoyer le lien de réinitialisation",
     envoiEnCours: "Envoi en cours...",
     noteSecurite:
-      "Pour des raisons de sécurité, nous ne confirmons pas si un compte existe. Vérifiez votre boîte de réception et vos spams.",
+      "Seul un compte existant et actif peut réinitialiser son mot de passe. Utilisez l'email ou l'identifiant exacts de votre compte.",
     succesTitre: "Demande enregistrée",
     succesTexte:
       "Si un compte correspond à ces informations, vous recevrez un email avec un lien sécurisé pour définir un nouveau mot de passe.",
     emailEnvoye: "Instructions envoyées à {{email}} si le compte existe.",
     simulerLien: "Continuer — définir un nouveau mot de passe",
+    compteIntrouvable: "Aucun compte trouvé pour cet email ou identifiant.",
+    erreurReseau: "Impossible de contacter le serveur. Réessayez.",
+    erreurEnregistrement: "Impossible d'enregistrer le mot de passe.",
+    lienInvalide: "Lien de réinitialisation invalide ou expiré.",
     nouveauTitre: "Nouveau mot de passe",
     nouveauDescription:
       "Choisissez un mot de passe fort que vous n'utilisez pas ailleurs.",
+    nouveauDescriptionCompte:
+      "Définissez un nouveau mot de passe pour le compte {{compte}}.",
     nouveauMotDePasse: "Nouveau mot de passe",
     confirmerMotDePasse: "Confirmer le mot de passe",
     reglesMotDePasse:

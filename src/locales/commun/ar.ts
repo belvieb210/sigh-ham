@@ -1,4 +1,4 @@
-/** ترجمات مشتركة — التحقق، الرسائل، SEO، صفحات مساعدة */
+﻿/** ترجمات مشتركة — التحقق، الرسائل، SEO، صفحات مساعدة */
 
 export const communAr = {
   validation: {
@@ -112,8 +112,13 @@ export const communAr = {
       "إذا وُجد حساب يطابق هذه المعلومات، ستتلقى بريداً إلكترونياً يحتوي على رابط آمن لتعيين كلمة مرور جديدة.",
     emailEnvoye: "تم إرسال التعليمات إلى {{email}} إذا وُجد الحساب.",
     simulerLien: "متابعة — تعيين كلمة مرور جديدة",
+    compteIntrouvable: "Aucun compte trouvé pour cet email ou identifiant.",
+    erreurReseau: "Impossible de contacter le serveur. Réessayez.",
+    erreurEnregistrement: "Impossible d'enregistrer le mot de passe.",
+    lienInvalide: "Lien de réinitialisation invalide ou expiré.",
     nouveauTitre: "كلمة مرور جديدة",
     nouveauDescription: "اختر كلمة مرور آمنة لا تستخدمها في مكان آخر.",
+    nouveauDescriptionCompte: "Définissez un nouveau mot de passe pour le compte {{compte}}.",
     nouveauMotDePasse: "كلمة المرور الجديدة",
     confirmerMotDePasse: "تأكيد كلمة المرور",
     reglesMotDePasse:

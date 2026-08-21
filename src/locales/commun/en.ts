@@ -105,14 +105,19 @@ export const communEn = {
     envoyer: "Send reset link",
     envoiEnCours: "Sending...",
     noteSecurite:
-      "For security reasons, we do not confirm whether an account exists. Check your inbox and spam folder.",
+      "Only an existing active account can reset its password. Use the exact email or username of your account.",
     succesTitre: "Request received",
     succesTexte:
       "If an account matches this information, you will receive an email with a secure link to set a new password.",
     emailEnvoye: "Instructions sent to {{email}} if the account exists.",
     simulerLien: "Continue — set a new password",
+    compteIntrouvable: "No account found for this email or username.",
+    erreurReseau: "Unable to reach the server. Please try again.",
+    erreurEnregistrement: "Unable to save the password.",
+    lienInvalide: "Reset link is invalid or has expired.",
     nouveauTitre: "New password",
     nouveauDescription: "Choose a strong password you do not use elsewhere.",
+    nouveauDescriptionCompte: "Set a new password for account {{compte}}.",
     nouveauMotDePasse: "New password",
     confirmerMotDePasse: "Confirm password",
     reglesMotDePasse:

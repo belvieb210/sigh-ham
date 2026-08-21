@@ -1,4 +1,4 @@
-/** Querschnittsübersetzungen — Validierung, Nachrichten, SEO, Hilfsseiten */
+﻿/** Querschnittsübersetzungen — Validierung, Nachrichten, SEO, Hilfsseiten */
 
 export const communDe = {
   validation: {
@@ -112,8 +112,13 @@ export const communDe = {
       "Wenn ein Konto zu diesen Informationen passt, erhalten Sie eine E-Mail mit einem sicheren Link zum Festlegen eines neuen Passworts.",
     emailEnvoye: "Anweisungen gesendet an {{email}}, falls das Konto existiert.",
     simulerLien: "Weiter — neues Passwort festlegen",
+    compteIntrouvable: "Aucun compte trouvé pour cet email ou identifiant.",
+    erreurReseau: "Impossible de contacter le serveur. Réessayez.",
+    erreurEnregistrement: "Impossible d'enregistrer le mot de passe.",
+    lienInvalide: "Lien de réinitialisation invalide ou expiré.",
     nouveauTitre: "Neues Passwort",
     nouveauDescription: "Wählen Sie ein sicheres Passwort, das Sie anderswo nicht verwenden.",
+    nouveauDescriptionCompte: "Définissez un nouveau mot de passe pour le compte {{compte}}.",
     nouveauMotDePasse: "Neues Passwort",
     confirmerMotDePasse: "Passwort bestätigen",
     reglesMotDePasse:

@@ -11,6 +11,7 @@ import {
   Search,
   SlidersHorizontal,
   SquarePen,
+  Trash2,
   X,
 } from "lucide-react";
 import {
@@ -301,6 +302,40 @@ export function ContenuExamensAdmin({
     }
   };
 
+  const supprimerDefinitivement = async (item: ExamenItem) => {
+    const ok = window.confirm(
+      t("admin.examens.confirmerSuppressionDefinitive", {
+        libelle: item.libelle,
+        code: item.code,
+      })
+    );
+    if (!ok) return;
+
+    setEnCours(true);
+    setErreur(null);
+    setMessage(null);
+    setMenuOuvertId(null);
+    try {
+      const res = await fetch(`/api/admin/examens/${item.id}`, {
+        method: "DELETE",
+      });
+      const data = (await res.json()) as { message?: string };
+      if (!res.ok) throw new Error(data.message ?? t("admin.common.erreur"));
+      setMessage(t("admin.examens.supprimeOk"));
+      if (selectionId === item.id) {
+        setSelectionId(null);
+        setModePanneau("creation");
+        setForm({ ...FORM_EXAMEN_ADMIN_VIDE });
+      }
+      setIdsCoches((ids) => ids.filter((id) => id !== item.id));
+      await charger();
+    } catch (e: unknown) {
+      setErreur(e instanceof Error ? e.message : t("admin.common.erreur"));
+    } finally {
+      setEnCours(false);
+    }
+  };
+
   const soumettre = async () => {
     if (!form.code.trim() || !form.libelle.trim() || !form.categorie.trim()) {
       setErreur(t("admin.examens.champsRequis"));
@@ -489,7 +524,7 @@ export function ContenuExamensAdmin({
         ) : null}
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-          <div className="overflow-hidden rounded-xl border border-gris-bordure bg-white shadow-sm">
+          <div className="rounded-xl border border-gris-bordure bg-white shadow-sm">
             {chargement ? (
               <p className="flex items-center gap-2 p-6 text-sm text-texte-secondaire">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -501,7 +536,7 @@ export function ContenuExamensAdmin({
               </p>
             ) : (
               <>
-                <div className="conteneur-tableau-sigh">
+                <div className="conteneur-tableau-sigh overflow-visible">
                   <table className="tableau-sigh min-w-[640px]">
                     <thead className="bg-gris-tres-clair text-xs uppercase text-texte-secondaire">
                       <tr>
@@ -617,6 +652,19 @@ export function ContenuExamensAdmin({
                               >
                                 <SquarePen className="h-4 w-4" />
                               </button>
+                              <button
+                                type="button"
+                                disabled={enCours}
+                                onClick={() => void supprimerDefinitivement(item)}
+                                className={cn(
+                                  CLASSE_BOUTON_ACTION,
+                                  "hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                                )}
+                                aria-label={t("admin.examens.supprimer")}
+                                title={t("admin.examens.supprimer")}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
                               <div
                                 className="relative"
                                 ref={
@@ -641,7 +689,7 @@ export function ContenuExamensAdmin({
                                 {menuOuvertId === item.id ? (
                                   <div
                                     role="menu"
-                                    className="absolute right-0 top-10 z-20 min-w-[240px] overflow-hidden rounded-lg border border-gris-bordure bg-white py-1 shadow-lg"
+                                    className="absolute bottom-full right-0 z-50 mb-1 min-w-[240px] rounded-lg border border-gris-bordure bg-white py-1 shadow-lg"
                                   >
                                     {item.actif ? (
                                       <button
@@ -651,7 +699,7 @@ export function ContenuExamensAdmin({
                                         onClick={() =>
                                           void changerActif(item, false)
                                         }
-                                        className="block w-full px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
+                                        className="block w-full px-3 py-2.5 text-left text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
                                       >
                                         {t("admin.examens.exclureCatalogue")}
                                       </button>
@@ -663,11 +711,22 @@ export function ContenuExamensAdmin({
                                         onClick={() =>
                                           void changerActif(item, true)
                                         }
-                                        className="block w-full px-3 py-2 text-left text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                                        className="block w-full px-3 py-2.5 text-left text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
                                       >
                                         {t("admin.examens.inclureCatalogue")}
                                       </button>
                                     )}
+                                    <button
+                                      type="button"
+                                      role="menuitem"
+                                      disabled={enCours}
+                                      onClick={() =>
+                                        void supprimerDefinitivement(item)
+                                      }
+                                      className="block w-full border-t border-gris-bordure px-3 py-2.5 text-left text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                                    >
+                                      {t("admin.examens.supprimerDefinitivement")}
+                                    </button>
                                   </div>
                                 ) : null}
                               </div>

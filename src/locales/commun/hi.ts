@@ -1,4 +1,4 @@
-/** क्रॉस-कटिंग अनुवाद — सत्यापन, संदेश, SEO, उपयोगिता पृष्ठ */
+﻿/** क्रॉस-कटिंग अनुवाद — सत्यापन, संदेश, SEO, उपयोगिता पृष्ठ */
 
 export const communHi = {
   validation: {
@@ -111,8 +111,13 @@ export const communHi = {
       "यदि कोई खाता इस जानकारी से मेल खाता है, तो आपको नया पासवर्ड सेट करने के लिए एक सुरक्षित लिंक वाला ईमेल प्राप्त होगा।",
     emailEnvoye: "यदि खाता मौजूद है तो {{email}} पर निर्देश भेजे गए।",
     simulerLien: "जारी रखें — नया पासवर्ड सेट करें",
+    compteIntrouvable: "Aucun compte trouvé pour cet email ou identifiant.",
+    erreurReseau: "Impossible de contacter le serveur. Réessayez.",
+    erreurEnregistrement: "Impossible d'enregistrer le mot de passe.",
+    lienInvalide: "Lien de réinitialisation invalide ou expiré.",
     nouveauTitre: "नया पासवर्ड",
     nouveauDescription: "एक मज़बूत पासवर्ड चुनें जो आप कहीं और उपयोग नहीं करते।",
+    nouveauDescriptionCompte: "Définissez un nouveau mot de passe pour le compte {{compte}}.",
     nouveauMotDePasse: "नया पासवर्ड",
     confirmerMotDePasse: "पासवर्ड की पुष्टि करें",
     reglesMotDePasse:

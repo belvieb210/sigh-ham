@@ -1,4 +1,4 @@
-/** תרגומים חוצי-מערכת — אימות, הודעות, SEO, דפי שירות */
+﻿/** תרגומים חוצי-מערכת — אימות, הודעות, SEO, דפי שירות */
 
 export const communHe = {
   validation: {
@@ -112,8 +112,13 @@ export const communHe = {
       "אם קיים חשבון התואם לפרטים אלה, תקבלו דוא\"ל עם קישור מאובטח להגדרת סיסמה חדשה.",
     emailEnvoye: "הוראות נשלחו ל-{{email}} אם החשבון קיים.",
     simulerLien: "המשך — הגדרת סיסמה חדשה",
+    compteIntrouvable: "Aucun compte trouvé pour cet email ou identifiant.",
+    erreurReseau: "Impossible de contacter le serveur. Réessayez.",
+    erreurEnregistrement: "Impossible d'enregistrer le mot de passe.",
+    lienInvalide: "Lien de réinitialisation invalide ou expiré.",
     nouveauTitre: "סיסמה חדשה",
     nouveauDescription: "בחרו סיסמה חזקה שלא משתמשים בה במקום אחר.",
+    nouveauDescriptionCompte: "Définissez un nouveau mot de passe pour le compte {{compte}}.",
     nouveauMotDePasse: "סיסמה חדשה",
     confirmerMotDePasse: "אימות סיסמה",
     reglesMotDePasse:

@@ -1,4 +1,4 @@
-/** Traduções transversais — validação, mensagens, SEO, páginas utilitárias */
+﻿/** Traduções transversais — validação, mensagens, SEO, páginas utilitárias */
 
 export const communPt = {
   validation: {
@@ -112,8 +112,13 @@ export const communPt = {
       "Se existir uma conta com estas informações, receberá um e-mail com uma ligação segura para definir uma nova palavra-passe.",
     emailEnvoye: "Instruções enviadas para {{email}} se a conta existir.",
     simulerLien: "Continuar — definir nova palavra-passe",
+    compteIntrouvable: "Aucun compte trouvé pour cet email ou identifiant.",
+    erreurReseau: "Impossible de contacter le serveur. Réessayez.",
+    erreurEnregistrement: "Impossible d'enregistrer le mot de passe.",
+    lienInvalide: "Lien de réinitialisation invalide ou expiré.",
     nouveauTitre: "Nova palavra-passe",
     nouveauDescription: "Escolha uma palavra-passe forte que não utilize noutro local.",
+    nouveauDescriptionCompte: "Définissez un nouveau mot de passe pour le compte {{compte}}.",
     nouveauMotDePasse: "Nova palavra-passe",
     confirmerMotDePasse: "Confirmar palavra-passe",
     reglesMotDePasse:

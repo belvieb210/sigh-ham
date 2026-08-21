@@ -1,4 +1,4 @@
-/** Traducciones transversales — validación, mensajes, SEO, páginas de utilidad */
+﻿/** Traducciones transversales — validación, mensajes, SEO, páginas de utilidad */
 
 export const communEs = {
   validation: {
@@ -112,8 +112,13 @@ export const communEs = {
       "Si una cuenta coincide con esta información, recibirá un correo electrónico con un enlace seguro para establecer una nueva contraseña.",
     emailEnvoye: "Instrucciones enviadas a {{email}} si la cuenta existe.",
     simulerLien: "Continuar — establecer nueva contraseña",
+    compteIntrouvable: "Aucun compte trouvé pour cet email ou identifiant.",
+    erreurReseau: "Impossible de contacter le serveur. Réessayez.",
+    erreurEnregistrement: "Impossible d'enregistrer le mot de passe.",
+    lienInvalide: "Lien de réinitialisation invalide ou expiré.",
     nouveauTitre: "Nueva contraseña",
     nouveauDescription: "Elija una contraseña segura que no utilice en otro lugar.",
+    nouveauDescriptionCompte: "Définissez un nouveau mot de passe pour le compte {{compte}}.",
     nouveauMotDePasse: "Nueva contraseña",
     confirmerMotDePasse: "Confirmar contraseña",
     reglesMotDePasse:

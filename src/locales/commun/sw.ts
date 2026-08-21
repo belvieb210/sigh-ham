@@ -1,4 +1,4 @@
-/** Tafsiri za kawaida — uthibitishaji, ujumbe, SEO, kurasa za huduma */
+﻿/** Tafsiri za kawaida — uthibitishaji, ujumbe, SEO, kurasa za huduma */
 
 export const communSw = {
   validation: {
@@ -111,8 +111,13 @@ export const communSw = {
       "Ikiwa akaunti inalingana na taarifa hizi, utapokea barua pepe yenye kiungo salama cha kuweka nenosiri jipya.",
     emailEnvoye: "Maelekezo yametumwa kwa {{email}} ikiwa akaunti ipo.",
     simulerLien: "Endelea — weka nenosiri jipya",
+    compteIntrouvable: "Aucun compte trouvé pour cet email ou identifiant.",
+    erreurReseau: "Impossible de contacter le serveur. Réessayez.",
+    erreurEnregistrement: "Impossible d'enregistrer le mot de passe.",
+    lienInvalide: "Lien de réinitialisation invalide ou expiré.",
     nouveauTitre: "Nenosiri jipya",
     nouveauDescription: "Chagua nenosiri imara ambalo hutumii mahali pengine.",
+    nouveauDescriptionCompte: "Définissez un nouveau mot de passe pour le compte {{compte}}.",
     nouveauMotDePasse: "Nenosiri jipya",
     confirmerMotDePasse: "Thibitisha nenosiri",
     reglesMotDePasse:

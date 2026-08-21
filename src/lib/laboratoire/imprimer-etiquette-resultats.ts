@@ -125,12 +125,12 @@ export async function construireHtmlEtiquetteResultats(
     }
     .ligne {
       margin: 0;
-      font-size: 8.5px;
-      line-height: 1.25;
+      font-size: 8px;
+      line-height: 1.28;
       font-weight: 600;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .ligne .v { font-weight: 800; }
     .noms .v { text-transform: uppercase; }
@@ -154,9 +154,9 @@ export async function construireHtmlEtiquetteResultats(
       .toolbar { display: none !important; }
       .sheet { width: 50mm; margin: 8mm auto 0; }
       .label { border-bottom: 0; padding-bottom: 4mm; }
-      .qr-wrap { flex-basis: 20mm; width: 20mm; }
-      .qr { width: 20mm; height: 20mm; }
-      .ligne { font-size: 8px; }
+      .qr-wrap { flex-basis: 18mm; width: 18mm; }
+      .qr { width: 18mm; height: 18mm; }
+      .ligne { font-size: 7.5px; }
     }
   </style>
 </head>

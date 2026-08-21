@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ContenuReinitialisationMotDePasse } from "@/features/connexion/contenu-reinitialisation-mot-de-passe";
 
 export const metadata: Metadata = {
@@ -9,5 +10,9 @@ export const metadata: Metadata = {
 };
 
 export default function PageMotDePasseOublie() {
-  return <ContenuReinitialisationMotDePasse />;
+  return (
+    <Suspense fallback={null}>
+      <ContenuReinitialisationMotDePasse />
+    </Suspense>
+  );
 }

@@ -699,6 +699,11 @@ export const adminFr = {
     plusActions: "Plus d’actions",
     inclureCatalogue: "Inclure dans le catalogue",
     exclureCatalogue: "Exclure du catalogue",
+    supprimer: "Supprimer définitivement",
+    supprimerDefinitivement: "Supprimer définitivement",
+    confirmerSuppressionDefinitive:
+      "Supprimer définitivement « {{libelle}} » ({{code}}) ? Cette action est irréversible.",
+    supprimeOk: "Examen supprimé définitivement.",
     active: "Examen inclus. Il peut à nouveau être prescrit.",
     desactive: "Examen exclu. Il n’apparaît plus dans les prescriptions.",
     effacerRecherche: "Effacer la recherche",

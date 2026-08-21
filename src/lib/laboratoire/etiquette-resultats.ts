@@ -9,7 +9,8 @@ export type { EtiquetteResultatsLabo };
 function formaterNomPrescripteur(prenom: string, nom: string): string {
   const complet = `${prenom} ${nom}`.trim();
   if (!complet) return "—";
-  return /^dr\.?\s/i.test(complet) ? complet : `Dr ${complet}`;
+  // Pas de préfixe « Dr » sur l'étiquette (même si saisi avec Dr).
+  return complet.replace(/^dr\.?\s+/i, "").trim() || "—";
 }
 
 /**
@@ -80,7 +81,10 @@ export async function construireEtiquetteResultatsDossier(
     ? formaterNomPrescripteur(prescripteur.prenom, prescripteur.nom)
     : null;
   const medecinEnreg =
-    dossier.enregistrementsReception[0]?.medecinResponsable?.trim() || null;
+    dossier.enregistrementsReception[0]?.medecinResponsable
+      ?.trim()
+      .replace(/^dr\.?\s+/i, "")
+      .trim() || null;
   const medecinDemandeur =
     medecinDepuisPrescripteur || medecinEnreg || "—";
   const cnomMedecin =

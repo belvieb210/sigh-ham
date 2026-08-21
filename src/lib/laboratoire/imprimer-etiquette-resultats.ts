@@ -1,9 +1,11 @@
 /**
- * Impression étiquette code-barres résultats (navigateur).
+ * Impression étiquette résultats (QR code) — navigateur.
  */
 
-import JsBarcode from "jsbarcode";
+import QRCode from "qrcode";
 import type { EtiquetteResultatsLabo } from "@/lib/laboratoire/types-etiquette-resultats";
+
+const URL_SITE = "https://hamlab5.duckdns.org/";
 
 function echapper(texte: string): string {
   return texte
@@ -13,34 +15,35 @@ function echapper(texte: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function genererCodeBarreDataUrl(valeur: string): string {
-  const canvas = document.createElement("canvas");
+/** Retire un éventuel préfixe « Dr » / « Dr. » pour l'affichage. */
+export function sansPrefixeDr(nom: string): string {
+  return nom.replace(/^dr\.?\s+/i, "").trim();
+}
+
+async function genererQrDataUrl(contenu: string): Promise<string> {
   try {
-    JsBarcode(canvas, valeur, {
-      format: "CODE128",
-      width: 2,
-      height: 64,
-      displayValue: false,
-      margin: 0,
-      background: "#ffffff",
-      lineColor: "#000000",
+    return await QRCode.toDataURL(contenu, {
+      type: "image/png",
+      width: 112,
+      margin: 1,
+      errorCorrectionLevel: "M",
+      color: { dark: "#000000", light: "#ffffff" },
     });
-    return canvas.toDataURL("image/png");
   } catch {
     return "";
   }
 }
 
-export function construireHtmlEtiquetteResultats(
-  e: EtiquetteResultatsLabo
-): string {
-  const src = genererCodeBarreDataUrl(e.codeBarre);
+export async function construireHtmlEtiquetteResultats(
+  e: EtiquetteResultatsLabo,
+  urlSite: string = URL_SITE
+): Promise<string> {
+  const url = urlSite.replace(/\/?$/, "/");
+  const src = await genererQrDataUrl(url);
   const img = src
-    ? `<img class="bc" src="${src}" alt="Code-barres ${echapper(e.numeroPermanent)}" />`
-    : `<div class="bc-fallback">${echapper(e.codeBarre)}</div>`;
-  const medecin = e.cnomMedecin
-    ? `${e.medecinDemandeur} — CNOM: ${e.cnomMedecin}`
-    : e.medecinDemandeur;
+    ? `<img class="qr" src="${src}" alt="QR code ${echapper(e.numeroPermanent)}" />`
+    : `<div class="qr-fallback">${echapper(e.numeroPermanent)}</div>`;
+  const docteur = sansPrefixeDr(e.medecinDemandeur);
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -65,63 +68,89 @@ export function construireHtmlEtiquetteResultats(
       background: #0f2744; color: #fff; font-size: 12px;
       font-family: system-ui, sans-serif;
     }
+    .toolbar-actions { display: flex; gap: 8px; align-items: center; }
     .toolbar button {
       border: 0; border-radius: 6px; padding: 7px 12px;
-      background: #1d6ef5; color: #fff; font-weight: 700; cursor: pointer;
+      font-weight: 700; cursor: pointer;
     }
+    .toolbar .btn-print { background: #1d6ef5; color: #fff; }
+    .toolbar .btn-close { background: #e2e8f0; color: #0f2744; }
     .sheet { width: min(70mm, 100%); margin: 0 auto; }
     .label {
-      text-align: center;
+      text-align: left;
       padding: 6px 4px 10px;
       border-bottom: 1px dashed #ccc;
     }
-    .bc {
-      display: block;
-      width: 100%;
-      height: 64px;
+    .qr-wrap { text-align: center; margin-bottom: 6px; }
+    .qr {
+      display: inline-block;
+      width: 56px;
+      height: 56px;
       object-fit: contain;
-      object-position: center;
-      margin: 0 auto 4px;
     }
-    .bc-fallback {
+    .qr-fallback {
       font-family: monospace;
       font-size: 11px;
       padding: 4px 0;
+      text-align: center;
     }
-    .l1, .l2, .l3, .l4, .l5 {
-      margin: 2px 0 0;
+    .ligne {
+      margin: 3px 0 0;
       font-size: 11px;
-      line-height: 1.25;
+      line-height: 1.3;
       font-weight: 600;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .l2 { font-size: 12px; font-weight: 800; text-transform: uppercase; }
-    .l4 { font-family: monospace; font-weight: 700; }
+    .ligne .v { font-weight: 800; }
+    .noms .v { text-transform: uppercase; }
+    .site {
+      margin-top: 6px;
+      font-size: 9px;
+      font-weight: 600;
+      color: #1a4d7c;
+      word-break: break-all;
+      text-align: center;
+    }
     @media print {
       body { background: #fff; padding: 0; }
       .toolbar { display: none !important; }
       .sheet { width: 50mm; margin: 8mm auto 0; }
       .label { border-bottom: 0; padding-bottom: 4mm; }
-      .bc { height: 60px; }
+      .qr { width: 48px; height: 48px; }
     }
   </style>
 </head>
 <body>
   <div class="toolbar">
     <span>Étiquette résultats · ${echapper(e.numeroPermanent)}</span>
-    <button type="button" onclick="window.print()">Imprimer</button>
+    <div class="toolbar-actions">
+      <button type="button" class="btn-print" onclick="window.print()">Imprimer</button>
+      <button type="button" class="btn-close" onclick="fermerEtiquette()">Fermer</button>
+    </div>
   </div>
   <div class="sheet">
     <article class="label">
-      ${img}
-      <p class="l1">${echapper(e.dateResultat)}</p>
-      <p class="l2">${echapper(e.nomComplet)}</p>
-      <p class="l3">${echapper(e.ligneIdentite)}</p>
-      <p class="l4">${echapper(e.numeroPermanent)}</p>
-      <p class="l5">${echapper(medecin)}</p>
+      <div class="qr-wrap">${img}</div>
+      <p class="ligne">Délivrée : <span class="v">${echapper(e.dateResultat)}</span></p>
+      <p class="ligne noms">Noms : <span class="v">${echapper(e.nomComplet)}</span></p>
+      <p class="ligne">Age : <span class="v">${echapper(e.ligneIdentite)}</span></p>
+      <p class="ligne">N° Permanent : <span class="v">${echapper(e.numeroPermanent)}</span></p>
+      <p class="ligne">Docteur : <span class="v">${echapper(docteur)}</span></p>
+      <p class="site">${echapper(url)}</p>
     </article>
   </div>
+  <script>
+    function fermerEtiquette() {
+      try { window.close(); } catch (e) {}
+      // Si la fenêtre ne peut pas se fermer, retour au site public.
+      setTimeout(function () {
+        if (!window.closed) {
+          window.location.href = ${JSON.stringify(url)};
+        }
+      }, 150);
+    }
+  </script>
 </body>
 </html>`;
 }
@@ -150,7 +179,14 @@ export async function imprimerEtiquetteResultatsDossier(
       return { ok: false, erreur: data.erreur || "Étiquette indisponible." };
     }
 
-    const html = construireHtmlEtiquetteResultats(data.etiquette);
+    const origin =
+      typeof window !== "undefined" && window.location?.origin
+        ? `${window.location.origin}/`
+        : URL_SITE;
+    const html = await construireHtmlEtiquetteResultats(
+      data.etiquette,
+      origin.includes("localhost") ? URL_SITE : origin
+    );
     const fenetre = window.open("", "_blank");
     if (!fenetre) {
       return { ok: false, erreur: "Autorisez les popups pour imprimer." };
@@ -158,13 +194,8 @@ export async function imprimerEtiquetteResultatsDossier(
     fenetre.document.open();
     fenetre.document.write(html);
     fenetre.document.close();
-    try {
-      fenetre.opener = null;
-    } catch {
-      /* ignore */
-    }
     return { ok: true };
   } catch {
-    return { ok: false, erreur: "Erreur lors de la préparation du code-barres." };
+    return { ok: false, erreur: "Erreur lors de la préparation de l'étiquette." };
   }
 }

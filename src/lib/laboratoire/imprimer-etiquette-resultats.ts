@@ -89,9 +89,9 @@ export async function construireHtmlEtiquetteResultats(
       display: flex;
       flex-direction: row;
       align-items: stretch;
-      gap: 4px;
+      gap: 3px;
       background: #fff;
-      padding: 2px 0 8px;
+      padding: 2px 1.5mm 8px;
       page-break-inside: avoid;
       border-bottom: 1px dashed #ccc;
     }
@@ -102,19 +102,19 @@ export async function construireHtmlEtiquetteResultats(
       flex-direction: column;
       justify-content: center;
       text-align: left;
-      padding-right: 2px;
+      padding-right: 1px;
     }
     .qr-wrap {
-      flex: 0 0 24mm;
-      width: 24mm;
+      flex: 0 0 20mm;
+      width: 20mm;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .qr {
       display: block;
-      width: 24mm;
-      height: 24mm;
+      width: 20mm;
+      height: 20mm;
       object-fit: contain;
     }
     .qr-fallback {
@@ -128,9 +128,9 @@ export async function construireHtmlEtiquetteResultats(
       font-size: 8px;
       line-height: 1.28;
       font-weight: 600;
-      white-space: normal;
-      overflow-wrap: anywhere;
-      word-break: break-word;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip;
     }
     .ligne .v { font-weight: 800; }
     .noms .v { text-transform: uppercase; }
@@ -142,21 +142,22 @@ export async function construireHtmlEtiquetteResultats(
     }
     .site {
       margin: 0;
-      font-size: 7px;
+      font-size: 6.5px;
       font-weight: 600;
       color: #111;
-      word-break: break-all;
-      white-space: normal;
+      white-space: nowrap;
+      overflow: hidden;
       line-height: 1.2;
     }
     @media print {
       body { background: #fff; padding: 0; }
       .toolbar { display: none !important; }
-      .sheet { width: 50mm; margin: 8mm auto 0; }
-      .label { border-bottom: 0; padding-bottom: 4mm; }
+      .sheet { width: 58mm; margin: 6mm auto 0; }
+      .label { border-bottom: 0; padding: 1mm 1.5mm 3mm; }
       .qr-wrap { flex-basis: 18mm; width: 18mm; }
       .qr { width: 18mm; height: 18mm; }
       .ligne { font-size: 7.5px; }
+      .site { font-size: 6px; }
     }
   </style>
 </head>
@@ -174,7 +175,7 @@ export async function construireHtmlEtiquetteResultats(
         <p class="ligne">Délivrée : <span class="v">${echapper(e.dateResultat)}</span></p>
         <p class="ligne noms">Noms : <span class="v">${echapper(e.nomComplet)}</span></p>
         <p class="ligne">Age : <span class="v">${echapper(e.ligneIdentite)}</span></p>
-        <p class="ligne">N° Permanent : <span class="v">${echapper(e.numeroPermanent)}</span></p>
+        <p class="ligne permanent">N° : <span class="v">${echapper(e.numeroPermanent)}</span></p>
         <p class="ligne">Docteur : <span class="v">${echapper(docteur)}</span></p>
         <hr class="sep" />
         <p class="site">${echapper(urlSite)}</p>

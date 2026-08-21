@@ -37,6 +37,7 @@ import {
 } from "@/features/admin/formulaire-filtres-examens-admin";
 import {
   FORM_EXAMEN_ADMIN_VIDE,
+  appliquerCategorieAuFormulaire,
   FormulaireExamenAdmin,
   nouveauParametreExamen,
   type FormExamenAdmin,
@@ -73,7 +74,7 @@ type ModePanneau = "creation" | "consultation" | "edition";
 const EXAMENS_PAR_PAGE = 16;
 
 const CLASSE_BOUTON_ACTION =
-  "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gris-bordure text-slate-500 transition-colors hover:bg-gris-tres-clair hover:text-bleu-medical";
+  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-gris-bordure bg-white text-slate-600 transition-colors hover:bg-gris-tres-clair hover:text-bleu-medical disabled:cursor-not-allowed disabled:opacity-40";
 
 function formaterPrixUsd(n: number) {
   return `$ ${n.toLocaleString("en-US", {
@@ -83,7 +84,7 @@ function formaterPrixUsd(n: number) {
 }
 
 function itemVersForm(item: ExamenItem): FormExamenAdmin {
-  return {
+  const base: FormExamenAdmin = {
     code: item.code,
     libelle: item.libelle,
     categorie: item.categorie,
@@ -110,6 +111,7 @@ function itemVersForm(item: ExamenItem): FormExamenAdmin {
         ordre: p.ordre + 1,
       })),
   };
+  return appliquerCategorieAuFormulaire(base, base.categorie);
 }
 
 export function ContenuExamensAdmin({
@@ -556,7 +558,7 @@ export function ContenuExamensAdmin({
                         <th className="px-3 py-2">
                           {t("admin.examens.colonnes.statut")}
                         </th>
-                        <th className="px-3 py-2 text-center">
+                        <th className="w-[9.5rem] min-w-[9.5rem] px-2 py-2 text-center">
                           {t("admin.examens.colonnes.actions")}
                         </th>
                       </tr>
@@ -630,10 +632,10 @@ export function ContenuExamensAdmin({
                             ) : null}
                           </td>
                           <td
-                            className="px-3 py-2.5"
+                            className="whitespace-nowrap px-2 py-2.5"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <div className="flex items-center justify-center gap-1.5">
+                            <div className="flex flex-nowrap items-center justify-end gap-1">
                               <button
                                 type="button"
                                 onClick={() => consulter(item)}

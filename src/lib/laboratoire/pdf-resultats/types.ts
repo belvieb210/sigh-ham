@@ -41,6 +41,8 @@ export interface DonneesExamenResultatPdf {
   examenId: string;
   typeCode: string;
   typeFormulaire: string | null;
+  /** Catégorie catalogue — fallback PDF si formulaire vide. */
+  typeCategorie?: string | null;
   libelle: string;
   specimen: string | null;
   description: string | null;

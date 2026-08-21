@@ -41,7 +41,7 @@ const MOTS_CLES: { pattern: RegExp; type: string }[] = [
 export function detecterTypeExamenPdf(
   examen: Pick<
     DonneesExamenResultatPdf,
-    "typeCode" | "typeFormulaire" | "libelle"
+    "typeCode" | "typeFormulaire" | "typeCategorie" | "libelle"
   >
 ): string {
   const candidats = [

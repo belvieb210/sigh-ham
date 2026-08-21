@@ -16,6 +16,8 @@ import { trierParametresParFormulaire } from "@/lib/laboratoire/ordre-parametres
 import { calculerFlagDepuisParametre } from "@/lib/laboratoire/indicateur-resultat";
 import { estValeurAutres } from "@/lib/laboratoire/config-saisie-parametre";
 import { resoudreConfigSaisieParametre } from "@/lib/laboratoire/resoudre-config-saisie-parametre";
+import { resoudreFormulaireExamen } from "@/lib/laboratoire/formulaire-depuis-categorie";
+import { nomsParametresDepuisFormulaire } from "@/lib/laboratoire/parametres-modele-formulaire";
 import { validerCalculsPourVerification } from "@/lib/laboratoire/calculs-automatiques";
 import type {
   ActionEnregistrementResultat,
@@ -111,6 +113,59 @@ function mapperParametres(
   ];
 }
 
+async function assurerParametresTypeExamen(type: {
+  id: string;
+  code: string;
+  libelle: string;
+  categorie: string;
+  prix: unknown;
+  formulaire: string | null;
+  parametres: {
+    id: string;
+    nom: string;
+    unite: string | null;
+    rangeUsuelle: string | null;
+    obligatoire: boolean;
+    ordre: number;
+    configSaisie?: unknown;
+  }[];
+}) {
+  const formulaire = resoudreFormulaireExamen(type.formulaire, type.categorie);
+  if (type.parametres.length > 0) {
+    return { ...type, formulaire: formulaire ?? type.formulaire };
+  }
+  const noms = nomsParametresDepuisFormulaire(formulaire);
+  if (!noms.length) {
+    return { ...type, formulaire: formulaire ?? type.formulaire };
+  }
+  await prisma.$transaction(async (tx) => {
+    if (!type.formulaire && formulaire) {
+      await tx.typeExamen.update({
+        where: { id: type.id },
+        data: { formulaire },
+      });
+    }
+    await tx.parametreTypeExamen.createMany({
+      data: noms.map((nom, i) => ({
+        typeExamenId: type.id,
+        nom,
+        obligatoire: true,
+        ordre: i,
+      })),
+    });
+  });
+  const rafraichi = await prisma.typeExamen.findUniqueOrThrow({
+    where: { id: type.id },
+    include: { parametres: { orderBy: { ordre: "asc" } } },
+  });
+  return {
+    ...rafraichi,
+    formulaire: resoudreFormulaireExamen(
+      rafraichi.formulaire,
+      rafraichi.categorie
+    ),
+  };
+}
 export async function chargerSaisieResultats(
   dossierId: string,
   options?: { inclureRejetes?: boolean }
@@ -144,6 +199,33 @@ export async function chargerSaisieResultats(
     select: { numeroTransfert: true },
   });
 
+  const examensAssures = await Promise.all(
+    dossier.examensLaboratoire.map(async (ex) => {
+      const type = await assurerParametresTypeExamen(ex.typeExamen);
+      const formulaire = resoudreFormulaireExamen(
+        type.formulaire,
+        type.categorie
+      );
+      return {
+        id: ex.id,
+        code: type.code,
+        libelle: type.libelle,
+        categorie: type.categorie,
+        prix: Number(type.prix),
+        statut: ex.statut,
+        orientationAnalyse: lireOrientationAnalyseDepuisNotes(ex.notes),
+        formulaire,
+        remarque: extraireRemarqueSansOrientation(ex.notes) || null,
+        parametres: mapperParametres(
+          type.parametres,
+          ex.resultats,
+          formulaire
+        ),
+        piecesJointes: lirePiecesJointesDepuisNotes(ex.notes),
+      };
+    })
+  );
+
   return {
     dossierId: dossier.id,
     numeroDossier: dossier.numeroDossier,
@@ -157,23 +239,7 @@ export async function chargerSaisieResultats(
       age: patient.age,
     }),
     telephone: patient.telephone,
-    examens: dossier.examensLaboratoire.map((ex) => ({
-      id: ex.id,
-      code: ex.typeExamen.code,
-      libelle: ex.typeExamen.libelle,
-      categorie: ex.typeExamen.categorie,
-      prix: Number(ex.typeExamen.prix),
-      statut: ex.statut,
-      orientationAnalyse: lireOrientationAnalyseDepuisNotes(ex.notes),
-      formulaire: ex.typeExamen.formulaire,
-      remarque: extraireRemarqueSansOrientation(ex.notes) || null,
-      parametres: mapperParametres(
-        ex.typeExamen.parametres,
-        ex.resultats,
-        ex.typeExamen.formulaire
-      ),
-      piecesJointes: lirePiecesJointesDepuisNotes(ex.notes),
-    })),
+    examens: examensAssures,
   };
 }
 
@@ -246,7 +312,7 @@ export async function enregistrerResultatsExamen(
     const config = resoudreConfigSaisieParametre({
       configSaisie: cat.configSaisie,
       nom: cat.nom,
-      typeExamen: { formulaire: examen.typeExamen.formulaire },
+      typeExamen: { formulaire: resoudreFormulaireExamen(examen.typeExamen.formulaire, examen.typeExamen.categorie) },
     });
 
     if (exigerParametres && !nonRequis && cat.obligatoire) {
@@ -294,7 +360,7 @@ export async function enregistrerResultatsExamen(
       })),
     ];
     const erreurCalcul = validerCalculsPourVerification(
-      examen.typeExamen.formulaire,
+      resoudreFormulaireExamen(examen.typeExamen.formulaire, examen.typeExamen.categorie),
       parametresPourCalcul
     );
     if (erreurCalcul) {
@@ -311,7 +377,7 @@ export async function enregistrerResultatsExamen(
         const configSaisie = resoudreConfigSaisieParametre({
           configSaisie: cat.configSaisie,
           nom: cat.nom,
-          typeExamen: { formulaire: examen.typeExamen.formulaire },
+          typeExamen: { formulaire: resoudreFormulaireExamen(examen.typeExamen.formulaire, examen.typeExamen.categorie) },
         });
         const flag = calculerFlagDepuisParametre({
           valeur: ligne.valeur.trim(),

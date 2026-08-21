@@ -6,6 +6,10 @@ import { Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import { Bouton } from "@/components/ui/bouton";
 import { CLASSE_CHAMP_RECEPTION, CLASSE_LABEL_RECEPTION } from "@/constants/reception";
 import { cn } from "@/lib/utils";
+import {
+  formulaireDepuisCategorie,
+  resoudreFormulaireExamen,
+} from "@/lib/laboratoire/formulaire-depuis-categorie";
 
 export interface FormParametreExamenAdmin {
   cle: string;
@@ -51,6 +55,22 @@ export function nouveauParametreExamen(ordre = 1): FormParametreExamenAdmin {
 
 function trierParametresFormulaire(parametres: FormParametreExamenAdmin[]) {
   return [...parametres].sort((a, b) => a.ordre - b.ordre);
+}
+
+/** Si le champ formulaire est vide : préremplit avec le défaut de la catégorie. */
+export function appliquerCategorieAuFormulaire(
+  form: FormExamenAdmin,
+  categorie: string
+): FormExamenAdmin {
+  const suivant: FormExamenAdmin = { ...form, categorie };
+  if (!form.formulaire.trim()) {
+    const defaut =
+      formulaireDepuisCategorie(categorie) ||
+      resoudreFormulaireExamen(null, categorie) ||
+      "";
+    if (defaut) suivant.formulaire = defaut;
+  }
+  return suivant;
 }
 
 export const FORM_EXAMEN_ADMIN_VIDE: FormExamenAdmin = {
@@ -227,7 +247,9 @@ export function FormulaireExamenAdmin({
               value={form.categorie}
               disabled={lectureSeule}
               placeholder={t("admin.examens.placeholders.categorie")}
-              onChange={(e) => maj("categorie", e.target.value)}
+              onChange={(e) =>
+                onChange(appliquerCategorieAuFormulaire(form, e.target.value))
+              }
             />
             <datalist id="admin-examen-categories">
               {categories.map((c) => (

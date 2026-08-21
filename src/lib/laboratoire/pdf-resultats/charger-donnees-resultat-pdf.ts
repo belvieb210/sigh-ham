@@ -10,6 +10,7 @@ import {
   retirerPiecesJointesDesNotes,
 } from "@/constants/laboratoire-notes-examen";
 import { detecterTypeExamenPdf } from "@/lib/laboratoire/pdf-resultats/detecter-type-examen";
+import { resoudreFormulaireExamen } from "@/lib/laboratoire/formulaire-depuis-categorie";
 import { detecterTypeParStructureResultats } from "@/lib/laboratoire/pdf-resultats/detecter-type-par-structure";
 import { trierParametresParFormulaire } from "@/lib/laboratoire/ordre-parametres-formulaire";
 import { resoudreFactureIdPourQrPdfLabo } from "@/lib/caisse/recu-public";
@@ -116,7 +117,7 @@ export async function chargerDonneesResultatExamenPdf(
   );
 
   const resultatsTries = trierParametresParFormulaire(
-    examen.typeExamen.formulaire,
+    resoudreFormulaireExamen(examen.typeExamen.formulaire, examen.typeExamen.categorie),
     examen.resultats.map((r) => ({
       ...r,
       nom: r.parametre,
@@ -133,7 +134,11 @@ export async function chargerDonneesResultatExamenPdf(
   const examenPdf = {
     examenId: examen.id,
     typeCode: examen.typeExamen.code,
-    typeFormulaire: examen.typeExamen.formulaire,
+    typeFormulaire: resoudreFormulaireExamen(
+      examen.typeExamen.formulaire,
+      examen.typeExamen.categorie
+    ),
+    typeCategorie: examen.typeExamen.categorie,
     libelle: examen.typeExamen.libelle,
     specimen: examen.typeExamen.specimen,
     description: examen.typeExamen.description,

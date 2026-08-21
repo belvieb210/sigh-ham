@@ -2,6 +2,8 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { Prisma as PrismaNs } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { resoudreFormulaireExamen } from "@/lib/laboratoire/formulaire-depuis-categorie";
+import { nomsParametresDepuisFormulaire } from "@/lib/laboratoire/parametres-modele-formulaire";
 
 function decimalVersNombre(
   v: { toNumber?: () => number; toString?: () => string } | number | null | undefined
@@ -324,13 +326,29 @@ type DonneesTypeExamen = {
   parametres?: ParametreTypeExamenInput[];
 };
 
+function parametresDepuisModeleFormulaire(
+  formulaire: string | null
+): ParametreTypeExamenInput[] {
+  return nomsParametresDepuisFormulaire(formulaire).map((nom) => ({
+    nom,
+    obligatoire: true,
+  }));
+}
+
 export async function creerTypeExamen(data: DonneesTypeExamen) {
   const code = data.code.trim().toUpperCase();
   const libelle = data.libelle.trim();
   const categorie = data.categorie.trim();
   if (!code || !libelle || !categorie) throw new Error("CHAMPS_REQUIS");
   if (!Number.isFinite(data.prix) || data.prix < 0) throw new Error("PRIX_INVALIDE");
-  const parametres = normaliserParametres(data.parametres);
+  const formulaire =
+    texteOuNull(data.formulaire) ?? resoudreFormulaireExamen(null, categorie);
+  let parametres = normaliserParametres(data.parametres);
+  if (parametres.length === 0 && formulaire) {
+    parametres = normaliserParametres(
+      parametresDepuisModeleFormulaire(formulaire)
+    );
+  }
 
   try {
     const cree = await prisma.typeExamen.create({
@@ -342,7 +360,7 @@ export async function creerTypeExamen(data: DonneesTypeExamen) {
         delaiHeures: data.delaiHeures ?? 24,
         actif: data.actif ?? true,
         packPrenuptial: data.packPrenuptial ?? false,
-        formulaire: texteOuNull(data.formulaire),
+        formulaire,
         serviceLabo: texteOuNull(data.serviceLabo),
         specimen: texteOuNull(data.specimen),
         uniteDefaut: texteOuNull(data.uniteDefaut),
@@ -376,8 +394,19 @@ export async function mettreAJourTypeExamen(
   id: string,
   data: Partial<DonneesTypeExamen>
 ) {
-  const existant = await prisma.typeExamen.findUnique({ where: { id } });
+  const existant = await prisma.typeExamen.findUnique({
+    where: { id },
+    include: { parametres: { select: { id: true } } },
+  });
   if (!existant) throw new Error("INTROUVABLE");
+
+  const categorieCible = data.categorie?.trim() || existant.categorie;
+  const formulaireExplicite =
+    data.formulaire !== undefined
+      ? texteOuNull(data.formulaire)
+      : texteOuNull(existant.formulaire);
+  const formulaireResolu =
+    formulaireExplicite ?? resoudreFormulaireExamen(null, categorieCible);
 
   const payload: Prisma.TypeExamenUpdateInput = {};
   if (data.code != null) payload.code = data.code.trim().toUpperCase();
@@ -390,15 +419,37 @@ export async function mettreAJourTypeExamen(
   if (data.delaiHeures != null) payload.delaiHeures = data.delaiHeures;
   if (data.actif != null) payload.actif = data.actif;
   if (data.packPrenuptial != null) payload.packPrenuptial = data.packPrenuptial;
-  if (data.formulaire !== undefined) payload.formulaire = texteOuNull(data.formulaire);
+  if (data.formulaire !== undefined) {
+    payload.formulaire = formulaireExplicite ?? formulaireResolu;
+  } else if (!existant.formulaire && formulaireResolu) {
+    payload.formulaire = formulaireResolu;
+  }
   if (data.serviceLabo !== undefined) payload.serviceLabo = texteOuNull(data.serviceLabo);
   if (data.specimen !== undefined) payload.specimen = texteOuNull(data.specimen);
   if (data.uniteDefaut !== undefined) payload.uniteDefaut = texteOuNull(data.uniteDefaut);
   if (data.rangeUsuelle !== undefined) payload.rangeUsuelle = texteOuNull(data.rangeUsuelle);
   if (data.description !== undefined) payload.description = texteOuNull(data.description);
 
-  const parametres =
+  let parametres =
     data.parametres !== undefined ? normaliserParametres(data.parametres) : null;
+  if (
+    parametres &&
+    parametres.length === 0 &&
+    existant.parametres.length === 0 &&
+    formulaireResolu
+  ) {
+    parametres = normaliserParametres(
+      parametresDepuisModeleFormulaire(formulaireResolu)
+    );
+  } else if (
+    parametres === null &&
+    existant.parametres.length === 0 &&
+    formulaireResolu
+  ) {
+    parametres = normaliserParametres(
+      parametresDepuisModeleFormulaire(formulaireResolu)
+    );
+  }
 
   try {
     const maj = await prisma.$transaction(async (tx) => {

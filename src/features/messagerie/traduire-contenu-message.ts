@@ -1,6 +1,11 @@
 import type { TFunction } from "i18next";
+import {
+  estMarqueurPieceJointe,
+  MARQUEUR_TRANSFERT_INDISPONIBLE,
+} from "@/lib/messagerie/marqueurs-contenu";
 
 const MOTIFS_TRANSFERT = [
+  /^⟦FWD⟧(.+)\n([\s\S]*)$/,
   /^↪ Transféré de (.+):\n([\s\S]*)$/,
   /^↪ Forwarded from (.+):\n([\s\S]*)$/,
   /^↪ 转发自 (.+):\n([\s\S]*)$/,
@@ -22,24 +27,42 @@ const CLES_MESSAGES_DEMO: Record<string, string> = {
     "reception.messagerie.demo.directMedecin",
 };
 
-/** Traduit préfixes transfert et messages de démonstration seed ; le reste reste tel quel. */
+/**
+ * Traduit les contenus système (transfert, pièce jointe, démos).
+ * Les messages saisis par l'utilisateur restent inchangés (pratique clinique / entreprise).
+ */
 export function traduireContenuMessage(contenu: string, t: TFunction): string {
   const texte = contenu.trim();
+
+  if (!texte || estMarqueurPieceJointe(texte)) {
+    return t("reception.messagerie.pieceJointe");
+  }
+
+  if (
+    texte === MARQUEUR_TRANSFERT_INDISPONIBLE ||
+    texte === "[Message transféré — contenu indisponible]"
+  ) {
+    return t("reception.messagerie.contenuTransfereIndisponible");
+  }
 
   for (const motif of MOTIFS_TRANSFERT) {
     const match = texte.match(motif);
     if (match) {
+      const corps = match[2] ?? "";
+      const corpsTraduit = estMarqueurPieceJointe(corps)
+        ? t("reception.messagerie.pieceJointe")
+        : corps;
       return t("reception.messagerie.contenuTransfere", {
         nom: match[1],
-        texte: match[2],
+        texte: corpsTraduit,
       });
     }
   }
 
   const cleDemo = CLES_MESSAGES_DEMO[texte];
   if (cleDemo) {
-    const traduit = t(cleDemo, { defaultValue: "" });
-    if (traduit) return traduit;
+    const traduit = t(cleDemo);
+    if (traduit && traduit !== cleDemo) return traduit;
   }
 
   return contenu;

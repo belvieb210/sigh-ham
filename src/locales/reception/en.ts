@@ -678,6 +678,7 @@ export const receptionEn = {
       aujourdhui: "Today",
     },
     contenuTransfere: "↪ Forwarded from {{nom}}:\n{{texte}}",
+    contenuTransfereIndisponible: "↪ Forwarded message — content unavailable",
     demo: {
       receptionMatin:
         "Hello everyone. The morning flow is active — please confirm pending transfers.",

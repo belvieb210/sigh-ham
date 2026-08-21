@@ -149,6 +149,7 @@ export const messagerieKg = {
     aujourdhui: "Lelo",
   },
   contenuTransfere: "↪ Etindami na {{nom}}:\n{{texte}}",
+  contenuTransfereIndisponible: "↪ Lusadisu lwatindama — mambu kele ve",
   demo: {
     receptionMatin:
       "Mbote na bantu nyonso. Mobembo ya ntongo ke salaka — pona kondima ba kotinda oyo ke vanda.",

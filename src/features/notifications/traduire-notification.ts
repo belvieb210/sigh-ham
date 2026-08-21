@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next";
 import type { TypeNotification } from "@/generated/prisma/enums";
+import { traduireContenuMessage } from "@/features/messagerie/traduire-contenu-message";
 
 export interface NotificationAffichable {
   type: TypeNotification;
@@ -8,13 +9,18 @@ export interface NotificationAffichable {
   metadonnees?: Record<string, unknown> | null;
 }
 
-function paramsDepuisMetadonnees(meta: Record<string, unknown> | null | undefined): Record<string, string> {
+function paramsDepuisMetadonnees(
+  meta: Record<string, unknown> | null | undefined,
+  t: TFunction
+): Record<string, string> {
   if (!meta) return {};
   const params: Record<string, string> = {};
   for (const [cle, val] of Object.entries(meta)) {
     if (cle.startsWith("cle")) continue;
     if (typeof val === "string" || typeof val === "number") {
-      params[cle] = String(val);
+      const brut = String(val);
+      params[cle] =
+        cle === "apercu" ? traduireContenuMessage(brut, t) : brut;
     }
   }
   return params;
@@ -26,7 +32,7 @@ export function traduireNotification(
   t: TFunction
 ): { titre: string; message: string } {
   const meta = (notification.metadonnees ?? {}) as Record<string, unknown>;
-  const params = paramsDepuisMetadonnees(meta);
+  const params = paramsDepuisMetadonnees(meta, t);
 
   const cleTitre =
     (typeof meta.cleTitre === "string" && meta.cleTitre) ||

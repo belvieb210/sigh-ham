@@ -149,6 +149,7 @@ export const messagerieZh = {
     aujourdhui: "今天",
   },
   contenuTransfere: "↪ 转发自 {{nom}}:\n{{texte}}",
+  contenuTransfereIndisponible: "↪ 已转发消息 — 内容不可用",
   demo: {
     receptionMatin: "大家好。上午流程已启动 — 请确认待处理的转介。",
     infirmiersConstantes: "收到。3 名患者等待测量生命体征。",

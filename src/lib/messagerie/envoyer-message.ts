@@ -2,6 +2,9 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { PayloadEnvoiMessage } from "@/lib/messagerie/types";
 import type { MessageConversation } from "@/lib/messagerie/types";
+import {
+  MARQUEUR_PIECE_JOINTE,
+} from "@/lib/messagerie/marqueurs-contenu";
 import { publierRedis, CANAUX_REDIS } from "@/lib/redis/client";
 import { EVENEMENTS_SOCKET } from "@/lib/realtime/evenements";
 import {
@@ -57,7 +60,7 @@ export async function envoyerMessage(
       data: {
         conversationId,
         expediteurId: utilisateurId,
-        contenu: contenu ?? "📎 Pièce jointe",
+        contenu: contenu ?? MARQUEUR_PIECE_JOINTE,
         priorite: payload.priorite ?? "NORMALE",
         type: payload.type ?? "TEXTE",
         messageParentId: payload.messageParentId,
@@ -148,7 +151,7 @@ export async function envoyerMessage(
     destinataireIds: participants.map((p) => p.utilisateurId),
     expediteurNom: nomExp,
     conversationId,
-    apercu: contenu ?? "Pièce jointe",
+    apercu: contenu ?? MARQUEUR_PIECE_JOINTE,
   });
 
   if (mentions.length > 0) {

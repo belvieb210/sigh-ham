@@ -149,6 +149,7 @@ export const messagerieSw = {
     aujourdhui: "Leo",
   },
   contenuTransfere: "↪ Imehamishwa kutoka kwa {{nom}}:\n{{texte}}",
+  contenuTransfereIndisponible: "↪ Ujumbe uliohamishwa — maudhui hayapatikani",
   demo: {
     receptionMatin:
       "Habari kwa wote. Mtiririko wa asubuhi unaendelea — tafadhali thibitisha uhamisho unaosubiri.",

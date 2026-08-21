@@ -681,6 +681,7 @@ export const receptionFr = {
       aujourdhui: "Aujourd'hui",
     },
     contenuTransfere: "↪ Transféré de {{nom}}:\n{{texte}}",
+    contenuTransfereIndisponible: "↪ Message transféré — contenu indisponible",
     demo: {
       receptionMatin:
         "Bonjour à toutes et à tous. Le flux du matin est actif — merci de confirmer les transferts en attente.",

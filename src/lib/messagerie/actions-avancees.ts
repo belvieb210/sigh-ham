@@ -6,6 +6,10 @@ import { creerNotification } from "@/lib/notifications/service-notifications";
 import { metadonneesNotificationI18n } from "@/lib/notifications/cles-i18n";
 import { lienMessagerieReception } from "@/lib/notifications/liens";
 import { creerConversation } from "@/lib/messagerie/creer-conversation";
+import {
+  formaterContenuTransfere,
+  MARQUEUR_TRANSFERT_INDISPONIBLE,
+} from "@/lib/messagerie/marqueurs-contenu";
 import type { CategorieGroupe } from "@/generated/prisma/enums";
 
 export async function creerDiffusion(
@@ -440,10 +444,10 @@ export async function transfererMessage(
     where: { id: message.expediteurId },
     select: { prenom: true, nom: true },
   });
-  const nomExp = expediteur ? `${expediteur.prenom} ${expediteur.nom}` : "Collègue";
+  const nomExp = expediteur ? `${expediteur.prenom} ${expediteur.nom}` : "—";
   const contenuTransfere = message.supprime
-    ? `[Message transféré — contenu indisponible]`
-    : `↪ Transféré de ${nomExp}:\n${message.contenu}`;
+    ? MARQUEUR_TRANSFERT_INDISPONIBLE
+    : formaterContenuTransfere(nomExp, message.contenu);
 
   const { envoyerMessage } = await import("@/lib/messagerie/envoyer-message");
   return envoyerMessage(conversationCibleId, utilisateurId, {

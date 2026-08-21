@@ -1,6 +1,6 @@
 import { Image, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { INFORMATIONS_HOPITAL } from "@/constants/navigation";
-import { INFOS_LEGALES_TICKET } from "@/constants/ticket-thermique";
+import { INFOS_LEGALES_TICKET, lignePiedDocument } from "@/constants/ticket-thermique";
 
 const BLEU = "#1a4d7c";
 const BLEU_CONTOUR = "#7eb6e0";
@@ -111,12 +111,9 @@ export function EnTetePdfInfirmiersServeur({
 }
 
 export function PiedPdfInfirmiersServeur() {
-  const b = INFORMATIONS_HOPITAL;
   return (
     <View style={styles.pied} fixed>
-      <Text style={styles.piedTexte}>
-        {b.nomComplet} — {b.adresseCourte} — {b.telephone}
-      </Text>
+      <Text style={styles.piedTexte}>{lignePiedDocument()}</Text>
     </View>
   );
 }

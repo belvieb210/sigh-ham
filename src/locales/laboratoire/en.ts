@@ -352,9 +352,9 @@ export const laboratoireEn: LaboratoireFr = {
     imprimerExamen: "Print this exam result",
     imprimer: "Print",
     imprimerSelection: "Print {{count}} selected exam(s) as one PDF",
-    imprimerBarcode: "Print barcode label",
-    barcode: "Barcode",
-    barcodeErreur: "Unable to open the barcode label.",
+    imprimerBarcode: "Print QR code label",
+    barcode: "QR code",
+    barcodeErreur: "Unable to open the QR code label.",
     sousTitreSelectionExamens:
       "{{count}} patient(s) · {{selection}} exam(s) selected for printing",
   },

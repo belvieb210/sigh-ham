@@ -633,7 +633,11 @@ export function DocumentDevisEstimation({
             <Text style={styles.piedTexte}>Merci de votre confiance !</Text>
             <Text style={styles.piedTexte}>HAM LABORATOIRE — Kinshasa, RDC</Text>
           </View>
-          <Text style={styles.piedAdresse}>{L.adresseComplete}</Text>
+          <Text style={styles.piedAdresse}>
+            {L.adresseComplete}
+            {"\n"}
+            {L.siteWeb}
+          </Text>
         </View>
       </Page>
     </Document>

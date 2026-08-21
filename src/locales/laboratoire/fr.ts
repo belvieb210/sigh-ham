@@ -354,9 +354,9 @@ export const laboratoireFr = {
     imprimerExamen: "Imprimer le résultat de cet examen",
     imprimer: "Imprimer",
     imprimerSelection: "Imprimer {{count}} examen(s) sélectionné(s) en un seul PDF",
-    imprimerBarcode: "Imprimer l'étiquette code-barres",
-    barcode: "Barcode",
-    barcodeErreur: "Impossible d'ouvrir l'étiquette code-barres.",
+    imprimerBarcode: "Imprimer l'étiquette QR code",
+    barcode: "QR code",
+    barcodeErreur: "Impossible d'ouvrir l'étiquette QR code.",
     sousTitreSelectionExamens:
       "{{count}} patient(s) · {{selection}} examen(s) sélectionné(s) pour impression",
   },

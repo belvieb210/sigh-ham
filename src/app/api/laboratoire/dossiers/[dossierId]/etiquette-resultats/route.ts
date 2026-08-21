@@ -22,7 +22,8 @@ export async function GET(
   try {
     const etiquette = await construireEtiquetteResultatsDossier(
       dossierId.trim(),
-      examenIds.length > 0 ? examenIds : undefined
+      examenIds.length > 0 ? examenIds : undefined,
+      request
     );
     if (!etiquette) {
       return NextResponse.json({ erreur: "Dossier introuvable." }, { status: 404 });

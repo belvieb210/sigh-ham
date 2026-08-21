@@ -212,12 +212,9 @@ export function PiedPdfLabo({
 }) {
   const b = branding ?? BRANDING_PDF_FALLBACK;
   const L = INFOS_LEGALES_TICKET;
-  const telephone = L.telephones || b.telephone;
-  const adresse = L.adresseComplete || b.adresse;
   const slogan = b.slogan || L.sloganPied;
-  const corps = prefixe
-    ? `${prefixe} — ${slogan} — ${telephone}`
-    : `${slogan} — ${telephone} — ${adresse}`;
+  const base = `${slogan} — ${L.telephones} — ${L.adresseComplete} — ${L.siteWeb}`;
+  const corps = prefixe ? `${prefixe} — ${base}` : base;
 
   return (
     <View style={styles.pied} fixed>

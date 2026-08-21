@@ -118,6 +118,7 @@ export async function construireHtmlTicketThermique(
     centrerLigne(L.ville),
     centrerLigne(L.telephones),
     centrerLigne(L.email),
+    centrerLigne(L.siteWeb),
     "",
     SEPARATEUR_TIRETS,
   ];

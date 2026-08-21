@@ -437,7 +437,8 @@ export function construireDocumentHtmlRecuPublic(
       ${echapper(L.adresseLigne2)}<br />
       ${echapper(L.ville)}<br /><br />
       ${echapper(L.telephones)}<br />
-      ${echapper(L.email)}
+      ${echapper(L.email)}<br />
+      <a href="${echapper(L.siteWeb)}" style="color:inherit">${echapper(L.siteWeb)}</a>
     </footer>
   </main>
 

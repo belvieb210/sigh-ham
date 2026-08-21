@@ -1,6 +1,9 @@
 import { Image, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { INFORMATIONS_HOPITAL } from "@/constants/navigation";
-import { INFOS_LEGALES_TICKET } from "@/constants/ticket-thermique";
+import {
+  INFOS_LEGALES_TICKET,
+  lignePiedDocument,
+} from "@/constants/ticket-thermique";
 
 const styles = StyleSheet.create({
   enTete: {
@@ -95,12 +98,9 @@ export function EnTeteResultatPdfServeur({
 }
 
 export function PiedResultatPdfServeur() {
-  const L = INFOS_LEGALES_TICKET;
   return (
     <View style={styles.pied} fixed>
-      <Text style={styles.piedTexte}>
-        {L.sloganPied} — {L.telephones} — {L.adresseComplete}
-      </Text>
+      <Text style={styles.piedTexte}>{lignePiedDocument()}</Text>
     </View>
   );
 }

@@ -2,24 +2,31 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import { resoudreAgePatient } from "@/features/caisse/utils-format";
+import {
+  cheminRecuPublic,
+  creerTokenRecuFacture,
+} from "@/lib/caisse/token-recu-public";
+import { obtenirOriginePublique } from "@/lib/url-publique";
 import type { EtiquetteResultatsLabo } from "@/lib/laboratoire/types-etiquette-resultats";
+import { estNumeroFacturePharmacie } from "@/lib/caisse/etat-facturation-dual";
 
 export type { EtiquetteResultatsLabo };
 
 function formaterNomPrescripteur(prenom: string, nom: string): string {
   const complet = `${prenom} ${nom}`.trim();
   if (!complet) return "—";
-  // Pas de préfixe « Dr » sur l'étiquette (même si saisi avec Dr).
   return complet.replace(/^dr\.?\s+/i, "").trim() || "—";
 }
 
 /**
- * Données pour étiquette code-barres des résultats (examens disponibles).
+ * Données pour étiquette QR des résultats (examens disponibles).
  * Date = date d'enregistrement des résultats (resultatLe).
+ * QR → page publique reçu facture (/r/…) avec infos facture + examens.
  */
 export async function construireEtiquetteResultatsDossier(
   dossierId: string,
-  examenIds?: string[]
+  examenIds?: string[],
+  request?: Request
 ): Promise<EtiquetteResultatsLabo | null> {
   const dossier = await prisma.dossierPatient.findUnique({
     where: { id: dossierId },
@@ -39,6 +46,15 @@ export async function construireEtiquetteResultatsDossier(
           prescripteur: { include: { medecinExterne: true } },
         },
         orderBy: { resultatLe: "desc" },
+      },
+      factures: {
+        where: { statut: { in: ["EMISE", "PARTIELLEMENT_PAYEE", "PAYEE"] } },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          numeroFacture: true,
+          ventePharmacie: { select: { id: true } },
+        },
       },
     },
   });
@@ -92,6 +108,16 @@ export async function construireEtiquetteResultatsDossier(
 
   const numeroPermanent = patient.numeroPatient;
 
+  const facture =
+    dossier.factures.find(
+      (f) => !f.ventePharmacie && !estNumeroFacturePharmacie(f.numeroFacture)
+    ) ?? dossier.factures[0] ?? null;
+
+  const origin = obtenirOriginePublique(request);
+  const urlPublique = facture
+    ? `${origin}${cheminRecuPublic(creerTokenRecuFacture(facture.id))}`
+    : `${origin}/resultats`;
+
   return {
     dateResultat,
     nomComplet: `${patient.nom} ${patient.prenom}`.trim().toUpperCase(),
@@ -99,6 +125,9 @@ export async function construireEtiquetteResultatsDossier(
     numeroPermanent,
     medecinDemandeur,
     cnomMedecin,
-    codeBarre: numeroPermanent,
+    codeBarre: urlPublique,
+    urlPublique,
+    factureId: facture?.id ?? null,
+    numeroFacture: facture?.numeroFacture ?? null,
   };
 }

@@ -20,7 +20,21 @@ export const INFOS_LEGALES_TICKET = {
     "259, Avenue Lumière, Entrée Debonhomme Troisième Parcelle À Droit Commune MATETE, Kinshasa, République démocratique du Congo",
   telephones: "+243 815 129 111 - 819 191 643",
   email: "obb5lab@gmail.com",
+  /** Site public (pieds PDF, tickets, étiquettes). */
+  siteWeb: "https://hamlab5.duckdns.org",
 } as const;
+
+/** Ligne de pied document : slogan — tél. — adresse — site. */
+export function lignePiedDocument(opts?: {
+  avecAdresse?: boolean;
+  avecSite?: boolean;
+}): string {
+  const L = INFOS_LEGALES_TICKET;
+  const parts: string[] = [L.sloganPied, L.telephones];
+  if (opts?.avecAdresse !== false) parts.push(L.adresseComplete);
+  if (opts?.avecSite !== false) parts.push(L.siteWeb);
+  return parts.join(" — ");
+}
 
 export const SEPARATEUR_ETOILES = "*".repeat(LARGEUR_TICKET_THERMIQUE);
 export const SEPARATEUR_TIRETS = "-".repeat(LARGEUR_TICKET_THERMIQUE);

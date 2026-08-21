@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { Barcode, ChevronDown, ListChecks, Printer } from "lucide-react";
+import { ChevronDown, ListChecks, Printer, QrCode } from "lucide-react";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import {
   CelluleBadgesStatutExamens,
@@ -162,7 +162,7 @@ export function LignesTableauDrApprouve({
                       className="inline-flex h-7 items-center gap-1 rounded-md border border-sky-300 bg-sky-50 px-2 text-[11px] font-semibold text-sky-900 transition-colors hover:bg-sky-100"
                       title={t("laboratoire.drApprouve.imprimerBarcode")}
                     >
-                      <Barcode className="h-3.5 w-3.5" />
+                      <QrCode className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">
                         {t("laboratoire.drApprouve.barcode")}
                       </span>

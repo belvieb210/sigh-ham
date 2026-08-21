@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ListChecks, Printer } from "lucide-react";
+import { Barcode, ChevronDown, ListChecks, Printer } from "lucide-react";
 import { CaseCocheLigne } from "@/components/ui/case-coche-ligne";
 import {
   CelluleBadgesStatutExamens,
@@ -30,6 +30,7 @@ interface PropsLignesTableauDrApprouve {
   onBasculerCocheExamen: (examenId: string, coche: boolean) => void;
   onSelectionnerTousExamensPatient: (examens: ExamenFileLaboratoire[]) => void;
   onImprimerExamensSelectionnes: (examens: ExamenFileLaboratoire[]) => void;
+  onImprimerBarcode?: (examens: ExamenFileLaboratoire[]) => void;
   onContextMenu?: (e: React.MouseEvent) => void;
   /** Labo : PAT… ; autres salles : N° permanent */
   varianteNumero?: "labo" | "salle";
@@ -47,6 +48,7 @@ export function LignesTableauDrApprouve({
   onBasculerCocheExamen,
   onSelectionnerTousExamensPatient,
   onImprimerExamensSelectionnes,
+  onImprimerBarcode,
   onContextMenu,
   varianteNumero = "labo",
 }: PropsLignesTableauDrApprouve) {
@@ -57,6 +59,8 @@ export function LignesTableauDrApprouve({
     examensCoches.has(ex.id)
   );
   const modeSelectionImpression = examensSelectionnes.length > 0;
+  const examensPourBarcode =
+    examensSelectionnes.length > 0 ? examensSelectionnes : examensDrApprouve;
 
   const tousExamensCoches =
     examensDrApprouve.length > 0 &&
@@ -148,6 +152,22 @@ export function LignesTableauDrApprouve({
                   })}
                 </p>
                 <div className="flex shrink-0 items-center gap-1.5">
+                  {onImprimerBarcode ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onImprimerBarcode(examensPourBarcode);
+                      }}
+                      className="inline-flex h-7 items-center gap-1 rounded-md border border-sky-300 bg-sky-50 px-2 text-[11px] font-semibold text-sky-900 transition-colors hover:bg-sky-100"
+                      title={t("laboratoire.drApprouve.imprimerBarcode")}
+                    >
+                      <Barcode className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">
+                        {t("laboratoire.drApprouve.barcode")}
+                      </span>
+                    </button>
+                  ) : null}
                   {modeSelectionImpression ? (
                     <button
                       type="button"

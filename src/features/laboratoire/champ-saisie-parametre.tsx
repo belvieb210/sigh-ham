@@ -117,6 +117,23 @@ export function ChampSaisieParametre({
           : valeurs.valeur
         : "";
 
+    const optsSecondaire = avecOptionAutres(config.optionsSecondaire ?? []);
+    const aSelectSecondaire = (config.optionsSecondaire?.length ?? 0) > 0;
+    const valeurSec = valeurs.valeurSecondaire?.trim() ?? "";
+    const selectionSecondaire = !aSelectSecondaire
+      ? ""
+      : !valeurSec
+        ? ""
+        : optsSecondaire.includes(valeurSec) && valeurSec !== OPTION_AUTRES
+          ? valeurSec
+          : OPTION_AUTRES;
+    const preciserSecondaire =
+      aSelectSecondaire &&
+      selectionSecondaire === OPTION_AUTRES &&
+      valeurSec !== OPTION_AUTRES
+        ? valeurSec
+        : "";
+
     return (
       <div className={`flex flex-wrap items-center gap-x-2 gap-y-1.5 ${className}`}>
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-500 sm:text-xs">
@@ -158,17 +175,64 @@ export function ChampSaisieParametre({
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-500 sm:text-xs">
           {libelleSecondaire ?? "Valeurs"}
         </span>
-        <input
-          type="text"
-          className={cn(field, "min-w-[5rem] flex-1")}
-          value={valeurs.valeurSecondaire ?? ""}
-          disabled={disabled}
-          placeholder={placeholderSecondaire ?? "Titre/Valeur"}
-          onChange={(e) =>
-            onChange({ valeurSecondaire: e.target.value || null })
-          }
-          aria-label={libelleSecondaire ?? "Valeur secondaire"}
-        />
+        {aSelectSecondaire ? (
+          <>
+            <select
+              className={cn(field, "min-w-[5.5rem] flex-1")}
+              value={selectionSecondaire}
+              disabled={disabled}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (!v) {
+                  onChange({ valeurSecondaire: null });
+                } else if (v === OPTION_AUTRES) {
+                  onChange({
+                    valeurSecondaire: preciserSecondaire || OPTION_AUTRES,
+                  });
+                } else {
+                  onChange({ valeurSecondaire: v });
+                }
+              }}
+              aria-label={libelleSecondaire ?? "Valeur secondaire"}
+            >
+              <option value="">—</option>
+              {optsSecondaire.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+            {selectionSecondaire === OPTION_AUTRES ? (
+              <input
+                type="text"
+                className={cn(field, "min-w-[5rem] flex-1")}
+                value={
+                  valeurSec === OPTION_AUTRES ? "" : preciserSecondaire
+                }
+                disabled={disabled}
+                placeholder="Préciser…"
+                onChange={(e) => {
+                  const txt = e.target.value.trim();
+                  onChange({
+                    valeurSecondaire: txt || OPTION_AUTRES,
+                  });
+                }}
+              />
+            ) : null}
+          </>
+        ) : (
+          <input
+            type="text"
+            className={cn(field, "min-w-[5rem] flex-1")}
+            value={valeurs.valeurSecondaire ?? ""}
+            disabled={disabled}
+            placeholder={placeholderSecondaire ?? "Titre/Valeur"}
+            onChange={(e) =>
+              onChange({ valeurSecondaire: e.target.value || null })
+            }
+            aria-label={libelleSecondaire ?? "Valeur secondaire"}
+          />
+        )}
       </div>
     );
   }

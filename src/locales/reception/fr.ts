@@ -99,10 +99,10 @@ export const receptionFr = {
   examensDisponibles: {
     titre: "Examens disponibles",
     description:
-      "Résultats validés par le biologiste (Dr approuve), prêts à être imprimés depuis la réception.",
+      "Résultats approuvés par le biologiste, prêts à être imprimés depuis la réception.",
     fil: "Examens disponibles",
     sousTitreListe: "{{count}} patient(s) affiché(s)",
-    vide: "Aucun examen Dr approuve disponible pour le moment.",
+    vide: "Aucun examen Approuvé disponible pour le moment.",
     erreur: "Impossible de charger les examens disponibles.",
     imprimerTous: "Imprimer les résultats",
     imprimerSelection: "Imprimer ({{count}})",
@@ -110,7 +110,7 @@ export const receptionFr = {
     examensDisponiblesFacture: "{{count}} disponible(s)",
     examensEnAttente: "{{count}} en attente",
     examensEnAttenteInfo:
-      "Ces examens figurent sur la facture mais les résultats ne sont pas encore validés (Dr approuve).",
+      "Ces examens figurent sur la facture mais les résultats ne sont pas encore Approuvés.",
     tousExamensDisponibles: "Tous les examens de cette facture sont disponibles.",
     erreurDetail: "Impossible de charger le détail de la facture.",
   },
@@ -146,7 +146,7 @@ export const receptionFr = {
     examensDisponibles: {
       titre: "Examens disponibles",
       description:
-        "Consultez et imprimez les résultats validés par le biologiste (Dr approuve).",
+        "Consultez et imprimez les résultats Approuvés par le biologiste.",
       fil: "Examens disponibles",
     },
     recherche: {

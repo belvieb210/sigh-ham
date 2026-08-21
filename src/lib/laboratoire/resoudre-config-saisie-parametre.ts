@@ -87,12 +87,30 @@ export function resoudreConfigSaisieParametre(
   parametre: ParametrePourConfigSaisie
 ): ConfigSaisieParametre {
   const nom = parametre.nom ?? "";
+  const formulaire = parametre.typeExamen?.formulaire ?? null;
+  const depuisModaux = optionsSaisieDepuisModaux(formulaire, nom);
   const depuisBdd = normaliserConfigSaisie(parametre.configSaisie);
+
   if (depuisBdd) {
-    return forcerSelectAutresSiNomAutres(nom, sansFlagValeur(depuisBdd));
+    let config = sansFlagValeur(depuisBdd);
+    // Compléter optionsSecondaire depuis les modaux (ex. titres Widal) si absentes en BDD.
+    if (
+      config.typeSaisie === "resultat_valeur" &&
+      (!config.optionsSecondaire || config.optionsSecondaire.length === 0) &&
+      depuisModaux?.optionsSecondaire?.length
+    ) {
+      config = {
+        ...config,
+        optionsSecondaire: depuisModaux.optionsSecondaire,
+        libelleSecondaire:
+          config.libelleSecondaire ?? depuisModaux.libelleSecondaire,
+        placeholderSecondaire:
+          config.placeholderSecondaire ?? depuisModaux.placeholderSecondaire,
+      };
+    }
+    return forcerSelectAutresSiNomAutres(nom, config);
   }
 
-  const formulaire = parametre.typeExamen?.formulaire ?? null;
   return forcerSelectAutresSiNomAutres(
     nom,
     infererConfigDepuisFormulaire(formulaire, nom)

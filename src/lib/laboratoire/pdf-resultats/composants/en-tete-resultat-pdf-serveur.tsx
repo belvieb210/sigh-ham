@@ -38,14 +38,21 @@ const styles = StyleSheet.create({
   },
   pied: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#1a4d7c",
-    paddingVertical: 6,
-    paddingHorizontal: 16,
+    bottom: 10,
+    left: 42,
+    right: 42,
+    borderTopWidth: 1.5,
+    borderTopColor: "#7eb6e6",
+    paddingTop: 5,
+    paddingBottom: 2,
+    backgroundColor: "transparent",
   },
-  piedTexte: { color: "#ffffff", fontSize: 7, textAlign: "center" },
+  piedTexte: {
+    color: "#111111",
+    fontSize: 7,
+    textAlign: "center",
+    lineHeight: 1.25,
+  },
 });
 
 export function EnTeteResultatPdfServeur({

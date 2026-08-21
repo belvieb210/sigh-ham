@@ -15,6 +15,11 @@ export type ConfigSaisieParametre = {
   libelleSecondaire?: string;
   /** Placeholder du champ secondaire. */
   placeholderSecondaire?: string;
+  /**
+   * Options du champ secondaire (resultat_valeur) — select + Autres.
+   * Ex. titres Widal : < 1:80, 1:80, 1:160…
+   */
+  optionsSecondaire?: string[];
 };
 
 /** @deprecated Les flags B/N/E sont calculés automatiquement — plus de saisie manuelle. */
@@ -72,6 +77,11 @@ export function normaliserConfigSaisie(
   }
   if (typeof o.placeholderSecondaire === "string") {
     config.placeholderSecondaire = o.placeholderSecondaire;
+  }
+  if (Array.isArray(o.optionsSecondaire)) {
+    config.optionsSecondaire = avecOptionAutres(
+      o.optionsSecondaire.filter((x): x is string => typeof x === "string")
+    );
   }
 
   if (

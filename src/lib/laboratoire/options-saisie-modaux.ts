@@ -146,8 +146,15 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
         "Positif",
         "Autres"
       ],
-      "libelleSecondaire": "Valeurs",
-      "placeholderSecondaire": "Titre/Valeur"
+      "libelleSecondaire": "Valeur / Titre",
+      "placeholderSecondaire": "Titre/Valeur",
+      "optionsSecondaire": [
+        "< 1:80",
+        "1:80",
+        "1:160",
+        "1:320",
+        "> 320"
+      ]
     },
     "S TYPHI AG H": {
       "typeSaisie": "resultat_valeur",
@@ -156,8 +163,15 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
         "Positif",
         "Autres"
       ],
-      "libelleSecondaire": "Valeurs",
-      "placeholderSecondaire": "Titre/Valeur"
+      "libelleSecondaire": "Valeur / Titre",
+      "placeholderSecondaire": "Titre/Valeur",
+      "optionsSecondaire": [
+        "< 1:80",
+        "1:80",
+        "1:160",
+        "1:320",
+        "> 320"
+      ]
     },
     "S PARATYPHI AG BH": {
       "typeSaisie": "resultat_valeur",
@@ -166,8 +180,15 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
         "Positif",
         "Autres"
       ],
-      "libelleSecondaire": "Valeurs",
-      "placeholderSecondaire": "Titre/Valeur"
+      "libelleSecondaire": "Valeur / Titre",
+      "placeholderSecondaire": "Titre/Valeur",
+      "optionsSecondaire": [
+        "< 1:80",
+        "1:80",
+        "1:160",
+        "1:320",
+        "> 320"
+      ]
     },
     "S PARATYPHI AG AH": {
       "typeSaisie": "resultat_valeur",
@@ -176,8 +197,15 @@ export const OPTIONS_SAISIE_PAR_FORMULAIRE: Record<
         "Positif",
         "Autres"
       ],
-      "libelleSecondaire": "Valeurs",
-      "placeholderSecondaire": "Titre/Valeur"
+      "libelleSecondaire": "Valeur / Titre",
+      "placeholderSecondaire": "Titre/Valeur",
+      "optionsSecondaire": [
+        "< 1:80",
+        "1:80",
+        "1:160",
+        "1:320",
+        "> 320"
+      ]
     }
   },
   "sedimentUrinaire": {
@@ -2461,6 +2489,13 @@ function normaliserEntree(entree: EntreeOptionsSaisie): EntreeOptionsSaisie {
   }
   if (copie.typeSaisie === "resultat_valeur" && (!copie.options || copie.options.length === 0)) {
     copie.options = avecOptionAutres(["Négatif", "Positif"]);
+  }
+  if (
+    copie.typeSaisie === "resultat_valeur" &&
+    copie.optionsSecondaire &&
+    copie.optionsSecondaire.length > 0
+  ) {
+    copie.optionsSecondaire = avecOptionAutres(copie.optionsSecondaire);
   }
   return copie;
 }

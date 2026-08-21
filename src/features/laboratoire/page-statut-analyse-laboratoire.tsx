@@ -15,7 +15,7 @@ const META: Record<
     chemin: "/sigh/laboratoire/examens-en-cours",
   },
   VERIFIES: {
-    title: "Vérifiés — Laboratoire",
+    title: "Validés — Laboratoire",
     chemin: "/sigh/laboratoire/verifies",
   },
   REJETES: {
@@ -23,7 +23,7 @@ const META: Record<
     chemin: "/sigh/laboratoire/rejetes",
   },
   DR_APPROUVE: {
-    title: "Dr approuve — Laboratoire",
+    title: "Approuvés — Laboratoire",
     chemin: "/sigh/laboratoire/dr-approuve",
   },
 };

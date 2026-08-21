@@ -20,6 +20,7 @@ import {
   type FiltresLaboratoireUi,
 } from "@/features/laboratoire/formulaire-filtres-laboratoire";
 import { LignesTableauDrApprouve } from "@/features/laboratoire/lignes-tableau-dr-approuve";
+import { imprimerEtiquetteResultatsDossier } from "@/lib/laboratoire/imprimer-etiquette-resultats";
 import {
   examensPourPageStatut,
   libellesExamensDemandes,
@@ -191,6 +192,22 @@ export function ContenuExamensDisponiblesCaisse({
     setImpressionEnCours(false);
     if (!resultat.ok) {
       setMessageAction(t("laboratoire.actions.erreurImpression"));
+    }
+  };
+
+  const imprimerBarcodeResultats = async (
+    patient: PatientFileLaboratoire,
+    examens: ExamenFileLaboratoire[]
+  ) => {
+    setMessageAction(null);
+    const resultat = await imprimerEtiquetteResultatsDossier(
+      patient.dossierId,
+      examens.map((ex) => ex.id)
+    );
+    if (!resultat.ok) {
+      setMessageAction(
+        resultat.erreur || t("laboratoire.drApprouve.barcodeErreur")
+      );
     }
   };
 
@@ -420,6 +437,9 @@ export function ContenuExamensDisponiblesCaisse({
                       }
                       onImprimerExamensSelectionnes={(examens) =>
                         void imprimerExamensDrApprouve(p, examens)
+                      }
+                      onImprimerBarcode={(examens) =>
+                        void imprimerBarcodeResultats(p, examens)
                       }
                       varianteNumero="salle"
                     />

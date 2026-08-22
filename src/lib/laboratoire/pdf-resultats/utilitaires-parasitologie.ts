@@ -1,4 +1,5 @@
 import type { LigneParametrePdf } from "@/lib/laboratoire/pdf-resultats/types";
+import { valeurAffichageParametre } from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
 
 function normaliserNom(nom: string): string {
   return nom
@@ -9,9 +10,7 @@ function normaliserNom(nom: string): string {
 }
 
 function valeurLigne(l: LigneParametrePdf): string {
-  const other = (l.other ?? "").trim();
-  if (other) return other;
-  return (l.value ?? "").trim();
+  return valeurAffichageParametre(l);
 }
 
 const RESERVE_MICRO =
@@ -68,9 +67,7 @@ export const PATHOLOGIES_GOUTTE_FRAICHE = [
 ];
 
 export function observationEspece(l: LigneParametrePdf): string {
-  const other = (l.other ?? "").trim();
-  if (other) return other.toUpperCase();
-  return (l.value ?? "").trim().toUpperCase();
+  return valeurAffichageParametre(l);
 }
 
 export function pathologieEspece(l: LigneParametrePdf): string {

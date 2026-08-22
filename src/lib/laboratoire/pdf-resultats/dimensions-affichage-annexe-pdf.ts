@@ -1,8 +1,8 @@
-/** Largeur utile page A4 (595pt) − marges horizontales (42×2). */
-export const LARGEUR_CONTENU_ANNEXE_PDF = 511;
+/** Largeur utile page A4 (595pt) − marges horizontales réduites annexe (20×2). */
+export const LARGEUR_CONTENU_ANNEXE_PDF = 555;
 
-/** Hauteur max. image annexe (en-tête + titres + pied de page réservés). */
-export const HAUTEUR_MAX_IMAGE_ANNEXE_PDF = 640;
+/** Hauteur max. image annexe (en-tête compact + pied de page). */
+export const HAUTEUR_MAX_IMAGE_ANNEXE_PDF = 750;
 
 export function lireDimensionsPng(buffer: Buffer): { width: number; height: number } | null {
   if (buffer.length < 24 || buffer.toString("ascii", 1, 4) !== "PNG") return null;
@@ -72,16 +72,8 @@ export function calculerDimensionsAffichageAnnexe(
   }
 
   const ratio = largeurPx / hauteurPx;
-  let largeurAffichage = largeurMax;
-  let hauteurAffichage = largeurAffichage / ratio;
+  const largeurAffichage = largeurMax;
+  const hauteurAffichage = Math.min(Math.round(largeurAffichage / ratio), hauteurMax);
 
-  if (hauteurAffichage > hauteurMax) {
-    hauteurAffichage = hauteurMax;
-    largeurAffichage = hauteurAffichage * ratio;
-  }
-
-  return {
-    largeurAffichage: Math.round(largeurAffichage),
-    hauteurAffichage: Math.round(hauteurAffichage),
-  };
+  return { largeurAffichage, hauteurAffichage };
 }

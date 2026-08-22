@@ -2,6 +2,7 @@ import { View } from "@react-pdf/renderer";
 import type { LigneParametrePdf } from "@/lib/laboratoire/pdf-resultats/types";
 import { TableauColonnesPdf } from "@/lib/laboratoire/pdf-resultats/composants/renders-speciaux/primitives-tableau-pdf";
 import { TableauParametresResultatPdf } from "@/lib/laboratoire/pdf-resultats/composants/tableau-parametres-resultat-pdf";
+import { valeurAffichageParametre } from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
 
 interface LigneZn {
   date: string;
@@ -15,7 +16,7 @@ function parserZiehlNelsen(lignes: LigneParametrePdf[]): LigneZn[] {
 
   for (const l of lignes) {
     const name = l.name.trim().toUpperCase();
-    const val = (l.value ?? "").trim();
+    const val = valeurAffichageParametre(l);
     const mDate = name.match(/LIGNE_(\d+)_DATE/);
     const mEch = name.match(/LIGNE_(\d+)_ECH/);
     const mAspect = name.match(/LIGNE_(\d+)_ASPECT/);

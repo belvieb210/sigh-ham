@@ -1,5 +1,6 @@
 import type { LigneParametrePdf } from "@/lib/laboratoire/pdf-resultats/types";
 import { calculerFlagDepuisParametre } from "@/lib/laboratoire/indicateur-resultat";
+import { estValeurAutres } from "@/lib/laboratoire/config-saisie-parametre";
 
 const EXPOSANTS: Record<string, string> = {
   "-": "⁻",
@@ -33,13 +34,41 @@ function nettoyerUnite(unite: string | null | undefined): string {
   return u;
 }
 
+function formaterValeurAvecUnite(val: string, unit: string): string {
+  const v = val.toUpperCase();
+  return unit ? `${v} ${unit}` : v;
+}
+
+/** Valeur principale (colonne résultat) — gère select_autres et resultat_valeur. */
 export function valeurAffichageParametre(ligne: LigneParametrePdf): string {
-  const other = (ligne.other ?? "").trim();
-  if (other) return normaliserNotationScientifique(other).toUpperCase();
   const val = normaliserNotationScientifique((ligne.value ?? "").trim());
+  const other = normaliserNotationScientifique((ligne.other ?? "").trim());
   const unit = nettoyerUnite(ligne.unit);
-  if (!val) return "";
-  return unit ? `${val.toUpperCase()} ${unit}` : val.toUpperCase();
+
+  if (estValeurAutres(val)) {
+    if (other && !estValeurAutres(other)) {
+      return formaterValeurAvecUnite(other, unit);
+    }
+    return "";
+  }
+
+  if (!val) {
+    if (other && !estValeurAutres(other)) {
+      return formaterValeurAvecUnite(other, unit);
+    }
+    return "";
+  }
+
+  return formaterValeurAvecUnite(val, unit);
+}
+
+/** Valeur secondaire (colonne « Valeur » des dual-fields resultat_valeur). */
+export function valeurSecondaireAffichagePdf(ligne: LigneParametrePdf): string {
+  const val = (ligne.value ?? "").trim();
+  const other = normaliserNotationScientifique((ligne.other ?? "").trim());
+  if (!other || estValeurAutres(other)) return "";
+  if (estValeurAutres(val)) return "";
+  return other.toUpperCase();
 }
 
 /** Flag affiché en PDF : B/E uniquement (N normal et NR masqués). */

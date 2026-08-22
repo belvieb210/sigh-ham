@@ -15,7 +15,7 @@ import type { PageAnnexePieceJointePdf } from "@/lib/laboratoire/pdf-resultats/t
 import type { PieceJointeExamenPersistee } from "@/constants/laboratoire-notes-examen";
 
 const MAX_PAGES_PDF = 5;
-const ECHELLE_CONVERSION_PDF = 2.5;
+const ECHELLE_CONVERSION_PDF = 3;
 
 function bufferVersDataUrlPng(buffer: Buffer): string {
   return `data:image/png;base64,${buffer.toString("base64")}`;

@@ -1,4 +1,5 @@
 import type { LigneParametrePdf } from "@/lib/laboratoire/pdf-resultats/types";
+import { valeurAffichageParametre } from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
 
 const ANTIGENES = ["A", "B", "AB", "O"] as const;
 
@@ -27,7 +28,7 @@ function trouverValeur(
   for (const l of lignes) {
     const key = normaliserCle(l.name);
     if (set.has(key)) {
-      const v = (l.other ?? l.value ?? "").trim();
+      const v = valeurAffichageParametre(l);
       if (v) return v;
     }
   }
@@ -35,7 +36,7 @@ function trouverValeur(
     const key = normaliserCle(l.name);
     for (const c of candidats) {
       if (key.includes(normaliserCle(c))) {
-        const v = (l.other ?? l.value ?? "").trim();
+        const v = valeurAffichageParametre(l);
         if (v) return v;
       }
     }
@@ -80,7 +81,7 @@ function mapSelections(lignes: LigneParametrePdf[]): Record<string, boolean> {
   const out: Record<string, boolean> = {};
   for (const l of lignes) {
     const key = normaliserCle(l.name);
-    const val = (l.other ?? l.value ?? "").trim();
+    const val = valeurAffichageParametre(l);
     if (/^(beth|simonin)_[ab0o]+$/.test(key.replace(/ab/g, "ab"))) {
       out[key] = estTruthy(val);
     }
@@ -124,7 +125,7 @@ export function parserGroupageSanguin(
     for (const l of lignes) {
       const nm = normaliserCle(l.name);
       if (nm.includes("rhesus") || nm === "rh" || nm.includes("rh_d")) {
-        rhesus = (l.other ?? l.value ?? "").trim();
+        rhesus = valeurAffichageParametre(l);
         if (rhesus) break;
       }
     }

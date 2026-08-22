@@ -25,9 +25,9 @@ export const stylesResultatPdf = StyleSheet.create({
   pageAnnexe: {
     fontFamily: "Roboto",
     fontSize: 10,
-    paddingTop: 28,
-    paddingHorizontal: 42,
-    paddingBottom: 48,
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
     color: COULEURS_RESULTAT_PDF.noir,
     backgroundColor: "#ffffff",
   },
@@ -209,15 +209,26 @@ export const stylesResultatPdf = StyleSheet.create({
     fontSize: 9,
   },
   annexeNomFichier: {
-    fontSize: 8,
+    fontSize: 7,
     color: COULEURS_RESULTAT_PDF.gris,
-    marginBottom: 4,
+    marginBottom: 2,
     textAlign: "center",
+  },
+  annexeTitreSection: {
+    fontSize: 9,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 2,
+    marginTop: 2,
   },
   annexeImageWrap: {
     width: "100%",
     alignItems: "center",
-    marginTop: 2,
+    marginTop: 0,
+  },
+  annexeCorps: {
+    flex: 1,
+    width: "100%",
   },
   annexeErreur: {
     fontSize: 9,

@@ -1,16 +1,11 @@
 import type { LigneParametrePdf } from "@/lib/laboratoire/pdf-resultats/types";
-
-function nettoyerUnite(unite: string | undefined): string {
-  return (unite ?? "").trim().replace(/[Μμ]/g, "µ");
-}
+import {
+  valeurAffichageParametre,
+  valeurSecondaireAffichagePdf,
+} from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
 
 function afficherValeur(l: LigneParametrePdf): string {
-  const other = (l.other ?? "").trim();
-  const val = (l.value ?? "").trim();
-  const unit = nettoyerUnite(l.unit);
-  if (other) return other.toUpperCase();
-  if (val && unit) return `${val.toUpperCase()} ${unit}`;
-  return val.toUpperCase();
+  return valeurAffichageParametre(l);
 }
 
 export interface GroupeSerologiePdf {
@@ -24,19 +19,11 @@ export interface GroupeTorchPdf extends GroupeSerologiePdf {
 }
 
 function afficherResultatSansUnite(l: LigneParametrePdf): string {
-  const other = (l.other ?? "").trim();
-  const val = (l.value ?? "").trim();
-  if (other) return other.toUpperCase();
-  return val.toUpperCase();
+  return valeurAffichageParametre(l);
 }
 
 function afficherValeurAvecUnite(l: LigneParametrePdf): string {
-  const other = (l.other ?? "").trim();
-  const val = (l.value ?? "").trim();
-  const unit = nettoyerUnite(l.unit);
-  if (other) return other.toUpperCase();
-  if (val && unit) return `${val.toUpperCase()} ${unit}`;
-  return val.toUpperCase();
+  return valeurAffichageParametre(l);
 }
 
 /** Regroupe paires TORCH RESULTAT + VALEUR + range (port renderBilansTorch PHP). */
@@ -88,18 +75,11 @@ export function normaliserNomParametreWidal(rawName: string): string {
 }
 
 function afficherResultatPrincipal(l: LigneParametrePdf): string {
-  const val = (l.value ?? "").trim();
-  const other = (l.other ?? "").trim();
-  if (val && val.toUpperCase() !== "AUTRES") return val.toUpperCase();
-  if (val.toUpperCase() === "AUTRES" && other) return other.toUpperCase();
-  if (other) return other.toUpperCase();
-  return val.toUpperCase();
+  return valeurAffichageParametre(l);
 }
 
 function afficherTitreOuValeurSecondaire(l: LigneParametrePdf): string {
-  const other = (l.other ?? "").trim();
-  if (other) return other.toUpperCase();
-  return "";
+  return valeurSecondaireAffichagePdf(l);
 }
 
 function estNomResultatsSeul(name: string): boolean {
@@ -269,12 +249,11 @@ export function texteMethodeMalariaTDR(
   l: LigneParametrePdf,
   densiteVal: string
 ): string {
-  const rawVal = (l.value ?? "").trim();
-  const other = (l.other ?? "").trim();
   if (/densit\w* parasitaire/i.test(l.name) && densiteVal) {
     return densiteVal;
   }
-  if (other) return other.replace(/[Μμ]/g, "µ");
-  if (rawVal.toUpperCase() === "AUTRES") return "";
-  return rawVal.replace(/[Μμ]/g, "µ");
+  const sec = valeurSecondaireAffichagePdf(l);
+  if (sec) return sec.replace(/[Μμ]/g, "µ");
+  const val = valeurAffichageParametre(l);
+  return val.replace(/[Μμ]/g, "µ");
 }

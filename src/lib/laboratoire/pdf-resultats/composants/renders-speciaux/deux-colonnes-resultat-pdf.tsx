@@ -1,12 +1,11 @@
 import { View } from "@react-pdf/renderer";
 import type { LigneParametrePdf } from "@/lib/laboratoire/pdf-resultats/types";
 import { TableauColonnesPdf } from "@/lib/laboratoire/pdf-resultats/composants/renders-speciaux/primitives-tableau-pdf";
+import { valeurAffichageParametre } from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
 
 function afficherValeur(l: LigneParametrePdf, majuscules: boolean): string {
-  const other = (l.other ?? "").trim();
-  const val = (l.value ?? "").trim();
-  const raw = other || val;
-  return majuscules ? raw.toUpperCase() : raw;
+  const raw = valeurAffichageParametre(l);
+  return majuscules ? raw : raw.toLowerCase();
 }
 
 /** Tableau 30/70 Paramètres · Résultat/Description (Rivalta, Trypanosomiase, Histopatho…). */

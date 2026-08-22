@@ -4,7 +4,7 @@ import type {
   OptionsTableauParametresPdf,
 } from "@/lib/laboratoire/pdf-resultats/types";
 import { stylesResultatPdf } from "@/lib/laboratoire/pdf-resultats/composants/styles-resultat-pdf";
-import { valeurAffichageParametre, flagAffichagePdf } from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
+import { valeurAffichageParametre, flagAffichagePdf, valeurSecondaireAffichagePdf } from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
 
 type ColDef = { key: string; label: string; width: string; center?: boolean };
 
@@ -106,20 +106,20 @@ export function TableauParametresResultatPdf({
     for (const l of lignes) {
       const n = l.name.trim().toUpperCase().replace(/:$/, "");
       if (n === "RESULTAT" || n === "RÉSULTAT") {
-        resultat = (l.value ?? "").trim().toUpperCase() || valeurAffichageParametre(l);
-        if (!valeurs && (l.other ?? "").trim()) {
-          valeurs = (l.other ?? "").trim().toUpperCase();
+        resultat = valeurAffichageParametre(l);
+        if (!valeurs) {
+          const sec = valeurSecondaireAffichagePdf(l);
+          if (sec) valeurs = sec;
         }
       }
       if (n === "VALEURS" || n === "VALEUR") {
-        valeurs = valeurAffichageParametre(l);
+        valeurs = valeurSecondaireAffichagePdf(l) || valeurAffichageParametre(l);
       }
     }
-    // Une seule ligne dual (resultat_valeur) sans noms RESULTAT/VALEUR.
     if (!resultat && !valeurs && lignes.length === 1) {
       const l = lignes[0]!;
-      resultat = (l.value ?? "").trim().toUpperCase();
-      valeurs = (l.other ?? "").trim().toUpperCase();
+      resultat = valeurAffichageParametre(l);
+      valeurs = valeurSecondaireAffichagePdf(l);
     }
     return (
       <View style={stylesResultatPdf.table}>
@@ -174,7 +174,7 @@ export function TableauParametresResultatPdf({
           </Cell>
           {showValues ? (
             <Cell width={cols.find((c) => c.key === "values")!.width} center>
-              {l.other ?? ""}
+              {valeurSecondaireAffichagePdf(l)}
             </Cell>
           ) : null}
           {options.showRange !== false ? (

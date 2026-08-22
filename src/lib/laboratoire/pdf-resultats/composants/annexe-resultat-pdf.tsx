@@ -34,8 +34,8 @@ export function PagesAnnexeResultatPdf({
             logoPath={logoPath}
             lignesBadge={["ANNEXE", "RÉSULTATS"]}
           />
-          <View>
-            <Text style={stylesResultatPdf.sectionTitre}>
+          <View style={stylesResultatPdf.annexeCorps}>
+            <Text style={stylesResultatPdf.annexeTitreSection}>
               PIÈCES JOINTES — {libelleExamen.toUpperCase()}
             </Text>
             <Text style={stylesResultatPdf.annexeNomFichier}>{page.libelle}</Text>

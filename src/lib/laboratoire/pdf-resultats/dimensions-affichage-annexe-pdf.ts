@@ -1,8 +1,24 @@
-/** Largeur utile page A4 (595pt) − marges horizontales réduites annexe (20×2). */
+/** Hauteur page A4 en points (react-pdf). */
+export const HAUTEUR_PAGE_A4_PDF = 842;
+
+/** Largeur utile page A4 (595pt) − marges horizontales annexe (20×2). */
 export const LARGEUR_CONTENU_ANNEXE_PDF = 555;
 
-/** Hauteur max. image annexe (en-tête compact + pied de page). */
-export const HAUTEUR_MAX_IMAGE_ANNEXE_PDF = 750;
+/** Padding vertical page annexe (styles pageAnnexe). */
+export const PADDING_PAGE_ANNEXE_PDF = { top: 20, bottom: 40 };
+
+/**
+ * Espace vertical hors image : en-tête HAM + titres + marge pied.
+ * Doit rester sur la même page que l'image (évite le débordement page 3).
+ */
+export const HAUTEUR_RESERVE_HORS_IMAGE_ANNEXE_PDF = 118;
+
+/** Hauteur max. image — calculée pour tenir sur une seule page A4. */
+export const HAUTEUR_MAX_IMAGE_ANNEXE_PDF =
+  HAUTEUR_PAGE_A4_PDF -
+  PADDING_PAGE_ANNEXE_PDF.top -
+  PADDING_PAGE_ANNEXE_PDF.bottom -
+  HAUTEUR_RESERVE_HORS_IMAGE_ANNEXE_PDF;
 
 export function lireDimensionsPng(buffer: Buffer): { width: number; height: number } | null {
   if (buffer.length < 24 || buffer.toString("ascii", 1, 4) !== "PNG") return null;
@@ -60,7 +76,7 @@ export function lireDimensionsImageBuffer(
   return lireDimensionsPng(buffer) ?? lireDimensionsJpeg(buffer);
 }
 
-/** Adapte l'image à la zone annexe (pleine largeur, hauteur proportionnelle). */
+/** Adapte l'image à la zone annexe (pleine largeur, hauteur ≤ une page A4). */
 export function calculerDimensionsAffichageAnnexe(
   largeurPx: number,
   hauteurPx: number,

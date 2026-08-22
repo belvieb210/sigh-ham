@@ -28,27 +28,29 @@ export function PagesAnnexeResultatPdf({
         <Page
           key={`annexe-${page.nomFichier}-${page.page ?? idx}`}
           size="A4"
+          wrap={false}
           style={stylesResultatPdf.pageAnnexe}
         >
-          <EnTeteResultatPdfServeur
-            logoPath={logoPath}
-            lignesBadge={["ANNEXE", "RÉSULTATS"]}
-          />
-          <View style={stylesResultatPdf.annexeCorps}>
+          <View fixed style={stylesResultatPdf.annexeEnteteFixe}>
+            <EnTeteResultatPdfServeur
+              logoPath={logoPath}
+              lignesBadge={["ANNEXE", "RÉSULTATS"]}
+            />
             <Text style={stylesResultatPdf.annexeTitreSection}>
               PIÈCES JOINTES — {libelleExamen.toUpperCase()}
             </Text>
             <Text style={stylesResultatPdf.annexeNomFichier}>{page.libelle}</Text>
+          </View>
+
+          <View style={stylesResultatPdf.annexeCorps} wrap={false}>
             {page.integrable && page.cheminImage ? (
-              <View style={stylesResultatPdf.annexeImageWrap}>
-                <Image
-                  src={page.cheminImage}
-                  style={{
-                    width: page.largeurAffichage ?? LARGEUR_CONTENU_ANNEXE_PDF,
-                    height: page.hauteurAffichage ?? HAUTEUR_MAX_IMAGE_ANNEXE_PDF,
-                  }}
-                />
-              </View>
+              <Image
+                src={page.cheminImage}
+                style={{
+                  width: page.largeurAffichage ?? LARGEUR_CONTENU_ANNEXE_PDF,
+                  height: page.hauteurAffichage ?? HAUTEUR_MAX_IMAGE_ANNEXE_PDF,
+                }}
+              />
             ) : (
               <Text style={stylesResultatPdf.annexeErreur}>
                 {page.messageErreur ??
@@ -56,6 +58,7 @@ export function PagesAnnexeResultatPdf({
               </Text>
             )}
           </View>
+
           <PiedResultatPdfServeur />
         </Page>
       ))}

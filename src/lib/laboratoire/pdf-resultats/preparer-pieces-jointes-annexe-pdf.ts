@@ -2,6 +2,10 @@ import "server-only";
 
 import { existsSync, readFileSync } from "fs";
 import {
+  calculerDimensionsAffichageAnnexe,
+  lireDimensionsImageBuffer,
+} from "@/lib/laboratoire/pdf-resultats/dimensions-affichage-annexe-pdf";
+import {
   estImageAffichablePdf,
   estPdfPieceJointe,
   resoudreCheminAbsoluFichierPdf,
@@ -11,9 +15,21 @@ import type { PageAnnexePieceJointePdf } from "@/lib/laboratoire/pdf-resultats/t
 import type { PieceJointeExamenPersistee } from "@/constants/laboratoire-notes-examen";
 
 const MAX_PAGES_PDF = 5;
+const ECHELLE_CONVERSION_PDF = 2.5;
 
 function bufferVersDataUrlPng(buffer: Buffer): string {
   return `data:image/png;base64,${buffer.toString("base64")}`;
+}
+
+function dimensionsDepuisBufferImage(
+  buffer: Buffer,
+  mimeType: string
+): { largeurAffichage: number; hauteurAffichage: number } {
+  const intrinseque = lireDimensionsImageBuffer(buffer, mimeType);
+  if (!intrinseque) {
+    return calculerDimensionsAffichageAnnexe(1, 1.414);
+  }
+  return calculerDimensionsAffichageAnnexe(intrinseque.width, intrinseque.height);
 }
 
 /** Lit le fichier joint depuis le disque local ou une URL HTTP(S) (MinIO, etc.). */
@@ -42,21 +58,36 @@ async function chargerBufferPieceJointe(url: string): Promise<Buffer | null> {
   return null;
 }
 
+type PageImageAnnexe = {
+  cheminImage: string;
+  largeurAffichage: number;
+  hauteurAffichage: number;
+};
+
 /** Convertit un buffer PDF en images PNG (data URLs) pour react-pdf. */
 async function convertirPdfBufferEnImages(
   buffer: Buffer,
   maxPages = MAX_PAGES_PDF
-): Promise<string[]> {
+): Promise<PageImageAnnexe[]> {
   try {
     const { pdf } = await import("pdf-to-img");
-    const document = await pdf(buffer, { scale: 2 });
-    const images: string[] = [];
+    const document = await pdf(buffer, { scale: ECHELLE_CONVERSION_PDF });
+    const pages: PageImageAnnexe[] = [];
     for await (const page of document) {
-      if (images.length >= maxPages) break;
-      images.push(bufferVersDataUrlPng(Buffer.from(page)));
+      if (pages.length >= maxPages) break;
+      const png = Buffer.from(page);
+      const { largeurAffichage, hauteurAffichage } = dimensionsDepuisBufferImage(
+        png,
+        "image/png"
+      );
+      pages.push({
+        cheminImage: bufferVersDataUrlPng(png),
+        largeurAffichage,
+        hauteurAffichage,
+      });
     }
     await document.destroy?.();
-    return images;
+    return pages;
   } catch (e) {
     console.error("[preparerPagesAnnexePiecesJointes] conversion PDF", e);
     return [];
@@ -83,12 +114,19 @@ export async function preparerPagesAnnexePiecesJointes(
     const cheminAffichable = resoudreCheminFichierPdf(pj.url);
 
     if (estImageAffichablePdf(pj.mimeType) && cheminAffichable) {
+      const buffer = await chargerBufferPieceJointe(pj.url);
+      const { largeurAffichage, hauteurAffichage } = buffer
+        ? dimensionsDepuisBufferImage(buffer, pj.mimeType)
+        : calculerDimensionsAffichageAnnexe(1, 1.414);
+
       pages.push({
         nomFichier: pj.nom,
         libelle: pj.nom,
         cheminImage: cheminAffichable,
         integrable: true,
         mimeType: pj.mimeType,
+        largeurAffichage,
+        hauteurAffichage,
       });
       continue;
     }
@@ -121,16 +159,18 @@ export async function preparerPagesAnnexePiecesJointes(
       }
 
       const total = images.length;
-      images.forEach((dataUrl, index) => {
+      images.forEach((img, index) => {
         const pageNum = index + 1;
         pages.push({
           nomFichier: pj.nom,
           libelle: libellePage(pj.nom, pageNum, total),
-          cheminImage: dataUrl,
+          cheminImage: img.cheminImage,
           integrable: true,
           mimeType: pj.mimeType,
           page: total > 1 ? pageNum : undefined,
           totalPages: total > 1 ? total : undefined,
+          largeurAffichage: img.largeurAffichage,
+          hauteurAffichage: img.hauteurAffichage,
         });
       });
       continue;

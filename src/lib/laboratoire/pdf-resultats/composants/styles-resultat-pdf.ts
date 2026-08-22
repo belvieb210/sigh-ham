@@ -209,19 +209,15 @@ export const stylesResultatPdf = StyleSheet.create({
     fontSize: 9,
   },
   annexeNomFichier: {
-    fontSize: 9,
+    fontSize: 8,
     color: COULEURS_RESULTAT_PDF.gris,
-    marginBottom: 6,
+    marginBottom: 4,
     textAlign: "center",
   },
   annexeImageWrap: {
+    width: "100%",
     alignItems: "center",
-    marginTop: 4,
-  },
-  annexeImage: {
-    maxWidth: "92%",
-    maxHeight: 620,
-    objectFit: "contain",
+    marginTop: 2,
   },
   annexeErreur: {
     fontSize: 9,

@@ -29,6 +29,9 @@ export interface PageAnnexePieceJointePdf {
   page?: number;
   totalPages?: number;
   messageErreur?: string;
+  /** Dimensions en points pour react-pdf `<Image />` (pleine largeur page). */
+  largeurAffichage?: number;
+  hauteurAffichage?: number;
 }
 
 export interface DonneesPatientResultatPdf {

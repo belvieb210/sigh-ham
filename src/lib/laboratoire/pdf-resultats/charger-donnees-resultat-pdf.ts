@@ -22,8 +22,10 @@ import {
   estImageAffichablePdf,
   resoudreCheminFichierPdf,
 } from "@/lib/laboratoire/pdf-resultats/resoudre-chemin-fichier-pdf";
+import { preparerPagesAnnexePiecesJointes } from "@/lib/laboratoire/pdf-resultats/preparer-pieces-jointes-annexe-pdf";
 import type {
   DonneesResultatExamenPdf,
+  PageAnnexePieceJointePdf,
   PieceJointeResultatPdf,
 } from "@/lib/laboratoire/pdf-resultats/types";
 import { mapperResultatsPrismaVersPdf } from "@/lib/laboratoire/pdf-resultats/utilitaires-parametres";
@@ -40,9 +42,12 @@ function formaterNomPrescripteur(
 
 async function resoudrePiecesJointesPdf(
   notes: string | null | undefined
-): Promise<PieceJointeResultatPdf[]> {
+): Promise<{
+  piecesJointes: PieceJointeResultatPdf[];
+  pagesAnnexe: PageAnnexePieceJointePdf[];
+}> {
   const brutes = lirePiecesJointesDepuisNotes(notes);
-  return brutes.map((pj) => {
+  const piecesJointes = brutes.map((pj) => {
     const chemin = resoudreCheminFichierPdf(pj.url);
     const cheminAffichable =
       estImageAffichablePdf(pj.mimeType) && chemin ? chemin : null;
@@ -53,6 +58,8 @@ async function resoudrePiecesJointesPdf(
       cheminAffichable,
     };
   });
+  const pagesAnnexe = await preparerPagesAnnexePiecesJointes(brutes);
+  return { piecesJointes, pagesAnnexe };
 }
 
 async function resoudreQrFactureDossier(
@@ -158,7 +165,7 @@ export async function chargerDonneesResultatExamenPdf(
         commentaire: r.commentaire,
       }))
     ),
-    piecesJointes: await resoudrePiecesJointesPdf(examen.notes),
+    ...(await resoudrePiecesJointesPdf(examen.notes)),
   };
 
   let typeRender = detecterTypeExamenPdf(examenPdf);

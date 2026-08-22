@@ -25,7 +25,7 @@ export function DocumentResultatExamenPdf({
 }: PropsAssetsPdf & {
   donnees: DonneesResultatExamenPdf;
 }) {
-  const annexes = donnees.examen.piecesJointes ?? [];
+  const annexes = donnees.examen.pagesAnnexe ?? [];
 
   return (
     <Document>
@@ -46,7 +46,7 @@ export function DocumentResultatExamenPdf({
         <PiedResultatPdfServeur />
       </Page>
       <PagesAnnexeResultatPdf
-        piecesJointes={annexes}
+        pagesAnnexe={annexes}
         libelleExamen={donnees.examen.libelle}
         logoPath={logoPath}
       />
@@ -96,12 +96,12 @@ export function DocumentResultatsMultiExamensPdf({
         <PiedResultatPdfServeur />
       </Page>
       {pages.flatMap((donnees) => {
-        const annexes = donnees.examen.piecesJointes ?? [];
+        const annexes = donnees.examen.pagesAnnexe ?? [];
         if (!annexes.length) return [];
         return (
           <PagesAnnexeResultatPdf
             key={`ann-${donnees.examen.examenId}`}
-            piecesJointes={annexes}
+            pagesAnnexe={annexes}
             libelleExamen={donnees.examen.libelle}
             logoPath={logoPath}
           />

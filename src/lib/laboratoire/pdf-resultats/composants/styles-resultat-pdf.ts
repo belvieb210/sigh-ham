@@ -22,6 +22,15 @@ export const stylesResultatPdf = StyleSheet.create({
     color: COULEURS_RESULTAT_PDF.noir,
     backgroundColor: "#ffffff",
   },
+  pageAnnexe: {
+    fontFamily: "Roboto",
+    fontSize: 10,
+    paddingTop: 28,
+    paddingHorizontal: 42,
+    paddingBottom: 48,
+    color: COULEURS_RESULTAT_PDF.noir,
+    backgroundColor: "#ffffff",
+  },
   enteteFixe: {
     position: "absolute",
     top: 28,
@@ -213,6 +222,13 @@ export const stylesResultatPdf = StyleSheet.create({
     maxWidth: "92%",
     maxHeight: 620,
     objectFit: "contain",
+  },
+  annexeErreur: {
+    fontSize: 9,
+    color: COULEURS_RESULTAT_PDF.gris,
+    marginTop: 8,
+    textAlign: "center",
+    lineHeight: 1.35,
   },
   legendeBox: {
     borderWidth: 1,

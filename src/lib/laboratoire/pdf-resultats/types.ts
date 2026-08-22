@@ -19,6 +19,18 @@ export interface PieceJointeResultatPdf {
   cheminAffichable?: string | null;
 }
 
+/** Une page annexe prête à l'affichage (après conversion PDF → images). */
+export interface PageAnnexePieceJointePdf {
+  nomFichier: string;
+  libelle: string;
+  cheminImage: string | null;
+  integrable: boolean;
+  mimeType: string;
+  page?: number;
+  totalPages?: number;
+  messageErreur?: string;
+}
+
 export interface DonneesPatientResultatPdf {
   dossierId: string;
   numeroEnregistrement: string;
@@ -50,6 +62,8 @@ export interface DonneesExamenResultatPdf {
   dateAnalyse: string | null;
   resultats: LigneParametrePdf[];
   piecesJointes?: PieceJointeResultatPdf[];
+  /** Pages annexe (images + PDF convertis) — affichées après FIN. */
+  pagesAnnexe?: PageAnnexePieceJointePdf[];
 }
 
 export interface DonneesResultatExamenPdf {

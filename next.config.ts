@@ -9,7 +9,7 @@ const configurationSuivante: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   outputFileTracingRoot: racineProjet,
   /** pdfjs-dist / pdf-to-img : évite l'échec de conversion PDF en annexe (worker + cmaps). */
-  serverExternalPackages: ["pdf-to-img", "pdfjs-dist"],
+  serverExternalPackages: ["pdf-to-img", "pdfjs-dist", "pdf-lib"],
   outputFileTracingIncludes: {
     "/**/*": [
       "./node_modules/pdfjs-dist/cmaps/**/*",

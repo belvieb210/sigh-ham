@@ -27,15 +27,9 @@ export const stylesResultatPdf = StyleSheet.create({
     fontSize: 10,
     paddingTop: 20,
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 48,
     color: COULEURS_RESULTAT_PDF.noir,
     backgroundColor: "#ffffff",
-  },
-  annexeEnteteFixe: {
-    position: "absolute",
-    top: 20,
-    left: 20,
-    right: 20,
   },
   enteteFixe: {
     position: "absolute",
@@ -230,15 +224,7 @@ export const stylesResultatPdf = StyleSheet.create({
   annexeImageWrap: {
     width: "100%",
     alignItems: "center",
-  },
-  annexeCorps: {
-    position: "absolute",
-    top: 118,
-    left: 20,
-    right: 20,
-    bottom: 48,
-    alignItems: "center",
-    justifyContent: "flex-start",
+    marginTop: 4,
   },
   annexeErreur: {
     fontSize: 9,

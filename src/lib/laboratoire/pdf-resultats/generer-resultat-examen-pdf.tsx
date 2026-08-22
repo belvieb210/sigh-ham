@@ -1,6 +1,8 @@
 import "server-only";
 
 import {
+  DocumentAnnexesResultatExamenPdf,
+  DocumentAnnexesResultatsMultiExamensPdf,
   DocumentResultatExamenPdf,
   DocumentResultatsMultiExamensPdf,
 } from "@/lib/laboratoire/pdf-resultats/document-resultat-examen-pdf";
@@ -10,6 +12,7 @@ import {
 } from "@/lib/laboratoire/pdf-resultats/charger-donnees-resultat-pdf";
 import { nomFichierResultatPdf } from "@/lib/laboratoire/pdf-resultats/nom-fichier-resultat-pdf";
 import { cheminsAssetsPdfServeur } from "@/lib/pdf/assets-pdf-serveur";
+import { fusionnerBuffersPdf } from "@/lib/pdf/fusionner-pdf";
 import { bufferDepuisDocumentPdf } from "@/lib/pdf/rendre-pdf-serveur";
 
 export type PdfResultatExamenGenere = {
@@ -27,7 +30,7 @@ export async function genererBufferPdfResultatExamen(
 
   const { logo, signature, avatarHomme, avatarFemme } = cheminsAssetsPdfServeur();
 
-  const buffer = await bufferDepuisDocumentPdf(
+  const bufferPrincipal = await bufferDepuisDocumentPdf(
     <DocumentResultatExamenPdf
       donnees={donnees}
       logoPath={logo}
@@ -36,6 +39,19 @@ export async function genererBufferPdfResultatExamen(
       avatarFemme={avatarFemme}
     />
   );
+
+  const annexes = donnees.examen.pagesAnnexe ?? [];
+  let buffer = bufferPrincipal;
+  if (annexes.length > 0) {
+    const bufferAnnexes = await bufferDepuisDocumentPdf(
+      <DocumentAnnexesResultatExamenPdf
+        pagesAnnexe={annexes}
+        libelleExamen={donnees.examen.libelle}
+        logoPath={logo}
+      />
+    );
+    buffer = await fusionnerBuffersPdf(bufferPrincipal, bufferAnnexes);
+  }
 
   return {
     buffer,
@@ -62,7 +78,7 @@ export async function genererBufferPdfResultatsMultiExamens(
 
   const { logo, signature, avatarHomme, avatarFemme } = cheminsAssetsPdfServeur();
 
-  const buffer = await bufferDepuisDocumentPdf(
+  const bufferPrincipal = await bufferDepuisDocumentPdf(
     <DocumentResultatsMultiExamensPdf
       pages={pages}
       logoPath={logo}
@@ -71,6 +87,15 @@ export async function genererBufferPdfResultatsMultiExamens(
       avatarFemme={avatarFemme}
     />
   );
+
+  const aDesAnnexes = pages.some((p) => (p.examen.pagesAnnexe?.length ?? 0) > 0);
+  let buffer = bufferPrincipal;
+  if (aDesAnnexes) {
+    const bufferAnnexes = await bufferDepuisDocumentPdf(
+      <DocumentAnnexesResultatsMultiExamensPdf pages={pages} logoPath={logo} />
+    );
+    buffer = await fusionnerBuffersPdf(bufferPrincipal, bufferAnnexes);
+  }
 
   return {
     buffer,

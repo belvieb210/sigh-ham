@@ -5,7 +5,7 @@ export const HAUTEUR_PAGE_A4_PDF = 842;
 export const LARGEUR_CONTENU_ANNEXE_PDF = 555;
 
 /** Padding vertical page annexe (styles pageAnnexe). */
-export const PADDING_PAGE_ANNEXE_PDF = { top: 20, bottom: 40 };
+export const PADDING_PAGE_ANNEXE_PDF = { top: 20, bottom: 48 };
 
 /**
  * Espace vertical hors image : en-tête HAM + titres + marge pied.

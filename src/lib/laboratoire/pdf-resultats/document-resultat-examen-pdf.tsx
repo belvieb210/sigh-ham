@@ -7,7 +7,10 @@ import { PagesAnnexeResultatPdf } from "@/lib/laboratoire/pdf-resultats/composan
 import { ContenuExamenResultatPdf } from "@/lib/laboratoire/pdf-resultats/composants/contenu-examen-resultat-pdf";
 import { SignatureValidationPdf } from "@/lib/laboratoire/pdf-resultats/composants/sections-fin-resultat-pdf";
 import { stylesResultatPdf } from "@/lib/laboratoire/pdf-resultats/composants/styles-resultat-pdf";
-import type { DonneesResultatExamenPdf } from "@/lib/laboratoire/pdf-resultats/types";
+import type {
+  DonneesResultatExamenPdf,
+  PageAnnexePieceJointePdf,
+} from "@/lib/laboratoire/pdf-resultats/types";
 
 type PropsAssetsPdf = {
   logoPath: string;
@@ -16,6 +19,7 @@ type PropsAssetsPdf = {
   avatarFemme: string;
 };
 
+/** Rapport principal seul (sans pièces jointes — fusionnées ensuite). */
 export function DocumentResultatExamenPdf({
   donnees,
   logoPath,
@@ -25,8 +29,6 @@ export function DocumentResultatExamenPdf({
 }: PropsAssetsPdf & {
   donnees: DonneesResultatExamenPdf;
 }) {
-  const annexes = donnees.examen.pagesAnnexe ?? [];
-
   return (
     <Document>
       <Page size="A4" style={stylesResultatPdf.page} wrap>
@@ -45,9 +47,27 @@ export function DocumentResultatExamenPdf({
         />
         <PiedResultatPdfServeur />
       </Page>
+    </Document>
+  );
+}
+
+/** Document annexe séparé — évite l'en-tête fixed du rapport sur ces pages. */
+export function DocumentAnnexesResultatExamenPdf({
+  pagesAnnexe,
+  libelleExamen,
+  logoPath,
+}: {
+  pagesAnnexe: PageAnnexePieceJointePdf[];
+  libelleExamen: string;
+  logoPath: string;
+}) {
+  if (!pagesAnnexe.length) return null;
+
+  return (
+    <Document>
       <PagesAnnexeResultatPdf
-        pagesAnnexe={annexes}
-        libelleExamen={donnees.examen.libelle}
+        pagesAnnexe={pagesAnnexe}
+        libelleExamen={libelleExamen}
         logoPath={logoPath}
       />
     </Document>
@@ -95,18 +115,32 @@ export function DocumentResultatsMultiExamensPdf({
         <SignatureValidationPdf signaturePath={signaturePath} afficherLegende />
         <PiedResultatPdfServeur />
       </Page>
-      {pages.flatMap((donnees) => {
-        const annexes = donnees.examen.pagesAnnexe ?? [];
-        if (!annexes.length) return [];
-        return (
-          <PagesAnnexeResultatPdf
-            key={`ann-${donnees.examen.examenId}`}
-            pagesAnnexe={annexes}
-            libelleExamen={donnees.examen.libelle}
-            logoPath={logoPath}
-          />
-        );
-      })}
     </Document>
   );
+}
+
+/** Annexes multi-examens (document séparé). */
+export function DocumentAnnexesResultatsMultiExamensPdf({
+  pages,
+  logoPath,
+}: {
+  pages: DonneesResultatExamenPdf[];
+  logoPath: string;
+}) {
+  const blocs = pages.flatMap((donnees) => {
+    const annexes = donnees.examen.pagesAnnexe ?? [];
+    if (!annexes.length) return [];
+    return (
+      <PagesAnnexeResultatPdf
+        key={`ann-${donnees.examen.examenId}`}
+        pagesAnnexe={annexes}
+        libelleExamen={donnees.examen.libelle}
+        logoPath={logoPath}
+      />
+    );
+  });
+
+  if (!blocs.length) return null;
+
+  return <Document>{blocs}</Document>;
 }

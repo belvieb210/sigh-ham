@@ -97,9 +97,19 @@ export function EnTeteResultatPdfServeur({
   );
 }
 
-export function PiedResultatPdfServeur() {
+export function PiedResultatPdfServeur({
+  margesHorizontales = 42,
+}: {
+  margesHorizontales?: number;
+} = {}) {
   return (
-    <View style={styles.pied} fixed>
+    <View
+      style={[
+        styles.pied,
+        { left: margesHorizontales, right: margesHorizontales },
+      ]}
+      fixed
+    >
       <Text style={styles.piedTexte}>{lignePiedDocument()}</Text>
     </View>
   );

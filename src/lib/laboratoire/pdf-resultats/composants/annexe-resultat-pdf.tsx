@@ -10,7 +10,7 @@ import {
 } from "@/lib/laboratoire/pdf-resultats/dimensions-affichage-annexe-pdf";
 import type { PageAnnexePieceJointePdf } from "@/lib/laboratoire/pdf-resultats/types";
 
-/** Pages annexe — une page par pièce jointe (images + PDF convertis), après FIN. */
+/** Pages annexe — document séparé (évite le chevauchement avec l'en-tête fixed du rapport). */
 export function PagesAnnexeResultatPdf({
   pagesAnnexe,
   libelleExamen,
@@ -31,19 +31,17 @@ export function PagesAnnexeResultatPdf({
           wrap={false}
           style={stylesResultatPdf.pageAnnexe}
         >
-          <View fixed style={stylesResultatPdf.annexeEnteteFixe}>
-            <EnTeteResultatPdfServeur
-              logoPath={logoPath}
-              lignesBadge={["ANNEXE", "RÉSULTATS"]}
-            />
-            <Text style={stylesResultatPdf.annexeTitreSection}>
-              PIÈCES JOINTES — {libelleExamen.toUpperCase()}
-            </Text>
-            <Text style={stylesResultatPdf.annexeNomFichier}>{page.libelle}</Text>
-          </View>
+          <EnTeteResultatPdfServeur
+            logoPath={logoPath}
+            lignesBadge={["ANNEXE", "RÉSULTATS"]}
+          />
+          <Text style={stylesResultatPdf.annexeTitreSection}>
+            PIÈCES JOINTES — {libelleExamen.toUpperCase()}
+          </Text>
+          <Text style={stylesResultatPdf.annexeNomFichier}>{page.libelle}</Text>
 
-          <View style={stylesResultatPdf.annexeCorps} wrap={false}>
-            {page.integrable && page.cheminImage ? (
+          {page.integrable && page.cheminImage ? (
+            <View style={stylesResultatPdf.annexeImageWrap} wrap={false}>
               <Image
                 src={page.cheminImage}
                 style={{
@@ -51,15 +49,15 @@ export function PagesAnnexeResultatPdf({
                   height: page.hauteurAffichage ?? HAUTEUR_MAX_IMAGE_ANNEXE_PDF,
                 }}
               />
-            ) : (
-              <Text style={stylesResultatPdf.annexeErreur}>
-                {page.messageErreur ??
-                  `${page.nomFichier} — format non intégrable au PDF (${page.mimeType})`}
-              </Text>
-            )}
-          </View>
+            </View>
+          ) : (
+            <Text style={stylesResultatPdf.annexeErreur}>
+              {page.messageErreur ??
+                `${page.nomFichier} — format non intégrable au PDF (${page.mimeType})`}
+            </Text>
+          )}
 
-          <PiedResultatPdfServeur />
+          <PiedResultatPdfServeur margesHorizontales={20} />
         </Page>
       ))}
     </>

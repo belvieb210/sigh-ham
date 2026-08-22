@@ -8,6 +8,14 @@ const configurationSuivante: NextConfig = {
   /** Permet un build parallèle (.next-new) sans casser le site en production. */
   distDir: process.env.NEXT_DIST_DIR || ".next",
   outputFileTracingRoot: racineProjet,
+  /** pdfjs-dist / pdf-to-img : évite l'échec de conversion PDF en annexe (worker + cmaps). */
+  serverExternalPackages: ["pdf-to-img", "pdfjs-dist"],
+  outputFileTracingIncludes: {
+    "/**/*": [
+      "./node_modules/pdfjs-dist/cmaps/**/*",
+      "./node_modules/pdfjs-dist/standard_fonts/**/*",
+    ],
+  },
   images: {
     /** Évite les timeouts 504 sur images distantes (réseau local instable) */
     unoptimized: process.env.NODE_ENV === "development",

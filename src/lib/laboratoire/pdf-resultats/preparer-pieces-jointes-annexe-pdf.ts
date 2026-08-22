@@ -1,7 +1,6 @@
 import "server-only";
 
-import { existsSync } from "fs";
-import { pdf } from "pdf-to-img";
+import { existsSync, readFileSync } from "fs";
 import {
   estImageAffichablePdf,
   estPdfPieceJointe,
@@ -17,23 +16,49 @@ function bufferVersDataUrlPng(buffer: Buffer): string {
   return `data:image/png;base64,${buffer.toString("base64")}`;
 }
 
-/** Convertit un PDF local en images PNG (data URLs) pour react-pdf. */
-async function convertirPdfLocalEnImages(
-  cheminAbsolu: string,
+/** Lit le fichier joint depuis le disque local ou une URL HTTP(S) (MinIO, etc.). */
+async function chargerBufferPieceJointe(url: string): Promise<Buffer | null> {
+  const absolu = resoudreCheminAbsoluFichierPdf(url);
+  if (absolu && existsSync(absolu)) {
+    return readFileSync(absolu);
+  }
+
+  const brut = url.trim();
+  if (/^https?:\/\//i.test(brut)) {
+    try {
+      const res = await fetch(brut);
+      if (res.ok) return Buffer.from(await res.arrayBuffer());
+      console.error(
+        "[preparerPagesAnnexePiecesJointes] HTTP",
+        brut,
+        res.status,
+        res.statusText
+      );
+    } catch (e) {
+      console.error("[preparerPagesAnnexePiecesJointes] fetch", brut, e);
+    }
+  }
+
+  return null;
+}
+
+/** Convertit un buffer PDF en images PNG (data URLs) pour react-pdf. */
+async function convertirPdfBufferEnImages(
+  buffer: Buffer,
   maxPages = MAX_PAGES_PDF
 ): Promise<string[]> {
-  if (!existsSync(cheminAbsolu)) return [];
-
   try {
-    const document = await pdf(cheminAbsolu, { scale: 2 });
+    const { pdf } = await import("pdf-to-img");
+    const document = await pdf(buffer, { scale: 2 });
     const images: string[] = [];
     for await (const page of document) {
       if (images.length >= maxPages) break;
       images.push(bufferVersDataUrlPng(Buffer.from(page)));
     }
+    await document.destroy?.();
     return images;
   } catch (e) {
-    console.error("[preparerPagesAnnexePiecesJointes] PDF", cheminAbsolu, e);
+    console.error("[preparerPagesAnnexePiecesJointes] conversion PDF", e);
     return [];
   }
 }
@@ -55,7 +80,6 @@ export async function preparerPagesAnnexePiecesJointes(
   const pages: PageAnnexePieceJointePdf[] = [];
 
   for (const pj of pieces) {
-    const cheminAbsolu = resoudreCheminAbsoluFichierPdf(pj.url);
     const cheminAffichable = resoudreCheminFichierPdf(pj.url);
 
     if (estImageAffichablePdf(pj.mimeType) && cheminAffichable) {
@@ -69,8 +93,21 @@ export async function preparerPagesAnnexePiecesJointes(
       continue;
     }
 
-    if (estPdfPieceJointe(pj.mimeType, pj.nom) && cheminAbsolu) {
-      const images = await convertirPdfLocalEnImages(cheminAbsolu);
+    if (estPdfPieceJointe(pj.mimeType, pj.nom)) {
+      const buffer = await chargerBufferPieceJointe(pj.url);
+      if (!buffer) {
+        pages.push({
+          nomFichier: pj.nom,
+          libelle: pj.nom,
+          cheminImage: null,
+          integrable: false,
+          mimeType: pj.mimeType,
+          messageErreur: "Fichier joint introuvable sur le serveur.",
+        });
+        continue;
+      }
+
+      const images = await convertirPdfBufferEnImages(buffer);
       if (images.length === 0) {
         pages.push({
           nomFichier: pj.nom,
@@ -105,9 +142,7 @@ export async function preparerPagesAnnexePiecesJointes(
       cheminImage: null,
       integrable: false,
       mimeType: pj.mimeType,
-      messageErreur: cheminAbsolu
-        ? `Format non intégrable au PDF (${pj.mimeType})`
-        : "Fichier joint introuvable sur le serveur.",
+      messageErreur: `Format non intégrable au PDF (${pj.mimeType})`,
     });
   }
 
